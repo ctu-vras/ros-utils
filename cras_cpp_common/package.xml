@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cras_cpp_common</name>
+  <version>1.0.0</version>
+  <description>Common code for C++ nodes</description>
+
+  <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
+  <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
+
+  <license>BSD</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>filters</depend>
+  <depend>roscpp</depend>
+  <depend>rosconsole</depend>
+
+</package>
