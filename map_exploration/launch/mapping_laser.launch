@@ -1,0 +1,55 @@
+<launch>
+	
+	<!-- Only one argument is required, it defines the node name! -->
+	<node pkg="robot_mapping" type="mapping_node" name="robot_mapping25D_node" output="screen" args="map_25D_node" >
+		
+		<param name="inPointCloud" value="/X1/points" />
+		<param name="inPose" value="/icp_odom" />
+		<param name="inUberCommands" value="/ubercommander/commands" />
+		<param name="goals" value="/mapping/goals" />
+		
+		<param name="outObjectives" value="mapping/objectives/pcd" />
+		<param name="outPath" value="hexapod/path1" />
+		
+		<param name="outDebugLocalElevation" value="mapping/debug/localPCD" />
+		<param name="outDebugFarElevation" value="mapping/debug/globalPCD" />
+		<param name="outDebugLocalElevationSize" value="20" />
+		<param name="lowResMultip" value="3" />
+		<param name="enableDebugOCC" value="false" />
+		<param name="outDebugOCC" value="mapping/debug/occ" />
+		<param name="enableDebugTimes" value="false" />
+			
+		<param name="enableTransCloudToRobotFrame" value="false" />
+		<param name="pcdSkipStep" value="1" />
+		<param name="pointSkipStep" value="1" />
+		<param name="senseXmin" value="-3" />
+		<param name="senseXmax" value="3" />
+		<param name="senseYmin" value="-20" />
+		<param name="senseYmax" value="20" />
+		<param name="senseZmin" value="-1" />
+		<param name="senseZmax" value="1.5" />
+
+		<param name="enableFrontiers" value="true" />
+		<param name="frontierNeighSize" value="1.0" />
+		<param name="frontierMinCandidates" value="7" />
+		
+		<param name="shadowsEnable" value="true" />
+		<param name="shadowsDist" value="0.8" />
+		
+		<!-- possible modes: none followFrontiers followGiven -->
+		<param name="plannMode" value="followFrontiers" />
+		
+		<param name="mapExpOpAreaDistance" value="10" />
+		<param name="mapResolution" value="0.2" />
+		<param name="maxTravMargin" value="0.15" />
+
+		<param name="dropBeaconEnable" value="true" />
+		<param name="dropBeaconDist" value="12" />
+		<param name="dropBeaconMinDist" value="10" />
+
+	</node>
+
+</launch>
+
+
+
