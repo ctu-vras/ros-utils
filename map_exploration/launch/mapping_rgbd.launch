@@ -1,0 +1,41 @@
+<launch>
+	
+	<!-- Only one argument is required, it defines the node name! -->
+	<node pkg="robot_mapping" type="mapping_node" name="robot_mapping25D_node" output="screen" args="map_25D_node" >
+		
+		<param name="inPointCloud" value="/camera/depth/color/points_throttle" />
+		<param name="inPose" value="/orb_slam/pose" />
+		<param name="inUberCommands" value="/ubercommander/commands" />
+		<param name="goals" value="/mapping/goals" />
+		
+		<param name="outObjectives" value="mapping/objectives/pcd" />
+		<param name="outPath" value="hexapod/path1" />
+		
+		<param name="outDebugElevation" value="mapping/debug/pcd" />
+		<param name="enableDebugOCC" value="false" />
+		<param name="outDebugOCC" value="mapping/debug/occ" />
+		<param name="enableDebugTimes" value="true" />
+
+		<param name="mapExpOpAreaDistance" value="1" />
+			
+		<param name="enableTransCloudToRobotFrame" value="true" />
+		<param name="pcdSkipStep" value="1" />
+		
+		<param name="pointSkipStep" value="4" />
+		<param name="senseZmin" value="0.2" />
+		<param name="senseZmax" value="2.5" />
+		<param name="senseXmin" value="-3" />
+		<param name="senseXmax" value="3" />
+
+		<param name="enableFrontiers" value="true" />
+		<param name="frontierNeighSize" value="0.4" />
+		<param name="frontierMinCandidates" value="5" />
+		
+		<param name="mapResolution" value="0.05" />
+		<param name="maxTravMargin" value="0.15" />
+	</node>
+
+</launch>
+
+
+
