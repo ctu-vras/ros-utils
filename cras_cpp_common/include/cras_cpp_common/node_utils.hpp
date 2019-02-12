@@ -41,6 +41,12 @@ T getParam(ros::NodeHandle &node, const std::string &name,
   return defaultValue;
 }
 
+// std::string - char interop specializations
+
+std::string getParam(ros::NodeHandle &node, const std::string &name, const char *defaultValue, const std::string &unit = "")
+{
+  return getParam<std::string>(node, name, std::string(defaultValue), unit);
+}
 
 // getParam specializations for unsigned values
 
