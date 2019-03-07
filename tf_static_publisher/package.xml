@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tf_static_publisher</name>
+  <version>1.0.0</version>
+  <description>
+    The tf_static_publisher package provides simple static transform publisher
+    node which allows to send multiple (latched) static transforms from
+    single node in single message.
+  </description>
+  <maintainer email="tpetricek@gmail.com">Tomas Petricek</maintainer>
+  <license>BSD</license>
+
+  <author email="tpetricek@gmail.com">Tomas Petricek</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf2_ros</build_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+</package>
