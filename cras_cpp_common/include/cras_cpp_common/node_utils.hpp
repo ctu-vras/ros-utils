@@ -21,7 +21,7 @@ namespace cras {
  * \return The loaded param value.
  */
 template<typename T>
-T getParam(ros::NodeHandle &node, const std::string &name,
+inline T getParam(ros::NodeHandle &node, const std::string &name,
            const T &defaultValue = T(), const std::string &unit = "")
 {
   T value;
@@ -43,7 +43,7 @@ T getParam(ros::NodeHandle &node, const std::string &name,
 
 // std::string - char interop specializations
 
-std::string getParam(ros::NodeHandle &node, const std::string &name, const char *defaultValue, const std::string &unit = "")
+inline std::string getParam(ros::NodeHandle &node, const std::string &name, const char *defaultValue, const std::string &unit = "")
 {
   return getParam<std::string>(node, name, std::string(defaultValue), unit);
 }
@@ -53,7 +53,7 @@ std::string getParam(ros::NodeHandle &node, const std::string &name, const char 
 namespace impl
 {
 template <typename Result, typename Param>
-Result getParamUnsigned(ros::NodeHandle &node, const std::string &name, const Result &defaultValue, const std::string &unit = "")
+inline Result getParamUnsigned(ros::NodeHandle &node, const std::string &name, const Result &defaultValue, const std::string &unit = "")
 {
   const Param signedValue = getParam(node, name, static_cast<Param>(defaultValue), unit);
   if (signedValue < 0)
@@ -67,13 +67,13 @@ Result getParamUnsigned(ros::NodeHandle &node, const std::string &name, const Re
 };
 
 template <>
-uint64_t getParam(ros::NodeHandle &node, const std::string &name, const uint64_t &defaultValue, const std::string &unit)
+inline uint64_t getParam(ros::NodeHandle &node, const std::string &name, const uint64_t &defaultValue, const std::string &unit)
 {
   return impl::getParamUnsigned<uint64_t, int>(node, name, defaultValue, unit);
 }
 
 template <>
-unsigned int getParam(ros::NodeHandle &node, const std::string &name, const unsigned int &defaultValue, const std::string &unit)
+inline unsigned int getParam(ros::NodeHandle &node, const std::string &name, const unsigned int &defaultValue, const std::string &unit)
 {
   return impl::getParamUnsigned<unsigned int, int>(node, name, defaultValue, unit);
 }
@@ -82,7 +82,7 @@ namespace impl
 {
 // generic casting getParam()
 template <typename Result, typename Param>
-Result getParamCast(ros::NodeHandle &node, const std::string &name, const Param &defaultValue, const std::string &unit = "")
+inline Result getParamCast(ros::NodeHandle &node, const std::string &name, const Param &defaultValue, const std::string &unit = "")
 {
   const Param paramValue = getParam(node, name, defaultValue, unit);
   return Result(paramValue);
@@ -92,7 +92,7 @@ Result getParamCast(ros::NodeHandle &node, const std::string &name, const Param 
 // ROS types specializations
 
 template <>
-ros::Duration getParam(ros::NodeHandle &node, const std::string &name, const ros::Duration &defaultValue, const std::string &unit)
+inline ros::Duration getParam(ros::NodeHandle &node, const std::string &name, const ros::Duration &defaultValue, const std::string &unit)
 {
   return impl::getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
 }

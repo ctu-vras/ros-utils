@@ -42,19 +42,17 @@ std::string prependIfNonEmpty(const std::string &str, const std::string &prefix)
 std::string appendIfNonEmpty(const std::string &str, const std::string &suffix);
 
 template<typename T>
-std::string to_string(const T &value)
+inline std::string to_string(const T &value)
 {
   return std::to_string(value);
 }
 
-// HACK: the inline modifier is needed, otherwise we'd get multiple definitions
 template<>
 inline std::string to_string(const std::string &value)
 {
   return value;
 }
 
-// HACK: the inline modifier is needed, otherwise we'd get multiple definitions
 template<>
 inline std::string to_string(const XmlRpc::XmlRpcValue &value)
 {
@@ -62,7 +60,7 @@ inline std::string to_string(const XmlRpc::XmlRpcValue &value)
 }
 
 template<typename T>
-std::string to_string(const std::vector<T> &value)
+inline std::string to_string(const std::vector<T> &value)
 {
   std::stringstream ss;
   ss << "[";
@@ -72,7 +70,7 @@ std::string to_string(const std::vector<T> &value)
 }
 
 template<typename K, typename V>
-std::string to_string(const std::map<K, V> &value)
+inline std::string to_string(const std::map<K, V> &value)
 {
   std::stringstream ss;
   ss << "{";
