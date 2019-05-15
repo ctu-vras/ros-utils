@@ -3,6 +3,7 @@ project(cras_cpp_common)
 
 find_package(catkin REQUIRED COMPONENTS
   filters
+  nodelet
   roscpp
   rosconsole
 )
