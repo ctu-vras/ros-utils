@@ -3,6 +3,8 @@
 
 #include <rosconsole/macros_generated.h>
 #include <filters/filter_base.h>
+#include <filters/filter_chain.h>
+#include <nodelet/nodelet.h>
 
 #include "cras_cpp_common/string_utils.hpp"
 
@@ -10,10 +12,26 @@ namespace cras
 {
 
 template<typename F>
+class FilterChain : public filters::FilterChain<F>
+{
+public:
+  explicit FilterChain(const std::string &dataType) : filters::FilterChain<F>(dataType) {};
+  void setNodelet(const nodelet::Nodelet* nodelet);
+};
+
+template<typename F>
 class FilterBase : public filters::FilterBase<F>
 {
 
+public:
+  void setNodelet(const nodelet::Nodelet* nodelet)
+  {
+    this->nodelet = nodelet;
+  }
+
 protected:
+
+  const nodelet::Nodelet* nodelet;
 
   /**
    * \brief Get the value of the given filter parameter, falling back to the

@@ -4,6 +4,7 @@
 #include <string>
 #include <ros/ros.h>
 #include <rosconsole/macros_generated.h>
+#include <tf2_ros/buffer.h>
 
 #include <nodelet/nodelet.h>
 
@@ -11,7 +12,14 @@
 
 namespace cras {
 
+class NodeletAwareTFBuffer;
+
 class Nodelet : public ::nodelet::Nodelet {
+
+  friend class NodeletAwareTFBuffer;
+
+public:
+  virtual ~Nodelet();
 
 protected:
 
@@ -24,6 +32,12 @@ protected:
    * \note This function doesn't reset the name back to the original.
    */
   void updateThreadName() const;
+
+  /**
+   * \brief Similar to ros::ok(). Becomes false when nodelet unload is requested.
+   * \return Whether it is ok to continue nodelet operations.
+   */
+  bool ok() const;
 
   /**
    * \brief Get the value of the given ROS parameter, falling back to the
@@ -68,6 +82,8 @@ protected:
   }
 
 private:
+
+  bool isUnloading = false;
 
   template <typename Result, typename Param>
   inline Result getParamUnsigned(ros::NodeHandle &node,
@@ -117,6 +133,23 @@ Nodelet::getParam(ros::NodeHandle &node, const std::string &name,
                   const ros::Duration &defaultValue, const std::string &unit) {
   return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
 }
+
+class NodeletAwareTFBuffer : public tf2_ros::Buffer {
+public:
+  explicit NodeletAwareTFBuffer(const Nodelet* nodelet);
+
+  bool canTransform(const std::string& target_frame,
+      const std::string& source_frame, const ros::Time& time,
+      const ros::Duration timeout, std::string *errstr) const override;
+
+  bool canTransform(const std::string &target_frame, const ros::Time &target_time,
+      const std::string &source_frame, const ros::Time &source_time,
+      const std::string &fixed_frame, const ros::Duration timeout,
+      std::string *errstr) const override;
+
+protected:
+  const Nodelet* nodelet;
+};
 
 }
 

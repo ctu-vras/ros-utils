@@ -6,12 +6,14 @@ find_package(catkin REQUIRED COMPONENTS
   nodelet
   roscpp
   rosconsole
+  sensor_msgs
+  tf2_ros
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS filters roscpp rosconsole
-  LIBRARIES nodelet_utils string_utils time_utils
+  CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros
+  LIBRARIES filter_utils nodelet_utils string_utils time_utils
 )
 
 include_directories(
@@ -32,10 +34,8 @@ add_library(nodelet_utils src/nodelet_utils.cpp)
 target_link_libraries(nodelet_utils ${catkin_LIBRARIES} pthread)
 add_dependencies(nodelet_utils string_utils)
 
-add_library(filter_utils INTERFACE)
-target_sources(filter_utils INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/filter_utils.hpp)
-target_include_directories(filter_utils INTERFACE ${catkin_INCLUDE_DIRS})
+add_library(filter_utils src/filter_utils.cpp)
+target_link_libraries(filter_utils ${catkin_LIBRARIES})
 add_dependencies(filter_utils string_utils)
 
 add_library(time_utils src/time_utils.cpp)
