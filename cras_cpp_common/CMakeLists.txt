@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS filters roscpp rosconsole
-  LIBRARIES time_utils string_utils
+  LIBRARIES nodelet_utils string_utils time_utils
 )
 
 include_directories(
@@ -28,6 +28,10 @@ target_sources(node_utils INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/node_utils.hpp)
 target_include_directories(node_utils INTERFACE ${catkin_INCLUDE_DIRS})
 
+add_library(nodelet_utils src/nodelet_utils.cpp)
+target_link_libraries(nodelet_utils ${catkin_LIBRARIES} pthread)
+add_dependencies(nodelet_utils string_utils)
+
 add_library(filter_utils INTERFACE)
 target_sources(filter_utils INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/filter_utils.hpp)
@@ -37,6 +41,16 @@ add_dependencies(filter_utils string_utils)
 add_library(time_utils src/time_utils.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})
 add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
+
+add_library(math_utils INTERFACE)
+target_sources(math_utils INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/math_utils.hpp)
+target_include_directories(math_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
+add_library(set_utils INTERFACE)
+target_sources(set_utils INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/set_utils.hpp)
+target_include_directories(set_utils INTERFACE ${catkin_INCLUDE_DIRS})
 
 #############
 ## Install ##

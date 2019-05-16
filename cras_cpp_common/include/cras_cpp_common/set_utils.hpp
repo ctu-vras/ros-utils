@@ -1,6 +1,8 @@
 #ifndef CRAS_CPP_COMMON_SET_UTILS_HPP
 #define CRAS_CPP_COMMON_SET_UTILS_HPP
 
+#include <set>
+
 namespace cras
 {
 

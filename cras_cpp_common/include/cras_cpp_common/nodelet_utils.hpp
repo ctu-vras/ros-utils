@@ -14,6 +14,17 @@ namespace cras {
 class Nodelet : public ::nodelet::Nodelet {
 
 protected:
+
+  /**
+   * \brief Set custom name of the current thread to this nodelet's name.
+   *
+   * \note The name will be automatically shortened if longer than 15 chars.
+   * \note You can see the custom names in htop when you enable display of
+   *       custom thread names in options.
+   * \note This function doesn't reset the name back to the original.
+   */
+  void updateThreadName() const;
+
   /**
    * \brief Get the value of the given ROS parameter, falling back to the
    *        specified default value, and print out a ROS info/warning message with the loaded values.
