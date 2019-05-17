@@ -8,7 +8,7 @@ namespace cras
 static const double CAN_TRANSFORM_POLLING_SCALE = 0.01;
 
 Nodelet::~Nodelet() {
-  this->isUnloading = true;
+  this->shutdown();
 }
 
 void Nodelet::updateThreadName() const
@@ -77,6 +77,10 @@ void conditionally_append_timeout_info(std::string * errstr, const ros::Time& st
 
 bool Nodelet::ok() const {
   return !this->isUnloading;
+}
+
+void Nodelet::shutdown() {
+  this->isUnloading = true;
 }
 
 bool NodeletAwareTFBuffer::canTransform(const std::string& target_frame,

@@ -81,6 +81,8 @@ protected:
                                        unit);
   }
 
+  void shutdown();
+
 private:
 
   bool isUnloading = false;
