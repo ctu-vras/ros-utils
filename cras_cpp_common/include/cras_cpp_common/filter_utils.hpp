@@ -1,6 +1,8 @@
 #ifndef CRAS_CPP_COMMON_FILTER_UTILS_HPP
 #define CRAS_CPP_COMMON_FILTER_UTILS_HPP
 
+#include <functional>
+
 #include <rosconsole/macros_generated.h>
 #include <filters/filter_base.h>
 #include <filters/filter_chain.h>
@@ -15,8 +17,29 @@ template<typename F>
 class FilterChain : public filters::FilterChain<F>
 {
 public:
-  explicit FilterChain(const std::string &dataType) : filters::FilterChain<F>(dataType) {};
+  /**
+   * \brief Callback to be called after each filter processes the data.
+   *
+   * \param data The data after application of the filter.
+   * \param filterNum The number of the filter in the filtering chain.
+   * \param name Name of the filter that processed the data.
+   * \param type Type of the filter that processed the data.
+   */
+  typedef std::function<void(const F& data, const size_t filterNum, const std::string& name, const std::string& type)> FilterCallback;
+
+  /**
+   * \brief Construct a filter chain.
+   * \param dataType Textual representation of the data type.
+   * \param filterCallback Optional callback to be called after each filter finishes its work.
+   */
+  explicit FilterChain(const std::string &dataType, const FilterCallback& filterCallback = {})
+      : filters::FilterChain<F>(dataType), filterCallback(filterCallback) {};
   void setNodelet(const nodelet::Nodelet* nodelet);
+  bool update(const F& data_in, F& data_out);
+protected:
+   FilterCallback filterCallback;
+
+   void callCallback(const F& data, size_t filterNum);
 };
 
 template<typename F>
