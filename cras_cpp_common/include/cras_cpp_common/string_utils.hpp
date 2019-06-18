@@ -17,7 +17,7 @@ namespace cras {
  * \param s The string from which slash should be removed.
  * \param warn If true, issue a ROS warning if the string contained the leading slash.
  */
-void stripLeadingSlash(std::string &s, bool warn = false);
+void stripLeadingSlash(std::string& s, bool warn = false);
 
 /**
  * \brief Return a copy of the given string with leading slash removed (if there is one).
@@ -25,7 +25,7 @@ void stripLeadingSlash(std::string &s, bool warn = false);
  * \param warn If true, issue a ROS warning if the string contained the leading slash.
  * \return The string without leading slash.
  */
-std::string stripLeadingSlash(const std::string &s, bool warn = false);
+std::string stripLeadingSlash(const std::string& s, bool warn = false);
 
 /**
  * \brief If `str` is nonempty, returns prefix + str, otherwise empty string.
@@ -33,7 +33,7 @@ std::string stripLeadingSlash(const std::string &s, bool warn = false);
  * \param prefix The string's prefix.
  * \return The possibly prefixed string.
  */
-std::string prependIfNonEmpty(const std::string &str, const std::string &prefix);
+std::string prependIfNonEmpty(const std::string& str, const std::string& prefix);
 
 /**
  * \brief If `str` is nonempty, returns str + suffix, otherwise empty string.
@@ -41,28 +41,28 @@ std::string prependIfNonEmpty(const std::string &str, const std::string &prefix)
  * \param suffix The string's suffix.
  * \return The possibly suffixed string.
  */
-std::string appendIfNonEmpty(const std::string &str, const std::string &suffix);
+std::string appendIfNonEmpty(const std::string& str, const std::string& suffix);
 
 template<typename T>
-inline std::string to_string(const T &value)
+inline std::string to_string(const T& value)
 {
   return std::to_string(value);
 }
 
 template<>
-inline std::string to_string(const std::string &value)
+inline std::string to_string(const std::string& value)
 {
   return value;
 }
 
 template<>
-inline std::string to_string(const XmlRpc::XmlRpcValue &value)
+inline std::string to_string(const XmlRpc::XmlRpcValue& value)
 {
   return value.toXml();
 }
 
 template<typename T>
-inline std::string to_string(const std::vector<T> &value)
+inline std::string to_string(const std::vector<T>& value)
 {
   std::stringstream ss;
   ss << "[";
@@ -72,11 +72,11 @@ inline std::string to_string(const std::vector<T> &value)
 }
 
 template<typename K, typename V>
-inline std::string to_string(const std::map<K, V> &value)
+inline std::string to_string(const std::map<K, V>& value)
 {
   std::stringstream ss;
   ss << "{";
-  for (const auto &pair : value)
+  for (const auto& pair : value)
   {
     ss << "\"" << to_string(pair.first) << "\": \"" << to_string(pair.second) << "\", ";
   }
