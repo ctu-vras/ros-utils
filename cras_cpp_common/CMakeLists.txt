@@ -7,13 +7,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosconsole
   sensor_msgs
+  tf2
+  tf2_geometry_msgs
   tf2_ros
 )
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros
-  LIBRARIES filter_utils nodelet_utils string_utils time_utils
+  LIBRARIES filter_utils nodelet_utils string_utils tf2_utils time_utils
 )
 
 include_directories(
@@ -41,6 +43,10 @@ add_dependencies(filter_utils string_utils)
 add_library(time_utils src/time_utils.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})
 add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
+
+add_library(tf2_utils src/tf2_utils.cpp)
+target_link_libraries(tf2_utils ${catkin_LIBRARIES})
+add_dependencies(tf2_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(math_utils INTERFACE)
 target_sources(math_utils INTERFACE
