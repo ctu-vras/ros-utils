@@ -22,12 +22,6 @@ ros::Duration remainingTime(const ros::Time &query, double timeout);
 ros::Duration remainingTime(const ros::Time &query,
                             const ros::Duration &timeout);
 
-std::string to_string(const ros::Time& time);
-std::string to_string(const ros::WallTime& time);
-std::string to_string(const ros::SteadyTime& time);
-std::string to_string(const ros::Duration& time);
-std::string to_string(const ros::WallDuration& time);
-
 };
 
 #endif //CRAS_CPP_COMMON_TIME_UTILS_HPP

@@ -16,39 +16,4 @@ ros::Duration remainingTime(const ros::Time &query,
   return (remaining.sec >= 0) ? remaining : ros::Duration(0);
 }
 
-std::string to_string(const ros::Time& time)
-{
-  std::stringstream ss;
-  ss << time;
-  return ss.str();
-}
-
-std::string to_string(const ros::WallTime& time)
-{
-  std::stringstream ss;
-  ss << time;
-  return ss.str();
-}
-
-std::string to_string(const ros::SteadyTime& time)
-{
-  std::stringstream ss;
-  ss << time;
-  return ss.str();
-}
-
-std::string to_string(const ros::Duration& time)
-{
-  std::stringstream ss;
-  ss << time;
-  return ss.str();
-}
-
-std::string to_string(const ros::WallDuration& time)
-{
-  std::stringstream ss;
-  ss << time;
-  return ss.str();
-}
-
 };
