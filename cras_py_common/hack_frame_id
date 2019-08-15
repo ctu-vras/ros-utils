@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+"""
+Rewrite msg.header.frame_id to a different value.
+
+This can be used e.g. for prefixing frame IDs in sensor_msgs types.
+"""
+
+import rospy
+from roslib.message import get_message_class
+
+rospy.init_node('hack_frame_id')
+
+new_frame = rospy.get_param('~new_frame_id')
+queue_size = rospy.get_param('~queue_size', 10)
+
+pub = None
+
+def data_to_msg(data):
+        """Convert generic message data dict to ROS message."""        
+        cls = get_message_class(data._connection_header['type'])
+        msg = cls().deserialize(data._buff)
+        return msg, cls
+
+def callback(data_dict):
+	msg, cls = data_to_msg(data_dict)
+	msg.header.frame_id = new_frame
+
+        global pub
+	if pub is None:
+		pub = rospy.Publisher('out', cls, queue_size=queue_size)
+		rospy.sleep(rospy.Duration(0.1))
+
+	pub.publish(msg)
+
+
+sub = rospy.Subscriber('in', rospy.AnyMsg, callback, queue_size=queue_size)
+
+rospy.spin()
