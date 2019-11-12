@@ -2,6 +2,7 @@
 #define CRAS_CPP_COMMON_FILTER_UTILS_HPP
 
 #include <functional>
+#include <unordered_set>
 
 #include <rosconsole/macros_generated.h>
 #include <filters/filter_base.h>
@@ -32,14 +33,21 @@ public:
    * \param dataType Textual representation of the data type.
    * \param filterCallback Optional callback to be called after each filter finishes its work.
    */
-  explicit FilterChain(const std::string &dataType, const FilterCallback& filterCallback = {})
-      : filters::FilterChain<F>(dataType), filterCallback(filterCallback) {};
+  explicit FilterChain(const std::string &dataType, const FilterCallback& filterCallback = {});
   void setNodelet(const nodelet::Nodelet* nodelet);
   bool update(const F& data_in, F& data_out);
+  void disableFilter(const std::string& name);
+  void enableFilter(const std::string& name);
+  void setDisabledFilters(std::unordered_set<std::string> filters);
 protected:
-   FilterCallback filterCallback;
+  FilterCallback filterCallback;
 
-   void callCallback(const F& data, size_t filterNum);
+  void callCallback(const F& data, size_t filterNum);
+
+  void updateActiveFilters();
+  std::unordered_set<std::string> disabledFilters;
+  std::vector<boost::shared_ptr<filters::FilterBase<F> > > activeFilters;
+
 };
 
 template<typename F>
