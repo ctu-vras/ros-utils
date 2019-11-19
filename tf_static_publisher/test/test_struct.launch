@@ -1,0 +1,9 @@
+<launch>
+    <node name="tf_static_publisher" pkg="tf_static_publisher" type="tf_static_publisher" required="true" output="screen">
+        <rosparam param="transforms">
+            child_1: [1., 0., 0., 2., 0., 0., parent, child_1]
+            child_2: [0., 1., 0., 0., 2., 0., parent, child_2]
+            child_3: [0., 0., 1., 0., 0., 2., parent, child_3]
+        </rosparam>
+    </node>
+</launch>
