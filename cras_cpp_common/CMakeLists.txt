@@ -16,6 +16,7 @@ catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros
   LIBRARIES filter_utils nodelet_utils string_utils tf2_utils time_utils
+  CFG_EXTRAS cras_cpp_common-extras.cmake
 )
 
 include_directories(
@@ -67,3 +68,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.hpp"
 )
+
+install(DIRECTORY cmake/Modules
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)

@@ -1,0 +1,2 @@
+# Append cmake modules from source directory to the cmake module path
+list(APPEND CMAKE_MODULE_PATH "${cras_cpp_common_DIR}/../../../@CATKIN_PACKAGE_SHARE_DESTINATION@/cmake/Modules")
