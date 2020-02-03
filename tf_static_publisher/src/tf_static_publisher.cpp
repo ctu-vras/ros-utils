@@ -1,11 +1,15 @@
 #include <cmath>
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <std_srvs/Trigger.h>
+#include <thread>
+#include <mutex>
+#include <XmlRpcException.h>
 
 using XmlRpc::XmlRpcValue;
 typedef XmlRpcValue::ValueStruct::value_type KeyValue;
 using geometry_msgs::TransformStamped;
 
-TransformStamped value_to_transform(XmlRpcValue &value)
+TransformStamped value_to_transform(XmlRpcValue& value)
 {
   ROS_ASSERT_MSG(value.getType() == XmlRpcValue::TypeArray
                  && (value.size() == 8 || value.size() == 9),
@@ -51,36 +55,124 @@ TransformStamped value_to_transform(XmlRpcValue &value)
 }
 
 
+class TfStaticPublisher
+{
+  public: void loadAndPublish()
+  {
+    if (!ros::ok()) return;
+
+    ROS_DEBUG("Reloading static transforms");
+
+    XmlRpcValue transforms;
+    {
+      std::lock_guard<std::mutex> lock(this->paramMutex);
+
+      this->nh.param("transforms", transforms, transforms);
+      ROS_ASSERT_MSG(transforms.getType() == XmlRpcValue::TypeArray
+                         || transforms.getType() == XmlRpcValue::TypeStruct,
+                     "Parameter %s must be array or struct of arrays, got type %i.",
+                     this->nh.resolveName("transforms").c_str(),
+                     transforms.getType());
+
+    }
+
+    std::vector<TransformStamped> msgs;
+    msgs.reserve(static_cast<size_t>(transforms.size()));
+
+    if (transforms.getType() == XmlRpcValue::TypeArray)
+    {
+      for (auto& transform : transforms)
+      {
+        try
+        {
+          msgs.push_back(value_to_transform(transform.second));
+        }
+        catch (XmlRpc::XmlRpcException& e)
+        {
+          ROS_ERROR("Error reading static transform %s: %s, error code %i",
+              transform.first.c_str(), e.getMessage().c_str(), e.getCode());
+        }
+      }
+    }
+    else
+    {
+      size_t i = 0;
+      for (KeyValue &v : transforms)
+      {
+        try
+        {
+          msgs.push_back(value_to_transform(v.second));
+        }
+        catch (XmlRpc::XmlRpcException& e)
+        {
+          ROS_ERROR("Error reading static transform nr. %lu: %s, error code %i",
+              i, e.getMessage().c_str(), e.getCode());
+        }
+        ++i;
+      }
+    }
+
+
+    broadcaster.sendTransform(msgs);
+
+    for (const auto &msg : msgs)
+    {
+      ROS_DEBUG("Publishing static transform from %s to %s.",
+                msg.header.frame_id.c_str(),
+                msg.child_frame_id.c_str());
+    }
+  }
+
+  protected: bool onReloadTrigger(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& resp)
+  {
+    this->loadAndPublish();
+    resp.success = true;
+    return true;
+  }
+
+  public: explicit TfStaticPublisher(ros::NodeHandle nh) : nh(nh)
+  {
+    triggerServer = nh.advertiseService("reload", &TfStaticPublisher::onReloadTrigger, this);
+  }
+
+  private: ros::NodeHandle nh;
+  private: ros::ServiceServer triggerServer;
+  private: std::mutex paramMutex;
+  private: tf2_ros::StaticTransformBroadcaster broadcaster;
+};
+
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "tf_static_publisher",
             ros::init_options::AnonymousName);
   ros::NodeHandle pnh("~");
 
-  XmlRpcValue transforms;
-  pnh.param("transforms", transforms, transforms);
-  ROS_ASSERT_MSG(transforms.getType() == XmlRpcValue::TypeArray
-                 || transforms.getType() == XmlRpcValue::TypeStruct,
-                 "Parameter must be array or struct of arrays.");
+  TfStaticPublisher node(pnh);
 
-  std::vector<TransformStamped> msgs;
-  msgs.reserve(static_cast<size_t>(transforms.size()));
+  const auto reload_frequency = pnh.param("reload_frequency", 0.0);
 
-  if (transforms.getType() == XmlRpcValue::TypeArray)
-    for (int i = 0; i < transforms.size(); ++i)
-      msgs.push_back(value_to_transform(transforms[i]));
-  else
-    for (KeyValue &v : transforms)
-      msgs.push_back(value_to_transform(v.second));
+  node.loadAndPublish();
 
-  tf2_ros::StaticTransformBroadcaster broadcaster;
-  broadcaster.sendTransform(msgs);
-  for (const auto &msg : msgs)
+  if (reload_frequency == 0.0)
   {
-    ROS_INFO("Publishing static transform from %s to %s.",
-             msg.header.frame_id.c_str(),
-             msg.child_frame_id.c_str());
+    ros::spin();
   }
-  ros::spin();
+  else
+  {
+    ros::Rate rate(reload_frequency);
+    std::thread reload_thread([&rate, &node]()
+    {
+      while (ros::ok())
+      {
+        rate.sleep();
+        node.loadAndPublish();
+      }
+    });
+
+    ros::spin();
+    reload_thread.join();
+  }
+
   return 0;
 }
