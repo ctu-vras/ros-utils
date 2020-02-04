@@ -67,13 +67,25 @@ class TfStaticPublisher
     {
       std::lock_guard<std::mutex> lock(this->paramMutex);
 
-      this->nh.param("transforms", transforms, transforms);
-      ROS_ASSERT_MSG(transforms.getType() == XmlRpcValue::TypeArray
-                         || transforms.getType() == XmlRpcValue::TypeStruct,
-                     "Parameter %s must be array or struct of arrays, got type %i.",
-                     this->nh.resolveName("transforms").c_str(),
-                     transforms.getType());
+      try
+      {
+        this->nh.param("transforms", transforms, transforms);
+      }
+      catch (XmlRpc::XmlRpcException& e)
+      {
+        ROS_ERROR("Error reading transforms from parameter %s: %s, error code %i",
+                  this->nh.resolveName("transforms").c_str(),
+                  e.getMessage().c_str(), e.getCode());
+        return;
+      }
+    }
 
+    if (transforms.getType() != XmlRpcValue::TypeArray
+        && transforms.getType() != XmlRpcValue::TypeStruct)
+    {
+      ROS_ERROR("Parameter %s must be array or struct of arrays, got type %i.",
+                this->nh.resolveName("transforms").c_str(), transforms.getType());
+      return;
     }
 
     std::vector<TransformStamped> msgs;
@@ -81,22 +93,23 @@ class TfStaticPublisher
 
     if (transforms.getType() == XmlRpcValue::TypeArray)
     {
-      for (auto& transform : transforms)
+      // Do not use range-based for-loop! It's used for structs, not arrays!
+      for (size_t i = 0; i < transforms.size(); ++i)
       {
+        auto& transform = transforms[i];
         try
         {
-          msgs.push_back(value_to_transform(transform.second));
+          msgs.push_back(value_to_transform(transform));
         }
         catch (XmlRpc::XmlRpcException& e)
         {
-          ROS_ERROR("Error reading static transform %s: %s, error code %i",
-              transform.first.c_str(), e.getMessage().c_str(), e.getCode());
+          ROS_ERROR("Error reading static transform nr. %lu: %s, error code %i",
+              i, e.getMessage().c_str(), e.getCode());
         }
       }
     }
     else
     {
-      size_t i = 0;
       for (KeyValue &v : transforms)
       {
         try
@@ -105,10 +118,9 @@ class TfStaticPublisher
         }
         catch (XmlRpc::XmlRpcException& e)
         {
-          ROS_ERROR("Error reading static transform nr. %lu: %s, error code %i",
-              i, e.getMessage().c_str(), e.getCode());
+          ROS_ERROR("Error reading static transform %s: %s, error code %i",
+              v.first.c_str(), e.getMessage().c_str(), e.getCode());
         }
-        ++i;
       }
     }
 
