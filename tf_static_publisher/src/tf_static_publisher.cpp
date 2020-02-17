@@ -54,6 +54,22 @@ TransformStamped value_to_transform(XmlRpcValue& value)
   return msg;
 }
 
+namespace geometry_msgs
+{
+bool operator==(const TransformStamped &lhs, const TransformStamped &rhs)
+{
+  return lhs.header.frame_id == rhs.header.frame_id &&
+         lhs.child_frame_id == rhs.child_frame_id &&
+         lhs.transform.translation.x == rhs.transform.translation.x &&
+         lhs.transform.translation.y == rhs.transform.translation.y &&
+         lhs.transform.translation.z == rhs.transform.translation.z &&
+         lhs.transform.rotation.x == rhs.transform.rotation.x &&
+         lhs.transform.rotation.y == rhs.transform.rotation.y &&
+         lhs.transform.rotation.z == rhs.transform.rotation.z &&
+         lhs.transform.rotation.w == rhs.transform.rotation.w;
+}
+}
+
 
 class TfStaticPublisher
 {
@@ -66,6 +82,11 @@ class TfStaticPublisher
     XmlRpcValue transforms;
     {
       std::lock_guard<std::mutex> lock(this->paramMutex);
+      if (!this->nh.hasParam("transforms"))
+      {
+        ROS_WARN_ONCE("Parameter 'transforms' was not found. Will not publish any transforms until it appears.");
+        return;
+      }
 
       try
       {
@@ -124,14 +145,18 @@ class TfStaticPublisher
       }
     }
 
-
-    broadcaster.sendTransform(msgs);
-
-    for (const auto &msg : msgs)
+    if (msgs != this->lastTransforms)
     {
-      ROS_DEBUG("Publishing static transform from %s to %s.",
-                msg.header.frame_id.c_str(),
-                msg.child_frame_id.c_str());
+      broadcaster.sendTransform(msgs);
+
+      for (const auto &msg : msgs)
+      {
+        ROS_DEBUG("Publishing static transform from %s to %s.",
+                  msg.header.frame_id.c_str(),
+                  msg.child_frame_id.c_str());
+      }
+      this->lastTransforms.clear();
+      this->lastTransforms = msgs;
     }
   }
 
@@ -151,6 +176,7 @@ class TfStaticPublisher
   private: ros::ServiceServer triggerServer;
   private: std::mutex paramMutex;
   private: tf2_ros::StaticTransformBroadcaster broadcaster;
+  private: std::vector<geometry_msgs::TransformStamped> lastTransforms;
 };
 
 
