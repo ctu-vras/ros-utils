@@ -10,11 +10,12 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_geometry_msgs
   tf2_ros
+  topic_tools
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros
+  CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros topic_tools
   LIBRARIES filter_utils nodelet_utils string_utils tf2_utils time_utils
   CFG_EXTRAS cras_cpp_common-extras.cmake
 )
@@ -23,6 +24,9 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
+
+add_executable(repeater src/repeater.cpp)
+target_link_libraries(repeater ${catkin_LIBRARIES})
 
 add_library(string_utils src/string_utils.cpp)
 target_link_libraries(string_utils ${catkin_LIBRARIES})
