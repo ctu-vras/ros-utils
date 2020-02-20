@@ -1,0 +1,25 @@
+<launch>
+    <arg name="bag" default="/home/petrito1/workspace/data/subt/dpp/2019-11-28/dfki_robot/ugv_2019-11-28-11-20-42.bag"/>
+
+    <param name="use_sim_time" value="true"/>
+    <node name="play" pkg="rosbag" type="play" args="--clock $(arg bag)" output="log">
+        <remap from="rosout" to="~/rosout"/>
+        <remap from="rosout_agg" to="~/rosout_agg"/>
+    </node>
+
+    <node name="$(anon repeater_1)" pkg="nav_utils" type="repeater" output="log"
+          respawn="true" respawn_delay="0.5">
+        <param name="rate" value="5.0"/>
+        <param name="republish" value="false"/>
+        <remap from="in" to="co2"/>
+        <remap from="out" to="co2_fast"/>
+    </node>
+
+    <node name="$(anon repeater_2)" pkg="nav_utils" type="repeater" output="log"
+          respawn="true" respawn_delay="0.5">
+        <param name="rate" value="5.0"/>
+        <param name="republish" value="true"/>
+        <remap from="in" to="co2"/>
+        <remap from="out" to="co2_fast_repub"/>
+    </node>
+</launch>

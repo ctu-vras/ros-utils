@@ -15,11 +15,11 @@ public:
             advertised_(false)
     {
         pnh.param("rate", rate_, rate_);
-        pnh.param("republish", republish_, republish_);
         if (std::isnan(rate_) || !std::isfinite(rate_) || rate_ <= 0.0)
         {
             throw std::invalid_argument("Rate must be positive.");
         }
+        pnh.param("republish", republish_, republish_);
         sub_ = nh_.subscribe("in", 5, &Repeater::messageReceived, this);
         timer_ = nh.createTimer(ros::Duration(1.0 / rate_), &Repeater::everyPeriod, this);
     }
@@ -41,6 +41,10 @@ public:
 
     void everyPeriod(const ros::TimerEvent& event)
     {
+        if (!msg_)
+        {
+            return;
+        }
         std::lock_guard<std::mutex> lock(msg_mutex_);
         pub_.publish(msg_);
     }

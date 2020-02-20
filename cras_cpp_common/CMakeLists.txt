@@ -28,6 +28,9 @@ include_directories(
 add_executable(repeater src/repeater.cpp)
 target_link_libraries(repeater ${catkin_LIBRARIES})
 
+add_executable(joy_repeater src/joy_repeater.cpp)
+target_link_libraries(joy_repeater ${catkin_LIBRARIES})
+
 add_library(string_utils src/string_utils.cpp)
 target_link_libraries(string_utils ${catkin_LIBRARIES})
 add_dependencies(string_utils ${catkin_EXPORTED_TARGETS})
