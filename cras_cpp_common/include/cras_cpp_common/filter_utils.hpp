@@ -95,6 +95,15 @@ protected:
     return defaultValue;
   }
 
+  /** \brief Get the value of the given filter parameter, falling back to the
+   *        specified default value, and print out a ROS info/warning message with
+   *        the loaded values.
+   * \param name Name of the parameter.
+   * \param defaultValue The default value to use.
+   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the
+   *             messages more informative.
+   * \return The loaded param value.
+   */
   std::string getParamVerbose(const std::string &name, const char* defaultValue,
                               const std::string &unit = "")
   {
@@ -105,6 +114,16 @@ protected:
 
   // getParam specializations for unsigned values
 
+  /** \brief Get the value of the given filter parameter, falling back to the
+   *        specified default value, and print out a ROS info/warning message with
+   *        the loaded values.
+   * \param name Name of the parameter.
+   * \param defaultValue The default value to use.
+   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the
+   *             messages more informative.
+   * \return The loaded param value.
+   * \throw std::invalid_argument If the loaded value is negative.
+   */
   uint64_t getParamVerbose(const std::string &name, const uint64_t &defaultValue,
                            const std::string &unit = "")
   {
@@ -114,6 +133,16 @@ protected:
   // there actually is an unsigned int implementation of FilterBase::getParam,
   // but it doesn't tell you when the passed value is negative - instead it just
   // returns false
+  /** \brief Get the value of the given filter parameter, falling back to the
+   *        specified default value, and print out a ROS info/warning message with
+   *        the loaded values.
+   * \param name Name of the parameter.
+   * \param defaultValue The default value to use.
+   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the
+   *             messages more informative.
+   * \return The loaded param value.
+   * \throw std::invalid_argument If the loaded value is negative.
+   */
   unsigned int getParamVerbose(const std::string &name,
                                const unsigned int &defaultValue,
                                const std::string &unit = "")
@@ -124,6 +153,15 @@ protected:
 
   // ROS types specializations
 
+  /** \brief Get the value of the given filter parameter, falling back to the
+   *        specified default value, and print out a ROS info/warning message with
+   *        the loaded values.
+   * \param name Name of the parameter.
+   * \param defaultValue The default value to use.
+   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the
+   *             messages more informative.
+   * \return The loaded param value.
+   */
   ros::Duration getParamVerbose(const std::string &name,
                                 const ros::Duration &defaultValue,
                                 const std::string &unit = "")
