@@ -170,6 +170,27 @@ protected:
       unit);
   }
 
+  /** \brief Get the value of the given filter parameter as a set of strings, falling back to the
+   *        specified default value, and print out a ROS info/warning message with
+   *        the loaded values.
+   * \tparam Foo Ignored. Just needed for compilation to succeed.
+   * \param name Name of the parameter.
+   * \param defaultValue The default value to use.
+   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the
+   *             messages more informative.
+   * \return The loaded param value.
+   */
+  template<typename Foo>
+  std::set<std::string> getParamVerboseSet(
+      const std::string &name,
+      const std::set<std::string> &defaultValue = std::set<std::string>(),
+      const std::string &unit = "")
+  {
+    std::vector<std::string> vector(defaultValue.begin(), defaultValue.end());
+    vector = this->getParamVerbose(name, vector, unit);
+    return std::set<std::string>(vector.begin(), vector.end());
+  }
+
 private:
 
   template<typename Result, typename Param>
