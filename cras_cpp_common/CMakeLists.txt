@@ -8,15 +8,17 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole
   sensor_msgs
   tf2
+  tf2_eigen
   tf2_geometry_msgs
   tf2_ros
+  tf2_sensor_msgs
   topic_tools
 )
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros topic_tools
-  LIBRARIES filter_utils nodelet_utils string_utils tf2_utils time_utils
+  LIBRARIES filter_utils nodelet_utils string_utils tf2_sensor_msgs_cras tf2_utils time_utils
   CFG_EXTRAS cras_cpp_common-extras.cmake
 )
 
@@ -24,6 +26,11 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
+
+add_library(cloud INTERFACE)
+target_sources(cloud INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/cloud.hpp)
+target_include_directories(cloud INTERFACE ${catkin_INCLUDE_DIRS})
 
 add_executable(repeater src/repeater.cpp)
 target_link_libraries(repeater ${catkin_LIBRARIES})
@@ -52,6 +59,10 @@ add_library(time_utils src/time_utils.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})
 add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
 
+add_library(tf2_sensor_msgs_cras src/tf2_sensor_msgs.cpp)
+target_link_libraries(tf2_sensor_msgs_cras cloud string_utils ${catkin_LIBRARIES})
+add_dependencies(tf2_sensor_msgs_cras ${catkin_EXPORTED_TARGETS})
+
 add_library(tf2_utils src/tf2_utils.cpp)
 target_link_libraries(tf2_utils ${catkin_LIBRARIES})
 add_dependencies(tf2_utils ${catkin_EXPORTED_TARGETS})
@@ -73,8 +84,15 @@ target_include_directories(set_utils INTERFACE ${catkin_INCLUDE_DIRS})
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
+  FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
 install(DIRECTORY cmake/Modules
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
+
+install(TARGETS cloud repeater joy_repeater string_utils node_utils nodelet_utils filter_utils time_utils
+        tf2_sensor_msgs_cras tf2_utils math_utils set_utils
+
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})

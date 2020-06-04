@@ -19,6 +19,10 @@
   <depend>topic_tools</depend>
 
   <build_depend>tf2</build_depend>
+  <build_depend>tf2_eigen</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
+
+  <exec_depend>tf2</exec_depend>
 
 </package>
