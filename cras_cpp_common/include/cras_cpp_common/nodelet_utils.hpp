@@ -2,6 +2,7 @@
 #define CRAS_CPP_COMMON_NODELET_UTILS_HPP
 
 #include <string>
+#include <utility>
 #include <ros/ros.h>
 #include <rosconsole/macros_generated.h>
 #include <tf2_ros/buffer.h>
@@ -14,30 +15,18 @@ namespace cras {
 
 class NodeletAwareTFBuffer;
 
-class Nodelet : public ::nodelet::Nodelet {
-
-  friend class NodeletAwareTFBuffer;
-
+class NodeletParamHelper
+{
 public:
-  virtual ~Nodelet();
+  explicit NodeletParamHelper(std::string name) : nodeletName(std::move(name)) {}
 
 protected:
+  std::string nodeletName;
 
-  /**
-   * \brief Set custom name of the current thread to this nodelet's name.
-   *
-   * \note The name will be automatically shortened if longer than 15 chars.
-   * \note You can see the custom names in htop when you enable display of
-   *       custom thread names in options.
-   * \note This function doesn't reset the name back to the original.
-   */
-  void updateThreadName() const;
-
-  /**
-   * \brief Similar to ros::ok(). Becomes false when nodelet unload is requested.
-   * \return Whether it is ok to continue nodelet operations.
-   */
-  bool ok() const;
+  inline const std::string& getName() const
+  {
+    return this->nodeletName;
+  }
 
   /**
    * \brief Get the value of the given ROS parameter, falling back to the
@@ -57,16 +46,16 @@ protected:
     T value;
     if (node.getParam(name, value)) {
       NODELET_INFO_STREAM(node.getNamespace()
-                          << ": Found parameter: " << name
-                          << ", value: " << cras::to_string(value)
-                          << cras::prependIfNonEmpty(unit, " "));
+                              << ": Found parameter: " << name
+                              << ", value: " << cras::to_string(value)
+                              << cras::prependIfNonEmpty(unit, " "));
       return value;
     } else {
       NODELET_WARN_STREAM(node.getNamespace()
-                          << ": Cannot find value for parameter: " << name
-                          << ", assigning default: "
-                          << cras::to_string(defaultValue)
-                          << cras::prependIfNonEmpty(unit, " "));
+                              << ": Cannot find value for parameter: " << name
+                              << ", assigning default: "
+                              << cras::to_string(defaultValue)
+                              << cras::prependIfNonEmpty(unit, " "));
     }
     return defaultValue;
   }
@@ -81,12 +70,7 @@ protected:
                                        unit);
   }
 
-  void shutdown();
-
 private:
-
-  bool isUnloading = false;
-
   template <typename Result, typename Param>
   inline Result getParamUnsigned(ros::NodeHandle &node,
                                  const std::string &name,
@@ -111,19 +95,57 @@ private:
     const Param paramValue = this->getParam(node, name, defaultValue, unit);
     return Result(paramValue);
   }
+};
+
+class Nodelet : public ::nodelet::Nodelet, public NodeletParamHelper {
+
+  friend class NodeletAwareTFBuffer;
+
+public:
+  Nodelet();
+  ~Nodelet() override;
+
+  inline const std::string& getName() const
+  {
+    return ::nodelet::Nodelet::getName();
+  }
+
+protected:
+
+  /**
+   * \brief Set custom name of the current thread to this nodelet's name.
+   *
+   * \note The name will be automatically shortened if longer than 15 chars.
+   * \note You can see the custom names in htop when you enable display of
+   *       custom thread names in options.
+   * \note This function doesn't reset the name back to the original.
+   */
+  void updateThreadName() const;
+
+  /**
+   * \brief Similar to ros::ok(). Becomes false when nodelet unload is requested.
+   * \return Whether it is ok to continue nodelet operations.
+   */
+  bool ok() const;
+
+  void shutdown();
+
+private:
+
+  bool isUnloading = false;
 
 };
 
 // getParam specializations for unsigned values
 
 template<> inline uint64_t
-Nodelet::getParam(ros::NodeHandle &node, const std::string &name,
+NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
                   const uint64_t &defaultValue, const std::string &unit) {
   return this->getParamUnsigned<uint64_t, int>(node, name, defaultValue, unit);
 }
 
 template<> inline unsigned int
-Nodelet::getParam(ros::NodeHandle &node, const std::string &name,
+NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
                   const unsigned int &defaultValue, const std::string &unit) {
   return this->getParamUnsigned<unsigned int, int>(node, name, defaultValue, unit);
 }
@@ -131,7 +153,7 @@ Nodelet::getParam(ros::NodeHandle &node, const std::string &name,
 // ROS types specializations
 
 template<> inline ros::Duration
-Nodelet::getParam(ros::NodeHandle &node, const std::string &name,
+NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
                   const ros::Duration &defaultValue, const std::string &unit) {
   return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
 }
@@ -142,11 +164,11 @@ public:
 
   bool canTransform(const std::string& target_frame,
       const std::string& source_frame, const ros::Time& time,
-      const ros::Duration timeout, std::string *errstr) const override;
+      ros::Duration timeout, std::string *errstr) const override;
 
   bool canTransform(const std::string &target_frame, const ros::Time &target_time,
       const std::string &source_frame, const ros::Time &source_time,
-      const std::string &fixed_frame, const ros::Duration timeout,
+      const std::string &fixed_frame, ros::Duration timeout,
       std::string *errstr) const override;
 
 protected:

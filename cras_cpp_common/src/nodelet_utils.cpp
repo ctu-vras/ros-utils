@@ -14,7 +14,7 @@ Nodelet::~Nodelet() {
 void Nodelet::updateThreadName() const
 {
   char nameBuf[16];
-  const auto& name = stripLeadingSlash(this->getName());
+  const auto& name = stripLeadingSlash(::nodelet::Nodelet::getName());
 
   if (name.length() <= 15) {
     memcpy(nameBuf, name.c_str(), name.length());
@@ -38,10 +38,10 @@ ros::Time now_fallback_to_wall()
   {
     return ros::Time::now();
   }
-  catch (ros::TimeNotInitializedException ex)
+  catch (const ros::TimeNotInitializedException& ex)
   {
     ros::WallTime wt = ros::WallTime::now();
-    return ros::Time(wt.sec, wt.nsec);
+    return {wt.sec, wt.nsec};
   }
 }
 
@@ -56,7 +56,7 @@ void sleep_fallback_to_wall(const ros::Duration& d)
   {
     d.sleep();
   }
-  catch (ros::TimeNotInitializedException ex)
+  catch (const ros::TimeNotInitializedException& ex)
   {
     ros::WallDuration wd = ros::WallDuration(d.sec, d.nsec);
     wd.sleep();
@@ -81,6 +81,9 @@ bool Nodelet::ok() const {
 
 void Nodelet::shutdown() {
   this->isUnloading = true;
+}
+
+Nodelet::Nodelet() : ::nodelet::Nodelet(), NodeletParamHelper(::nodelet::Nodelet::getName()) {
 }
 
 bool NodeletAwareTFBuffer::canTransform(const std::string& target_frame,
