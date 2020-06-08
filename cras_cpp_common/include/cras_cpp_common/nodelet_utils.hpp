@@ -3,30 +3,52 @@
 
 #include <string>
 #include <utility>
+
+#include <nodelet/nodelet.h>
 #include <ros/ros.h>
 #include <rosconsole/macros_generated.h>
 #include <tf2_ros/buffer.h>
 
-#include <nodelet/nodelet.h>
-
 #include "cras_cpp_common/string_utils.hpp"
+
+/**
+ * This file contains a set of classes that make work with nodelets easier.
+ *
+ * First, there are a few helper "mixins", which are not derived from Nodelet, but are expected to be its sister classes.
+ *
+ * NodeletParamHelper provides the conveniently templatized getParam() methods similar to those in node_utils.
+ *
+ * StatefulNodelet adds state to the nodelets, so that you can query isOk() to determine whether the nodelet is not
+ * shutting down.
+ *
+ * ThreadNameUpdatingNodelet adds function updateThreadName() which you can call in your callbacks to signal to the OS
+ * which nodelet is currently being run in the particualar nodlet manager's thread.
+ *
+ * Finally, NodeletBase<BaseNodelet> template class adds all these mixins to the provided BaseNodelet class to create
+ * a nodelet where you can use all the features added by the mentioned mixins. Use this template if you need to
+ * derive your nodelet from a different class than nodelet::Nodelet (like PCLNodelet).
+ *
+ * If you just want to build your nodelet from scratch, you should start by deriving it from the cras::Nodelet class.
+ *
+ * NodeletAwareTFBuffer is a class that is able to correctly end canTransform() calls in case the nodelet is asked to
+ * unload while the canTransform() call is waiting.
+ */
 
 namespace cras {
 
-class NodeletAwareTFBuffer;
-
+/** \brief Make this class a public base of your Nodelet and it will allow you to call the getParam() helpers. */
 class NodeletParamHelper
 {
 public:
-  explicit NodeletParamHelper(std::string name) : nodeletName(std::move(name)) {}
+  NodeletParamHelper() = default;
+  // we need at least one virtual function so that we can use dynamic cast in implementation
+  virtual ~NodeletParamHelper() = default;
 
 protected:
-  std::string nodeletName;
+  std::string defaultName = "NodeletParamHelper_has_to_be_a_sister_class_of_Nodelet";
 
-  inline const std::string& getName() const
-  {
-    return this->nodeletName;
-  }
+  // we need to provide this for the NODELET_* logging macros to work
+  const std::string& getName() const;
 
   /**
    * \brief Get the value of the given ROS parameter, falling back to the
@@ -97,30 +119,11 @@ private:
   }
 };
 
-class Nodelet : public ::nodelet::Nodelet, public NodeletParamHelper {
-
-  friend class NodeletAwareTFBuffer;
-
+/** \brief This is a nodelet which can tell you when it is being unloaded. */
+class StatefulNodelet
+{
 public:
-  Nodelet();
-  ~Nodelet() override;
-
-  inline const std::string& getName() const
-  {
-    return ::nodelet::Nodelet::getName();
-  }
-
-protected:
-
-  /**
-   * \brief Set custom name of the current thread to this nodelet's name.
-   *
-   * \note The name will be automatically shortened if longer than 15 chars.
-   * \note You can see the custom names in htop when you enable display of
-   *       custom thread names in options.
-   * \note This function doesn't reset the name back to the original.
-   */
-  void updateThreadName() const;
+  virtual ~StatefulNodelet();
 
   /**
    * \brief Similar to ros::ok(). Becomes false when nodelet unload is requested.
@@ -128,11 +131,44 @@ protected:
    */
   bool ok() const;
 
+protected:
   void shutdown();
 
 private:
-
   bool isUnloading = false;
+};
+
+/** \brief A nodelet that provides a function to update the OS name of the thread it is currently executing in. */
+class ThreadNameUpdatingNodelet
+{
+public:
+  // we need at least one virtual function so that we can use dynamic cast in implementation
+  virtual ~ThreadNameUpdatingNodelet() = default;
+
+protected:
+  /**
+   * \brief Set custom name of the current thread to this nodelet's name.
+   *
+   * \note The name will be automatically shortened if longer than 15 chars.
+   * \note You can see the custom names in htop when you enable display of
+   *       custom thread names in options.
+   * \note This function doesn't reset the name back to the original.
+   * \note You should call this function at the beginning of all your callbacks.
+   */
+  void updateThreadName() const;
+};
+
+/** \brief Base template which adds all defined mixins to BaseNodelet class. */
+template <typename BaseNodelet>
+class NodeletBase : public BaseNodelet, public NodeletParamHelper, public StatefulNodelet, public ThreadNameUpdatingNodelet
+{
+};
+
+/** A convenient base class for all nodelets. */
+class Nodelet : public NodeletBase<::nodelet::Nodelet> {
+
+  // To disambiguate between nodelet::Nodelet::getName() and NodeletParamHelper::getName().
+  protected: using ::nodelet::Nodelet::getName;
 
 };
 
@@ -158,9 +194,10 @@ NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
   return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
 }
 
+/** Provides overrides of canTransform() that correctly end when the nodelet is asked to unload. */
 class NodeletAwareTFBuffer : public tf2_ros::Buffer {
 public:
-  explicit NodeletAwareTFBuffer(const Nodelet* nodelet);
+  explicit NodeletAwareTFBuffer(const StatefulNodelet* nodelet);
 
   bool canTransform(const std::string& target_frame,
       const std::string& source_frame, const ros::Time& time,
@@ -172,7 +209,7 @@ public:
       std::string *errstr) const override;
 
 protected:
-  const Nodelet* nodelet;
+  const StatefulNodelet* nodelet;
 };
 
 }

@@ -1,3 +1,8 @@
+#include <sstream>
+#define protected public
+#include <nodelet/nodelet.h>
+#undef protected
+
 #include <cras_cpp_common/nodelet_utils.hpp>
 
 #include <pthread.h>
@@ -7,14 +12,18 @@ namespace cras
 
 static const double CAN_TRANSFORM_POLLING_SCALE = 0.01;
 
-Nodelet::~Nodelet() {
+StatefulNodelet::~StatefulNodelet() {
   this->shutdown();
 }
 
-void Nodelet::updateThreadName() const
+void ThreadNameUpdatingNodelet::updateThreadName() const
 {
+  const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
+  if (nodelet == nullptr)
+    return;
+
   char nameBuf[16];
-  const auto& name = stripLeadingSlash(::nodelet::Nodelet::getName());
+  const auto& name = stripLeadingSlash(nodelet->getName());
 
   if (name.length() <= 15) {
     memcpy(nameBuf, name.c_str(), name.length());
@@ -75,15 +84,12 @@ void conditionally_append_timeout_info(std::string * errstr, const ros::Time& st
   }
 }
 
-bool Nodelet::ok() const {
+bool StatefulNodelet::ok() const {
   return !this->isUnloading;
 }
 
-void Nodelet::shutdown() {
+void StatefulNodelet::shutdown() {
   this->isUnloading = true;
-}
-
-Nodelet::Nodelet() : ::nodelet::Nodelet(), NodeletParamHelper(::nodelet::Nodelet::getName()) {
 }
 
 bool NodeletAwareTFBuffer::canTransform(const std::string& target_frame,
@@ -136,9 +142,16 @@ bool NodeletAwareTFBuffer::canTransform(const std::string &target_frame,
   return retval;
 }
 
-NodeletAwareTFBuffer::NodeletAwareTFBuffer(const Nodelet* nodelet) :
+NodeletAwareTFBuffer::NodeletAwareTFBuffer(const StatefulNodelet* nodelet) :
   nodelet(nodelet)
 {
+}
+
+const std::string &NodeletParamHelper::getName() const {
+  const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
+  if (nodelet != nullptr)
+    return nodelet->getName();
+  return this->defaultName;
 }
 
 }
