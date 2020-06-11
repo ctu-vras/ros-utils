@@ -4,6 +4,7 @@ project(cras_cpp_common)
 set(CMAKE_CXX_STANDARD 17)  # allows better Eigen alignment handling
 
 find_package(catkin REQUIRED COMPONENTS
+  bondcpp
   filters
   nodelet
   roscpp
@@ -50,8 +51,7 @@ target_sources(node_utils INTERFACE
 target_include_directories(node_utils INTERFACE ${catkin_INCLUDE_DIRS})
 
 add_library(nodelet_utils src/nodelet_utils.cpp)
-target_link_libraries(nodelet_utils ${catkin_LIBRARIES} pthread)
-add_dependencies(nodelet_utils string_utils)
+target_link_libraries(nodelet_utils string_utils ${catkin_LIBRARIES} pthread)
 
 add_library(filter_utils src/filter_utils.cpp)
 target_link_libraries(filter_utils ${catkin_LIBRARIES})
@@ -79,6 +79,10 @@ add_library(set_utils INTERFACE)
 target_sources(set_utils INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/set_utils.hpp)
 target_include_directories(set_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
+add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
+target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
+add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##

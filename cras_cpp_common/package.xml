@@ -18,6 +18,7 @@
   <depend>tf2_ros</depend>
   <depend>topic_tools</depend>
 
+  <build_depend>bondcpp</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>tf2_eigen</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>

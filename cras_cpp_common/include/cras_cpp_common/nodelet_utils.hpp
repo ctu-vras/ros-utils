@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <rosconsole/macros_generated.h>
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include "cras_cpp_common/string_utils.hpp"
 
@@ -22,7 +23,7 @@
  * shutting down.
  *
  * ThreadNameUpdatingNodelet adds function updateThreadName() which you can call in your callbacks to signal to the OS
- * which nodelet is currently being run in the particualar nodlet manager's thread.
+ * which nodelet is currently being run in the particular nodelet manager's thread.
  *
  * Finally, NodeletBase<BaseNodelet> template class adds all these mixins to the provided BaseNodelet class to create
  * a nodelet where you can use all the features added by the mentioned mixins. Use this template if you need to
@@ -158,9 +159,24 @@ protected:
   void updateThreadName() const;
 };
 
+struct NodeletWithSharedTfBuffer
+{
+public:
+  NodeletWithSharedTfBuffer();
+  virtual ~NodeletWithSharedTfBuffer();  // we need to be polymorphic
+  void setBuffer(const std::shared_ptr<tf2_ros::Buffer>& buffer);
+  tf2_ros::Buffer& getBuffer() const;
+
+private:
+  const std::string& getName() const;
+  struct NodeletWithSharedTfBufferPrivate;
+  std::unique_ptr<NodeletWithSharedTfBufferPrivate> data;
+};
+
 /** \brief Base template which adds all defined mixins to BaseNodelet class. */
 template <typename BaseNodelet>
-class NodeletBase : public BaseNodelet, public NodeletParamHelper, public StatefulNodelet, public ThreadNameUpdatingNodelet
+class NodeletBase : public BaseNodelet, public NodeletParamHelper, public StatefulNodelet,
+    public ThreadNameUpdatingNodelet, public NodeletWithSharedTfBuffer
 {
 };
 
