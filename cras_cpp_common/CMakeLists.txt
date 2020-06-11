@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cras_cpp_common)
 
+set(CMAKE_CXX_STANDARD 17)  # allows better Eigen alignment handling
+
 find_package(catkin REQUIRED COMPONENTS
   filters
   nodelet
@@ -62,6 +64,7 @@ add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
 add_library(tf2_sensor_msgs_cras src/tf2_sensor_msgs.cpp)
 target_link_libraries(tf2_sensor_msgs_cras cloud string_utils ${catkin_LIBRARIES})
 add_dependencies(tf2_sensor_msgs_cras ${catkin_EXPORTED_TARGETS})
+target_compile_options(tf2_sensor_msgs_cras PRIVATE -march=native)
 
 add_library(tf2_utils src/tf2_utils.cpp)
 target_link_libraries(tf2_utils ${catkin_LIBRARIES})

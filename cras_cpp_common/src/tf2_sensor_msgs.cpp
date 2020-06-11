@@ -4,8 +4,9 @@
 #include <cras_cpp_common/string_utils.hpp>
 
 #include <sensor_msgs/point_cloud2_iterator.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 #include <tf2_eigen/tf2_eigen.h>
+
+#include <Eigen/Geometry>  // needs to be implementation-private as we want -march=native optimizations
 
 #include <unordered_set>
 
@@ -16,7 +17,7 @@ const static std::unordered_map<std::string, CloudChannelType> DEFAULT_CHANNELS(
   {"normal_", CloudChannelType::DIRECTION}
 });
 
-void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& t,
+void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& tt,
     const std::string& channelPrefix, const CloudChannelType type)
 {
   CloudIter x_out(cloud, channelPrefix + "x");
@@ -24,6 +25,7 @@ void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& 
   CloudIter z_out(cloud, channelPrefix + "z");
 
   Eigen::Vector3f point;
+  Eigen::Isometry3f t = tt;  // allow alignment
 
   // the switch has to be outside the for loop for performance reasons
   switch (type) {
@@ -73,13 +75,12 @@ sensor_msgs::PointCloud2& transformWithChannels(
     }
   }
 
-  tf2::doTransform(in, out, tf);
-
-  if (channelsPresent.empty())
-    return out;
+  out = in;
+  out.header = tf.header;
 
   const auto t = tf2::transformToEigen(tf).cast<float>();
 
+  transformChannel(out, t, "", CloudChannelType::POINT);
   for (const auto& channel : channelsPresent)
     transformChannel(out, t, channel, channels.at(channel));
 
