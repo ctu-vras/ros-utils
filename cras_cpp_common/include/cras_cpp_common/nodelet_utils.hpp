@@ -25,6 +25,10 @@
  * ThreadNameUpdatingNodelet adds function updateThreadName() which you can call in your callbacks to signal to the OS
  * which nodelet is currently being run in the particular nodelet manager's thread.
  *
+ * The NodeletSharingTfBuffer adds functions setBuffer(), getBuffer() and usesSharedBuffer(), which allow the nodelet
+ * manager to pass a pointer to a shared TF buffer. Note that standard nodelet manager cannot make use of this feature,
+ * so to utilize it, you should launch nodelet_manager_sharing_tf_buffer from this package instead.
+ *
  * Finally, NodeletBase<BaseNodelet> template class adds all these mixins to the provided BaseNodelet class to create
  * a nodelet where you can use all the features added by the mentioned mixins. Use this template if you need to
  * derive your nodelet from a different class than nodelet::Nodelet (like PCLNodelet).
