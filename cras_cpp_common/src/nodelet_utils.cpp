@@ -159,6 +159,7 @@ struct NodeletWithSharedTfBuffer::NodeletWithSharedTfBufferPrivate
   std::string defaultName = "NodeletWithSharedTfBuffer_has_to_be_a_sister_class_of_Nodelet";
   std::shared_ptr<tf2_ros::Buffer> buffer;
   std::unique_ptr<tf2_ros::TransformListener> listener;
+  bool usesSharedBuffer = false;
 };
 
 NodeletWithSharedTfBuffer::NodeletWithSharedTfBuffer()
@@ -170,8 +171,9 @@ void NodeletWithSharedTfBuffer::setBuffer(const std::shared_ptr<tf2_ros::Buffer>
   if (this->data->buffer != nullptr || this->data->listener != nullptr)
     throw std::runtime_error("tf2 buffer cannot be set multiple times");
 
-  NODELET_WARN("Initialized shared tf2 buffer");
+  NODELET_INFO("Initialized shared tf2 buffer");
   this->data->buffer = buffer;
+  this->data->usesSharedBuffer = true;
 }
 
 tf2_ros::Buffer& NodeletWithSharedTfBuffer::getBuffer() const {
@@ -179,7 +181,8 @@ tf2_ros::Buffer& NodeletWithSharedTfBuffer::getBuffer() const {
   {
     this->data->buffer.reset(new tf2_ros::Buffer);
     this->data->listener.reset(new tf2_ros::TransformListener(*this->data->buffer));
-    NODELET_WARN("Initialized standalone tf2 buffer");
+    this->data->usesSharedBuffer = false;
+    NODELET_INFO("Initialized standalone tf2 buffer");
   }
   return *this->data->buffer;
 }
@@ -189,6 +192,10 @@ const std::string& NodeletWithSharedTfBuffer::getName() const {
   if (nodelet != nullptr)
     return nodelet->getName();
   return this->data->defaultName;
+}
+
+bool NodeletWithSharedTfBuffer::usesSharedBuffer() const {
+  return this->data->usesSharedBuffer;
 }
 
 NodeletWithSharedTfBuffer::~NodeletWithSharedTfBuffer() {

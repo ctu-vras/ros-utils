@@ -166,6 +166,7 @@ public:
   virtual ~NodeletWithSharedTfBuffer();  // we need to be polymorphic
   void setBuffer(const std::shared_ptr<tf2_ros::Buffer>& buffer);
   tf2_ros::Buffer& getBuffer() const;
+  bool usesSharedBuffer() const;
 
 private:
   const std::string& getName() const;
