@@ -3,7 +3,6 @@
 #include <cras_cpp_common/cloud.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 
-#include <sensor_msgs/point_cloud2_iterator.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <Eigen/Geometry>  // needs to be implementation-private as we want -march=native optimizations
@@ -17,20 +16,23 @@ const static std::unordered_map<std::string, CloudChannelType> DEFAULT_CHANNELS(
   {"normal_", CloudChannelType::DIRECTION}
 });
 
-void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& tt,
+void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& t,
     const std::string& channelPrefix, const CloudChannelType type)
 {
+  if (numPoints(cloud) == 0)
+    return;
+
   CloudIter x_out(cloud, channelPrefix + "x");
   CloudIter y_out(cloud, channelPrefix + "y");
   CloudIter z_out(cloud, channelPrefix + "z");
 
   Eigen::Vector3f point;
-  Eigen::Isometry3f t = tt;  // allow alignment
-
   // the switch has to be outside the for loop for performance reasons
-  switch (type) {
+  switch (type)
+  {
     case CloudChannelType::POINT:
-      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out) {
+      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out)
+      {
         point = t * Eigen::Vector3f(*x_out, *y_out, *z_out);  // apply the whole transform
         *x_out = point.x();
         *y_out = point.y();
@@ -38,7 +40,8 @@ void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& 
       }
       break;
     case CloudChannelType::DIRECTION:
-      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out) {
+      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out)
+      {
         point = t.linear() * Eigen::Vector3f(*x_out, *y_out, *z_out);  // apply only rotation
         *x_out = point.x();
         *y_out = point.y();
