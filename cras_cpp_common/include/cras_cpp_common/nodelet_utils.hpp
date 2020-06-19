@@ -9,6 +9,7 @@
 #include <rosconsole/macros_generated.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <diagnostic_updater/diagnostic_updater.h>
 
 #include "cras_cpp_common/string_utils.hpp"
 
@@ -178,10 +179,22 @@ private:
   std::unique_ptr<NodeletWithSharedTfBufferPrivate> data;
 };
 
+struct NodeletWithDiagnostics
+{
+public:
+  NodeletWithDiagnostics();
+  virtual ~NodeletWithDiagnostics();  // we need to be polymorphic
+  diagnostic_updater::Updater& getDiagUpdater() const;
+
+private:
+  struct NodeletWithDiagnosticsPrivate;
+  std::unique_ptr<NodeletWithDiagnosticsPrivate> data;
+};
+
 /** \brief Base template which adds all defined mixins to BaseNodelet class. */
 template <typename BaseNodelet>
 class NodeletBase : public BaseNodelet, public NodeletParamHelper, public StatefulNodelet,
-    public ThreadNameUpdatingNodelet, public NodeletWithSharedTfBuffer
+    public ThreadNameUpdatingNodelet, public NodeletWithSharedTfBuffer, public NodeletWithDiagnostics
 {
 };
 

@@ -6,6 +6,7 @@
 #include <cras_cpp_common/nodelet_utils.hpp>
 
 #include <pthread.h>
+#include <unistd.h>
 
 namespace cras
 {
@@ -199,6 +200,37 @@ bool NodeletWithSharedTfBuffer::usesSharedBuffer() const {
 }
 
 NodeletWithSharedTfBuffer::~NodeletWithSharedTfBuffer() {
+}
+
+struct NodeletWithDiagnostics::NodeletWithDiagnosticsPrivate
+{
+  std::shared_ptr<diagnostic_updater::Updater> updater;
+};
+
+NodeletWithDiagnostics::NodeletWithDiagnostics()
+    : data(new NodeletWithDiagnosticsPrivate)
+{
+}
+
+diagnostic_updater::Updater& NodeletWithDiagnostics::getDiagUpdater() const {
+  if (this->data->updater == nullptr)
+  {
+    const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
+    if (nodelet != nullptr) {
+      this->data->updater = std::make_shared<diagnostic_updater::Updater>(
+          nodelet->getNodeHandle(), nodelet->getPrivateNodeHandle(), nodelet->getName());
+    } else {
+      this->data->updater = std::make_shared<diagnostic_updater::Updater>();
+    }
+    char hostname[1024];
+    hostname[1023] = '\0';
+    gethostname(hostname, 1023);
+    this->data->updater->setHardwareID(std::string(hostname));
+  }
+  return *this->data->updater;
+}
+
+NodeletWithDiagnostics::~NodeletWithDiagnostics() {
 }
 
 }
