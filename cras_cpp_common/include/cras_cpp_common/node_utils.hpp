@@ -67,9 +67,9 @@ inline Result getParamUnsigned(ros::NodeHandle &node, const std::string &name, c
 };
 
 template <>
-inline uint64_t getParam(ros::NodeHandle &node, const std::string &name, const uint64_t &defaultValue, const std::string &unit)
+inline size_t getParam(ros::NodeHandle &node, const std::string &name, const size_t &defaultValue, const std::string &unit)
 {
-  return impl::getParamUnsigned<uint64_t, int>(node, name, defaultValue, unit);
+  return impl::getParamUnsigned<size_t, int>(node, name, defaultValue, unit);
 }
 
 template <>

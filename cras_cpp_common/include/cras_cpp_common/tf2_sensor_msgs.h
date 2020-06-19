@@ -9,7 +9,7 @@
 namespace cras
 {
 
-enum class CloudChannelType { POINT, DIRECTION };
+enum class CloudChannelType { POINT, DIRECTION, SCALAR };
 
 void transformChannel(sensor_msgs::PointCloud2& cloud, const geometry_msgs::Transform& t,
                       const std::string& channelPrefix, CloudChannelType type);
@@ -20,5 +20,12 @@ sensor_msgs::PointCloud2& transformWithChannels(
 sensor_msgs::PointCloud2& transformWithChannels(
     const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out, const geometry_msgs::TransformStamped& tf,
     const std::unordered_map<std::string, CloudChannelType>& channels);
+
+sensor_msgs::PointCloud2& transformOnlyChannels(
+    const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out, const geometry_msgs::TransformStamped& tf,
+    const std::unordered_map<std::string, CloudChannelType>& channels);
+
+sensor_msgs::PointCloud2& transformOnlyXYZ(
+    const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out, const geometry_msgs::TransformStamped& tf);
 
 }

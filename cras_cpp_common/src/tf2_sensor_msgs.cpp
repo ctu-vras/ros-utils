@@ -11,38 +11,61 @@
 
 namespace cras {
 
+const static std::unordered_map<std::string, CloudChannelType> XYZ_CHANNELS({
+  {"", CloudChannelType::POINT},
+});
+
 const static std::unordered_map<std::string, CloudChannelType> DEFAULT_CHANNELS({
   {"vp_", CloudChannelType::POINT},
   {"normal_", CloudChannelType::DIRECTION}
 });
 
-void transformChannel(sensor_msgs::PointCloud2& cloud, const Eigen::Isometry3f& t,
-    const std::string& channelPrefix, const CloudChannelType type)
+bool fieldNameMatchesChannel(const std::string& fieldName, const std::string& channelName, CloudChannelType channelType)
 {
-  if (numPoints(cloud) == 0)
+  if (channelType == CloudChannelType::SCALAR) {
+    return fieldName == channelName;
+  } else if (channelName.empty()) {
+    return fieldName == "x" || fieldName == "y" || fieldName == "z";
+  } else {
+    return fieldName.length() == channelName.length() + 1 && cras::startsWith(fieldName, channelName) && (
+        cras::endsWith(fieldName, "x") || cras::endsWith(fieldName, "y") || cras::endsWith(fieldName, "z"));
+  }
+}
+
+void transformChannel(const sensor_msgs::PointCloud2& cloudIn, sensor_msgs::PointCloud2& cloudOut,
+    const Eigen::Isometry3f& t, const std::string& channelPrefix, const CloudChannelType type)
+{
+  if (numPoints(cloudIn) == 0)
     return;
 
-  CloudIter x_out(cloud, channelPrefix + "x");
-  CloudIter y_out(cloud, channelPrefix + "y");
-  CloudIter z_out(cloud, channelPrefix + "z");
+  if (type == CloudChannelType::SCALAR)
+    return;
+
+  CloudConstIter x_in(cloudIn, channelPrefix + "x");
+  CloudConstIter y_in(cloudIn, channelPrefix + "y");
+  CloudConstIter z_in(cloudIn, channelPrefix + "z");
+
+  CloudIter x_out(cloudOut, channelPrefix + "x");
+  CloudIter y_out(cloudOut, channelPrefix + "y");
+  CloudIter z_out(cloudOut, channelPrefix + "z");
 
   Eigen::Vector3f point;
   // the switch has to be outside the for loop for performance reasons
   switch (type)
   {
     case CloudChannelType::POINT:
-      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out)
+      for (; x_in != x_in.end(); ++x_in, ++y_in, ++z_in, ++x_out, ++y_out, ++z_out)
       {
-        point = t * Eigen::Vector3f(*x_out, *y_out, *z_out);  // apply the whole transform
+        point = t * Eigen::Vector3f(*x_in, *y_in, *z_in);  // apply the whole transform
         *x_out = point.x();
         *y_out = point.y();
         *z_out = point.z();
       }
       break;
     case CloudChannelType::DIRECTION:
-      for (; x_out != x_out.end(); ++x_out, ++y_out, ++z_out)
+      for (; x_out != x_out.end(); ++x_in, ++y_in, ++z_in, ++x_out, ++y_out, ++z_out)
       {
-        point = t.linear() * Eigen::Vector3f(*x_out, *y_out, *z_out);  // apply only rotation
+        point = t.linear() * Eigen::Vector3f(*x_in, *y_in, *z_in);  // apply only rotation
         *x_out = point.x();
         *y_out = point.y();
         *z_out = point.z();
@@ -55,7 +78,7 @@ void transformChannel(sensor_msgs::PointCloud2& cloud, const geometry_msgs::Tran
                       const std::string& channelPrefix, CloudChannelType type)
 {
   const auto t = tf2::transformToEigen(tf).cast<float>();
-  transformChannel(cloud, t, channelPrefix, type);
+  transformChannel(cloud, cloud, t, channelPrefix, type);
 }
 
 sensor_msgs::PointCloud2& transformWithChannels(
@@ -73,7 +96,8 @@ sensor_msgs::PointCloud2& transformWithChannels(
     for (const auto& channelAndType : channels)
     {
       const std::string& channel = channelAndType.first;
-      if (startsWith(field.name, channel))
+      const auto& channelType = channelAndType.second;
+      if (channelType != CloudChannelType::SCALAR && fieldNameMatchesChannel(field.name, channel, channelType))
         channelsPresent.insert(channel);
     }
   }
@@ -83,11 +107,58 @@ sensor_msgs::PointCloud2& transformWithChannels(
 
   const auto t = tf2::transformToEigen(tf).cast<float>();
 
-  transformChannel(out, t, "", CloudChannelType::POINT);
+  transformChannel(in, out, t, "", CloudChannelType::POINT);
   for (const auto& channel : channelsPresent)
-    transformChannel(out, t, channel, channels.at(channel));
+    transformChannel(in, out, t, channel, channels.at(channel));
 
   return out;
+}
+
+sensor_msgs::PointCloud2& transformOnlyChannels(
+    const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out, const geometry_msgs::TransformStamped& tf,
+    const std::unordered_map<std::string, CloudChannelType>& channels)
+{
+  std::unordered_set<std::string> channelsPresent;
+  out.point_step = 0;
+  for (const auto& field: in.fields) {
+    for (const auto& channelAndType : channels)
+    {
+      const std::string& channel = channelAndType.first;
+      const auto& channelType = channelAndType.second;
+      if (fieldNameMatchesChannel(field.name, channel, channelType)) {
+        channelsPresent.insert(channel);
+        out.fields.push_back(field);
+        out.point_step += sizeOfPointField(field.datatype);
+      }
+    }
+  }
+
+  out.header = tf.header;
+  out.is_dense = in.is_dense;
+  out.height = in.height;
+  out.width = in.width;
+  out.is_bigendian = in.is_bigendian;
+
+  CloudModifier mod(out);
+  mod.resize(numPoints(in));
+
+  const auto t = tf2::transformToEigen(tf).cast<float>();
+
+  for (const auto& channel : channelsPresent) {
+    const auto channelType = channels.at(channel);
+    if (channelType != CloudChannelType::SCALAR) {
+      transformChannel(in, out, t, channel, channelType);
+    } else {
+      copyChannelData(in, out, channel);
+    }
+  }
+
+  return out;
+}
+
+sensor_msgs::PointCloud2& transformOnlyXYZ(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
+                                           const geometry_msgs::TransformStamped& tf) {
+  return transformOnlyChannels(in, out, tf, XYZ_CHANNELS);
 }
 
 }

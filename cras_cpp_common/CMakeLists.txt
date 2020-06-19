@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros topic_tools
-  LIBRARIES filter_utils nodelet_utils string_utils tf2_sensor_msgs_cras tf2_utils time_utils
+  LIBRARIES cloud filter_utils nodelet_utils string_utils tf2_sensor_msgs_cras tf2_utils time_utils
   CFG_EXTRAS cras_cpp_common-extras.cmake
 )
 
@@ -30,10 +30,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(cloud INTERFACE)
-target_sources(cloud INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/cloud.hpp)
-target_include_directories(cloud INTERFACE ${catkin_INCLUDE_DIRS})
+add_library(cloud src/cloud.cpp)
+target_link_libraries(cloud ${catkin_LIBRARIES})
+add_dependencies(cloud ${catkin_EXPORTED_TARGETS})
 
 add_executable(repeater src/repeater.cpp)
 target_link_libraries(repeater ${catkin_LIBRARIES})
