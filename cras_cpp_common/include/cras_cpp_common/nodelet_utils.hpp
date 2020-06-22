@@ -11,7 +11,9 @@
 #include <tf2_ros/transform_listener.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include "cras_cpp_common/string_utils.hpp"
+#include <cras_cpp_common/string_utils.hpp>
+#include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/param_utils.h>
 
 /**
  * This file contains a set of classes that make work with nodelets easier.
@@ -42,87 +44,56 @@
 
 namespace cras {
 
-/** \brief Make this class a public base of your Nodelet and it will allow you to call the getParam() helpers. */
-class NodeletParamHelper
+/**
+ * Log helper delegating the logging calls to the NODELET_ macros.
+ */
+class NodeletLogHelper : public LogHelper
 {
 public:
-  NodeletParamHelper() = default;
+  /**
+   * Create the log helper reporting as the nodelet of name returned by getNameFn.
+   * @param getNameFn A function returning the name of the nodelet.
+   */
+  NodeletLogHelper(const std::function<const std::string&()> &getNameFn) : getNameFn(getNameFn) {}
+  virtual ~NodeletLogHelper() = default;
+
+protected:
+  /**
+   * Used by the NODELET_ logging macros.
+   * @return Name of the bound nodelet.
+   */
+  const std::string& getName() const { return getNameFn(); }
+
+  void printDebug(const std::string &text) const override { NODELET_DEBUG("%s", text.c_str()); }
+  void printInfo(const std::string &text) const override { NODELET_INFO("%s", text.c_str()); }
+  void printWarn(const std::string &text) const override { NODELET_WARN("%s", text.c_str()); }
+  void printError(const std::string &text) const override { NODELET_ERROR("%s", text.c_str()); }
+  void printFatal(const std::string &text) const override { NODELET_FATAL("%s", text.c_str()); }
+
+  std::function<const std::string&()> getNameFn; //!< Function returning the name of the nodelet.
+};
+
+/** \brief Make this class a public base of your Nodelet and it will allow you to call the getParam() helpers. */
+class NodeletParamHelper : public ParamHelper
+{
+public:
+  NodeletParamHelper() :
+    ParamHelper(std::make_shared<NodeletLogHelper>(std::bind(&NodeletParamHelper::getName, this)))
+  {
+  }
+
   // we need at least one virtual function so that we can use dynamic cast in implementation
   virtual ~NodeletParamHelper() = default;
 
 protected:
   std::string defaultName = "NodeletParamHelper_has_to_be_a_sister_class_of_Nodelet";
 
-  // we need to provide this for the NODELET_* logging macros to work
+  /**
+   * This function is passed to the logging helper.
+   * @return Name of the nodelet.
+   */
   const std::string& getName() const;
 
-  /**
-   * \brief Get the value of the given ROS parameter, falling back to the
-   *        specified default value, and print out a ROS info/warning message with the loaded values.
-   *
-   * \tparam T Param type.
-   * \param node The node handle to read the param value from.
-   * \param name Name of the parameter.
-   * \param defaultValue The default value to use.
-   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages more informative.
-   * \return The loaded param value.
-   */
-  template <typename T>
-  inline T getParam(ros::NodeHandle &node, const std::string &name,
-                    const T &defaultValue = T(),
-                    const std::string &unit = "") {
-    T value;
-    if (node.getParam(name, value)) {
-      NODELET_INFO_STREAM(node.getNamespace()
-                              << ": Found parameter: " << name
-                              << ", value: " << cras::to_string(value)
-                              << cras::prependIfNonEmpty(unit, " "));
-      return value;
-    } else {
-      NODELET_WARN_STREAM(node.getNamespace()
-                              << ": Cannot find value for parameter: " << name
-                              << ", assigning default: "
-                              << cras::to_string(defaultValue)
-                              << cras::prependIfNonEmpty(unit, " "));
-    }
-    return defaultValue;
-  }
-
-  // std::string - char interop specializations
-
-  inline std::string getParam(ros::NodeHandle &node,
-                              const std::string &name,
-                              const char *defaultValue,
-                              const std::string &unit = "") {
-    return this->getParam<std::string>(node, name, std::string(defaultValue),
-                                       unit);
-  }
-
-private:
-  template <typename Result, typename Param>
-  inline Result getParamUnsigned(ros::NodeHandle &node,
-                                 const std::string &name,
-                                 const Result &defaultValue,
-                                 const std::string &unit = "") {
-    const Param signedValue =
-        this->getParam(node, name, static_cast<Param>(defaultValue), unit);
-    if (signedValue < 0) {
-      NODELET_ERROR_STREAM(node.getNamespace() << ": Value " << signedValue
-                                               << " of unsigned parameter "
-                                               << name << " is negative.");
-      throw std::invalid_argument(name);
-    }
-    return static_cast<Result>(signedValue);
-  }
-
-  // generic casting getParam()
-  template <typename Result, typename Param>
-  inline Result
-  getParamCast(ros::NodeHandle &node, const std::string &name,
-               const Param &defaultValue, const std::string &unit = "") {
-    const Param paramValue = this->getParam(node, name, defaultValue, unit);
-    return Result(paramValue);
-  }
 };
 
 /** \brief This is a nodelet which can tell you when it is being unloaded. */
@@ -205,28 +176,6 @@ class Nodelet : public NodeletBase<::nodelet::Nodelet> {
   protected: using ::nodelet::Nodelet::getName;
 
 };
-
-// getParam specializations for unsigned values
-
-template<> inline uint64_t
-NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
-                  const uint64_t &defaultValue, const std::string &unit) {
-  return this->getParamUnsigned<uint64_t, int>(node, name, defaultValue, unit);
-}
-
-template<> inline unsigned int
-NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
-                  const unsigned int &defaultValue, const std::string &unit) {
-  return this->getParamUnsigned<unsigned int, int>(node, name, defaultValue, unit);
-}
-
-// ROS types specializations
-
-template<> inline ros::Duration
-NodeletParamHelper::getParam(ros::NodeHandle &node, const std::string &name,
-                  const ros::Duration &defaultValue, const std::string &unit) {
-  return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
-}
 
 /** Provides overrides of canTransform() that correctly end when the nodelet is asked to unload. */
 class NodeletAwareTFBuffer : public tf2_ros::Buffer {

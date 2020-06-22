@@ -232,5 +232,4 @@ diagnostic_updater::Updater& NodeletWithDiagnostics::getDiagUpdater() const {
 
 NodeletWithDiagnostics::~NodeletWithDiagnostics() {
 }
-
 }

@@ -1,11 +1,12 @@
-#ifndef CRAS_CPP_COMMON_TOPIC_UTILS_HPP
-#define CRAS_CPP_COMMON_TOPIC_UTILS_HPP
+#pragma once
 
+#include <cstdarg>
 #include <iterator>
 #include <map>
 #include <ros/duration.h>
 #include <ros/time.h>
 #include <set>
+#include <stdio.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -173,6 +174,58 @@ inline std::string to_string(const ros::WallDuration& value)
   return ss.str();
 }
 
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * @param format The printf-like format string.
+ * @param args Arguments of the format string.
+ * @return The formatted string.
+ */
+inline std::string format(const char* format, va_list args)
+{
+  constexpr size_t BUF_LEN = 1024u;
+  char buf[BUF_LEN];
 
-};
-#endif //CRAS_CPP_COMMON_TOPIC_UTILS_HPP
+  const auto len = vsnprintf(buf, BUF_LEN, format, args);
+
+  if (len < BUF_LEN) {
+    return std::string(buf);
+  } else {
+    char* buf2 = new char[len+1];
+    vsnprintf(buf2, len+1, format, args);
+    const std::string result(buf2);
+    delete[] buf2;
+    return result;
+  }
+}
+
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * @param format The printf-like format string.
+ * @param args Arguments of the format string.
+ * @return The formatted string.
+ */
+inline std::string format(const char* format, ...)
+{
+  va_list(args);
+  va_start(args, format);
+  const auto result = ::cras::format(format, args);
+  va_end(args);
+  return result;
+}
+
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * @param format The printf-like format string.
+ * @param args Arguments of the format string.
+ * @return The formatted string.
+ */
+inline std::string format(std::string format, ...)
+{
+  va_list(args);
+  va_start(args, format);
+  const auto result = ::cras::format(format.c_str(), args);
+  va_end(args);
+  return result;
+}
+
+}
