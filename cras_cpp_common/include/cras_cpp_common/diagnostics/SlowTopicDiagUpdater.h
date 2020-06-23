@@ -30,22 +30,15 @@ class SlowTopicDiagnostic : public CompositeDiagnosticTask {
   protected: diagnostic_updater::SlowTimeStampStatus stamp;
 };
 
-template<class T>
-class SlowDiagnosedPublisher
+template<class T, class D>
+class DiagnosedPublisherBase
 {
 public:
-  SlowDiagnosedPublisher(const ros::Publisher &pub, std::shared_ptr<SlowTopicDiagnostic> diag) : publisher_(pub), diag_(diag)
+  DiagnosedPublisherBase(const ros::Publisher &pub, D* diag) : publisher_(pub), diag_(diag)
   {
   }
 
-  SlowDiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
-                         const diagnostic_updater::FrequencyStatusParam &freq,
-                         const diagnostic_updater::TimeStampStatusParam &stamp) :
-    SlowDiagnosedPublisher(pub, std::make_shared<SlowTopicDiagnostic>(pub.getTopic(), diag, freq, stamp))
-  {
-  }
-
-  virtual ~SlowDiagnosedPublisher() = default;
+  virtual ~DiagnosedPublisherBase() = default;
 
   virtual void publish(const boost::shared_ptr<T> &message)
   {
@@ -71,7 +64,21 @@ public:
 
 private:
   ros::Publisher publisher_;
-  std::shared_ptr<SlowTopicDiagnostic> diag_;
+  D* diag_;
+};
+
+template<class T>
+class SlowDiagnosedPublisher : public SlowTopicDiagnostic, public DiagnosedPublisherBase<T, SlowTopicDiagnostic>
+{
+public:
+  SlowDiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                         const diagnostic_updater::FrequencyStatusParam &freq,
+                         const diagnostic_updater::TimeStampStatusParam &stamp) :
+    SlowTopicDiagnostic(pub.getTopic(), diag, freq, stamp),
+    DiagnosedPublisherBase<T, SlowTopicDiagnostic>(pub, this)
+  {
+  }
+  virtual ~SlowDiagnosedPublisher() = default;
 };
 
 }

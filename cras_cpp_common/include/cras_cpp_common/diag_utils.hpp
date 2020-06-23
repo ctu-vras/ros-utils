@@ -7,11 +7,18 @@
 
 namespace cras
 {
-  class TopicDiagnostic : public diagnostic_updater::SlowTopicDiagnostic, public std::enable_shared_from_this<TopicDiagnostic>
+  class TopicDiagnostic
   {
   public:
-    TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& diag, cras::BoundParamHelperPtr param);
-    virtual ~TopicDiagnostic() = default;
+    TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param,
+                    const ros::Rate& defaultRate, const ros::Rate& defaultMinRate, const ros::Rate& defaultMaxRate);
+    TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param,
+                    const ros::Rate& defaultRate);
+    TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param);
+
+    virtual ~TopicDiagnostic() {};
+
+    void tick(const ros::Time& stamp) const;
 
     inline const ros::Rate& getMinRate() const { return this->minRate; }
     inline const ros::Rate& getDesiredRate() const { return this->desiredRate; }
@@ -35,66 +42,107 @@ namespace cras
     ros::Duration minAcceptableDelay;
     ros::Duration maxAcceptableDelay;
 
-    diagnostic_updater::FrequencyStatusParam freq;
-    diagnostic_updater::TimeStampStatusParam stamps;
+    std::unique_ptr<diagnostic_updater::FrequencyStatusParam> freq;
+    std::unique_ptr<diagnostic_updater::TimeStampStatusParam> stamps;
+
+    std::unique_ptr<diagnostic_updater::SlowTopicDiagnostic> diag;
   };
 
   TopicDiagnostic::TopicDiagnostic(const std::string& name, diagnostic_updater::Updater &diag,
-    cras::BoundParamHelperPtr param) :
-    minRateDbl(-1.0), maxRateDbl(-1.0), minRate(-1.0), desiredRate(-1.0), maxRate(-1.0),  // rates will be set in the body
-    rateTolerance(param->getParam("tolerance", 0.1)),
-    rateWindowSize(param->getParam("window_size", 5_sz, "updates")),
-    freq(&this->minRateDbl, &this->maxRateDbl, rateTolerance, rateWindowSize),
-    minAcceptableDelay(param->getParam("min_delay", ros::Duration(-1))),
-    maxAcceptableDelay(param->getParam("max_delay", ros::Duration(5.0))),
-    stamps(minAcceptableDelay.toSec(), maxAcceptableDelay.toSec()),
-    diagnostic_updater::SlowTopicDiagnostic(name, diag, freq, stamps)
+    cras::BoundParamHelperPtr param, const ros::Rate& defaultRate, const ros::Rate& defaultMinRate,
+    const ros::Rate& defaultMaxRate) : minRate(defaultMinRate), desiredRate(defaultRate), maxRate(defaultMaxRate)
   {
-      if (param->hasParam("rate"))
-      {
-        this->desiredRate = param->getParam("rate", ros::Rate(-1.0));
-        this->minRate = param->getParam("min_rate", this->desiredRate);
-        this->maxRate = param->getParam("max_rate", this->desiredRate);
-      }
-      else if (param->hasParam("min_rate") && param->hasParam("max_rate"))
-      {
-        this->minRate = param->getParam("min_rate", ros::Rate(-1.0));
-        this->maxRate = param->getParam("max_rate", ros::Rate(-1.0));
-        this->desiredRate = param->getParam("rate", ros::Rate((this->maxRate.expectedCycleTime() - this->minRate.expectedCycleTime()) * 0.5));
-      }
-      else if (param->hasParam("min_rate") && !param->hasParam("max_rate"))
-      {
-        this->minRate = param->getParam("min_rate", ros::Rate(-1.0));
-        this->desiredRate = param->getParam("rate", this->minRate);
-        this->maxRate = param->getParam("max_rate", this->minRate);
-      }
-      else if (!param->hasParam("min_rate") && param->hasParam("max_rate"))
-      {
-        this->maxRate = param->getParam("max_rate", ros::Rate(-1.0));
-        this->desiredRate = param->getParam("rate", this->maxRate);
-        this->minRate = param->getParam("min_rate", this->maxRate);
-      }
-      else
-      {
-        this->desiredRate = param->getParam("rate", ros::Rate(-1.0));
-        this->minRate = param->getParam("min_rate", ros::Rate(-1.0));
-        this->maxRate = param->getParam("max_rate", ros::Rate(-1.0));
-      }
+    if (param->hasParam("rate/desired"))
+    {
+      this->desiredRate = param->getParam("rate/desired", this->desiredRate);
+      this->minRate = param->getParam("rate/min", this->desiredRate);
+      this->maxRate = param->getParam("rate/max", this->desiredRate);
+    }
+    else if (param->hasParam("rate/min") && param->hasParam("rate/max"))
+    {
+      this->minRate = param->getParam("rate/min", this->minRate);
+      this->maxRate = param->getParam("rate/max", this->maxRate);
+      this->desiredRate = param->getParam("rate/desired",
+        ros::Rate((this->maxRate.expectedCycleTime() - this->minRate.expectedCycleTime()) * 0.5));
+    }
+    else if (param->hasParam("rate/min") && !param->hasParam("rate/max"))
+    {
+      this->minRate = param->getParam("rate/min", this->minRate);
+      this->desiredRate = param->getParam("rate/desired", this->minRate);
+      this->maxRate = param->getParam("rate/max", this->minRate);
+    }
+    else if (!param->hasParam("rate/min") && param->hasParam("rate/max"))
+    {
+      this->maxRate = param->getParam("rate/max", this->maxRate);
+      this->desiredRate = param->getParam("rate/desired", this->maxRate);
+      this->minRate = param->getParam("rate/min", this->maxRate);
+    }
+    else
+    {
+      this->desiredRate = param->getParam("rate/desired", this->desiredRate);
+      this->minRate = param->getParam("rate/min", this->minRate);
+      this->maxRate = param->getParam("rate/max", this->maxRate);
+    }
 
-      // recompute the double values
-      this->setMinRate(this->minRate);
-      this->setMaxRate(this->maxRate);
+    // recompute the double values
+    this->setMinRate(this->minRate);
+    this->setMaxRate(this->maxRate);
+
+    this->rateTolerance = param->getParam("rate/tolerance", 0.1);
+    this->rateWindowSize = param->getParam("rate/window_size", 5_sz, "updates");
+    this->freq = std::make_unique<diagnostic_updater::FrequencyStatusParam>(&this->minRateDbl, &this->maxRateDbl,
+                                                                            rateTolerance, rateWindowSize);
+
+    this->minAcceptableDelay = param->getParam("delay/min", ros::Duration(-1));
+    this->maxAcceptableDelay = param->getParam("delay/max", ros::Duration(5.0));
+    this->stamps = std::make_unique<diagnostic_updater::TimeStampStatusParam>(minAcceptableDelay.toSec(),
+                                                                              maxAcceptableDelay.toSec());
+
+    this->diag = std::make_unique<diagnostic_updater::SlowTopicDiagnostic>(name, diag, *this->freq, *this->stamps);
   }
 
-  template <typename T>
-  class DiagnosedPublisher : public TopicDiagnostic, public diagnostic_updater::SlowDiagnosedPublisher<T>
+  TopicDiagnostic::TopicDiagnostic(const std::string& name, diagnostic_updater::Updater &diag,
+    cras::BoundParamHelperPtr param, const ros::Rate& defaultRate) :
+    TopicDiagnostic(name, diag, param, defaultRate, defaultRate, defaultRate)
+  {
+  }
+
+  TopicDiagnostic::TopicDiagnostic(const std::string& name, diagnostic_updater::Updater &diag,
+    cras::BoundParamHelperPtr param) :
+    TopicDiagnostic(name, diag, param, ros::Rate(-1.0))
+  {
+  }
+
+  void TopicDiagnostic::tick(const ros::Time& stamp) const {
+    this->diag->tick(stamp);
+  }
+
+template<class T>
+  class DiagnosedPublisher : public TopicDiagnostic, public diagnostic_updater::DiagnosedPublisherBase<T, TopicDiagnostic>
   {
   public:
     DiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
-                       cras::BoundParamHelperPtr param) :
-        TopicDiagnostic(pub.getTopic(), diag, param),
-        diagnostic_updater::SlowDiagnosedPublisher<T>(pub, TopicDiagnostic::shared_from_this())
+                       cras::BoundParamHelperPtr param, const ros::Rate& defaultRate, const ros::Rate& defaultMinRate,
+                       const ros::Rate& defaultMaxRate) :
+        TopicDiagnostic(pub.getTopic(), diag, param, defaultRate, defaultMinRate, defaultMaxRate),
+        diagnostic_updater::DiagnosedPublisherBase<T, TopicDiagnostic>(pub, this)
     {
     }
+
+    DiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                       cras::BoundParamHelperPtr param, const ros::Rate& defaultRate) :
+        TopicDiagnostic(pub.getTopic(), diag, param, defaultRate),
+        diagnostic_updater::DiagnosedPublisherBase<T, TopicDiagnostic>(pub, this)
+    {
+    }
+
+    DiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                       cras::BoundParamHelperPtr param) :
+        TopicDiagnostic(pub.getTopic(), diag, param),
+        diagnostic_updater::DiagnosedPublisherBase<T, TopicDiagnostic>(pub, this)
+    {
+    }
+
+    virtual ~DiagnosedPublisher() = default;
   };
 }
