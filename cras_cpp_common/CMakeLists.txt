@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)  # allows better Eigen alignment handling
 
 find_package(catkin REQUIRED COMPONENTS
   bondcpp
+  diagnostic_updater
   filters
   nodelet
   roscpp
@@ -20,8 +21,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS filters roscpp rosconsole sensor_msgs tf2_ros topic_tools
-  LIBRARIES cloud filter_utils nodelet_utils string_utils tf2_sensor_msgs_cras tf2_utils time_utils
+  CATKIN_DEPENDS diagnostic_updater filters roscpp rosconsole sensor_msgs tf2_ros topic_tools
+  LIBRARIES cloud filter_utils improved_updater nodelet_utils slow_topic_diag_updater string_utils tf2_sensor_msgs_cras tf2_utils time_utils
   CFG_EXTRAS cras_cpp_common-extras.cmake
 )
 
@@ -49,8 +50,16 @@ target_sources(node_utils INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/node_utils.hpp)
 target_include_directories(node_utils INTERFACE ${catkin_INCLUDE_DIRS})
 
+add_library(improved_updater src/diagnostics/ImprovedUpdater.cpp)
+target_link_libraries(improved_updater ${catkin_LIBRARIES})
+add_dependencies(improved_updater ${catkin_EXPORTED_TARGETS})
+
+add_library(slow_topic_diag_updater src/diagnostics/SlowTopicDiagUpdater.cpp)
+target_link_libraries(slow_topic_diag_updater improved_updater ${catkin_LIBRARIES})
+add_dependencies(slow_topic_diag_updater ${catkin_EXPORTED_TARGETS})
+
 add_library(nodelet_utils src/nodelet_utils.cpp)
-target_link_libraries(nodelet_utils string_utils ${catkin_LIBRARIES} pthread)
+target_link_libraries(nodelet_utils string_utils improved_updater ${catkin_LIBRARIES} pthread)
 
 add_library(filter_utils src/filter_utils.cpp)
 target_link_libraries(filter_utils ${catkin_LIBRARIES})
@@ -79,6 +88,26 @@ target_sources(set_utils INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/set_utils.hpp)
 target_include_directories(set_utils INTERFACE ${catkin_INCLUDE_DIRS})
 
+add_library(log_utils INTERFACE)
+target_sources(log_utils INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/log_utils.h)
+target_include_directories(log_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
+add_library(param_utils INTERFACE)
+target_sources(param_utils INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/param_utils.hpp)
+target_include_directories(param_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
+add_library(type_utils INTERFACE)
+target_sources(type_utils INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/type_utils.hpp)
+target_include_directories(type_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
+add_library(diag_utils INTERFACE)
+target_sources(diag_utils INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/cras_cpp_common/diag_utils.hpp)
+target_include_directories(diag_utils INTERFACE ${catkin_INCLUDE_DIRS})
+
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
 add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
@@ -97,7 +126,7 @@ install(DIRECTORY cmake/Modules
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
 install(TARGETS cloud repeater joy_repeater string_utils node_utils nodelet_utils filter_utils time_utils
-        tf2_sensor_msgs_cras tf2_utils math_utils set_utils
+        tf2_sensor_msgs_cras tf2_utils math_utils set_utils improved_updater slow_topic_diag_updater
 
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

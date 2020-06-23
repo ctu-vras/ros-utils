@@ -156,6 +156,8 @@ public:
   NodeletWithDiagnostics();
   virtual ~NodeletWithDiagnostics();  // we need to be polymorphic
   diagnostic_updater::Updater& getDiagUpdater() const;
+  void startDiagTimer(ros::NodeHandle& nh) const;
+  void stopDiagTimer() const;
 
 private:
   struct NodeletWithDiagnosticsPrivate;

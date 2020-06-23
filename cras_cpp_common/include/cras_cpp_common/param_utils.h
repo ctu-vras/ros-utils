@@ -5,6 +5,7 @@
 namespace cras {
 
 class BoundParamHelper;
+typedef std::shared_ptr<BoundParamHelper> BoundParamHelperPtr;
 
 /**
  * This class provides a unified experience for both nodes and nodelets for getting ROS parameter values.
@@ -27,7 +28,7 @@ public:
    * @param node The node to bind to.
    * @return The bound param helper.
    */
-  inline std::shared_ptr<BoundParamHelper> forNodeHandle(ros::NodeHandle& node);
+  inline BoundParamHelperPtr paramsForNodeHandle(ros::NodeHandle& node) const;
 
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value, and print out a
@@ -141,12 +142,12 @@ ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros:
 
 template<> inline ros::Duration
 ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros::Duration& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit);
+  return this->getParamCast<ros::Duration, double>(node, name, defaultValue.toSec(), unit.empty() ? "s" : unit);
 }
 
 template<> inline ros::Rate
 ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros::Rate& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::Rate, double>(node, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit);
+  return this->getParamCast<ros::Rate, double>(node, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit.empty() ? "Hz" : unit);
 }
 
 template<> inline ros::WallTime
@@ -156,12 +157,12 @@ ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros:
 
 template<> inline ros::WallDuration
 ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros::WallDuration& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::WallDuration, double>(node, name, defaultValue.toSec(), unit);
+  return this->getParamCast<ros::WallDuration, double>(node, name, defaultValue.toSec(), unit.empty() ? "s" : unit);
 }
 
 template<> inline ros::WallRate
 ParamHelper::getParam(ros::NodeHandle& node, const std::string& name, const ros::WallRate& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::WallRate, double>(node, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit);
+  return this->getParamCast<ros::WallRate, double>(node, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit.empty() ? "Hz" : unit);
 }
 
 /**
@@ -197,11 +198,20 @@ public:
     return ParamHelper::getParam(this->node, name, defaultValue, unit);
   }
 
+  inline bool hasParam(const std::string& param) const { return this->node.hasParam(param); }
+
+  inline std::shared_ptr<BoundParamHelper> paramsInNamespace(const std::string& ns) const
+  {
+    ros::Subscriber s;
+    ros::NodeHandle nh(this->node, ns);
+    return this->paramsForNodeHandle(nh);
+  }
+
 protected:
   mutable ros::NodeHandle node; //!< The bound node handle.
 };
 
-inline std::shared_ptr<BoundParamHelper> ParamHelper::forNodeHandle(ros::NodeHandle& node)
+inline std::shared_ptr<BoundParamHelper> ParamHelper::paramsForNodeHandle(ros::NodeHandle& node) const
 {
   return std::make_shared<BoundParamHelper>(this->log, node);
 }

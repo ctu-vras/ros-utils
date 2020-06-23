@@ -4,9 +4,9 @@
 #undef protected
 
 #include <cras_cpp_common/nodelet_utils.hpp>
+#include <cras_cpp_common/diagnostics/ImprovedUpdater.h>
 
 #include <pthread.h>
-#include <unistd.h>
 
 namespace cras
 {
@@ -205,6 +205,7 @@ NodeletWithSharedTfBuffer::~NodeletWithSharedTfBuffer() {
 struct NodeletWithDiagnostics::NodeletWithDiagnosticsPrivate
 {
   std::shared_ptr<diagnostic_updater::Updater> updater;
+  ros::Timer timer;
 };
 
 NodeletWithDiagnostics::NodeletWithDiagnostics()
@@ -217,19 +218,24 @@ diagnostic_updater::Updater& NodeletWithDiagnostics::getDiagUpdater() const {
   {
     const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
     if (nodelet != nullptr) {
-      this->data->updater = std::make_shared<diagnostic_updater::Updater>(
+      this->data->updater = std::make_shared<diagnostic_updater::ImprovedUpdater>(
           nodelet->getNodeHandle(), nodelet->getPrivateNodeHandle(), nodelet->getName());
     } else {
-      this->data->updater = std::make_shared<diagnostic_updater::Updater>();
+      this->data->updater = std::make_shared<diagnostic_updater::ImprovedUpdater>();
     }
-    char hostname[1024];
-    hostname[1023] = '\0';
-    gethostname(hostname, 1023);
-    this->data->updater->setHardwareID(std::string(hostname));
   }
   return *this->data->updater;
 }
 
 NodeletWithDiagnostics::~NodeletWithDiagnostics() {
+}
+
+void NodeletWithDiagnostics::startDiagTimer(ros::NodeHandle& nh) const {
+  this->data->timer = nh.createTimer(ros::Duration(1.0),
+    [this](const ros::TimerEvent&) { this->getDiagUpdater().update(); });
+}
+
+void NodeletWithDiagnostics::stopDiagTimer() const {
+  this->data->timer.stop();
 }
 }
