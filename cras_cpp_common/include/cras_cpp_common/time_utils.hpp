@@ -1,5 +1,4 @@
-#ifndef CRAS_CPP_COMMON_TIME_UTILS_HPP
-#define CRAS_CPP_COMMON_TIME_UTILS_HPP
+#pragma once
 
 #include <ros/ros.h>
 
@@ -22,6 +21,4 @@ ros::Duration remainingTime(const ros::Time &query, double timeout);
 ros::Duration remainingTime(const ros::Time &query,
                             const ros::Duration &timeout);
 
-};
-
-#endif //CRAS_CPP_COMMON_TIME_UTILS_HPP
+}

@@ -1,5 +1,4 @@
-#ifndef CRAS_CPP_COMMON_FILTER_UTILS_HPP
-#define CRAS_CPP_COMMON_FILTER_UTILS_HPP
+#pragma once
 
 #include <functional>
 #include <unordered_set>
@@ -219,5 +218,4 @@ private:
 
 };
 
-};
-#endif //CRAS_CPP_COMMON_FILTER_UTILS_HPP
+}

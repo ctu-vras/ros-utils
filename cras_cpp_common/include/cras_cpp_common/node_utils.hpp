@@ -5,7 +5,7 @@
 #include <rosconsole/macros_generated.h>
 
 #include <cras_cpp_common/string_utils.hpp>
-#include <cras_cpp_common/param_utils.h>
+#include <cras_cpp_common/param_utils.hpp>
 
 namespace cras {
 

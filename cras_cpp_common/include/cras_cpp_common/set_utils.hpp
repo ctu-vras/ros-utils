@@ -1,6 +1,6 @@
-#ifndef CRAS_CPP_COMMON_SET_UTILS_HPP
-#define CRAS_CPP_COMMON_SET_UTILS_HPP
+#pragma once
 
+#include <algorithm>
 #include <set>
 
 namespace cras
@@ -19,5 +19,3 @@ bool isSetIntersectionEmpty(const std::set<T>& set1,
 }
 
 }
-
-#endif //CRAS_CPP_COMMON_SET_UTILS_HPP

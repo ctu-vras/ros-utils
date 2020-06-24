@@ -1,5 +1,4 @@
-#ifndef CRAS_CPP_COMMON_NODELET_UTILS_HPP
-#define CRAS_CPP_COMMON_NODELET_UTILS_HPP
+#pragma once
 
 #include <string>
 #include <utility>
@@ -11,9 +10,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/param_utils.h>
+#include <cras_cpp_common/param_utils.hpp>
 
 /**
  * This file contains a set of classes that make work with nodelets easier.
@@ -198,5 +196,3 @@ protected:
 };
 
 }
-
-#endif //CRAS_CPP_COMMON_NODELET_UTILS_HPP

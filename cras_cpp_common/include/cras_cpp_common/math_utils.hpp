@@ -1,5 +1,4 @@
-#ifndef CRAS_CPP_COMMON_MATH_UTILS_HPP
-#define CRAS_CPP_COMMON_MATH_UTILS_HPP
+#pragma once
 
 /**
  * \brief Return the sign of the given value (-1, 0 or +1).
@@ -10,5 +9,3 @@
 template <typename T> inline int sgn(T val) {
   return (T(0) < val) - (val < T(0));
 }
-
-#endif //CRAS_CPP_COMMON_MATH_UTILS_HPP

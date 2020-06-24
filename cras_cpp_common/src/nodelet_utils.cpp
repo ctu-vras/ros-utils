@@ -4,6 +4,7 @@
 #undef protected
 
 #include <cras_cpp_common/nodelet_utils.hpp>
+#include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/diagnostics/ImprovedUpdater.h>
 
 #include <pthread.h>
