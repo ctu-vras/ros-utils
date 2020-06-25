@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)  # allows better Eigen alignment handling
 find_package(catkin REQUIRED COMPONENTS
   bondcpp
   diagnostic_updater
+  dynamic_reconfigure
   filters
   nodelet
   rosconsole
@@ -19,9 +20,13 @@ find_package(catkin REQUIRED COMPONENTS
   topic_tools
 )
 
+generate_dynamic_reconfigure_options(
+        cfg/FilterChain.cfg
+)
+
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS diagnostic_updater filters nodelet rosconsole roscpp sensor_msgs tf2_ros topic_tools
+  CATKIN_DEPENDS diagnostic_updater dynamic_reconfigure filters nodelet rosconsole roscpp sensor_msgs tf2_ros topic_tools
   LIBRARIES cloud diag_utils filter_utils improved_updater nodelet_utils slow_topic_diag_updater string_utils tf2_sensor_msgs_cras tf2_utils time_utils
   CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
 )
@@ -107,11 +112,17 @@ target_include_directories(set_utils INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT
 add_library(type_utils INTERFACE)
 target_sources(type_utils INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/type_utils.hpp>)
-target_include_directories(type_utils INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 add_library(diag_utils src/diag_utils.cpp)
 target_link_libraries(diag_utils PRIVATE type_utils PUBLIC param_utils slow_topic_diag_updater ${catkin_LIBRARIES})
 add_dependencies(diag_utils ${catkin_EXPORTED_TARGETS})
+target_include_directories(type_utils INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
+add_library(filter_chain_nodelet INTERFACE)
+target_sources(filter_chain_nodelet INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/filter_chain_nodelet.hpp>)
+target_link_libraries(filter_chain_nodelet INTERFACE diag_utils nodelet_utils filter_utils)
+target_include_directories(filter_chain_nodelet INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
