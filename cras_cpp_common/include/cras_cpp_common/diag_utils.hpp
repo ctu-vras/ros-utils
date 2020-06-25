@@ -40,6 +40,8 @@ public:
   virtual ~TopicDiagnostic() {};
 
   void tick(const ros::Time& stamp) const;
+  const std::string& getName() const;
+  void addTo(diagnostic_updater::Updater& updater) const;
 
   inline const ros::Rate& getMinRate() const { return this->minRate; }
   inline const ros::Rate& getDesiredRate() const { return this->desiredRate; }

@@ -74,4 +74,12 @@ TopicDiagnostic::TopicDiagnostic(const std::string& name, diagnostic_updater::Up
 void TopicDiagnostic::tick(const ros::Time& stamp) const {
   this->diag->tick(stamp);
 }
+
+const std::string &TopicDiagnostic::getName() const {
+  return this->diag->getName();
+}
+
+void TopicDiagnostic::addTo(diagnostic_updater::Updater &updater) const {
+  updater.add(*this->diag);
+}
 }
