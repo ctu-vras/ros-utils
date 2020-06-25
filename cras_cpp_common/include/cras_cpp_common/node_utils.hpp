@@ -7,6 +7,11 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/param_utils.hpp>
 
+/**
+ * This file adds utility functions to be used within nodes. So far it only makes ParamHelper templated getParam()
+ * functions accessible via static global calls cras::getParam(nh, ...).
+ */
+
 namespace cras {
 
 /**
@@ -24,6 +29,8 @@ protected:
 /** Static variable that serves as the singleton for getting node parameters. */
 const ParamHelper paramHelper(std::make_shared<NodeLogHelper>());
 
+// These functions are forward-declared with default parameters in param_utils.hpp
+
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value, and print out a
  *        ROS info/warning message with the loaded values.
@@ -36,15 +43,17 @@ const ParamHelper paramHelper(std::make_shared<NodeLogHelper>());
  * \return The loaded param value.
  */
 template<typename T>
-inline T getParam(ros::NodeHandle &node, const std::string &name, const T &defaultValue = T(), const std::string &unit = "")
+inline T getParam(ros::NodeHandle &node, const std::string &name, const T &defaultValue, const std::string &unit)
 {
-  return paramHelper.getParam(node, name, defaultValue, unit);
+  const auto param = cras::NodeRawGetParamAdapter(node);
+  return paramHelper.getParam(param, name, defaultValue, unit);
 }
 
 // std::string - char interop specializations
-inline std::string getParam(ros::NodeHandle &node, const std::string &name, const char *defaultValue, const std::string &unit = "")
+inline std::string getParam(ros::NodeHandle &node, const std::string &name, const char *defaultValue, const std::string &unit)
 {
-  return paramHelper.getParam(node, name, defaultValue, unit);
+  const auto param = cras::NodeRawGetParamAdapter(node);
+  return paramHelper.getParam(param, name, defaultValue, unit);
 }
 
 }

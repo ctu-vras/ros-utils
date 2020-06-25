@@ -83,6 +83,30 @@ public:
   // we need at least one virtual function so that we can use dynamic cast in implementation
   virtual ~NodeletParamHelper() = default;
 
+  template<typename T>
+  inline T getParam(ros::NodeHandle& nh, const std::string& name, const T& defaultValue = T(),
+                    const std::string& unit = "") const {
+    const auto param = cras::NodeRawGetParamAdapter(nh);
+    return ParamHelper::getParam(param, name, defaultValue, unit);
+  }
+
+  inline std::string getParam(ros::NodeHandle& nh, const std::string &name, const char *defaultValue,
+                              const std::string &unit = "") const {
+    const auto param = cras::NodeRawGetParamAdapter(nh);
+    return ParamHelper::getParam(param, name, defaultValue, unit);
+  }
+
+  /**
+   * Creates a version of this param helper "bound" to the given node handle, so that it is not needed to specify the
+   * node handle in the subsequent getParam calls.
+   * @param node The node to bind to.
+   * @return The bound param helper.
+   */
+  inline BoundParamHelperPtr paramsForNodeHandle(ros::NodeHandle& node) const {
+    const auto param = std::make_shared<NodeRawGetParamAdapter>(node);
+    return std::make_shared<BoundParamHelper>(this->log, param);
+  }
+
 protected:
   std::string defaultName = "NodeletParamHelper_has_to_be_a_sister_class_of_Nodelet";
 
