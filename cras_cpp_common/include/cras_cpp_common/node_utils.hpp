@@ -56,4 +56,15 @@ inline std::string getParam(ros::NodeHandle &node, const std::string &name, cons
   return paramHelper.getParam(param, name, defaultValue, unit);
 }
 
+/**
+   * Creates a version of this param helper "bound" to the given node handle, so that it is not needed to specify the
+   * node handle in the subsequent getParam calls.
+   * @param node The node to bind to.
+   * @return The bound param helper.
+   */
+inline BoundParamHelperPtr paramsForNodeHandle(ros::NodeHandle& node) {
+  const auto param = std::make_shared<NodeRawGetParamAdapter>(node);
+  return std::make_shared<BoundParamHelper>(std::make_shared<NodeLogHelper>(), param);
+}
+
 }
