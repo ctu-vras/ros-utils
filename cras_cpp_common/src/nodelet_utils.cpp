@@ -159,9 +159,11 @@ const std::string &NodeletParamHelper::getName() const {
 struct NodeletWithSharedTfBuffer::NodeletWithSharedTfBufferPrivate
 {
   std::string defaultName = "NodeletWithSharedTfBuffer_has_to_be_a_sister_class_of_Nodelet";
-  std::shared_ptr<tf2_ros::Buffer> buffer;
+  std::weak_ptr<tf2_ros::Buffer> buffer;
+  std::shared_ptr<tf2_ros::Buffer> standaloneBuffer;
   std::unique_ptr<tf2_ros::TransformListener> listener;
   bool usesSharedBuffer = false;
+  virtual ~NodeletWithSharedTfBufferPrivate() { }  // to correctly delete the unique_ptrs
 };
 
 NodeletWithSharedTfBuffer::NodeletWithSharedTfBuffer()
@@ -170,7 +172,7 @@ NodeletWithSharedTfBuffer::NodeletWithSharedTfBuffer()
 }
 
 void NodeletWithSharedTfBuffer::setBuffer(const std::shared_ptr<tf2_ros::Buffer> &buffer) {
-  if (this->data->buffer != nullptr || this->data->listener != nullptr)
+  if (this->data->buffer.lock() != nullptr || this->data->standaloneBuffer != nullptr || this->data->listener != nullptr)
     throw std::runtime_error("tf2 buffer cannot be set multiple times");
 
   NODELET_INFO("Initialized shared tf2 buffer");
@@ -179,14 +181,15 @@ void NodeletWithSharedTfBuffer::setBuffer(const std::shared_ptr<tf2_ros::Buffer>
 }
 
 tf2_ros::Buffer& NodeletWithSharedTfBuffer::getBuffer() const {
-  if (this->data->buffer == nullptr)
+  if (this->data->buffer.lock() == nullptr)
   {
-    this->data->buffer.reset(new tf2_ros::Buffer);
-    this->data->listener.reset(new tf2_ros::TransformListener(*this->data->buffer));
+    this->data->standaloneBuffer.reset(new tf2_ros::Buffer);
+    this->data->buffer = this->data->standaloneBuffer;
+    this->data->listener.reset(new tf2_ros::TransformListener(*this->data->standaloneBuffer));
     this->data->usesSharedBuffer = false;
     NODELET_INFO("Initialized standalone tf2 buffer");
   }
-  return *this->data->buffer;
+  return *this->data->buffer.lock();
 }
 
 const std::string& NodeletWithSharedTfBuffer::getName() const {
@@ -205,7 +208,7 @@ NodeletWithSharedTfBuffer::~NodeletWithSharedTfBuffer() {
 
 struct NodeletWithDiagnostics::NodeletWithDiagnosticsPrivate
 {
-  std::shared_ptr<diagnostic_updater::Updater> updater;
+  std::shared_ptr<diagnostic_updater::ImprovedUpdater> updater;
   ros::Timer timer;
 };
 
@@ -220,7 +223,8 @@ diagnostic_updater::Updater& NodeletWithDiagnostics::getDiagUpdater() const {
     const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
     if (nodelet != nullptr) {
       this->data->updater = std::make_shared<diagnostic_updater::ImprovedUpdater>(
-          nodelet->getNodeHandle(), nodelet->getPrivateNodeHandle(), nodelet->getName());
+          // if nodelet->getNodeHandle() is used as first argument, we get a segfault on nodelet unload
+          ros::NodeHandle(), nodelet->getPrivateNodeHandle(), nodelet->getName());
     } else {
       this->data->updater = std::make_shared<diagnostic_updater::ImprovedUpdater>();
     }
