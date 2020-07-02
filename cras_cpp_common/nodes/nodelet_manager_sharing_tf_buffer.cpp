@@ -84,7 +84,7 @@ private:
     // break the bond, if there is one
     M_stringToBond::iterator it = bond_map_.find(name);
     if (it != bond_map_.end()) {
-      // disable callback for broken bond, as we are breaking it intentially now
+      // disable callback for broken bond, as we are breaking it intentionally now
       it->second->setBrokenCallback(boost::function<void(void)>());
       // erase (and break) bond
       bond_map_.erase(name);
@@ -118,7 +118,9 @@ class NodeletManagerSharingTfBuffer : StatefulNodelet
 {
 public:
   void init();
-  virtual ~NodeletManagerSharingTfBuffer() = default;  // we need to be polymorphic to use dynamic_cast
+  // we need to be polymorphic so that NodeletAwareTFBuffer can dynamic_cast us to nodelet::Nodelet
+  // = default cannot be used, we need to correctly destroy the unique_ptrs.
+  virtual ~NodeletManagerSharingTfBuffer() {};
 protected:
   boost::shared_ptr<nodelet::Nodelet> createInstance(const std::string & lookup_name);
 private:
@@ -126,8 +128,9 @@ private:
 
   std::shared_ptr<tf2_ros::Buffer> buffer;
   std::unique_ptr<tf2_ros::TransformListener> listener;
-  std::unique_ptr<nodelet::Loader> loader;
   std::unique_ptr<ClassLoader> classLoader;
+  // loader has to be declared after classLoader, otherwise we get class_loader SEVERE_WARNING about leaving managed instances in memory
+  std::unique_ptr<nodelet::Loader> loader;
   std::unique_ptr<LoaderROS> loaderRos;
   ros::NodeHandle nh;
 };
