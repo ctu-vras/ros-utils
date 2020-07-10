@@ -151,8 +151,6 @@ protected:
   void subscribe()
   {
     NODELET_DEBUG("Connecting to input topic.");
-    if (this->subscriberDiag != nullptr)
-      this->subscriberDiag->addTo(this->getDiagUpdater());
     this->subscriber = this->nodeHandle.template subscribe<F>(this->topicIn, this->subscriberQueueSize,
         [this](const auto& data){ dataCallback(data); });
   }
@@ -165,6 +163,8 @@ protected:
       if (!this->subscriber && this->filteredPublisher.getNumSubscribers() > 0)
       {
         this->subscribe();
+        if (this->subscriberDiag != nullptr)
+          this->subscriberDiag->addTo(this->getDiagUpdater());
       }
     }
   }
@@ -177,9 +177,9 @@ protected:
       if (this->filteredPublisher.getNumSubscribers() == 0)
       {
         NODELET_DEBUG("Unsubscribing from input topic.");
-        this->subscriber.shutdown();
         if (this->subscriberDiag != nullptr)
           this->getDiagUpdater().removeByName(this->subscriberDiag->getName());
+        this->subscriber.shutdown();
       }
     }
   }
