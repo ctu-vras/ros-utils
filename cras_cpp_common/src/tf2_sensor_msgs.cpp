@@ -128,6 +128,7 @@ sensor_msgs::PointCloud2& transformOnlyChannels(
       if (fieldNameMatchesChannel(field.name, channel, channelType)) {
         channelsPresent.insert(channel);
         out.fields.push_back(field);
+        out.fields.back().offset = out.point_step;
         out.point_step += sizeOfPointField(field.datatype);
       }
     }
