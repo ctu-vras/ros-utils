@@ -1,0 +1,18 @@
+<library path="lib/libcamera_throttle">
+    <class name="camera_throttle/CameraThrottle"
+           type="camera_throttle::CameraThrottleNodelet"
+           base_class_type="nodelet::Nodelet">
+        <description>
+            Throttle a camera topic.
+        </description>
+    </class>
+</library>
+<library path="lib/librgbd_throttle">
+    <class name="camera_throttle/RGBDCameraThrottle"
+           type="camera_throttle::RgbdCameraThrottleNodelet"
+           base_class_type="nodelet::Nodelet">
+        <description>
+            Throttle a RGBD camera topic.
+        </description>
+    </class>
+</library>

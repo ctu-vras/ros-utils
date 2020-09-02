@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>camera_throttle</name>
+  <version>1.0.0</version>
+  <description>Utilities for throttling cameras</description>
+
+  <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
+  <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>cras_cpp_common</depend>
+  <depend>image_transport</depend>
+  <depend>nodelet</depend>
+  <depend>roscpp</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelets.xml" />
+  </export>
+</package>
