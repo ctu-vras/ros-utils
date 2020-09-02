@@ -35,26 +35,31 @@ public:
 
   /*!
    * \brief Returns the number of subscribers that are currently connected to
-   * this RgbdCameraPublisher.
+   * this CameraPublisher.
    *
    * Returns max(image topic subscribers, info topic subscribers).
    */
   size_t getNumSubscribers() const;
 
   /*!
-   * \brief Returns the RGB base (image) topic of this RgbdCameraPublisher.
+   * \brief Returns the RGB base (image) topic of this CameraPublisher.
    */
   std::string getRGBTopic() const;
 
+  /**
+   * \brief Returns the RGB camera info topic of this CameraPublisher.
+   */
+  std::string getRGBInfoTopic() const;
+
   /*!
-   * \brief Returns the depth base (image) topic of this RgbdCameraPublisher.
+   * \brief Returns the depth base (image) topic of this CameraPublisher.
    */
   std::string getDepthTopic() const;
 
   /**
-   * \brief Returns the camera info topic of this RgbdCameraPublisher.
+   * \brief Returns the depth camera info topic of this CameraPublisher.
    */
-  std::string getInfoTopic() const;
+  std::string getDepthInfoTopic() const;
 
   /*!
    * \brief Get the topic of the pointcloud (can be empty if pointcloud is not processed).
@@ -64,26 +69,28 @@ public:
   /*!
    * \brief Publish an RGB and depth (image, info) pair on the topics associated with this RgbdCameraPublisher.
    */
-  void publish(const sensor_msgs::Image& rgb_image, const sensor_msgs::Image& depth_image,
-               const sensor_msgs::CameraInfo& info) const;
+  void publish(const sensor_msgs::Image& rgb_image, const sensor_msgs::CameraInfo& rgb_info,
+               const sensor_msgs::Image& depth_image, const sensor_msgs::CameraInfo& depth_info) const;
 
   /*!
    * \brief Publish an RGB and depth (image, info) pair and PCL on the topics associated with this RgbdCameraPublisher.
    */
-  void publish(const sensor_msgs::Image& rgb_image, const sensor_msgs::Image& depth_image,
-               const sensor_msgs::CameraInfo& info, const sensor_msgs::PointCloud2& pcl) const;
+  void publish(const sensor_msgs::Image& rgb_image, const sensor_msgs::CameraInfo& rgb_info,
+               const sensor_msgs::Image& depth_image, const sensor_msgs::CameraInfo& depth_info,
+               const sensor_msgs::PointCloud2& pcl) const;
 
   /*!
    * \brief Publish an RGB and depth (image, info) pair on the topics associated with this RgbdCameraPublisher.
    */
-  void publish(const sensor_msgs::ImageConstPtr& rgb_image, const sensor_msgs::ImageConstPtr& depth_image,
-               const sensor_msgs::CameraInfoConstPtr& info) const;
+  void publish(const sensor_msgs::ImageConstPtr& rgb_image, const sensor_msgs::CameraInfoConstPtr& rgb_info,
+               const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_info) const;
 
   /*!
    * \brief Publish an RGB and depth (image, info) pair and PCL on the topics associated with this RgbdCameraPublisher.
    */
-  void publish(const sensor_msgs::ImageConstPtr& rgb_image, const sensor_msgs::ImageConstPtr& depth_image,
-               const sensor_msgs::CameraInfoConstPtr& info, const sensor_msgs::PointCloud2ConstPtr& pcl) const;
+  void publish(const sensor_msgs::ImageConstPtr& rgb_image, const sensor_msgs::CameraInfoConstPtr& rgb_info,
+               const sensor_msgs::ImageConstPtr& depth_image, const sensor_msgs::CameraInfoConstPtr& depth_info,
+               const sensor_msgs::PointCloud2ConstPtr& pcl) const;
 
   /*!
    * \brief Publish an RGB and depth (image, info) pair with given timestamp on the topics associated with
@@ -92,7 +99,8 @@ public:
    * Convenience version, which sets the timestamps of both image and info to stamp before
    * publishing.
    */
-  void publish(sensor_msgs::Image& rgb_image, sensor_msgs::Image& depth_image, sensor_msgs::CameraInfo& info, ros::Time stamp) const;
+  void publish(sensor_msgs::Image& rgb_image, sensor_msgs::CameraInfo& rgb_info,
+               sensor_msgs::Image& depth_image, sensor_msgs::CameraInfo& depth_info, ros::Time stamp) const;
 
   /*!
    * \brief Publish an RGB and depth (image, info) pair and PCL with given timestamp on the topics associated with
@@ -101,7 +109,8 @@ public:
    * Convenience version, which sets the timestamps of both image and info to stamp before
    * publishing.
    */
-  void publish(sensor_msgs::Image& rgb_image, sensor_msgs::Image& depth_image, sensor_msgs::CameraInfo& info,
+  void publish(sensor_msgs::Image& rgb_image, sensor_msgs::CameraInfo& rgb_info,
+               sensor_msgs::Image& depth_image, sensor_msgs::CameraInfo& depth_info,
                sensor_msgs::PointCloud2& pcl, ros::Time stamp) const;
 
   /*!
@@ -115,17 +124,19 @@ public:
   bool operator==(const RgbdCameraPublisher& rhs) const { return impl == rhs.impl; }
 
 private:
-  RgbdCameraPublisher(RgbdImageTransport& image_it, ros::NodeHandle& info_nh,
+  RgbdCameraPublisher(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh,
     const std::string& rgb_base_topic, const std::string& depth_base_topic, size_t queue_size,
     const image_transport::SubscriberStatusCallback& rgb_connect_cb,
     const image_transport::SubscriberStatusCallback& rgb_disconnect_cb,
     const image_transport::SubscriberStatusCallback& depth_connect_cb,
     const image_transport::SubscriberStatusCallback& depth_disconnect_cb,
-    const ros::SubscriberStatusCallback& info_connect_cb,
-    const ros::SubscriberStatusCallback& info_disconnect_cb,
+    const ros::SubscriberStatusCallback& rgb_info_connect_cb,
+    const ros::SubscriberStatusCallback& rgb_info_disconnect_cb,
+    const ros::SubscriberStatusCallback& depth_info_connect_cb,
+    const ros::SubscriberStatusCallback& depth_info_disconnect_cb,
     const ros::VoidPtr& tracked_object, bool latch);
 
-  RgbdCameraPublisher(RgbdImageTransport& image_it, ros::NodeHandle& info_nh, ros::NodeHandle& pcl_nh,
+  RgbdCameraPublisher(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh, ros::NodeHandle& pcl_nh,
     const std::string& rgb_base_topic, const std::string& depth_base_topic, const std::string& pcl_topic,
     size_t queue_size,
     const image_transport::SubscriberStatusCallback& rgb_connect_cb,
@@ -134,8 +145,10 @@ private:
     const image_transport::SubscriberStatusCallback& depth_disconnect_cb,
     const ros::SubscriberStatusCallback& pcl_connect_cb,
     const ros::SubscriberStatusCallback& pcl_disconnect_cb,
-    const ros::SubscriberStatusCallback& info_connect_cb,
-    const ros::SubscriberStatusCallback& info_disconnect_cb,
+    const ros::SubscriberStatusCallback& rgb_info_connect_cb,
+    const ros::SubscriberStatusCallback& rgb_info_disconnect_cb,
+    const ros::SubscriberStatusCallback& depth_info_connect_cb,
+    const ros::SubscriberStatusCallback& depth_info_disconnect_cb,
     const ros::VoidPtr& tracked_object, bool latch);
 
   struct Impl;

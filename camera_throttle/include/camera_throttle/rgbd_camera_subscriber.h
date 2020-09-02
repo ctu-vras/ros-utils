@@ -16,11 +16,11 @@ class RgbdImageTransport;
  * RgbdCameraSubscriber is the client-side counterpart to CameraPublisher, and assumes the
  * same topic naming convention. The callback is of type:
 \verbatim
-void callback(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
+void callback(const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&);
 \endverbatim
  * or
 \verbatim
-void callback(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const sensor_msgs::PointCloud2ConstPtr&);
+void callback(const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const sensor_msgs::ImageConstPtr&, const sensor_msgs::CameraInfoConstPtr&, const sensor_msgs::PointCloud2ConstPtr&);
 \endverbatim
  * A RgbdCameraSubscriber should always be created through a call to
  * RgbdImageTransport::subscribeCamera(), or copied from one that was.
@@ -32,9 +32,11 @@ class RgbdCameraSubscriber
 {
 public:
   typedef boost::function<void(const sensor_msgs::ImageConstPtr&,
+                               const sensor_msgs::CameraInfoConstPtr&,
                                const sensor_msgs::ImageConstPtr&,
                                const sensor_msgs::CameraInfoConstPtr&)> Callback;
   typedef boost::function<void(const sensor_msgs::ImageConstPtr&,
+                               const sensor_msgs::CameraInfoConstPtr&,
                                const sensor_msgs::ImageConstPtr&,
                                const sensor_msgs::CameraInfoConstPtr&,
                                const sensor_msgs::PointCloud2ConstPtr&)> PclCallback;
@@ -47,14 +49,19 @@ public:
   std::string getRGBTopic() const;
 
   /**
+   * \brief Get the RGB camera info topic.
+   */
+  std::string getRGBInfoTopic() const;
+
+  /**
    * \brief Get the depth base topic (on which the raw image is published).
    */
   std::string getDepthTopic() const;
 
   /**
-   * \brief Get the camera info topic.
+   * \brief Get the depth camera info topic.
    */
-  std::string getInfoTopic() const;
+  std::string getDepthInfoTopic() const;
 
   /**
    * \brief Get the topic of the pointcloud (can be empty if pointcloud is not processed).
@@ -87,12 +94,12 @@ public:
   bool operator==(const RgbdCameraSubscriber& rhs) const { return impl == rhs.impl; }
 
 private:
-  RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& info_nh,
+  RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh,
                    const std::string& rgb_base_topic, const std::string& depth_base_topic,
                    size_t queue_size, const Callback& callback,
                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),
                    const image_transport::TransportHints& transport_hints = image_transport::TransportHints());
-  RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& info_nh, ros::NodeHandle& pcl_nh,
+  RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh, ros::NodeHandle& pcl_nh,
                    const std::string& rgb_base_topic, const std::string& depth_base_topic,
                    const std::string& pcl_topic, size_t queue_size, const PclCallback& callback,
                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),

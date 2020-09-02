@@ -19,11 +19,15 @@ void RgbdCameraThrottleNodelet::onInit()
   this->pubDepthBaseName = this->getParam(pnh, "pub_depth_base_name", this->subDepthBaseName);
   this->subscribePcl = this->getParam(pnh, "subscribe_pcl", true);
 
-  this->subNh = ros::NodeHandle(this->getNodeHandle(), "camera_in");
-  this->subTransport = std::make_unique<RgbdImageTransport>(this->subNh, this->getNodeHandle());
+  this->subRgbNh = ros::NodeHandle(this->getNodeHandle(), "camera_rgb_in");
+  this->subDepthNh = ros::NodeHandle(this->getNodeHandle(), "camera_depth_in");
+  this->subPclNh = this->getNodeHandle();
+  this->subTransport = std::make_unique<RgbdImageTransport>(this->subRgbNh, this->subDepthNh, this->subPclNh);
 
-  this->pubNh = ros::NodeHandle(this->getNodeHandle(), "camera_out");
-  this->pubTransport = std::make_unique<RgbdImageTransport>(this->pubNh, this->getNodeHandle());
+  this->pubRgbNh = ros::NodeHandle(this->getNodeHandle(), "camera_rgb_out");
+  this->pubDepthNh = ros::NodeHandle(this->getNodeHandle(), "camera_depth_out");
+  this->pubPclNh = this->getNodeHandle();
+  this->pubTransport = std::make_unique<RgbdImageTransport>(this->pubRgbNh, this->pubDepthNh, this->pubPclNh);
 
   if (this->subscribePcl)
     this->pub = this->pubTransport->advertiseRgbdCamera(
@@ -32,6 +36,8 @@ void RgbdCameraThrottleNodelet::onInit()
         boost::bind(&RgbdCameraThrottleNodelet::img_disconnect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::img_connect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::img_disconnect_cb, this, _1),
+        boost::bind(&RgbdCameraThrottleNodelet::info_connect_cb, this, _1),
+        boost::bind(&RgbdCameraThrottleNodelet::info_disconnect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::info_connect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::info_disconnect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::info_connect_cb, this, _1),
@@ -44,10 +50,12 @@ void RgbdCameraThrottleNodelet::onInit()
         boost::bind(&RgbdCameraThrottleNodelet::img_connect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::img_disconnect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::info_connect_cb, this, _1),
+        boost::bind(&RgbdCameraThrottleNodelet::info_disconnect_cb, this, _1),
+        boost::bind(&RgbdCameraThrottleNodelet::info_connect_cb, this, _1),
         boost::bind(&RgbdCameraThrottleNodelet::info_disconnect_cb, this, _1));
 }
 
-void RgbdCameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& rgbImg, const sensor_msgs::ImageConstPtr& depthImg, const sensor_msgs::CameraInfoConstPtr& info)
+void RgbdCameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& rgbImg, const sensor_msgs::CameraInfoConstPtr& rgbInfo, const sensor_msgs::ImageConstPtr& depthImg, const sensor_msgs::CameraInfoConstPtr& depthInfo)
 {
   if (this->rate)
   {
@@ -59,10 +67,10 @@ void RgbdCameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& rgbImg, con
   }
 
   this->lastUpdate = ros::Time::now();
-  this->pub.publish(rgbImg, depthImg, info);
+  this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo);
 }
 
-void RgbdCameraThrottleNodelet::cbPcl(const sensor_msgs::ImageConstPtr& rgbImg, const sensor_msgs::ImageConstPtr& depthImg, const sensor_msgs::CameraInfoConstPtr& info, const sensor_msgs::PointCloud2ConstPtr& pcl)
+void RgbdCameraThrottleNodelet::cbPcl(const sensor_msgs::ImageConstPtr& rgbImg, const sensor_msgs::CameraInfoConstPtr& rgbInfo, const sensor_msgs::ImageConstPtr& depthImg, const sensor_msgs::CameraInfoConstPtr& depthInfo, const sensor_msgs::PointCloud2ConstPtr& pcl)
 {
   if (this->rate)
   {
@@ -74,7 +82,7 @@ void RgbdCameraThrottleNodelet::cbPcl(const sensor_msgs::ImageConstPtr& rgbImg, 
   }
 
   this->lastUpdate = ros::Time::now();
-  this->pub.publish(rgbImg, depthImg, info, pcl);
+  this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo, pcl);
 }
 
 void RgbdCameraThrottleNodelet::img_connect_cb(const image_transport::SingleSubscriberPublisher& status)
@@ -109,14 +117,14 @@ void RgbdCameraThrottleNodelet::onFirstConnect()
 {
   if (this->subscribePcl)
   {
-    NODELET_DEBUG("Started lazy-subscription to %s, %s and %s", this->subNh.resolveName(this->subRGBBaseName).c_str(),
-                  this->subNh.resolveName(this->subDepthBaseName).c_str(),
-                  this->subNh.resolveName("points_in").c_str());
+    NODELET_DEBUG("Started lazy-subscription to %s, %s and %s", this->subRgbNh.resolveName(this->subRGBBaseName).c_str(),
+                  this->subDepthNh.resolveName(this->subDepthBaseName).c_str(),
+                  this->subPclNh.resolveName("points_in").c_str());
     this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, "points_in", this->queueSize, &RgbdCameraThrottleNodelet::cbPcl, this);
   } else
   {
-    NODELET_DEBUG("Started lazy-subscription to %s and %s", this->subNh.resolveName(this->subRGBBaseName).c_str(),
-                  this->subNh.resolveName(this->subDepthBaseName).c_str());
+    NODELET_DEBUG("Started lazy-subscription to %s and %s", this->subRgbNh.resolveName(this->subRGBBaseName).c_str(),
+                  this->subDepthNh.resolveName(this->subDepthBaseName).c_str());
     this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, this->queueSize, &RgbdCameraThrottleNodelet::cb, this);
   }
 }
