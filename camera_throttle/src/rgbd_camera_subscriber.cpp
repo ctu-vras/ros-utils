@@ -148,7 +148,7 @@ RgbdCameraSubscriber::RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::No
   impl->depthSub.registerCallback(boost::bind(increment, &impl->depthReceived));
   impl->depthInfoSub.registerCallback(boost::bind(increment, &impl->depthInfoReceived));
   impl->pclSub.registerCallback(boost::bind(increment, &impl->pclReceived));
-  impl->sync.registerCallback(boost::bind(increment, &impl->allReceived));
+  impl->syncPcl.registerCallback(boost::bind(increment, &impl->allReceived));
   impl->checkSyncedTimer = rgb_nh.createWallTimer(ros::WallDuration(10.0),
                                                     boost::bind(&Impl::checkImagesSynchronized, impl.get()));
 }
