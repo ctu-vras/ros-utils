@@ -17,6 +17,13 @@ void CameraThrottleNodelet::onInit()
   this->subBaseName = this->getParam(pnh, "sub_base_name", "image_raw");
   this->pubBaseName = this->getParam(pnh, "pub_base_name", this->subBaseName);
 
+  if (pnh.hasParam("fix_frame_id"))
+    this->frameId = this->getParam(pnh, "fix_frame_id", "");
+  if (this->frameId.has_value() && this->frameId.value().empty())
+    this->frameId.reset();
+  if (this->frameId)
+    NODELET_INFO("Fixing RGB frame_id to %s", this->frameId->c_str());
+
   this->subNh = ros::NodeHandle(this->getNodeHandle(), "camera_in");
   this->subTransport = std::make_unique<image_transport::ImageTransport>(this->subNh);
 
@@ -41,7 +48,19 @@ void CameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& img, const sens
   }
 
   this->lastUpdate = ros::Time::now();
-  this->pub.publish(img, info);
+  if (!this->frameId.has_value())
+  {
+    this->pub.publish(img, info);
+  } else {
+    sensor_msgs::ImagePtr newImg(new sensor_msgs::Image);
+    sensor_msgs::CameraInfoPtr newInfo(new sensor_msgs::CameraInfo);
+    *newImg = *img;
+    *newInfo = *info;
+    newImg->header.frame_id = this->frameId.value();
+    newInfo->header.frame_id = this->frameId.value();
+
+    this->pub.publish(img, info);
+  }
 }
 
 void CameraThrottleNodelet::img_connect_cb(const image_transport::SingleSubscriberPublisher& status)

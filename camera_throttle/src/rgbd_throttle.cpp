@@ -19,6 +19,20 @@ void RgbdCameraThrottleNodelet::onInit()
   this->pubDepthBaseName = this->getParam(pnh, "pub_depth_base_name", this->subDepthBaseName);
   this->subscribePcl = this->getParam(pnh, "subscribe_pcl", true);
 
+  if (pnh.hasParam("fix_rgb_frame_id"))
+    this->rgbFrameId = this->getParam(pnh, "fix_rgb_frame_id", "");
+  if (this->rgbFrameId.has_value() && this->rgbFrameId.value().empty())
+    this->rgbFrameId.reset();
+  if (this->rgbFrameId)
+    NODELET_INFO("Fixing RGB frame_id to %s", this->rgbFrameId->c_str());
+  
+  if (pnh.hasParam("fix_depth_frame_id"))
+    this->depthFrameId = this->getParam(pnh, "fix_depth_frame_id", "");
+  if (this->depthFrameId.has_value() && this->depthFrameId.value().empty())
+    this->depthFrameId.reset();
+  if (this->depthFrameId)
+    NODELET_INFO("Fixing depth frame_id to %s", this->depthFrameId->c_str());
+
   this->subRgbNh = ros::NodeHandle(this->getNodeHandle(), "camera_rgb_in");
   this->subDepthNh = ros::NodeHandle(this->getNodeHandle(), "camera_depth_in");
   this->subPclNh = this->getNodeHandle();
@@ -67,7 +81,44 @@ void RgbdCameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& rgbImg, con
   }
 
   this->lastUpdate = ros::Time::now();
-  this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo);
+
+  if (!this->rgbFrameId.has_value() && !this->depthFrameId.has_value())
+  {
+    this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo);
+  } else {
+    sensor_msgs::ImageConstPtr pubRgbImg = rgbImg;
+    sensor_msgs::CameraInfoConstPtr pubRgbInfo = rgbInfo;
+    sensor_msgs::ImageConstPtr pubDepthImg = depthImg;
+    sensor_msgs::CameraInfoConstPtr pubDepthInfo = depthInfo;
+
+    if (this->rgbFrameId)
+    {
+      sensor_msgs::ImagePtr newRgbImg(new sensor_msgs::Image);
+      sensor_msgs::CameraInfoPtr newRgbInfo(new sensor_msgs::CameraInfo);
+      *newRgbImg = *rgbImg;
+      *newRgbInfo = *rgbInfo;
+      newRgbImg->header.frame_id = this->rgbFrameId.value();
+      newRgbInfo->header.frame_id = this->rgbFrameId.value();
+      
+      pubRgbImg = newRgbImg;
+      pubRgbInfo = newRgbInfo;
+    }
+
+    if (this->depthFrameId)
+    {
+      sensor_msgs::ImagePtr newDepthImg(new sensor_msgs::Image);
+      sensor_msgs::CameraInfoPtr newDepthInfo(new sensor_msgs::CameraInfo);
+      *newDepthImg = *depthImg;
+      *newDepthInfo = *depthInfo;
+      newDepthImg->header.frame_id = this->depthFrameId.value();
+      newDepthInfo->header.frame_id = this->depthFrameId.value();
+      
+      pubDepthImg = newDepthImg;
+      pubDepthInfo = newDepthInfo;
+    }
+
+    this->pub.publish(pubRgbImg, pubRgbInfo, pubDepthImg, pubDepthInfo);
+  }
 }
 
 void RgbdCameraThrottleNodelet::cbPcl(const sensor_msgs::ImageConstPtr& rgbImg, const sensor_msgs::CameraInfoConstPtr& rgbInfo, const sensor_msgs::ImageConstPtr& depthImg, const sensor_msgs::CameraInfoConstPtr& depthInfo, const sensor_msgs::PointCloud2ConstPtr& pcl)
@@ -82,7 +133,44 @@ void RgbdCameraThrottleNodelet::cbPcl(const sensor_msgs::ImageConstPtr& rgbImg, 
   }
 
   this->lastUpdate = ros::Time::now();
-  this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo, pcl);
+
+  if (!this->rgbFrameId.has_value() && !this->depthFrameId.has_value())
+  {
+    this->pub.publish(rgbImg, rgbInfo, depthImg, depthInfo, pcl);
+  } else {
+    sensor_msgs::ImageConstPtr pubRgbImg = rgbImg;
+    sensor_msgs::CameraInfoConstPtr pubRgbInfo = rgbInfo;
+    sensor_msgs::ImageConstPtr pubDepthImg = depthImg;
+    sensor_msgs::CameraInfoConstPtr pubDepthInfo = depthInfo;
+
+    if (this->rgbFrameId)
+    {
+      sensor_msgs::ImagePtr newRgbImg(new sensor_msgs::Image);
+      sensor_msgs::CameraInfoPtr newRgbInfo(new sensor_msgs::CameraInfo);
+      *newRgbImg = *rgbImg;
+      *newRgbInfo = *rgbInfo;
+      newRgbImg->header.frame_id = this->rgbFrameId.value();
+      newRgbInfo->header.frame_id = this->rgbFrameId.value();
+
+      pubRgbImg = newRgbImg;
+      pubRgbInfo = newRgbInfo;
+    }
+
+    if (this->depthFrameId)
+    {
+      sensor_msgs::ImagePtr newDepthImg(new sensor_msgs::Image);
+      sensor_msgs::CameraInfoPtr newDepthInfo(new sensor_msgs::CameraInfo);
+      *newDepthImg = *depthImg;
+      *newDepthInfo = *depthInfo;
+      newDepthImg->header.frame_id = this->depthFrameId.value();
+      newDepthInfo->header.frame_id = this->depthFrameId.value();
+
+      pubDepthImg = newDepthImg;
+      pubDepthInfo = newDepthInfo;
+    }
+
+    this->pub.publish(pubRgbImg, pubRgbInfo, pubDepthImg, pubDepthInfo, pcl);
+  }
 }
 
 void RgbdCameraThrottleNodelet::img_connect_cb(const image_transport::SingleSubscriberPublisher& status)

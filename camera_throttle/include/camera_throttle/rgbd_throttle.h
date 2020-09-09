@@ -22,6 +22,8 @@ namespace camera_throttle
  *  ~sub_depth_base_name: Base name of the depth input image. Default is depth.
  *  ~pub_depth_base_name: Base name of the depth output image. Default is whatever is set to ~sub_depth_base_name.
  *  ~subscribe_pcl: If true, also the pointcloud will be subscribed and throttled. Default is true.
+ *  ~fix_rgb_frame_id: If set and nonempty, the RGB images and camera infos will get this frame ID instead of the one they came with.
+ *  ~fix_depth_frame_id: If set and nonempty, the Depth images and camera infos will get this frame ID instead of the one they came with.
  *
  * Topics:
  *  camera_rgb_in: The input RGB camera topics
@@ -65,6 +67,8 @@ class RgbdCameraThrottleNodelet : public cras::Nodelet
   protected: std::optional<RgbdCameraSubscriber> sub;
   protected: RgbdCameraPublisher pub;
   protected: std::optional<ros::Rate> rate;
+  protected: std::optional<std::string> rgbFrameId;
+  protected: std::optional<std::string> depthFrameId;
   protected: size_t queueSize {10};
   protected: ros::Time lastUpdate;
   protected: std::string subRGBBaseName;

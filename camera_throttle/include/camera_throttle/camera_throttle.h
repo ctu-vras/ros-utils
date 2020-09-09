@@ -19,6 +19,7 @@ namespace camera_throttle
  *  ~queue_size: Queue size for both subscription and publication. Default is 10.
  *  ~sub_base_name: Base name of the input image. Default is image_raw.
  *  ~pub_base_name: Base name of the output image. Default is whatever is set to ~sub_base_name.
+ *  ~fix_frame_id: If set and nonempty, the images and camera infos will get this frame ID instead of the one they came with.
  *
  * Topics:
  *  camera_in: The input camera topics
@@ -48,6 +49,7 @@ class CameraThrottleNodelet : public cras::Nodelet
   protected: std::optional<image_transport::CameraSubscriber> sub;
   protected: image_transport::CameraPublisher pub;
   protected: std::optional<ros::Rate> rate;
+  protected: std::optional<std::string> frameId;
   protected: size_t queueSize {10};
   protected: ros::Time lastUpdate;
   protected: std::string subBaseName;
