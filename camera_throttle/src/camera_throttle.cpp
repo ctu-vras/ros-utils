@@ -59,7 +59,7 @@ void CameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& img, const sens
     newImg->header.frame_id = this->frameId.value();
     newInfo->header.frame_id = this->frameId.value();
 
-    this->pub.publish(img, info);
+    this->pub.publish(newImg, newInfo);
   }
 }
 
