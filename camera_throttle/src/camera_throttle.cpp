@@ -3,8 +3,20 @@
 #include <pluginlib/class_list_macros.hpp>
 #include <memory>
 
+#include <cv_bridge/cv_bridge.h>
+
 namespace camera_throttle
 {
+
+struct CameraThrottleNodelet::CameraThrottlePrivate
+{
+  cv::Mat opencvMat;
+};
+
+CameraThrottleNodelet::CameraThrottleNodelet() : data(new CameraThrottlePrivate)
+{
+
+}
 
 void CameraThrottleNodelet::onInit()
 {
@@ -23,6 +35,9 @@ void CameraThrottleNodelet::onInit()
     this->frameId.reset();
   if (this->frameId)
     NODELET_INFO("Fixing RGB frame_id to %s", this->frameId->c_str());
+
+  this->flipHorizontal = this->getParam(pnh, "flip_horizontal", false);
+  this->flipVertical = this->getParam(pnh, "flip_vertical", false);
 
   this->subNh = ros::NodeHandle(this->getNodeHandle(), "camera_in");
   this->subTransport = std::make_unique<image_transport::ImageTransport>(this->subNh);
@@ -48,16 +63,47 @@ void CameraThrottleNodelet::cb(const sensor_msgs::ImageConstPtr& img, const sens
   }
 
   this->lastUpdate = ros::Time::now();
-  if (!this->frameId.has_value())
+  if (!this->frameId.has_value() && !this->flipHorizontal && !this->flipVertical)
   {
     this->pub.publish(img, info);
   } else {
     sensor_msgs::ImagePtr newImg(new sensor_msgs::Image);
     sensor_msgs::CameraInfoPtr newInfo(new sensor_msgs::CameraInfo);
+
     *newImg = *img;
     *newInfo = *info;
-    newImg->header.frame_id = this->frameId.value();
-    newInfo->header.frame_id = this->frameId.value();
+
+    if (this->flipVertical || this->flipHorizontal)
+    {
+      int flipValue;
+      if (this->flipVertical && this->flipHorizontal)
+        flipValue = -1;
+      else if (this->flipVertical)
+        flipValue = 0;
+      else
+        flipValue = 1;
+
+      cv_bridge::CvImagePtr cvImage;
+      try
+      {
+        cvImage = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
+      }
+      catch (cv_bridge::Exception& e)
+      {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+      }
+
+      cv::flip(cvImage->image, this->data->opencvMat, flipValue);
+
+      newImg = cv_bridge::CvImage(img->header, "bgr8", this->data->opencvMat).toImageMsg();
+    }
+
+    if (this->frameId)
+    {
+      newImg->header.frame_id = this->frameId.value();
+      newInfo->header.frame_id = this->frameId.value();
+    }
 
     this->pub.publish(newImg, newInfo);
   }

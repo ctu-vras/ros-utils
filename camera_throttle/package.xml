@@ -14,6 +14,7 @@
   <depend>image_transport</depend>
   <depend>nodelet</depend>
   <depend>roscpp</depend>
+  <build_depend>cv_bridge</build_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelets.xml" />

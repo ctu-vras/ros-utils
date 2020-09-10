@@ -20,6 +20,8 @@ namespace camera_throttle
  *  ~sub_base_name: Base name of the input image. Default is image_raw.
  *  ~pub_base_name: Base name of the output image. Default is whatever is set to ~sub_base_name.
  *  ~fix_frame_id: If set and nonempty, the images and camera infos will get this frame ID instead of the one they came with.
+ *  ~flip_horizontal: If true, flip the image horizontally. Camera info remains unchanged.
+ *  ~flip_vertical: If true, flip the image vertically. Camera info remains unchanged.
  *
  * Topics:
  *  camera_in: The input camera topics
@@ -32,7 +34,7 @@ namespace camera_throttle
  */
 class CameraThrottleNodelet : public cras::Nodelet
 {
-  public: CameraThrottleNodelet() = default;
+  public: CameraThrottleNodelet();
   public: virtual ~CameraThrottleNodelet() {};
 
   protected: void onInit() override;
@@ -50,6 +52,8 @@ class CameraThrottleNodelet : public cras::Nodelet
   protected: image_transport::CameraPublisher pub;
   protected: std::optional<ros::Rate> rate;
   protected: std::optional<std::string> frameId;
+  protected: bool flipHorizontal{false};
+  protected: bool flipVertical{false};
   protected: size_t queueSize {10};
   protected: ros::Time lastUpdate;
   protected: std::string subBaseName;
@@ -61,6 +65,9 @@ class CameraThrottleNodelet : public cras::Nodelet
   private: void info_connect_cb(const ros::SingleSubscriberPublisher&);
   private: void img_disconnect_cb(const image_transport::SingleSubscriberPublisher&);
   private: void info_disconnect_cb(const ros::SingleSubscriberPublisher&);
+
+  struct CameraThrottlePrivate;
+  private: std::unique_ptr<CameraThrottlePrivate> data;
 };
 
 }
