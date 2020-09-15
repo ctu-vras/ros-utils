@@ -11,6 +11,7 @@
 
 namespace diagnostic_updater {
 
+#ifndef HAS_SLOW_TOPIC_UPDATER
 class SlowTimeStampStatus : public TimeStampStatus {
   public: explicit SlowTimeStampStatus(const TimeStampStatusParam &params);
   public: ~SlowTimeStampStatus() override = default;
@@ -18,6 +19,7 @@ class SlowTimeStampStatus : public TimeStampStatus {
   public: virtual void tick(const ros::Time& time);
   protected: bool someDataSeen;
 };
+#endif
 
 class SlowTopicDiagnostic : public CompositeDiagnosticTask {
   public: SlowTopicDiagnostic(const std::string& name, diagnostic_updater::Updater &diag,

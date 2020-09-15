@@ -20,6 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
   topic_tools
 )
 
+find_package(diagnostic_updater 1.9.6 QUIET)
+set(HAS_SLOW_TOPIC_UPDATER ${diagnostic_updater_FOUND})
+
 generate_dynamic_reconfigure_options(
         cfg/FilterChain.cfg
 )
@@ -77,6 +80,9 @@ add_dependencies(improved_updater ${catkin_EXPORTED_TARGETS})
 add_library(slow_topic_diag_updater src/diagnostics/SlowTopicDiagUpdater.cpp)
 target_link_libraries(slow_topic_diag_updater improved_updater ${catkin_LIBRARIES})
 add_dependencies(slow_topic_diag_updater ${catkin_EXPORTED_TARGETS})
+if (HAS_SLOW_TOPIC_UPDATER)
+  target_compile_definitions(slow_topic_diag_updater PUBLIC HAS_SLOW_TOPIC_UPDATER=1)
+endif()
 
 add_library(nodelet_utils src/nodelet_utils.cpp)
 target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC improved_updater ${catkin_LIBRARIES} pthread)

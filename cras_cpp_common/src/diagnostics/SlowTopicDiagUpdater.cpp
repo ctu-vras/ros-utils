@@ -1,13 +1,18 @@
+#ifndef HAS_SLOW_TOPIC_UPDATER
 #include <sstream>
 #define private protected
+#endif
 #include <diagnostic_updater/update_functions.h>
+#ifndef HAS_SLOW_TOPIC_UPDATER
 #undef private
+#endif
 
 #include <cras_cpp_common/diagnostics/SlowTopicDiagUpdater.h>
 
 namespace diagnostic_updater
 {
 
+#ifndef HAS_SLOW_TOPIC_UPDATER
 SlowTimeStampStatus::SlowTimeStampStatus(const TimeStampStatusParam& params)
     : TimeStampStatus(params)
 {
@@ -51,6 +56,7 @@ void SlowTimeStampStatus::tick(const ros::Time& time)
     }
     TimeStampStatus::tick(time);
 }
+#endif
 
 SlowTopicDiagnostic::SlowTopicDiagnostic(const std::string& name, Updater& diag,
     const FrequencyStatusParam& freq, const TimeStampStatusParam& stamp)
