@@ -1,4 +1,6 @@
 # Append cmake modules from source directory to the cmake module path
 list(APPEND CMAKE_MODULE_PATH "@CMAKE_CURRENT_SOURCE_DIR@/cmake/Modules")
 cmake_policy(SET CMP0022 NEW)
-add_definitions(-DHAS_SLOW_TOPIC_UPDATER=@HAS_SLOW_TOPIC_UPDATER@)
+if (@HAS_SLOW_TOPIC_UPDATER@)
+  add_definitions(-DHAS_SLOW_TOPIC_UPDATER=1)
+endif()
