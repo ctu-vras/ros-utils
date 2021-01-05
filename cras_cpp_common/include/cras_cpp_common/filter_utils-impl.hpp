@@ -131,7 +131,7 @@ struct FilterRawGetParamAdapter : public RawGetParamAdapter
     return this->getParamMap(name, v, XmlRpc::XmlRpcValue::TypeInt);
   }
   bool getParam(const std::string& name, std::map<std::string, double>& v) const override {
-    this->getParamMap(name, v, XmlRpc::XmlRpcValue::TypeDouble);
+    return this->getParamMap(name, v, XmlRpc::XmlRpcValue::TypeDouble);
   }
   bool getParam(const std::string& name, std::map<std::string, float>& v) const override {
     std::map<std::string, double> vec;
@@ -144,7 +144,7 @@ struct FilterRawGetParamAdapter : public RawGetParamAdapter
     return success;
   }
   bool getParam(const std::string& name, std::map<std::string, std::string>& v) const override {
-    this->getParamMap(name, v, XmlRpc::XmlRpcValue::TypeString);
+    return this->getParamMap(name, v, XmlRpc::XmlRpcValue::TypeString);
   }
 
   std::string getNamespace() const override { return this->filter->filter_name_; }
