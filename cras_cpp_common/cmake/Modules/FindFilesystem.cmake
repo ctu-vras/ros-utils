@@ -120,6 +120,15 @@ if(TARGET std::filesystem)
   return()
 endif()
 
+# All of our tests require C++17 or later
+set(CMAKE_CXX_STANDARD 17)
+
+cmake_policy(PUSH)
+# support if(IN_LIST) operator
+cmake_policy(SET CMP0057 NEW)
+# pass CMAKE_CXX_STANDARD to try_compile and check_include_file_cxx
+cmake_policy(SET CMP0067 NEW)
+
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
 include(CheckCXXSourceCompiles)
@@ -127,10 +136,6 @@ include(CheckCXXSourceCompiles)
 cmake_push_check_state()
 
 set(CMAKE_REQUIRED_QUIET ${Filesystem_FIND_QUIETLY})
-
-# All of our tests required C++17 or later
-set(CMAKE_CXX_STANDARD 17)
-cmake_policy(SET CMP0057 NEW)
 
 # Normalize and check the component list we were given
 set(want_components ${Filesystem_FIND_COMPONENTS})
@@ -235,23 +240,27 @@ if(CXX_FILESYSTEM_HAVE_FS)
   set(can_link ${CXX_FILESYSTEM_NO_LINK_NEEDED})
 
   if(NOT can_link)
-    set(prev_libraries ${CMAKE_REQUIRED_LIBRARIES})
+    cmake_push_check_state()
     # Add the libstdc++ flag
-    set(CMAKE_REQUIRED_LIBRARIES ${prev_libraries} -lstdc++fs)
+    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -lstdc++fs)
     check_cxx_source_compiles("${code}" CXX_FILESYSTEM_STDCPPFS_NEEDED)
     set(can_link ${CXX_FILESYSTEM_STDCPPFS_NEEDED})
+    cmake_pop_check_state()
     if(NOT can_link)
-      # Try the libc++ flag
-      set(CMAKE_REQUIRED_LIBRARIES ${prev_libraries} -lc++fs)
+      cmake_push_check_state()
+      # Try the libc++ flag      
+      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -lc++fs)
       check_cxx_source_compiles("${code}" CXX_FILESYSTEM_CPPFS_NEEDED)
       set(can_link ${CXX_FILESYSTEM_CPPFS_NEEDED})
+      cmake_pop_check_state()
       if(NOT can_link AND find_boost)
         # Try Boost
-        set(CMAKE_REQUIRED_LIBRARIES ${prev_libraries} Boost::filesystem)
-        set(prev_includes ${CMAKE_REQUIRED_INCLUDES})
-        set(CMAKE_REQUIRED_INCLUDES ${prev_includes} ${Boost_INCLUDE_DIRS})
+	cmake_push_check_state()
+	set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} Boost::filesystem)
+	set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${Boost_INCLUDE_DIRS})
         check_cxx_source_compiles("${code}" CXX_FILESYSTEM_BOOST_NEEDED)
         set(can_link ${CXX_FILESYSTEM_BOOST_NEEDED})
+	cmake_pop_check_state()
       endif()
     endif()
   endif()
@@ -278,9 +287,9 @@ endif()
 cmake_pop_check_state()
 
 set(Filesystem_FOUND ${_found} CACHE BOOL "TRUE if we can compile and link a program using std::filesystem" FORCE)
-set_property(TARGET std::filesystem APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS CXX_FILESYSTEM_FOUND=${Filesystem_FOUND})
 
 if(Filesystem_FOUND)
+  set_property(TARGET std::filesystem APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS CXX_FILESYSTEM_FOUND=${Filesystem_FOUND})
   set_property(TARGET std::filesystem APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS CXX_FILESYSTEM_HEADER=${CXX_FILESYSTEM_HEADER})
   set_property(TARGET std::filesystem APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS CXX_FILESYSTEM_INCLUDE=${CXX_FILESYSTEM_INCLUDE})
   set_property(TARGET std::filesystem APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS CXX_FILESYSTEM_NAMESPACE=${CXX_FILESYSTEM_NAMESPACE})
@@ -290,3 +299,5 @@ endif()
 if(Filesystem_FIND_REQUIRED AND NOT Filesystem_FOUND)
   message(FATAL_ERROR "Cannot Compile simple program using std::filesystem")
 endif()
+
+cmake_policy(POP)
