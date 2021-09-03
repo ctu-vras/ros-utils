@@ -64,7 +64,44 @@ public:
     this->publisher_ = pub;
   }
 
-private:
+protected:
+  ros::Publisher publisher_;
+  D* diag_;
+};
+
+template<class T, class D>
+class HeaderlessDiagnosedPublisherBase
+{
+public:
+  HeaderlessDiagnosedPublisherBase(const ros::Publisher &pub, D* diag) : publisher_(pub), diag_(diag)
+  {
+  }
+
+  virtual ~HeaderlessDiagnosedPublisherBase() = default;
+  
+  virtual void publish(const boost::shared_ptr<T>& message)
+  {
+    this->diag_->tick();
+    this->publisher_.publish(message);
+  }
+  
+  virtual void publish(const T& message)
+  {
+    this->diag_->tick();
+    this->publisher_.publish(message);
+  }
+
+  ros::Publisher getPublisher() const
+  {
+    return this->publisher_;
+  }
+
+  void setPublisher(const ros::Publisher& pub)
+  {
+    this->publisher_ = pub;
+  }
+
+protected:
   ros::Publisher publisher_;
   D* diag_;
 };

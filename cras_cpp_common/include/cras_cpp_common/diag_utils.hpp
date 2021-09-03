@@ -7,6 +7,98 @@ namespace cras
 {
 
 /**
+ * This class does frequency diagnostics of a published/subscribed topic and allows configuration via
+ * parameter server. The configuration is stored in a parameter namespace which you pass with the BoundParamHelper. For
+ * this diagnostics to work, you have to call tick() every time you send/receive a message.
+ *
+ * The configuration parameters (relative to the namespace) are:
+ *  - rate/desired (double): The desired rate of messages.
+ *  - rate/min (double): Min rate of messages.
+ *  - rate/max (double): Max rate of messages.
+ *  - rate/tolerance (double): Tolerance of min/max rate (decreases min, increases max, or goes both ways from desired).
+ *  - rate/window_size (positive int): Number of tick() calls throughout which the rate should be approximated.
+ *
+ * The rate parameters are processed according to the following rules:
+ *  - If exactly one of (desired|min|max) is set, it is used for all three rates.
+ *  - If min and max are set and desired is not set, desired is set to the mean of min and max.
+ *  - If no rate parameter is set, a rate of -1 Hz is used for all three rates. This default can be changed in the
+ *    extended constructors by passing defaultRate, defaultMinRate and defaultMaxRate.
+ *
+ * The rate (desired|min|max) parameters can be changed dynamically during runtime. Other parameters are constant.
+ */
+class HeaderlessTopicDiagnosticBase
+{
+public:
+  HeaderlessTopicDiagnosticBase(const ros::Rate& defaultRate, const ros::Rate& defaultMinRate, const ros::Rate& defaultMaxRate);
+  HeaderlessTopicDiagnosticBase(const ros::Rate& defaultRate);
+  HeaderlessTopicDiagnosticBase();
+
+  virtual ~HeaderlessTopicDiagnosticBase() {};
+
+  virtual const std::string& getName() const = 0;
+  virtual void addTo(diagnostic_updater::Updater& updater) const = 0;
+
+  inline const ros::Rate& getMinRate() const { return this->minRate; }
+  inline const ros::Rate& getDesiredRate() const { return this->desiredRate; }
+  inline const ros::Rate& getMaxRate() const { return this->maxRate; }
+  inline const void setMinRate(const ros::Rate& rate) { this->minRate = rate; this->minRateDbl = 1.0 / rate.expectedCycleTime().toSec(); }
+  inline const void setDesiredRate(const ros::Rate& rate) { this->desiredRate = rate; }
+  inline const void setMaxRate(const ros::Rate& rate) { this->maxRate = rate; this->maxRateDbl = 1.0 / rate.expectedCycleTime().toSec(); }
+  inline double getRateTolerance() const { return this->rateTolerance; }
+  inline size_t getRateWindowSize() const { return this->rateWindowSize; }
+
+protected:
+  void loadParams(cras::BoundParamHelperPtr param);
+  
+  ros::Rate minRate;
+  ros::Rate desiredRate;
+  ros::Rate maxRate;
+  double minRateDbl;
+  double maxRateDbl;
+  double rateTolerance;
+  size_t rateWindowSize;
+
+  std::unique_ptr<diagnostic_updater::FrequencyStatusParam> freq;
+};
+
+/**
+ * This class does frequency diagnostics of a published/subscribed topic and allows configuration via
+ * parameter server. The configuration is stored in a parameter namespace which you pass with the BoundParamHelper. For
+ * this diagnostics to work, you have to call tick() every time you send/receive a message.
+ *
+ * The configuration parameters (relative to the namespace) are:
+ *  - rate/desired (double): The desired rate of messages.
+ *  - rate/min (double): Min rate of messages.
+ *  - rate/max (double): Max rate of messages.
+ *  - rate/tolerance (double): Tolerance of min/max rate (decreases min, increases max, or goes both ways from desired).
+ *  - rate/window_size (positive int): Number of tick() calls throughout which the rate should be approximated.
+ *
+ * The rate parameters are processed according to the following rules:
+ *  - If exactly one of (desired|min|max) is set, it is used for all three rates.
+ *  - If min and max are set and desired is not set, desired is set to the mean of min and max.
+ *  - If no rate parameter is set, a rate of -1 Hz is used for all three rates. This default can be changed in the
+ *    extended constructors by passing defaultRate, defaultMinRate and defaultMaxRate.
+ *
+ * The rate (desired|min|max) parameters can be changed dynamically during runtime. Other parameters are constant.
+ */
+class HeaderlessTopicDiagnostic : public HeaderlessTopicDiagnosticBase
+{
+public:
+  HeaderlessTopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param,
+                            const ros::Rate& defaultRate, const ros::Rate& defaultMinRate, const ros::Rate& defaultMaxRate);
+  HeaderlessTopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param,
+                            const ros::Rate& defaultRate);
+  HeaderlessTopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param);
+  
+  void tick() const;
+  const std::string& getName() const override;
+  void addTo(diagnostic_updater::Updater& updater) const override;
+  
+protected:
+  std::unique_ptr<diagnostic_updater::FrequencyStatus> diag;
+};
+
+/**
  * This class does frequency and delay diagnostics of a published/subscribed topic and allows configuration via
  * parameter server. The configuration is stored in a parameter namespace which you pass with the BoundParamHelper. For
  * this diagnostics to work, you have to call tick() every time you send/receive a message.
@@ -28,7 +120,7 @@ namespace cras
  *
  * The rate (desired|min|max) parameters can be changed dynamically during runtime. Other parameters are constant.
  */
-class TopicDiagnostic
+class TopicDiagnostic : public HeaderlessTopicDiagnosticBase
 {
 public:
   TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param,
@@ -38,36 +130,18 @@ public:
   TopicDiagnostic(const std::string& name, diagnostic_updater::Updater& updater, cras::BoundParamHelperPtr param);
 
   virtual ~TopicDiagnostic() {};
-
   void tick(const ros::Time& stamp) const;
-  const std::string& getName() const;
-  void addTo(diagnostic_updater::Updater& updater) const;
+  const std::string& getName() const override;
+  void addTo(diagnostic_updater::Updater& updater) const override;
 
-  inline const ros::Rate& getMinRate() const { return this->minRate; }
-  inline const ros::Rate& getDesiredRate() const { return this->desiredRate; }
-  inline const ros::Rate& getMaxRate() const { return this->maxRate; }
-  inline const void setMinRate(const ros::Rate& rate) { this->minRate = rate; this->minRateDbl = 1.0 / rate.expectedCycleTime().toSec(); }
-  inline const void setDesiredRate(const ros::Rate& rate) { this->desiredRate = rate; }
-  inline const void setMaxRate(const ros::Rate& rate) { this->maxRate = rate; this->maxRateDbl = 1.0 / rate.expectedCycleTime().toSec(); }
-  inline double getRateTolerance() const { return this->rateTolerance; }
-  inline size_t getRateWindowSize() const { return this->rateWindowSize; }
   inline const ros::Duration& getMinAcceptableDelay() const { return this->minAcceptableDelay; }
   inline const ros::Duration& getMaxAcceptableDelay() const { return this->maxAcceptableDelay; }
 
 protected:
-  ros::Rate minRate;
-  ros::Rate desiredRate;
-  ros::Rate maxRate;
-  double minRateDbl;
-  double maxRateDbl;
-  double rateTolerance;
-  size_t rateWindowSize;
   ros::Duration minAcceptableDelay;
   ros::Duration maxAcceptableDelay;
 
-  std::unique_ptr<diagnostic_updater::FrequencyStatusParam> freq;
   std::unique_ptr<diagnostic_updater::TimeStampStatusParam> stamps;
-
   std::unique_ptr<diagnostic_updater::SlowTopicDiagnostic> diag;
 };
 
@@ -103,6 +177,40 @@ public:
   }
 
   virtual ~DiagnosedPublisher() = default;
+};
+
+/**
+ * This is a convenience class for TopicDiagnostic. If you want to diagnose a publisher, you can use this class and
+ * publish the messages using it, and it will automatically call tick() for you every time a message is published.
+ * @tparam T Type of the published messages.
+ */
+template<class T>
+class HeaderlessDiagnosedPublisher : public HeaderlessTopicDiagnostic, public diagnostic_updater::HeaderlessDiagnosedPublisherBase<T, HeaderlessTopicDiagnostic>
+{
+public:
+  HeaderlessDiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                     cras::BoundParamHelperPtr param, const ros::Rate& defaultRate, const ros::Rate& defaultMinRate,
+                     const ros::Rate& defaultMaxRate) :
+      HeaderlessTopicDiagnostic(pub.getTopic(), diag, param, defaultRate, defaultMinRate, defaultMaxRate),
+      diagnostic_updater::HeaderlessDiagnosedPublisherBase<T, HeaderlessTopicDiagnostic>(pub, this)
+  {
+  }
+
+  HeaderlessDiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                     cras::BoundParamHelperPtr param, const ros::Rate& defaultRate) :
+      HeaderlessTopicDiagnostic(pub.getTopic(), diag, param, defaultRate),
+      diagnostic_updater::HeaderlessDiagnosedPublisherBase<T, HeaderlessTopicDiagnostic>(pub, this)
+  {
+  }
+
+  HeaderlessDiagnosedPublisher(const ros::Publisher &pub, diagnostic_updater::Updater &diag,
+                     cras::BoundParamHelperPtr param) :
+      HeaderlessTopicDiagnostic(pub.getTopic(), diag, param),
+      diagnostic_updater::HeaderlessDiagnosedPublisherBase<T, HeaderlessTopicDiagnostic>(pub, this)
+  {
+  }
+
+  virtual ~HeaderlessDiagnosedPublisher() = default;
 };
 
 }

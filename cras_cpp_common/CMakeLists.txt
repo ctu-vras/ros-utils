@@ -85,7 +85,7 @@ if (HAS_SLOW_TOPIC_UPDATER)
 endif()
 
 add_library(nodelet_utils src/nodelet_utils.cpp)
-target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC improved_updater ${catkin_LIBRARIES} pthread)
+target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC improved_updater ${catkin_LIBRARIES} pthread slow_topic_diag_updater)
 add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(filter_utils src/filter_utils.cpp)
