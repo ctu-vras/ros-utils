@@ -203,8 +203,9 @@ class NodeletBase : public BaseNodelet, public NodeletParamHelper, public Statef
     public ThreadNameUpdatingNodelet, public NodeletWithSharedTfBuffer, public NodeletWithDiagnostics
 {
 protected:
-  template<typename T, class HasHeader = void>
-  std::unique_ptr<HeaderlessDiagnosedPublisher<T>> createDiagnosedPublisher(
+  template<typename T>
+  typename std::enable_if<!ros::message_traits::HasHeader<T>::value, std::unique_ptr<HeaderlessDiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace,
     const ros::Rate& defaultRate, const ros::Rate& defaultMinRate, const ros::Rate& defaultMaxRate)
   {
@@ -214,8 +215,9 @@ protected:
       defaultRate, defaultMinRate, defaultMaxRate);
   }
 
-  template<typename T, class HasHeader = void>
-  std::unique_ptr<HeaderlessDiagnosedPublisher<T>> createDiagnosedPublisher(
+  template<typename T>
+  typename std::enable_if<!ros::message_traits::HasHeader<T>::value, std::unique_ptr<HeaderlessDiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace,
     const ros::Rate& defaultRate)
   {
@@ -225,17 +227,19 @@ protected:
       defaultRate);
   }
 
-  template<typename T, class HasHeader = void>
-  std::unique_ptr<HeaderlessDiagnosedPublisher<T>> createDiagnosedPublisher(
+  template<typename T>
+  typename std::enable_if<!ros::message_traits::HasHeader<T>::value, std::unique_ptr<HeaderlessDiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace)
   {
     return std::make_unique<HeaderlessDiagnosedPublisher<T>>(
       nh.template advertise<T>(topic, queueSize), this->getDiagUpdater(),
       this->paramsForNodeHandle(this->getPrivateNodeHandle())->paramsInNamespace(paramNamespace));
   }
-  
-  template<typename T, typename std::enable_if<ros::message_traits::HasHeader<T>::value>::type>
-  std::unique_ptr<DiagnosedPublisher<T>> createDiagnosedPublisher(
+
+  template<typename T>
+  typename std::enable_if<ros::message_traits::HasHeader<T>::value, std::unique_ptr<DiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace,
     const ros::Rate& defaultRate, const ros::Rate& defaultMinRate, const ros::Rate& defaultMaxRate)
   {
@@ -244,9 +248,10 @@ protected:
       this->paramsForNodeHandle(this->getPrivateNodeHandle())->paramsInNamespace(paramNamespace),
       defaultRate, defaultMinRate, defaultMaxRate);
   }
-  
-  template<typename T, typename std::enable_if<ros::message_traits::HasHeader<T>::value>::type>
-  std::unique_ptr<DiagnosedPublisher<T>> createDiagnosedPublisher(
+
+  template<typename T>
+  typename std::enable_if<ros::message_traits::HasHeader<T>::value, std::unique_ptr<DiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace,
     const ros::Rate& defaultRate)
   {
@@ -255,9 +260,10 @@ protected:
       this->paramsForNodeHandle(this->getPrivateNodeHandle())->paramsInNamespace(paramNamespace),
       defaultRate);
   }
-  
-  template<typename T, typename std::enable_if<ros::message_traits::HasHeader<T>::value>::type>
-  std::unique_ptr<DiagnosedPublisher<T>> createDiagnosedPublisher(
+
+  template<typename T>
+  typename std::enable_if<ros::message_traits::HasHeader<T>::value, std::unique_ptr<DiagnosedPublisher<T>>>::type
+  createDiagnosedPublisher(
     ros::NodeHandle nh, const std::string& topic, size_t queueSize, const std::string& paramNamespace)
   {
     return std::make_unique<DiagnosedPublisher<T>>(
