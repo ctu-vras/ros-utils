@@ -1,0 +1,14 @@
+<library path="lib/libcras_throttle_nodelet">
+  <class name="cras_nodelet_topic_tools/throttle" type="cras::ThrottleNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      throttle
+    </description>
+  </class>
+</library>
+<library path="lib/libcras_relay_nodelet">
+<class name="cras_nodelet_topic_tools/relay" type="cras::RelayNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+    throttle
+  </description>
+</class>
+</library>
