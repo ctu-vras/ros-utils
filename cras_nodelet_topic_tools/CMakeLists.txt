@@ -11,15 +11,15 @@ catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_library(cras_throttle_nodelet src/throttle.cpp)
-add_dependencies(cras_throttle_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_throttle_nodelet ${catkin_LIBRARIES})
+add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
+add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_relay_nodelet ${catkin_LIBRARIES})
 
-install(TARGETS cras_throttle_nodelet cras_relay_nodelet
+install(TARGETS cras_throttle_messages_nodelet cras_relay_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

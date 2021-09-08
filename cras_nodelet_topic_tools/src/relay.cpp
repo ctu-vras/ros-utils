@@ -54,7 +54,7 @@ class RelayNodelet : public nodelet::Nodelet
     auto pnh = this->getMTPrivateNodeHandle();
 
     const auto inQueueSize = pnh.param("in_queue_size", 10);
-    this->outQueueSize = pnh.param("out_queue_size", 10);
+    this->outQueueSize = pnh.param("out_queue_size", inQueueSize);
 
     ros::SubscribeOptions ops;
     ops.template init<topic_tools::ShapeShifter>("input", inQueueSize, boost::bind(&RelayNodelet::cb, this, _1));

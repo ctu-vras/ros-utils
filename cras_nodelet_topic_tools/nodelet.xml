@@ -1,5 +1,5 @@
-<library path="lib/libcras_throttle_nodelet">
-  <class name="cras_nodelet_topic_tools/throttle" type="cras::ThrottleNodelet" base_class_type="nodelet::Nodelet">
+<library path="lib/libcras_throttle_messages_nodelet">
+  <class name="cras_nodelet_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
       throttle
     </description>
