@@ -5,6 +5,10 @@
 #include <pluginlib/class_list_macros.h>
 #include <topic_tools/shape_shifter.h>
 
+//! This is the simplest possible implementation of a non-lazy relay nodelet
+//! It can process the messages on a single topic in parallel allowing for
+//! maximum throughput.
+
 namespace cras
 {
 
@@ -12,31 +16,31 @@ class RelayNodelet : public nodelet::Nodelet
 {
   ros::Subscriber sub;
   ros::Publisher pub;
-  size_t out_queue_size;
+  size_t outQueueSize;
   bool advertised {false};
   std::mutex mutex;
   
-  void cb(const ros::MessageEvent<topic_tools::ShapeShifter>& msg_event)
+  void cb(const ros::MessageEvent<topic_tools::ShapeShifter>& event)
   {
-    const auto& msg = msg_event.getConstMessage();
+    const auto& msg = event.getConstMessage();
 
     if (!this->advertised)
     {
       std::lock_guard<std::mutex> lock(this->mutex);
       if (!this->advertised)  // the first check is outside mutex, this one is inside
       {
-        const auto& connection_header = msg_event.getConnectionHeaderPtr();
+        const auto& connectionHeader = event.getConnectionHeaderPtr();
         bool latch = false;
-        if (connection_header)
+        if (connectionHeader)
         {
-          auto it = connection_header->find("latching");
-          if((it != connection_header->end()) && (it->second == "1"))
+          auto it = connectionHeader->find("latching");
+          if((it != connectionHeader->end()) && (it->second == "1"))
           {
             ROS_DEBUG("input topic is latched; latching output topic to match");
             latch = true;
           }
         }
-        this->pub = msg->advertise(this->getMTPrivateNodeHandle(), "output", this->out_queue_size, latch);
+        this->pub = msg->advertise(this->getMTPrivateNodeHandle(), "output", this->outQueueSize, latch);
         this->advertised = true;
         ROS_INFO("advertised as %s\n", this->getMTPrivateNodeHandle().resolveName("output").c_str());
       }
@@ -48,8 +52,15 @@ class RelayNodelet : public nodelet::Nodelet
   void onInit() override
   {
     auto pnh = this->getMTPrivateNodeHandle();
-    this->out_queue_size = pnh.param("out_queue_size", 10);
-    this->sub = pnh.subscribe("input", pnh.param("in_queue_size", 10), &RelayNodelet::cb, this);
+
+    const auto inQueueSize = pnh.param("in_queue_size", 10);
+    this->outQueueSize = pnh.param("out_queue_size", 10);
+
+    ros::SubscribeOptions ops;
+    ops.template init<topic_tools::ShapeShifter>("input", inQueueSize, boost::bind(&RelayNodelet::cb, this, _1));
+    // allow concurrent processing even for messages on a single subscriber
+    ops.allow_concurrent_callbacks = true;
+    this->sub = pnh.subscribe(ops);
   }
 };
 
