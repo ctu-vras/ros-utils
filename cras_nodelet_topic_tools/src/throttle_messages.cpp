@@ -63,7 +63,7 @@ class ThrottleMessagesNodelet : public nodelet::Nodelet
     
     this->minPubPeriod = ros::Rate(pnh.param("frequency", 1.0)).expectedCycleTime();
 
-    // we cannot use pnh.subscribe() - otherwise there's double free from https://github.com/ros/ros_comm/pull/1722
+    // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from https://github.com/ros/ros_comm/pull/1722
     ros::SubscribeOptions ops;
     ops.template init<topic_tools::ShapeShifter>("input", inQueueSize, boost::bind(&ThrottleMessagesNodelet::cb, this, _1));
     this->sub = pnh.subscribe(ops);
