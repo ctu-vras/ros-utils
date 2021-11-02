@@ -19,6 +19,7 @@ def fix_msg_defs(bag, topics=None):
     connections = bag._get_connections(topics=topics if len(topics) > 0 else None)
     msg_def_maps = dict()
     msg_md5_maps = dict()
+    already_reported_types = set()
     for connection in connections:
         msg_type = connection.datatype
         if msg_type not in msg_def_maps:
@@ -45,13 +46,15 @@ def fix_msg_defs(bag, topics=None):
         if connection.msg_def.rstrip("\n") == full_msg_text.rstrip("\n"):
             continue
 
-        print("<<<")
-        print("Replacing definition of %s (%i chars, MD5 %s)" %
-              (msg_type, len(connection.msg_def), connection.md5sum))
-        print(connection.msg_def.replace("\n", "\\n"))
-        print("with following definition (%i chars, matching MD5)" % (len(full_msg_text,)))
-        print(full_msg_text.replace("\n", "\\n"))
-        print(">>>")
+        if msg_type not in already_reported_types:
+            print("<<<")
+            print("Replacing definition of %s (%i chars, MD5 %s)" %
+                  (msg_type, len(connection.msg_def), connection.md5sum))
+            print(connection.msg_def.replace("\n", "\\n"))
+            print("with following definition (%i chars, matching MD5)" % (len(full_msg_text,)))
+            print(full_msg_text.replace("\n", "\\n"))
+            print(">>>")
+            already_reported_types.add(msg_type)
 
         # here we really should replace the msg def, so do it
         connection.header['message_definition'] = full_msg_text
