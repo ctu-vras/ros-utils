@@ -2,7 +2,9 @@
 
 from __future__ import print_function
 
+import os
 import sys
+
 from rosbag.bag import Bag
 
 from cras_bag_tools.fix_msg_defs import fix_msg_defs
@@ -17,6 +19,10 @@ if __name__ == '__main__':
 
     bag_file = sys.argv[1]
     topics = sys.argv[2:]
+
+    if not os.path.exists(bag_file):
+        print("Bag file %s does not exist." % bag_file, file=sys.stderr)
+        sys.exit(2)
 
     with Bag(bag_file, mode='a', skip_index=True) as bag:
         fix_msg_defs(bag, topics)
