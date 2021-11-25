@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import rospy
 from roslib.message import get_message_class
 
@@ -17,9 +15,13 @@ def cb(msg):
     last_msg = msg
     if pub is None:
         cls = get_message_class(msg._connection_header['type'])
-        pub = rospy.Publisher("out", cls, queue_size=10)
-        timer = rospy.Timer(rospy.Rate(rate).sleep_dur, timer_cb)
+        pub = rospy.Publisher("out", cls, queue_size=rospy.get_param("~out_queue_size", 10))
     pub.publish(msg)
+    if reset_timer_on_msg and timer is not None:
+        timer.shutdown()
+        timer = None
+    if timer is None:
+        timer = rospy.Timer(rospy.Rate(rate).sleep_dur, timer_cb)
 
 
 def timer_cb(event):
@@ -30,5 +32,6 @@ def timer_cb(event):
 if __name__ == "__main__":
     rospy.init_node('repeat', anonymous=True)
     rate = rospy.get_param("~rate", 1.0)
-    sub = rospy.Subscriber('in', rospy.AnyMsg, cb, queue_size=10)
+    reset_timer_on_msg = rospy.get_param("~reset_timer_on_msg", True)
+    sub = rospy.Subscriber('in', rospy.AnyMsg, cb, queue_size=rospy.get_param("~in_queue_size", 10))
     rospy.spin()

@@ -5,5 +5,5 @@ find_package(catkin REQUIRED)
 
 catkin_package()
 
-catkin_install_python(PROGRAMS nodes/repeat
+catkin_install_python(PROGRAMS nodes/filter nodes/repeat
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
