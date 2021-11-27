@@ -17,7 +17,8 @@ def cb(msg):
         # noinspection PyProtectedMember
         cls = get_message_class(msg._connection_header['type'])
         pub = rospy.Publisher("out", cls, queue_size=rospy.get_param("~out_queue_size", 10))
-    pub.publish(msg)
+    if not publish_only_on_timer:
+        pub.publish(msg)
     if reset_timer_on_msg and timer is not None:
         timer.shutdown()
         timer = None
@@ -35,5 +36,6 @@ if __name__ == "__main__":
     rospy.init_node('repeat', anonymous=True)
     rate = rospy.get_param("~rate", 1.0)
     reset_timer_on_msg = rospy.get_param("~reset_timer_on_msg", True)
+    publish_only_on_timer = rospy.get_param("~publish_only_on_timer", False)
     sub = rospy.Subscriber('in', rospy.AnyMsg, cb, queue_size=rospy.get_param("~in_queue_size", 10))
     rospy.spin()
