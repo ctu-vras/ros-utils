@@ -14,6 +14,7 @@ def cb(msg):
     global timer
     last_msg = msg
     if pub is None:
+        # noinspection PyProtectedMember
         cls = get_message_class(msg._connection_header['type'])
         pub = rospy.Publisher("out", cls, queue_size=rospy.get_param("~out_queue_size", 10))
     pub.publish(msg)
@@ -26,6 +27,7 @@ def cb(msg):
 
 def timer_cb(event):
     if last_msg is not None and pub is not None:
+        # noinspection PyUnresolvedReferences
         pub.publish(last_msg)
 
 

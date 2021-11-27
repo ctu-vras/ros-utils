@@ -13,10 +13,12 @@ pub = None
 def cb(anymsg):
     global pub
     if pub is None:
+        # noinspection PyProtectedMember
         cls = get_message_class(anymsg._connection_header['type'])
         pub = rospy.Publisher("out", cls, queue_size=rospy.get_param("~out_queue_size", 10))
     else:
         cls = pub.data_class
+    # noinspection PyCallingNonCallable,PyProtectedMember
     msg = cls().deserialize(anymsg._buff)
     if filter_fn(msg):
         pub.publish(anymsg)

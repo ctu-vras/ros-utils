@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+"""
+Remap `mux/selected` from a bagfile to `selected` and `mux` to the name of a mux, and this node will
+re-trigger the mux selection commands as they happened when the recorded system was running, so the
+mux will be switching the same way it did during runtime.
+"""
+
+import rospy
+from std_msgs.msg import String
+from topic_tools.srv import MuxSelect, MuxSelectRequest
+
+
+def cb(msg):
+    req = MuxSelectRequest()
+    req.topic = msg.data
+
+    rospy.logdebug("Selecting " + req.topic + " on mux " + rospy.resolve_name("mux"))
+    select(req)
+
+
+if __name__ == "__main__":
+    rospy.init_node('mux_replay', anonymous=True)
+
+    service = rospy.resolve_name("mux") + "/select"
+
+    waited = False
+    while not rospy.is_shutdown():
+        try:
+            rospy.wait_for_service(service, rospy.Duration(1))
+            break
+        except rospy.ROSException:
+            rospy.logwarn("Waiting for service " + service + " to appear")
+            waited = True
+    if waited:
+        rospy.loginfo("Service " + service + " found")
+
+    select = rospy.ServiceProxy(service, MuxSelect)
+    sub = rospy.Subscriber('selected', String, cb, queue_size=10)
+    rospy.spin()
