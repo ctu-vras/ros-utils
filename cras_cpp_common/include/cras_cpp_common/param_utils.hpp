@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/xmlrpc_value_traits.hpp>
 
 #include <list>
 #include <set>
@@ -161,6 +162,16 @@ protected:
           param.getNamespace().c_str(), name.c_str(), cras::to_string(value).c_str(),
           cras::prependIfNonEmpty(unit, " ").c_str());
       return value;
+    }
+    else if (param.hasParam(name))
+    {
+      XmlRpc::XmlRpcValue v;
+      param.getParam(name, v);
+      this->log->logError("%s: Parameter %s found, but has wrong type. Expected XmlRpc type %s, got %s. Assigning default: %s%s",
+        param.getNamespace().c_str(), name.c_str(),
+        cras::XmlRpcValueTraits<T>::stringType, cras::to_string(v.getType()).c_str(),
+        cras::to_string(defaultValue).c_str(), cras::prependIfNonEmpty(unit, " ").c_str());
+      return defaultValue;
     }
     else
     {

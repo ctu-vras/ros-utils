@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(cras_cpp_common)
 
 set(CMAKE_CXX_STANDARD 17)  # allows better Eigen alignment handling
@@ -118,6 +118,11 @@ target_include_directories(set_utils INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT
 add_library(type_utils INTERFACE)
 target_sources(type_utils INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/type_utils.hpp>)
+
+add_library(xmlrpc_value_traits INTERFACE)
+target_sources(xmlrpc_value_traits INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/xmlrpc_value_traits.hpp>)
+target_include_directories(xmlrpc_value_traits INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 add_library(diag_utils src/diag_utils.cpp)
 target_link_libraries(diag_utils PRIVATE type_utils PUBLIC param_utils slow_topic_diag_updater ${catkin_LIBRARIES})
