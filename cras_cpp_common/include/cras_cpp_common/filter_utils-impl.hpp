@@ -31,7 +31,7 @@ class FilterBase;
 template<typename F>
 struct FilterRawGetParamAdapter : public RawGetParamAdapter
 {
-  explicit FilterRawGetParamAdapter(cras::FilterBase<F>* filter) : filter(filter) {}
+  explicit FilterRawGetParamAdapter(const cras::FilterBase<F>* filter) : filter(filter) {}
   virtual ~FilterRawGetParamAdapter() = default;
 
   // overloads directly implemented in filters::FilterBase
@@ -153,7 +153,7 @@ struct FilterRawGetParamAdapter : public RawGetParamAdapter
     throw std::runtime_error("Filters do not offer namespaced parameter adapters.");
   }
 protected:
-  cras::FilterBase<F>* filter;
+  const cras::FilterBase<F>* filter;
 };
 
 

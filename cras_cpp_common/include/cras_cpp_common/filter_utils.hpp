@@ -90,13 +90,13 @@ protected:
   const nodelet::Nodelet* nodelet;
   FilterRawGetParamAdapter<F> params;
 
-  bool getParamRaw(const std::string& name, bool& v) { return filters::FilterBase<F>::getParam(name, (bool&)v); }
-  bool getParamRaw(const std::string& name, int& v) { return filters::FilterBase<F>::getParam(name, (int&)v); }
-  bool getParamRaw(const std::string& name, double& v) { return filters::FilterBase<F>::getParam(name, (double&)v); }
-  bool getParamRaw(const std::string& name, std::string& v) { return filters::FilterBase<F>::getParam(name, (std::string&)v); }
-  bool getParamRaw(const std::string& name, std::vector<double>& v) { return filters::FilterBase<F>::getParam(name, (std::vector<double>&)v); }
-  bool getParamRaw(const std::string& name, std::vector<std::string>& v) { return filters::FilterBase<F>::getParam(name, (std::vector<std::string>&)v); }
-  bool getParamRaw(const std::string& name, XmlRpc::XmlRpcValue& v) { return filters::FilterBase<F>::getParam(name, (XmlRpc::XmlRpcValue&)v); }
+  bool getParamRaw(const std::string& name, bool& v) const { return filters::FilterBase<F>::getParam(name, (bool&)v); }
+  bool getParamRaw(const std::string& name, int& v) const { return filters::FilterBase<F>::getParam(name, (int&)v); }
+  bool getParamRaw(const std::string& name, double& v) const { return filters::FilterBase<F>::getParam(name, (double&)v); }
+  bool getParamRaw(const std::string& name, std::string& v) const { return filters::FilterBase<F>::getParam(name, (std::string&)v); }
+  bool getParamRaw(const std::string& name, std::vector<double>& v) const { return filters::FilterBase<F>::getParam(name, (std::vector<double>&)v); }
+  bool getParamRaw(const std::string& name, std::vector<std::string>& v) const { return filters::FilterBase<F>::getParam(name, (std::vector<std::string>&)v); }
+  bool getParamRaw(const std::string& name, XmlRpc::XmlRpcValue& v) const { return filters::FilterBase<F>::getParam(name, (XmlRpc::XmlRpcValue&)v); }
 
   bool hasParam(const std::string& name) const
   {
