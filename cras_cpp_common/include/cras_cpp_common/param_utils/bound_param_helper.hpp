@@ -59,7 +59,8 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
-  template<typename ResultType, typename ParamServerType = ResultType>
+  template<typename ResultType, typename ParamServerType = ResultType,
+    ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ::cras::GetParamResult<ResultType> getParamVerbose(
     const ::std::string& name, const ::cras::optional<ResultType>& defaultValue = ResultType(),
     const ::std::string& unit = "", const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {}) const
@@ -83,7 +84,8 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
-  template<typename ResultType, typename ParamServerType = ResultType>
+  template<typename ResultType, typename ParamServerType = ResultType,
+    ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ::cras::GetParamResult<ResultType> getParamVerbose(
     const ::std::string& name, const ResultType& defaultValue = ResultType(),
     const ::std::string& unit = "", const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {}) const
@@ -109,7 +111,8 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return The loaded parameter value.
    */
-  template<typename ResultType, typename ParamServerType = ResultType>
+  template<typename ResultType, typename ParamServerType = ResultType,
+    ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ResultType getParam(
     const ::std::string& name, const ::cras::optional<ResultType>& defaultValue = ResultType(),
     const ::std::string& unit = "", const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {}) const
@@ -133,7 +136,8 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return The loaded parameter value.
    */
-  template<typename ResultType, typename ParamServerType = ResultType>
+  template<typename ResultType, typename ParamServerType = ResultType,
+    ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ResultType getParam(
     const ::std::string& name, const ResultType& defaultValue = ResultType(),
     const ::std::string& unit = "", const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {}) const
@@ -176,7 +180,7 @@ public:
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
   inline ::cras::GetParamResult<std::string> getParamVerbose(
-    const ::std::string& name, const char* const& defaultValue, const ::std::string& unit = "",
+    const ::std::string& name, const char* defaultValue, const ::std::string& unit = "",
     const ::cras::GetParamOptions<::std::string>& options = {}) const
   {
     return ::cras::ParamHelper::getParamVerbose(*this->param, name, defaultValue, unit, options);
@@ -215,7 +219,7 @@ public:
    * \return The loaded parameter value.
    */
   inline ::std::string getParam(
-    const ::std::string& name, const char* const& defaultValue, const ::std::string& unit = "",
+    const ::std::string& name, const char* defaultValue, const ::std::string& unit = "",
     const ::cras::GetParamOptions<std::string>& options = {}) const
   {
     return ::cras::ParamHelper::getParam(*this->param, name, defaultValue, unit, options);

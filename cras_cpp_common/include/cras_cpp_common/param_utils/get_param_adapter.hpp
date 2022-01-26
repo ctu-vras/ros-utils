@@ -47,7 +47,7 @@ struct GetParamAdapter
   /**
    * \brief Construct another adapter whose source are parameters that are in a sub-namespce of this adapter.
    * \param[in] ns The namespace to search parameters in. 
-   * \return The constructed adapter.
+   * \return The constructed adapter. The function should never return null (throw an exception on failure).
    * \throws std::runtime_error If something fails.
    * \throws ros::InvalidNameException If the namespace specification does not follow ROS parameter name rules.
    */

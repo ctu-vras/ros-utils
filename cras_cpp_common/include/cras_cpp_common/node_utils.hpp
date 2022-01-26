@@ -44,7 +44,8 @@ const ParamHelper paramHelper(::std::make_shared<::cras::NodeLogHelper>());
  *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline GetParamResult<ResultType> getParamVerbose(
   const ::ros::NodeHandle& node, const ::std::string& name,
   const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -72,7 +73,8 @@ inline GetParamResult<ResultType> getParamVerbose(
  *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline GetParamResult<ResultType> getParamVerbose(
   const ::ros::NodeHandle& node, const ::std::string& name,
   const ResultType& defaultValue = ResultType(),
@@ -101,7 +103,8 @@ inline GetParamResult<ResultType> getParamVerbose(
  *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::ros::NodeHandle& node, const ::std::string& name,
   const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -129,7 +132,8 @@ inline ResultType getParam(
  *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::ros::NodeHandle& node, const ::std::string& name,
   const ResultType& defaultValue = ResultType(),
@@ -180,7 +184,7 @@ inline GetParamResult<::std::string> getParamVerbose(
  */
 inline GetParamResult<::std::string> getParamVerbose(
   const ::ros::NodeHandle& node, const ::std::string& name,
-  const char* const& defaultValue, const ::std::string& unit = "",
+  const char* defaultValue, const ::std::string& unit = "",
   const ::cras::GetParamOptions<::std::string>& options = {})
 {
   const auto param = ::cras::NodeHandleGetParamAdapter(node);
@@ -225,7 +229,7 @@ inline ::std::string getParam(
  */
 inline ::std::string getParam(
   const ::ros::NodeHandle& node, const ::std::string& name,
-  const char* const& defaultValue, const ::std::string& unit = "",
+  const char* defaultValue, const ::std::string& unit = "",
   const ::cras::GetParamOptions<std::string>& options = {})
 {
   const auto param = ::cras::NodeHandleGetParamAdapter(node);

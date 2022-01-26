@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
+# Keep this file in sync with getParam() method in test_param_utils.cpp
+
 test_chain_config:
 - name: "chain"
   type: "cras_cpp_common/NonExistentFilter"

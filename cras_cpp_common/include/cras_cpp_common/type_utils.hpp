@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 #include <cras_cpp_common/string_utils.hpp>
 
 /**
@@ -46,5 +47,26 @@ inline std::string getTypeName()
   ::cras::replace(result, " >", ">");
   return result;
 }
+
+template<typename T>
+struct is_c_string : public std::false_type {};
+
+template<>
+struct is_c_string<char*> : public std::true_type {};
+
+template<>
+struct is_c_string<char* const> : public std::true_type {};
+
+template<>
+struct is_c_string<const char*> : public std::true_type {};
+
+template<>
+struct is_c_string<const char* const> : public std::true_type {};
+
+template<int I>
+struct is_c_string<char[I]> : public std::true_type {};
+
+template<int I>
+struct is_c_string<const char[I]> : public std::true_type {};
 
 }

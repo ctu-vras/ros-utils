@@ -25,6 +25,10 @@ namespace cras
 struct NodeHandleGetParamAdapter : public ::cras::GetParamAdapter
 {
 public:
+  /**
+   * \brief Create a GetParamAdapter that reads parameters from the given node handle.
+   * \param nh The node handle to read params from.
+   */
   explicit NodeHandleGetParamAdapter(const ::ros::NodeHandle &nh) noexcept;
   ~NodeHandleGetParamAdapter() override;
 

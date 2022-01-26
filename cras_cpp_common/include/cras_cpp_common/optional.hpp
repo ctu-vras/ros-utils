@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * \file
+ * \brief A C++14 shim for std::optional. It doesn't work as a fully-fledged substitute and a compiler warning is
+ *        printed when the C++14 version is used.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
 #if __has_include(<optional>) && __cplusplus >= 201703L
 #include <optional>
 namespace cras
@@ -149,3 +158,20 @@ inline bool operator!=(nullopt_t, const optional<T>& rhs) noexcept {
 }
 
 #endif
+
+namespace cras
+{
+/**
+ * \brief Type trait determining whether type T is cras::optional or not.
+ * \tparam T The type to test.
+ */
+template<typename T>
+struct is_optional : public ::std::false_type {};
+
+/**
+ * \brief Type trait determining whether type T is cras::optional or not.
+ * \tparam T The type to test.
+ */
+template<typename T>
+struct is_optional<::cras::optional<T>> : public ::std::true_type {};
+}

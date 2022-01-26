@@ -47,6 +47,23 @@ public:
 };
 
 /**
+ * \brief This type is a TrueType if the combination of ResultType and ParamServerType is valid.
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ */
+template <typename ResultType, typename ParamServerType>
+using check_get_param_types = typename std::enable_if_t<
+  // getParam() cannot handle cras::optional types
+  !::cras::is_optional<ResultType>::value &&
+  // C strings are handled via overloads as GetParamOptions is undefined for them
+  !::cras::is_c_string<ResultType>::value &&
+  !::cras::is_c_string<ParamServerType>::value
+>;
+
+/**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
  *        and print out a ROS log message with the loaded values (if specified).
  *
@@ -69,7 +86,8 @@ public:
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ::cras::GetParamResult<ResultType> getParamVerbose(
   const ::cras::GetParamAdapter& param, const ::std::string& name,
   const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -265,7 +283,8 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ::cras::GetParamResult<ResultType> getParamVerbose(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
   const ResultType& defaultValue = ResultType(),
@@ -295,7 +314,8 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
   const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -324,7 +344,8 @@ inline ResultType getParam(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType>
+template<typename ResultType, typename ParamServerType = ResultType,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
   const ResultType& defaultValue = ResultType(),
@@ -379,7 +400,7 @@ inline ::cras::GetParamResult<::std::string> getParamVerbose(
  */
 inline ::cras::GetParamResult<::std::string> getParamVerbose(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
-  const char * const& defaultValue, const ::std::string &unit = "",
+  const char* defaultValue, const ::std::string &unit = "",
   const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
 {
   ::cras::optional<::std::string> defaultStr(defaultValue);
@@ -425,7 +446,7 @@ inline ::std::string getParam(
  */
 inline ::std::string getParam(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
-  const char * const& defaultValue, const ::std::string &unit = "",
+  const char* defaultValue, const ::std::string &unit = "",
   const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
 {
   return ::cras::getParamVerbose(param, name, defaultValue, unit, options, logger).value;

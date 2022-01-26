@@ -21,6 +21,12 @@ namespace cras
 struct XmlRpcValueGetParamAdapter : public ::cras::GetParamAdapter
 {
 public:
+  /**
+   * \brief Create a GetParamAdapter that reads parameters from baseParam (which needs to be struct).
+   * \param baseParam The struct to read parameters from.
+   * \param baseNamespace Any namespace prepended before the name of the created adapter in logs.
+   * \throws std::runtime_error If baseParam is not a struct.
+   */
   explicit XmlRpcValueGetParamAdapter(const ::XmlRpc::XmlRpcValue& baseParam, const ::std::string& baseNamespace);
   ~XmlRpcValueGetParamAdapter() override;
 
