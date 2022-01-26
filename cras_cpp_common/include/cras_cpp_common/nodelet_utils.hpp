@@ -1,22 +1,12 @@
 #pragma once
 
-#include <string>
-#include <utility>
-
-#include <nodelet/nodelet.h>
-#include <ros/ros.h>
-#include <rosconsole/macros_generated.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-#include <diagnostic_updater/diagnostic_updater.h>
-
-#include <cras_cpp_common/diag_utils.hpp>
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/param_utils.hpp>
-
 /**
- * This file contains a set of classes that make work with nodelets easier.
- *
+ * \brief This file contains a set of classes that make work with nodelets easier.
+ * \param[in] node The node to bind to.
+ * \param[in] ns If nonempty, returns just the parameters in the given namespace.
+ * \return The bound param helper.
+ * 
+ * \details
  * First, there are a few helper "mixins", which are not derived from Nodelet, but are expected to be its sister classes.
  *
  * NodeletParamHelper provides the conveniently templatized getParam() methods similar to those in node_utils.
@@ -41,6 +31,23 @@
  * unload while the canTransform() call is waiting.
  */
 
+#include <string>
+#include <utility>
+
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+#include <rosconsole/macros_generated.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <diagnostic_updater/diagnostic_updater.h>
+
+#include <cras_cpp_common/diag_utils.hpp>
+#include <cras_cpp_common/log_utils/nodelet.h>
+#include <cras_cpp_common/param_utils.hpp>
+#include <cras_cpp_common/param_utils/bound_param_helper.hpp>
+#include <cras_cpp_common/param_utils/param_helper.hpp>
+#include <cras_cpp_common/param_utils/get_param_adapters/node_handle.hpp>
+
 #define NODELET_DEBUG_DELAYED_THROTTLE(rate, ...) ROS_DEBUG_DELAYED_THROTTLE_NAMED(rate, getName(), __VA_ARGS__)
 #define NODELET_INFO_DELAYED_THROTTLE(rate, ...) ROS_INFO_DELAYED_THROTTLE_NAMED(rate, getName(), __VA_ARGS__)
 #define NODELET_WARN_DELAYED_THROTTLE(rate, ...) ROS_WARN_DELAYED_THROTTLE_NAMED(rate, getName(), __VA_ARGS__)
@@ -54,78 +61,267 @@
 namespace cras {
 
 /**
- * Log helper delegating the logging calls to the NODELET_ macros.
+ * \brief Make this class a public base of your Nodelet and it will allow you to call the getParam() helpers.
  */
-class NodeletLogHelper : public LogHelper
-{
-public:
-  /**
-   * Create the log helper reporting as the nodelet of name returned by getNameFn.
-   * @param getNameFn A function returning the name of the nodelet.
-   */
-  NodeletLogHelper(const std::function<const std::string&()> &getNameFn) : getNameFn(getNameFn) {}
-  virtual ~NodeletLogHelper() = default;
-
-protected:
-  /**
-   * Used by the NODELET_ logging macros.
-   * @return Name of the bound nodelet.
-   */
-  const std::string& getName() const { return getNameFn(); }
-
-  void printDebug(const std::string &text) const override { NODELET_DEBUG("%s", text.c_str()); }
-  void printInfo(const std::string &text) const override { NODELET_INFO("%s", text.c_str()); }
-  void printWarn(const std::string &text) const override { NODELET_WARN("%s", text.c_str()); }
-  void printError(const std::string &text) const override { NODELET_ERROR("%s", text.c_str()); }
-  void printFatal(const std::string &text) const override { NODELET_FATAL("%s", text.c_str()); }
-
-  std::function<const std::string&()> getNameFn; //!< Function returning the name of the nodelet.
-};
-
-/** \brief Make this class a public base of your Nodelet and it will allow you to call the getParam() helpers. */
-class NodeletParamHelper : public ParamHelper
+class NodeletParamHelper : public ::cras::ParamHelper
 {
 public:
   NodeletParamHelper() :
-    ParamHelper(std::make_shared<NodeletLogHelper>(std::bind(&NodeletParamHelper::getName, this)))
+    ::cras::ParamHelper(::std::make_shared<::cras::NodeletLogHelper>(::std::bind(&NodeletParamHelper::getName, this)))
   {
   }
 
   // we need at least one virtual function so that we can use dynamic cast in implementation
-  virtual ~NodeletParamHelper() = default;
+  ~NodeletParamHelper() override = default;
 
-  template<typename T>
-  inline T getParam(ros::NodeHandle& nh, const std::string& name, const T& defaultValue = T(),
-                    const std::string& unit = "") const {
-    const auto param = cras::NodeRawGetParamAdapter(nh);
-    return ParamHelper::getParam(param, name, defaultValue, unit);
-  }
-
-  inline std::string getParam(ros::NodeHandle& nh, const std::string &name, const char *defaultValue,
-                              const std::string &unit = "") const {
-    const auto param = cras::NodeRawGetParamAdapter(nh);
-    return ParamHelper::getParam(param, name, defaultValue, unit);
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+   *                    using options.toResult function (which defaults to static_cast).
+   * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+   *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+   *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+   *                         If a required param is not found, a GetParamException is thrown.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return A wrapper containing the loaded parameter value and details about the function execution.
+   */
+  template<typename ResultType, typename ParamServerType = ResultType>
+  inline ::cras::GetParamResult<ResultType> getParamVerbose(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ::cras::optional<ResultType>& defaultValue = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParamVerbose(param, name, defaultValue, unit, options);
   }
 
   /**
-   * Creates a version of this param helper "bound" to the given node handle, so that it is not needed to specify the
-   * node handle in the subsequent getParam calls.
-   * @param node The node to bind to.
-   * @return The bound param helper.
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+   *                    using options.toResult function (which defaults to static_cast).
+   * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+   *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+   *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
-  inline BoundParamHelperPtr paramsForNodeHandle(ros::NodeHandle& node) const {
-    const auto param = std::make_shared<NodeRawGetParamAdapter>(node);
-    return std::make_shared<BoundParamHelper>(this->log, param);
+  template<typename ResultType, typename ParamServerType = ResultType>
+  inline ::cras::GetParamResult<ResultType> getParamVerbose(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ResultType& defaultValue = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParamVerbose(param, name, defaultValue, unit, options);
   }
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+   *                    using options.toResult function (which defaults to static_cast).
+   * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+   *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+   *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+   *                         If a required param is not found, a GetParamException is thrown.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return The loaded parameter value.
+   */
+  template<typename ResultType, typename ParamServerType = ResultType>
+  inline ResultType getParam(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ::cras::optional<ResultType>& defaultValue = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParam(param, name, defaultValue, unit, options);
+  }
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+   *                    using options.toResult function (which defaults to static_cast).
+   * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+   *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+   *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return The loaded parameter value.
+   */
+  template<typename ResultType, typename ParamServerType = ResultType>
+  inline ResultType getParam(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ResultType& defaultValue = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParam(param, name, defaultValue, unit, options);
+  }
+
+  // std::string - char interop specializations
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+   *                         If a required param is not found, a GetParamException is thrown.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return A wrapper containing the loaded parameter value and details about the function execution.
+   */
+  inline ::cras::GetParamResult<::std::string> getParamVerbose(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ::cras::optional<const char*>& defaultValue, const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParamVerbose(param, name, defaultValue, unit, options);
+  }
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return A wrapper containing the loaded parameter value and details about the function execution.
+   */
+  inline ::cras::GetParamResult<::std::string> getParamVerbose(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const char* const& defaultValue, const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParamVerbose(param, name, defaultValue, unit, options);
+  }
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+   *                         If a required param is not found, a GetParamException is thrown.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return The loaded parameter value.
+   */
+  inline ::std::string getParam(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const ::cras::optional<const char*>& defaultValue, const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParam(param, name, defaultValue, unit, options);
+  }
+
+  /**
+   * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+   *        and print out a ROS log message with the loaded values (if specified).
+   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \param[in] node The node handle from which parameters are read.
+   * \param[in] name Name of the parameter.
+   * \param[in] defaultValue The default value to use.
+   * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+   *                 more informative.
+   * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+   *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+   * \return The loaded parameter value.
+   */
+  inline ::std::string getParam(
+    const ::ros::NodeHandle& node, const ::std::string& name,
+    const char* const& defaultValue, const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {})
+  {
+    const auto param = ::cras::NodeHandleGetParamAdapter(node);
+    return ::cras::ParamHelper::getParam(param, name, defaultValue, unit, options);
+  }
+
+  /**
+   * \brief Creates a version of this param helper "bound" to the given node handle, so that it is not needed to
+   *        specify the node handle in the subsequent getParam() calls.
+   * \param node[in] The node to bind to.
+   * \param ns[in] If nonempty, returns just the parameters in the given namespace.
+   * \return The bound param helper.
+   */
+  ::cras::BoundParamHelperPtr params(::ros::NodeHandle& node, const ::std::string& ns = "") const;
+
+  /**
+   * \brief Creates a version of this param helper "bound" to the private nodelet parameters, so that it is not needed
+   *        to specify the node handle in the subsequent getParam() calls.
+   * \param ns[in] If nonempty, returns just the parameters in the given namespace.
+   * \return The bound param helper.
+   */
+  ::cras::BoundParamHelperPtr privateParams(const ::std::string& ns = "") const;
+
+  /**
+   * \brief Creates a version of this param helper "bound" to the public nodelet parameters, so that it is not needed to
+   *        specify the node handle in the subsequent getParam() calls.
+   * \param ns[in] If nonempty, returns just the parameters in the given namespace.
+   * \return The bound param helper.
+   */
+  ::cras::BoundParamHelperPtr publicParams(const ::std::string& ns = "") const;
+
+  /**
+   * \brief Creates a version of this param helper "bound" to the given node handle, so that it is not needed to
+   *        specify the node handle in the subsequent getParam() calls.
+   * \param node[in] The node to bind to.
+   * \return The bound param helper.
+   */
+  ::cras::BoundParamHelperPtr paramsForNodeHandle(::ros::NodeHandle& node);
 
 protected:
-  std::string defaultName = "NodeletParamHelper_has_to_be_a_sister_class_of_Nodelet";
+  //! \brief This name is used for NodeletParamHelper instances that are wrongly not a sister class of nodelet::Nodelet. 
+  ::std::string defaultName = "NodeletParamHelper_has_to_be_a_sister_class_of_Nodelet";
 
   /**
-   * This function is passed to the logging helper.
-   * @return Name of the nodelet.
+   * \brief This function is passed to the logging helper.
+   * \return Name of the sister nodelet.
    */
-  const std::string& getName() const;
+  const ::std::string& getName() const;
 
 };
 

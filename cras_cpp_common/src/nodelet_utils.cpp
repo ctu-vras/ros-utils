@@ -156,6 +156,36 @@ const std::string &NodeletParamHelper::getName() const {
   return this->defaultName;
 }
 
+::cras::BoundParamHelperPtr NodeletParamHelper::params(::ros::NodeHandle& node, const ::std::string& ns) const
+{
+  const auto param = ::std::make_shared<::cras::NodeHandleGetParamAdapter>(node);
+  auto result = ::std::make_shared<::cras::BoundParamHelper>(this->log, param);
+  if (!ns.empty())
+    result = result->paramsInNamespace(ns);
+  return result;
+}
+
+::cras::BoundParamHelperPtr NodeletParamHelper::paramsForNodeHandle(::ros::NodeHandle& node)
+{
+  return this->params(node);
+}
+
+::cras::BoundParamHelperPtr NodeletParamHelper::privateParams(const ::std::string& ns) const
+{
+  const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
+  if (nodelet != nullptr)
+    return this->params(nodelet->getPrivateNodeHandle(), ns);
+  throw ::std::runtime_error("privateParams() called on an unsupported nodelet");
+}
+
+::cras::BoundParamHelperPtr NodeletParamHelper::publicParams(const ::std::string& ns) const
+{
+  const auto* nodelet = dynamic_cast<const ::nodelet::Nodelet*>(this);
+  if (nodelet != nullptr)
+    return this->params(nodelet->getNodeHandle(), ns);
+  throw ::std::runtime_error("publicParams() called on an unsupported nodelet");
+}
+
 struct NodeletWithSharedTfBuffer::NodeletWithSharedTfBufferPrivate
 {
   std::string defaultName = "NodeletWithSharedTfBuffer_has_to_be_a_sister_class_of_Nodelet";

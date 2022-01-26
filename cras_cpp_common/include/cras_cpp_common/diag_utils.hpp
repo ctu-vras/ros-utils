@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cras_cpp_common/diagnostics/SlowTopicDiagUpdater.h>
-#include <cras_cpp_common/param_utils.hpp>
+#include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 
 namespace cras
 {
