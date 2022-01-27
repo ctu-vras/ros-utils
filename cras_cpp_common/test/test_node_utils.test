@@ -2,5 +2,5 @@
 <!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
 <launch>
     <rosparam command="load" file="$(dirname)/test_params.yaml" />
-    <test test-name="filter_node_utils" pkg="cras_cpp_common" type="test_node_utils"/>
+    <test test-name="test_node_utils" pkg="cras_cpp_common" type="test_node_utils"/>
 </launch>

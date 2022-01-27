@@ -2,5 +2,5 @@
 <!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
 <launch>
     <rosparam command="load" file="$(dirname)/test_params.yaml" />
-    <test test-name="test_param_utils" pkg="cras_cpp_common" type="test_param_utils"/>
+    <test test-name="test_nodelet_get_param" pkg="cras_cpp_common" type="test_nodelet_get_param"/>
 </launch>

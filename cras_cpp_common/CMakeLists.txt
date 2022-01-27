@@ -173,4 +173,7 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest_gtest(test_node_utils test/test_node_utils.test test/test_node_utils.cpp)
   target_link_libraries(test_node_utils param_utils node_utils ${catkin_LIBRARIES})
+  
+  add_rostest_gtest(test_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
+  target_link_libraries(test_nodelet_get_param param_utils nodelet_utils ${catkin_LIBRARIES})
 endif()
