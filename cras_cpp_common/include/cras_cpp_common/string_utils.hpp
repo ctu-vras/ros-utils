@@ -206,12 +206,7 @@ inline std::string to_string(const char* value)
   return {value};
 }
 
-inline std::string to_string(const char* const& value)
-{
-  return {value};
-}
-
-inline std::string to_string(char* const& value)
+inline std::string to_string(char* value)
 {
   return {value};
 }
@@ -237,6 +232,34 @@ inline std::string to_string(const std::string& value)
 {
   return value;
 }
+
+}
+
+#if __has_include(<Eigen/Core>)
+#include "cras_cpp_common/string_utils/eigen.hpp"
+#endif
+
+#if __has_include(<tf2/LinearMath/Vector3.h>)
+#include "cras_cpp_common/string_utils/tf2.hpp"
+#endif
+
+#if __has_include(<ros/ros.h>)
+#include "cras_cpp_common/string_utils/ros.hpp"
+#endif
+
+#if __has_include(<xmlrpcpp/XmlRpcValue.h>)
+#include "cras_cpp_common/string_utils/xmlrpc.hpp"
+#endif
+
+namespace cras
+{
+
+// forward declarations of to_string(map) so that to_string(vector) can make use of it
+template<typename K, typename V>
+inline std::string to_string(const std::map<K, V>& value);
+
+template<typename K, typename V>
+inline std::string to_string(const std::unordered_map<K, V>& value);
 
 #define DECLARE_TO_STRING_VECTOR(vectorType, prefix, suffix) \
   template<typename T> \
@@ -284,19 +307,3 @@ DECLARE_TO_STRING_VECTOR(std::unordered_set, "{", "}")
 DECLARE_TO_STRING_MAP(std::map)
 DECLARE_TO_STRING_MAP(std::unordered_map)
 }
-
-#if __has_include(<Eigen/Core>)
-#include "cras_cpp_common/string_utils/eigen.hpp"
-#endif
-
-#if __has_include(<tf2/LinearMath/Vector3.h>)
-#include "cras_cpp_common/string_utils/tf2.hpp"
-#endif
-
-#if __has_include(<ros/ros.h>)
-#include "cras_cpp_common/string_utils/ros.hpp"
-#endif
-
-#if __has_include(<xmlrpcpp/XmlRpcValue.h>)
-#include "cras_cpp_common/string_utils/xmlrpc.hpp"
-#endif

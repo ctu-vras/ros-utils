@@ -157,6 +157,13 @@ inline bool convert(const XmlRpc::XmlRpcValue& x, std::string& v, bool /*skipNon
   return false;
 }
 
+// forward-declare map types so that they can be used by the vector converters (map inside vector)
+template<typename T>
+inline bool convert(const XmlRpc::XmlRpcValue& x, std::map<std::string, T>& v, bool skipNonConvertible = false, std::list<std::string>* errors = nullptr);
+
+template<typename T>
+inline bool convert(const XmlRpc::XmlRpcValue& x, std::unordered_map<std::string, T>& v, bool skipNonConvertible = false, std::list<std::string>* errors = nullptr);
+
 #define DEFINE_ARRAY_CONVERT(arrayType, insertFn) \
   template<typename T> \
   inline bool convert(const XmlRpc::XmlRpcValue& x, arrayType<T>& v, bool skipNonConvertible = false, std::list<std::string>* errors = nullptr) \
@@ -185,7 +192,7 @@ DEFINE_ARRAY_CONVERT(std::unordered_set, insert)
 
 #define DEFINE_STRUCT_CONVERT(mapType) \
   template<typename T> \
-  inline bool convert(const XmlRpc::XmlRpcValue& x, mapType<std::string, T>& v, bool skipNonConvertible = false, std::list<std::string>* errors = nullptr) \
+  inline bool convert(const XmlRpc::XmlRpcValue& x, mapType<std::string, T>& v, bool skipNonConvertible, std::list<std::string>* errors) \
   { \
     if (x.getType() != XmlRpc::XmlRpcValue::TypeStruct) { \
       if (errors != nullptr) \

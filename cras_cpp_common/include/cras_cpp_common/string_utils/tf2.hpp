@@ -5,7 +5,8 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
 
-namespace cras {
+namespace cras
+{
 
 inline std::string to_string(const tf2::Vector3& value)
 {

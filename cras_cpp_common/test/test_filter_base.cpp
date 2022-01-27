@@ -382,6 +382,12 @@ TEST_P(FilterUtils, TF2)
   filter->testTF2();
 }
 
+TEST_P(FilterUtils, Eigen)
+{
+  auto filter = getFilter(std::get<0>(GetParam()));
+  filter->testEigen();
+}
+
 TEST_P(FilterUtils, Nested)
 {
   auto filter = getFilter(std::get<0>(GetParam()));

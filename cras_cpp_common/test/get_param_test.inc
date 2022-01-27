@@ -8,6 +8,8 @@
 
 #include "gtest/gtest.h"
 
+#include <Eigen/Dense>
+
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Transform.h>
@@ -61,6 +63,40 @@ double distance(const tf2::Transform& v1, const tf2::Transform& v2)
   return distance(v1.getOrigin(), v2.getOrigin()) + distance(v1.getRotation(), v2.getRotation());
 }
 
+template <typename Scalar>
+double distance(const Eigen::Quaternion<Scalar>& q1, const Eigen::Quaternion<Scalar>& q2)
+{
+  return q1.angularDistance(q2);
+}
+
+template <typename Scalar, int Rows, int Cols, int Options, int RowsAtCompileTime, int ColsAtCompileTime>
+double distance(const Eigen::Matrix<Scalar, Rows, Cols, Options, RowsAtCompileTime, ColsAtCompileTime>& v1,
+  const Eigen::Matrix<Scalar, Rows, Cols, Options, RowsAtCompileTime, ColsAtCompileTime>& v2)
+{
+  return (v1 - v2).norm();
+}
+
+template <typename XprType, int BlockRows, int BlockCols, bool InnerPanel>
+double distance(const Eigen::Block<XprType, BlockRows, BlockCols, InnerPanel>& v1,
+  const Eigen::Block<XprType, BlockRows, BlockCols, InnerPanel>& v2)
+{
+  if (v1.rows() != v2.rows() || v1.cols() != v2.cols())
+    return std::numeric_limits<double>::quiet_NaN();
+  double d = 0;
+  for (Eigen::Index r = 0; r < v1.rows(); ++r)
+    for (Eigen::Index c = 0; c < v1.cols(); ++c)
+      d += std::pow(v1.coeff(r, c) - v2.coeff(r, c), 2);
+  return std::sqrt(d);
+}
+
+template <typename Scalar>
+double distance(const Eigen::Transform<Scalar, 3, Eigen::Isometry>& v1,
+  const Eigen::Transform<Scalar, 3, Eigen::Isometry>& v2)
+{
+  return distance(v1.translation(), v2.translation()) +
+    distance(Eigen::Quaternion<Scalar>(v1.linear()), Eigen::Quaternion<Scalar>(v2.linear()));
+}
+
 namespace ros
 {
 bool operator==(const ros::Rate& r1, const ros::Rate& r2)
@@ -71,6 +107,28 @@ bool operator==(const ros::Rate& r1, const ros::Rate& r2)
 bool operator==(const ros::WallRate& r1, const ros::WallRate& r2)
 {
   return r1.expectedCycleTime().operator==(r2.expectedCycleTime());
+}
+}
+
+namespace Eigen
+{
+template <typename Scalar>
+bool operator==(const Eigen::Quaternion<Scalar>& q1, const Eigen::Quaternion<Scalar>& q2)
+{
+  return q1.angularDistance(q2) == 0;
+}
+template <typename Scalar>
+bool operator==(const Eigen::Transform<Scalar, 3, Eigen::Isometry>& i1,
+  const Eigen::Transform<Scalar, 3, Eigen::Isometry>& i2)
+{
+  return i1.translation() == i2.translation() &&
+    Eigen::Quaternion<Scalar>(i1.linear()).angularDistance(Eigen::Quaternion<Scalar>(i2.linear())) == 0;
+}
+template <typename Scalar, int Rows, int Cols, int Options, int RowsAtCompileTime, int ColsAtCompileTime>
+bool operator==(const Eigen::Matrix<Scalar, Rows, Cols, Options, RowsAtCompileTime, ColsAtCompileTime>& m1,
+  const Eigen::Matrix<Scalar, Rows, Cols, Options, RowsAtCompileTime, ColsAtCompileTime>& m2)
+{
+  return distance(m1, m2) == 0;
 }
 }
 
@@ -748,6 +806,63 @@ struct GetParamTest
     {TRACE ((T*)this)->test_near("tf6", t, t2, false);}
     {TRACE ((T*)this)->test_near("tf7", t, t2, false);}
     {TRACE ((T*)this)->test_near("tf16", t, t2, false);}
+  }
+
+  template <typename Scalar>
+  inline void testEigenTemplate()
+  {
+    typedef Eigen::Matrix<Scalar, 3, 1> Vector3;
+    typedef Eigen::Matrix<Scalar, 4, 1> Vector4;
+    typedef Eigen::Matrix<Scalar, 4, 4> Matrix4;
+    typedef Eigen::Quaternion<Scalar> Quaternion;
+    typedef Eigen::Transform<Scalar, 3, Eigen::Isometry> Isometry3;
+    
+    Vector3 v(0, 1, 2);
+    {TRACE ((T*)this)->test_defaults("nonexistent", v);}
+    {TRACE ((T*)this)->test_defaults("quat4", v);}
+
+    Vector3 v2(M_PI, 0, 0);
+    {TRACE ((T*)this)->test_near("quat3", v, v2, false);}
+
+    Quaternion q(3, 0, 1, 2); // it doesn't need to be a valid quaternion; w first!
+    {TRACE ((T*)this)->test_defaults("nonexistent", q);}
+    {TRACE ((T*)this)->test_defaults("tf7", q);}
+
+    Quaternion q2(0, 1, 0, 0);  // w first!
+    {TRACE ((T*)this)->test_near("quat3", q, q2, false);}
+    {TRACE ((T*)this)->test_near("quat4", q, q2, false);}
+
+    Vector4 v4(1, 0, 0, 0);
+    {TRACE ((T*)this)->test_near("quat4", v4, Vector4(1, 0, 0, 0), false);}
+    {TRACE ((T*)this)->test_defaults("tf7", v4);}
+
+    Isometry3 t = Isometry3::Identity();
+    t.translationExt() = v; t.linearExt() = q.toRotationMatrix();
+    {TRACE ((T*)this)->test_defaults("nonexistent", t);}
+
+    Vector3 v3(1, 2, 3);
+    Isometry3 t2 = Isometry3::Identity();
+    t2.translationExt() = v3; t2.linearExt() = q2.toRotationMatrix();
+    {TRACE ((T*)this)->test_near("tf6", t, t2, false);}
+    {TRACE ((T*)this)->test_near("tf7", t, t2, false);}
+    {TRACE ((T*)this)->test_near("tf16", t, t2, false);}
+    {TRACE ((T*)this)->test_defaults("quat3", t);}
+
+    Matrix4 m = Matrix4::Identity();
+    Matrix4 m2; m2 <<
+      1, 0, 0, 1,
+      0, -1, 0, 2,
+      0, 0, -1, 3,
+      0, 0, 0, 1;
+    {TRACE ((T*)this)->test_near("tf16", m, m2, false);}
+    {TRACE ((T*)this)->test_defaults("tf7", m);}
+    {TRACE ((T*)this)->test_defaults("bool_True", m);}
+  }
+
+  inline void testEigen()
+  {
+    this->template testEigenTemplate<double>();
+    this->template testEigenTemplate<float>();
   }
 
   inline void testNested()

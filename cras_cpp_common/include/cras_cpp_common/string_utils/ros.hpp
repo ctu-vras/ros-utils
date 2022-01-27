@@ -5,7 +5,8 @@
 #include <ros/time.h>
 #include <ros/message_traits.h>
 
-namespace cras {
+namespace cras
+{
 
 template<typename T, typename std::enable_if_t<
     std::is_same<T, ros::Time>::value ||

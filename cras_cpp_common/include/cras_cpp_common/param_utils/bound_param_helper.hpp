@@ -227,17 +227,36 @@ public:
 
   /**
    * \brief Whether a parameter with the given name exists.
-   * \param name Name of the parameter.
+   * \param[in] name Name of the parameter.
+   * \param[in] searchNested If true, nested parameters (containing slash) will be looked up recursively. Otherwise,
+   *                         exact name match is required and slashes in name will result in failure (returning false).
    * \return Whether the parameter exists.
    */
-  inline bool hasParam(const ::std::string& name) const
+  inline bool hasParam(const ::std::string& name, const bool searchNested = true) const
   {
-    return this->param->hasParam(name);
+    if (this->param->hasParam(name))
+      return true;
+    if (!searchNested)
+      return false;
+
+    // try searching for a nested parameter
+    const auto parts = ::cras::split(name, "/", 1);
+    if (parts.size() == 1)
+      return false;
+    const auto& head = parts[0];
+    const auto& tail = parts[1];
+    if (!this->param->hasParam(head))
+      return false;
+    XmlRpc::XmlRpcValue x;
+    this->param->getParam(head, x);
+    if (x.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+      return false;
+    return this->paramsInNamespace(head)->hasParam(tail);
   }
 
   /**
    * \brief Return a parameter helper of a sub-namespace. 
-   * \param ns Namespace.
+   * \param[in] ns Namespace.
    * \return The new helper.
    */
   inline ::cras::BoundParamHelperPtr paramsInNamespace(const ::std::string& ns) const
