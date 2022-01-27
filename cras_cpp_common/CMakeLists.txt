@@ -164,10 +164,13 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_cloud test/test_cloud.cpp)
   target_link_libraries(test_cloud cloud ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_param_utils test/test_param_utils.cpp)
-  target_link_libraries(test_param_utils param_utils ${catkin_LIBRARIES})
   
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
-  target_compile_options(test_filter_base PRIVATE -fno-var-tracking-assignments)
+  
+  add_rostest_gtest(test_param_utils test/test_param_utils.test test/test_param_utils.cpp)
+  target_link_libraries(test_param_utils param_utils ${catkin_LIBRARIES})
+  
+  add_rostest_gtest(test_node_utils test/test_node_utils.test test/test_node_utils.cpp)
+  target_link_libraries(test_node_utils param_utils node_utils ${catkin_LIBRARIES})
 endif()
