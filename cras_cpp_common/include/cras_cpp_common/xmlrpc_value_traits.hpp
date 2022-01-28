@@ -53,6 +53,13 @@ template<> struct XmlRpcValueTraits<bool>
   constexpr static const bool isCanonical { true };
 };
 
+template<> struct XmlRpcValueTraits<char>
+{
+  constexpr static const XmlRpc::XmlRpcValue::Type xmlRpcType { XmlRpc::XmlRpcValue::TypeInt };
+  constexpr static const char* stringType { to_cstring(xmlRpcType) };
+  constexpr static const bool isCanonical { false };
+};
+
 template<> struct XmlRpcValueTraits<signed char>
 {
   constexpr static const XmlRpc::XmlRpcValue::Type xmlRpcType { XmlRpc::XmlRpcValue::TypeInt };
@@ -149,6 +156,20 @@ template<> struct XmlRpcValueTraits<std::string>
   constexpr static const XmlRpc::XmlRpcValue::Type xmlRpcType { XmlRpc::XmlRpcValue::TypeString };
   constexpr static const char* stringType { to_cstring(xmlRpcType) };
   constexpr static const bool isCanonical { true };
+};
+
+template<> struct XmlRpcValueTraits<char*>
+{
+  constexpr static const XmlRpc::XmlRpcValue::Type xmlRpcType { XmlRpc::XmlRpcValue::TypeString };
+  constexpr static const char* stringType { to_cstring(xmlRpcType) };
+  constexpr static const bool isCanonical { false };
+};
+
+template<> struct XmlRpcValueTraits<const char*>
+{
+  constexpr static const XmlRpc::XmlRpcValue::Type xmlRpcType { XmlRpc::XmlRpcValue::TypeString };
+  constexpr static const char* stringType { to_cstring(xmlRpcType) };
+  constexpr static const bool isCanonical { false };
 };
 
 template<> struct XmlRpcValueTraits<tm>
