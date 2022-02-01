@@ -168,6 +168,9 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_xmlrpc_value_traits test/test_xmlrpc_value_traits.cpp)
   target_link_libraries(test_xmlrpc_value_traits xmlrpc_value_traits ${catkin_LIBRARIES})
 
+  catkin_add_gtest(test_xmlrpc_value_utils test/test_xmlrpc_value_utils.cpp)
+  target_link_libraries(test_xmlrpc_value_utils xmlrpc_value_utils ${catkin_LIBRARIES})
+
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
   target_compile_options(test_filter_base PRIVATE -fno-var-tracking-assignments)  # speed up build
