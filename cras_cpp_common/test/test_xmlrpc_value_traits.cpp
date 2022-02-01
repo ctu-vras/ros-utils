@@ -1,3 +1,11 @@
+/**
+ * \file
+ * \brief Unit test for xmlrpc_value_traits.hpp.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
 #include <mutex>
 
 #include "gtest/gtest.h"
