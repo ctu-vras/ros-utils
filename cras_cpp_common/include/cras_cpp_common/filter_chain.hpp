@@ -9,6 +9,7 @@
  */
 
 #include <functional>
+#include <mutex>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -65,6 +66,12 @@ public:
   void setNodelet(const ::nodelet::Nodelet* nodelet);
   
   /**
+   * \brief Set the filter callback.
+   * \param callback The callback to set.
+   */
+  void setFilterCallback(const FilterCallback& callback);
+  
+  /**
    * \brief Do the filtering.
    * This function intentionally shadows filters::FilterChain::update() which is non-virtual.
    * \param[in] data_in Input data. 
@@ -91,6 +98,13 @@ public:
    * \param[in] filters The filters to disable. 
    */
   void setDisabledFilters(::std::unordered_set<::std::string> filters);
+  
+  /**
+   * \brief Clear all filters from this chain.
+   * This function intentionally shadows filters::FilterChain::clear() which is non-virtual.
+   * \return Always true.
+   */
+  bool clear();
 
 protected:
   /**
@@ -105,6 +119,16 @@ protected:
    */
   void updateActiveFilters();
   
+  /**
+   * \brief Get the list of filters configured for this chain.
+   * \return The filters.
+   */
+  ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters();
+
+  /**
+   * \brief Get the list of filters configured for this chain.
+   * \return The filters.
+   */
   const ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters() const; 
 
   //! \brief The optional callback to call when a filter finishes its work.
@@ -115,6 +139,12 @@ protected:
   
   //! \brief A list of filters that should be treated as active and should act on the input data.
   ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> activeFilters;
+  
+  //! \brief Mutex protecting activeFilters access.
+  ::std::mutex activeFiltersMutex;
+
+  //! \brief Whether this filter chain has been initialized (gets set by first `update()` and cleared by `clear()`).
+  bool initialized {false};
 
   // Parent class buffers are private, so we create our own
 

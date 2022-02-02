@@ -28,19 +28,28 @@ void FilterChain<F>::setNodelet(const ::nodelet::Nodelet* nodelet)
 {
   for (const auto& filter : this->getFilters())
   {
-    if (::boost::dynamic_pointer_cast<::cras::FilterBase<F>>(filter))
-    {
-      ::boost::dynamic_pointer_cast<::cras::FilterBase<F>>(filter)->setNodelet(nodelet);
-    }
+    auto crasFilter = ::boost::dynamic_pointer_cast<::cras::FilterBase<F>>(filter);
+    if (crasFilter != nullptr)
+      crasFilter->setNodelet(nodelet);
   }
+}
+
+template <typename F>
+void FilterChain<F>::setFilterCallback(const FilterCallback& callback)
+{
+  this->filterCallback = callback;
 }
 
 template <typename F>
 bool FilterChain<F>::update(const F &data_in, F &data_out)
 {
-
-  if (this->activeFilters.size() + this->disabledFilters.size() != this->getFilters().size())
+  if (!this->initialized || this->activeFilters.size() + this->disabledFilters.size() != this->getFilters().size())
+  {
     this->updateActiveFilters();
+    this->initialized = true;
+  }
+
+  ::std::lock_guard<::std::mutex> lock(this->activeFiltersMutex);
 
   size_t listSize = this->activeFilters.size();
   bool result;
@@ -98,9 +107,11 @@ bool FilterChain<F>::update(const F &data_in, F &data_out)
 template <typename F>
 void FilterChain<F>::callCallback(const F &data, size_t filterNum)
 {
-  const auto& filter = this->getFilters()[filterNum];
-  if (this->filterCallback)
-    this->filterCallback(data, filterNum, filter->getName(), filter->getType());
+  if (!this->filterCallback)
+    return;
+  // activeFilters mutex should be locked by the calling function
+  const auto& filter = this->activeFilters[filterNum];
+  this->filterCallback(data, filterNum, filter->getName(), filter->getType());
 }
 
 template<typename F>
@@ -108,6 +119,7 @@ void FilterChain<F>::disableFilter(const ::std::string &name)
 {
   this->disabledFilters.insert(name);
   ROS_DEBUG("Disabled filter %s", name.c_str());
+  this->updateActiveFilters();
 }
 
 template<typename F>
@@ -115,11 +127,14 @@ void FilterChain<F>::enableFilter(const ::std::string &name)
 {
   this->disabledFilters.erase(name);
   ROS_DEBUG("Enabled filter %s", name.c_str());
+  this->updateActiveFilters();
 }
 
 template<typename F>
 void FilterChain<F>::updateActiveFilters()
 {
+  ::std::lock_guard<::std::mutex> lock(this->activeFiltersMutex);
+
   this->activeFilters.clear();
   for (const auto& filter : this->getFilters())
   {
@@ -132,6 +147,20 @@ template<typename F>
 void FilterChain<F>::setDisabledFilters(::std::unordered_set<::std::string> filters)
 {
   this->disabledFilters = ::std::move(filters);
+  this->updateActiveFilters();
+}
+
+template<typename F>
+bool FilterChain<F>::clear()
+{
+  const auto result = ::filters::FilterChain<F>::clear();
+  this->disabledFilters.clear();
+  {
+    ::std::lock_guard<::std::mutex> lock(this->activeFiltersMutex);
+    this->activeFilters.clear();
+  }
+  this->initialized = false;
+  return result;
 }
 
 }

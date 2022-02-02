@@ -94,7 +94,7 @@ target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/
 target_link_libraries(cras_filter_base INTERFACE string_utils param_utils)
 
 add_library(cras_filter_chain src/filter_chain.cpp)
-target_link_libraries(cras_filter_chain string_utils ${catkin_LIBRARIES})
+target_link_libraries(cras_filter_chain cras_filter_base string_utils ${catkin_LIBRARIES})
 add_dependencies(cras_filter_chain log_utils)
 
 add_library(time_utils src/time_utils.cpp)
@@ -170,6 +170,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_xmlrpc_value_utils test/test_xmlrpc_value_utils.cpp)
   target_link_libraries(test_xmlrpc_value_utils xmlrpc_value_utils ${catkin_LIBRARIES})
+
+  catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
+  target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
