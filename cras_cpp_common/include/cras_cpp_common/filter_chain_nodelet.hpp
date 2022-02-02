@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 
 #include <cras_cpp_common/diag_utils.hpp>
-#include <cras_cpp_common/filter_base.hpp>
+#include <cras_cpp_common/filter_chain.hpp>
 #include <cras_cpp_common/nodelet_utils.hpp>
 #include <cras_cpp_common/type_utils.hpp>
 #include <nodelet/nodelet.h>
