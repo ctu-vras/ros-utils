@@ -23,6 +23,10 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(diagnostic_updater 1.9.6 QUIET)
 set(HAS_SLOW_TOPIC_UPDATER ${diagnostic_updater_FOUND})
 
+# find pthread and provide it as Threads::Threads imported target
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 generate_dynamic_reconfigure_options(
   cfg/FilterChain.cfg
 )
@@ -30,7 +34,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS diagnostic_updater dynamic_reconfigure filters nodelet rosconsole roscpp sensor_msgs tf2_ros topic_tools
-  LIBRARIES cloud diag_utils cras_filter_chain improved_updater log_utils nodelet_utils param_utils slow_topic_diag_updater string_utils tf2_sensor_msgs_cras tf2_utils time_utils
+  LIBRARIES cloud diag_utils cras_filter_chain improved_updater log_utils nodelet_utils param_utils slow_topic_diag_updater string_utils tf2_sensor_msgs_cras tf2_utils time_utils thread_utils
   CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
 )
 
@@ -85,8 +89,8 @@ if (HAS_SLOW_TOPIC_UPDATER)
   target_compile_definitions(slow_topic_diag_updater PUBLIC HAS_SLOW_TOPIC_UPDATER=1)
 endif()
 
-add_library(nodelet_utils src/nodelet_utils.cpp)
-target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC log_utils improved_updater param_utils ${catkin_LIBRARIES} pthread slow_topic_diag_updater)
+add_library(nodelet_utils src/nodelet_utils/nodelet_aware_tf_buffer.cpp src/nodelet_utils/stateful_nodelet.cpp)
+target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC thread_utils log_utils improved_updater param_utils time_utils tf2_utils ${catkin_LIBRARIES} slow_topic_diag_updater)
 add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(cras_filter_base INTERFACE)
@@ -97,7 +101,7 @@ add_library(cras_filter_chain src/filter_chain.cpp)
 target_link_libraries(cras_filter_chain cras_filter_base string_utils ${catkin_LIBRARIES})
 add_dependencies(cras_filter_chain log_utils)
 
-add_library(time_utils src/time_utils.cpp)
+add_library(time_utils src/time_utils.cpp src/time_utils/interruptible_sleep_interface.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})
 add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
 
@@ -106,8 +110,8 @@ target_link_libraries(tf2_sensor_msgs_cras PRIVATE cloud string_utils PUBLIC ${c
 add_dependencies(tf2_sensor_msgs_cras ${catkin_EXPORTED_TARGETS})
 target_compile_options(tf2_sensor_msgs_cras PRIVATE -march=native)
 
-add_library(tf2_utils src/tf2_utils.cpp)
-target_link_libraries(tf2_utils ${catkin_LIBRARIES})
+add_library(tf2_utils src/tf2_utils.cpp src/tf2_utils/interruptible_buffer.cpp)
+target_link_libraries(tf2_utils thread_utils ${catkin_LIBRARIES})
 add_dependencies(tf2_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(math_utils INTERFACE)
@@ -136,6 +140,9 @@ add_library(filter_chain_nodelet INTERFACE)
 target_sources(filter_chain_nodelet INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_chain_nodelet.hpp>)
 target_link_libraries(filter_chain_nodelet INTERFACE diag_utils nodelet_utils cras_filter_chain)
 add_dependencies(filter_chain_nodelet INTERFACE ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_library(thread_utils src/thread_utils.cpp src/thread_utils/semaphore.cpp)
+target_link_libraries(thread_utils PRIVATE string_utils Threads::Threads)
 
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
@@ -174,6 +181,12 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
   target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 
+  catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
+  target_link_libraries(test_thread_utils thread_utils string_utils Threads::Threads)
+
+  catkin_add_gtest(test_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
+  target_link_libraries(test_thread_name_updating_nodelet nodelet_utils)
+  
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
   target_compile_options(test_filter_base PRIVATE -fno-var-tracking-assignments)  # speed up build
@@ -189,4 +202,23 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
   target_link_libraries(test_nodelet_get_param param_utils nodelet_utils ${catkin_LIBRARIES})
   target_compile_options(test_nodelet_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
+
+  # nodelet_utils runs multiple tests from a single rostest launch file
+  catkin_add_executable_with_gtest(test_nodelet_aware_tf_buffer test/test_nodelet_aware_tf_buffer.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_nodelet_aware_tf_buffer nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_nodelet_aware_tf_buffer)
+  
+  catkin_add_executable_with_gtest(test_stateful_nodelet test/test_stateful_nodelet.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_stateful_nodelet nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_stateful_nodelet)
+  
+  catkin_add_executable_with_gtest(test_nodelet_log_macros test/test_nodelet_log_macros.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_nodelet_log_macros nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_nodelet_log_macros)
+  
+  catkin_add_executable_with_gtest(test_nodelet_with_shared_tf_buffer test/test_nodelet_with_shared_tf_buffer.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_nodelet_with_shared_tf_buffer nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_nodelet_with_shared_tf_buffer)
+  
+  add_rostest(test/test_nodelet_utils.test DEPENDENCIES test_nodelet_aware_tf_buffer test_stateful_nodelet test_nodelet_log_macros test_nodelet_with_shared_tf_buffer)
 endif()

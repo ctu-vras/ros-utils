@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="/use_sim_time" value="true" />
+    <test test-name="test_nodelet_aware_tf_buffer" pkg="cras_cpp_common" type="test_nodelet_aware_tf_buffer"/>
+    <test test-name="test_stateful_nodelet" pkg="cras_cpp_common" type="test_stateful_nodelet"/>
+    <test test-name="test_nodelet_log_macros" pkg="cras_cpp_common" type="test_nodelet_log_macros"/>
+    <test test-name="test_nodelet_with_shared_tf_buffer" pkg="cras_cpp_common" type="test_nodelet_with_shared_tf_buffer"/>
+</launch>

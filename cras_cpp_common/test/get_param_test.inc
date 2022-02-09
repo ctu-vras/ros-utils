@@ -22,6 +22,8 @@
 #include <tf2/LinearMath/Vector3.h>
 #include <XmlRpcValue.h>
 
+#include "log_appender.inc"
+
 double distance(const geometry_msgs::Quaternion& q1, const geometry_msgs::Quaternion& q2)
 {
   return std::sqrt(std::pow(q1.x - q2.x, 2) + std::pow(q1.y - q2.y, 2) +
@@ -131,24 +133,6 @@ bool operator==(const Eigen::Matrix<Scalar, Rows, Cols, Options, RowsAtCompileTi
   return distance(m1, m2) == 0;
 }
 }
-
-struct Appender : public ros::console::LogAppender
-{
-  void log(::ros::console::Level level, const char* str, const char* file, const char* function, int line) override
-  {
-    this->str = str;
-    this->level = level;
-  }
-  
-  void reset()
-  {
-    this->str = "";
-    this->level = ::ros::console::Level::Count;
-  }
-  
-  std::string str {};
-  ros::console::Level level {::ros::console::Level::Count};
-};
 
 #define TRACE SCOPED_TRACE("Failure happened here");
 

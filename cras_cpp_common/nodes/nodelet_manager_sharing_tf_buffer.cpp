@@ -6,6 +6,7 @@
 #include <nodelet/NodeletList.h>
 #include <cras_cpp_common/nodelet_utils.hpp>
 #include <pluginlib/class_loader.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <boost/ptr_container/ptr_map.hpp>
 
@@ -114,7 +115,7 @@ private:
   M_stringToBond bond_map_;
 };
 
-class NodeletManagerSharingTfBuffer : StatefulNodelet
+class NodeletManagerSharingTfBuffer
 {
 public:
   void init();
@@ -136,7 +137,7 @@ private:
 };
 
 void NodeletManagerSharingTfBuffer::init() {
-  this->buffer.reset(new NodeletAwareTFBuffer(this));
+  this->buffer.reset(new tf2_ros::Buffer);
   this->listener.reset(new tf2_ros::TransformListener(*this->buffer));
   this->classLoader.reset(new ClassLoader("nodelet", "nodelet::Nodelet"));
   this->classLoader->refreshDeclaredClasses();
@@ -147,11 +148,11 @@ void NodeletManagerSharingTfBuffer::init() {
 }
 
 boost::shared_ptr<nodelet::Nodelet> NodeletManagerSharingTfBuffer::createInstance(const std::string &lookup_name) {
-  const auto ptr = this->classLoader->createInstance(lookup_name);
+  auto ptr = this->classLoader->createInstance(lookup_name);
   if (ptr == nullptr)
     return nullptr;
 
-  auto* tfNodelet = dynamic_cast<NodeletWithSharedTfBuffer*>(ptr.get());
+  auto* tfNodelet = dynamic_cast<NodeletWithSharedTfBufferInterface*>(ptr.get());
   if (tfNodelet != nullptr)
     tfNodelet->setBuffer(this->buffer);
   return ptr;
