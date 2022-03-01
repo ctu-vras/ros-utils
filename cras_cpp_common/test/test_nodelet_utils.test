@@ -6,4 +6,5 @@
     <test test-name="test_stateful_nodelet" pkg="cras_cpp_common" type="test_stateful_nodelet"/>
     <test test-name="test_nodelet_log_macros" pkg="cras_cpp_common" type="test_nodelet_log_macros"/>
     <test test-name="test_nodelet_with_shared_tf_buffer" pkg="cras_cpp_common" type="test_nodelet_with_shared_tf_buffer"/>
+    <test test-name="test_nodelet_diagnostics" pkg="cras_cpp_common" type="test_nodelet_diagnostics"/>
 </launch>

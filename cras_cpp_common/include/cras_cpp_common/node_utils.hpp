@@ -2,8 +2,9 @@
 
 /**
  * \file
- * \brief This file adds utility functions to be used within nodes. So far it only makes
- *        ParamHelper templated getParam() functions accessible via static global calls cras::getParam(nh, ...).
+ * \brief This file adds utility functions to be used within nodes. It makes ParamHelper templated getParam() functions
+ * accessible via static global calls cras::getParam(nh, ...). It also exposes cras::NodeHandle utility class for even
+ * easier access to parameter getting.
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
@@ -15,6 +16,7 @@
 #include <ros/ros.h>
 
 #include <cras_cpp_common/log_utils/node.h>
+#include <cras_cpp_common/node_utils/node_handle.h>
 #include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 #include <cras_cpp_common/param_utils/param_helper.hpp>
@@ -243,7 +245,7 @@ inline ::std::string getParam(
  * \param[in] ns If nonempty, returns just the parameters in the given namespace.
  * \return The bound param helper.
  */
-inline ::cras::BoundParamHelperPtr nodeParams(::ros::NodeHandle& node, const ::std::string& ns = "")
+inline ::cras::BoundParamHelperPtr nodeParams(const ::ros::NodeHandle& node, const ::std::string& ns = "")
 {
   const auto log = ::std::make_shared<NodeLogHelper>();
   const auto param = ::std::make_shared<NodeHandleGetParamAdapter>(node);
@@ -259,7 +261,7 @@ inline ::cras::BoundParamHelperPtr nodeParams(::ros::NodeHandle& node, const ::s
  * \param[in] node The node to bind to.
  * \return The bound param helper.
  */
-inline ::cras::BoundParamHelperPtr paramsForNodeHandle(::ros::NodeHandle& node)
+inline ::cras::BoundParamHelperPtr paramsForNodeHandle(const ::ros::NodeHandle& node)
 {
   return ::cras::nodeParams(node);
 }

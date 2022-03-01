@@ -1,13 +1,16 @@
 /**
  * \file
- * \brief Unit test for node_utils.hpp.
+ * \brief Unit test for node_utils/param_helper.h.
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "gtest/gtest.h"
-#include <cras_cpp_common/node_utils.hpp>
+
+#include <ros/param.h>
+
+#include <cras_cpp_common/node_utils/param_helper.h>
 
 #include "get_param_test.inc" 
 
@@ -15,39 +18,39 @@ using namespace cras;
 
 struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 {
-  ros::NodeHandle nh;
+  cras::NodeParamHelper nh;
   
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
-    { auto r = cras::getParamVerbose(this->nh, (param), (def));
+    { auto r = this->nh.getParamVerbose((param), (def));
       EXPECT_EQ((expected), r); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(this->nh, (param), cras::optional(def));
+    { auto r = this->nh.getParamVerbose((param), cras::optional(def));
       EXPECT_EQ((expected), r); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    EXPECT_EQ((expected), cras::getParam(this->nh, (param), (def)));
-    EXPECT_EQ((expected), cras::getParam(this->nh, (param), cras::optional(def)));
+    EXPECT_EQ((expected), this->nh.getParam((param), (def)));
+    EXPECT_EQ((expected), this->nh.getParam((param), cras::optional(def)));
   }
 
   template <typename T, typename U>
   void test_s(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
-    { auto r = cras::getParamVerbose(this->nh, (param), (def));
+    { auto r = this->nh.getParamVerbose((param), (def));
       EXPECT_EQ((expected), r.value); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(this->nh, (param), cras::optional(def));
+    { auto r = this->nh.getParamVerbose((param), cras::optional(def));
       EXPECT_EQ((expected), r.value); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    EXPECT_EQ((expected), cras::getParam(this->nh, (param), (def)));
-    EXPECT_EQ((expected), cras::getParam(this->nh, (param), cras::optional(def)));
+    EXPECT_EQ((expected), this->nh.getParam((param), (def)));
+    EXPECT_EQ((expected), this->nh.getParam((param), cras::optional(def)));
   }
 
   template <typename T, typename U>
   void test_near(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
-    { auto r = cras::getParamVerbose(this->nh, (param), (def));
+    { auto r = this->nh.getParamVerbose((param), (def));
       EXPECT_GT(1e-6, distance((expected), r.value)); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(this->nh, (param), cras::optional(def));
+    { auto r = this->nh.getParamVerbose((param), cras::optional(def));
       EXPECT_GT(1e-6, distance((expected), r.value)); EXPECT_EQ((defUsed), r.info.defaultUsed); }
-    EXPECT_GT(1e-6, distance((expected), cras::getParam(this->nh, (param), (def))));
-    EXPECT_GT(1e-6, distance((expected), cras::getParam(this->nh, (param), cras::optional(def))));
+    EXPECT_GT(1e-6, distance((expected), this->nh.getParam((param), (def))));
+    EXPECT_GT(1e-6, distance((expected), this->nh.getParam((param), cras::optional(def))));
   }
 
   template <typename T>
@@ -59,35 +62,35 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
   void testMisc()
   {
     // test that getParam result type is the same as the default value
-    static_assert(std::is_same<bool, decltype(cras::getParam(this->nh, "bool_True", false))>::value);
-    static_assert(std::is_same<bool, decltype(cras::getParam(this->nh, "bool_True", cras::optional(false)))>::value);
+    static_assert(std::is_same<bool, decltype(this->nh.getParam("bool_True", false))>::value);
+    static_assert(std::is_same<bool, decltype(this->nh.getParam("bool_True", cras::optional(false)))>::value);
 
     // test that C-string methods return a std::string result
-    static_assert(std::is_same<std::string, decltype(cras::getParam(this->nh, "bool_True", "0"))>::value);
+    static_assert(std::is_same<std::string, decltype(this->nh.getParam("bool_True", "0"))>::value);
     static_assert(std::is_same<std::string,
-      decltype(cras::getParam(this->nh, "bool_True", cras::optional("")))>::value);
+      decltype(this->nh.getParam("bool_True", cras::optional("")))>::value);
 
     // test non-verbose getParam
-    EXPECT_EQ(true, cras::getParam(this->nh, "bool_True", false));
+    EXPECT_EQ(true, this->nh.getParam("bool_True", false));
     // test explicit conversion of GetParamResult to the contained type
-    EXPECT_EQ(true, static_cast<bool>(cras::getParamVerbose(this->nh, "bool_True", false)));
+    EXPECT_EQ(true, static_cast<bool>(this->nh.getParamVerbose("bool_True", false)));
     // test implicit conversion of GetParamResult to the contained type
-    { bool r = cras::getParamVerbose(this->nh, "bool_True", false); EXPECT_EQ(true, r); }
+    { bool r = this->nh.getParamVerbose("bool_True", false); EXPECT_EQ(true, r); }
 
     // test double NaN behavior
-    { auto r = cras::getParamVerbose(this->nh, "double_nan", 0.0);
+    { auto r = this->nh.getParamVerbose("double_nan", 0.0);
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(false, r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(this->nh, "double_nan", cras::optional(0.0));
+    { auto r = this->nh.getParamVerbose("double_nan", cras::optional(0.0));
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(false, r.info.defaultUsed); }
-    EXPECT_TRUE(std::isnan(cras::getParam(this->nh, "double_nan", 0.0)));
-    EXPECT_TRUE(std::isnan(cras::getParam(this->nh, "double_nan", cras::optional(0.0))));
+    EXPECT_TRUE(std::isnan(this->nh.getParam("double_nan", 0.0)));
+    EXPECT_TRUE(std::isnan(this->nh.getParam("double_nan", cras::optional(0.0))));
 
-    { auto r = cras::getParamVerbose(this->nh, "nonexistent", std::numeric_limits<double>::quiet_NaN());
+    { auto r = this->nh.getParamVerbose("nonexistent", std::numeric_limits<double>::quiet_NaN());
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(this->nh, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()));
+    { auto r = this->nh.getParamVerbose("nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()));
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    EXPECT_TRUE(std::isnan(cras::getParam(this->nh, "nonexistent", std::numeric_limits<double>::quiet_NaN())));
-    EXPECT_TRUE(std::isnan(cras::getParam(this->nh, "nonexistent",
+    EXPECT_TRUE(std::isnan(this->nh.getParam("nonexistent", std::numeric_limits<double>::quiet_NaN())));
+    EXPECT_TRUE(std::isnan(this->nh.getParam("nonexistent",
       cras::optional(std::numeric_limits<double>::quiet_NaN()))));
   };
 
@@ -102,7 +105,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test reading an existing param with default config
     opts = {}; log.reset();
-    r = cras::getParamVerbose(this->nh, "bool_False", true, "", opts);
+    r = this->nh.getParamVerbose("bool_False", true, "", opts);
     EXPECT_FALSE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -113,7 +116,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test printing reports about using default value as info messages
     opts = {}; log.reset();
-    r = cras::getParamVerbose(this->nh, "nonexistent", true, "", opts);
+    r = this->nh.getParamVerbose("nonexistent", true, "", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -124,7 +127,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test printing reports about using default value as warning messages
     opts = {}; opts.printDefaultAsWarn = true; log.reset();
-    r = cras::getParamVerbose(this->nh, "nonexistent", true, "", opts);
+    r = this->nh.getParamVerbose("nonexistent", true, "", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -135,7 +138,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test not printing log messages
     opts = {}; opts.printMessages = false; log.reset();
-    r = cras::getParamVerbose(this->nh, "nonexistent", true, "", opts);
+    r = this->nh.getParamVerbose("nonexistent", true, "", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -146,10 +149,10 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // required parameter is missing
     opts = {}; log.reset();
-    EXPECT_THROW(cras::getParamVerbose<bool>(this->nh, "nonexistent", std::nullopt, "", opts), GetParamException);
+    EXPECT_THROW(this->nh.getParamVerbose<bool>("nonexistent", std::nullopt, "", opts), GetParamException);
     try
     {
-      cras::getParamVerbose<bool>(this->nh, "nonexistent", std::nullopt, "", opts);
+      this->nh.getParamVerbose<bool>("nonexistent", std::nullopt, "", opts);
     }
     catch (const GetParamException& e)
     {
@@ -164,10 +167,10 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test throwing exception on convert failure
     opts = {}; opts.throwIfConvertFails = true; log.reset();
-    EXPECT_THROW(cras::getParamVerbose(this->nh, "str_a", false, "", opts), GetParamException);
+    EXPECT_THROW(this->nh.getParamVerbose("str_a", false, "", opts), GetParamException);
     try
     {
-      cras::getParamVerbose(this->nh, "str_a", false, "", opts);
+      this->nh.getParamVerbose("str_a", false, "", opts);
     }
     catch (const GetParamException& e)
     {
@@ -183,7 +186,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test failed conversion without throwing exception
     opts = {}; opts.throwIfConvertFails = false; log.reset();
-    r = cras::getParamVerbose(this->nh, "str_a", true, "", opts);
+    r = this->nh.getParamVerbose("str_a", true, "", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_TRUE(r.info.convertFailed);
@@ -196,7 +199,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test printing custom units
     opts = {}; log.reset();
-    r = cras::getParamVerbose(this->nh, "bool_False", true, "bools", opts);
+    r = this->nh.getParamVerbose("bool_False", true, "bools", opts);
     EXPECT_FALSE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -211,7 +214,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
     opts.resultToStr = [](const bool& v) -> std::string {return v ? "TRUE" : "FALSE"; };
     opts.toResult = [](const bool& v) -> bool { if (v) throw std::runtime_error("fail"); return v; };
     // reading false succeeds
-    r = cras::getParamVerbose(this->nh, "bool_False", true, "bools", opts);
+    r = this->nh.getParamVerbose("bool_False", true, "bools", opts);
     EXPECT_FALSE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_FALSE(r.info.convertFailed);
@@ -220,7 +223,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
     EXPECT_EQ(r.info.message, log.str);
     EXPECT_EQ(r.info.messageLevel, log.level);
     // reading true throws exception
-    r = cras::getParamVerbose(this->nh, "bool_True", false, "bools", opts);
+    r = this->nh.getParamVerbose("bool_True", false, "bools", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_TRUE(r.info.convertFailed);
@@ -232,7 +235,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test reading a parameter whose conversion from XmlRpc type fails
     log.reset();
-    auto r2 = cras::getParamVerbose(this->nh, "int_max", static_cast<short>(1), "", {});
+    auto r2 = this->nh.getParamVerbose("int_max", static_cast<short>(1), "", {});
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);
@@ -259,7 +262,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
         v = false;
         return true;
       };
-    r = cras::getParamVerbose(this->nh, "bool_True", false, "", opts);
+    r = this->nh.getParamVerbose("bool_True", false, "", opts);
     EXPECT_TRUE(r.info.defaultUsed);
     EXPECT_FALSE(r.info.requiredMissing);
     EXPECT_TRUE(r.info.convertFailed);
@@ -273,108 +276,108 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
   }
 };
 
-ros::NodeHandle& getNodelet()
+cras::NodeParamHelper& getNodeHandle()
 {
-  static std::shared_ptr<ros::NodeHandle> nh {nullptr};
+  static std::shared_ptr<cras::NodeParamHelper> nh {nullptr};
   if (nh)
     return *nh;
-  nh = std::make_shared<ros::NodeHandle>("test_dict_config/params");
+  nh = std::make_shared<cras::NodeParamHelper>("test_dict_config/params");
   return *nh;
 }
 
 TEST(NodeUtils, XmlRpcValue)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testXmlRpcValue(false);
 }
 
 TEST(NodeUtils, Bool)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testBool();
 }
 
 TEST(NodeUtils, Int)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testInt();
 }
 
 TEST(NodeUtils, Float)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testFloat();
 }
 
 TEST(NodeUtils, Double)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testDouble();
 }
 
 TEST(NodeUtils, Cstring)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testCstring();
 }
 
 TEST(NodeUtils, String)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testString();
 }
 
 TEST(NodeUtils, List)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testList();
 }
 
 TEST(NodeUtils, Dict)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testDict();
 }
 
 TEST(NodeUtils, Ros)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testRos();
 }
 
 TEST(NodeUtils, GeometryMsgs)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testGeometryMsgs();
 }
 
 TEST(NodeUtils, TF2)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testTF2();
 }
 
 TEST(NodeUtils, Eigen)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testEigen();
 }
 
 TEST(NodeUtils, Nested)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testNested();
 }
 
 TEST(NodeUtils, Misc)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testMisc();
 }
 
 TEST(NodeUtils, Options)
 {
-  NodeUtilsGetParamTest t {.nh = getNodelet()};
+  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
   t.testOptions();
 }
 
@@ -383,6 +386,8 @@ int main(int argc, char **argv)
   testing::InitGoogleTest(&argc, argv);
 
   ros::init(argc, argv, "test_node_utils");
+  ros::start();
+
   // rosparam load cannot load empty dict parameter from the YAML file
   ros::param::set("/test_dict_config/params/dict_empty", std::map<std::string, std::string>());
 

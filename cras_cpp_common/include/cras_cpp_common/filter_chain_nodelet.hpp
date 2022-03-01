@@ -18,7 +18,8 @@
 namespace cras {
 
 template<class F>
-class FilterChainNodelet : public cras::Nodelet {
+class FilterChainNodelet : public cras::Nodelet
+{
 
 public:
   //! Read ROS parameters, initialize publishers/subscribers, initialize other class members. ROS::init() is assumed to have been called before.
@@ -61,7 +62,7 @@ protected:
 
   //! Subscriber to data
   ros::Subscriber subscriber;
-  std::unique_ptr<cras::TopicDiagnostic> subscriberDiag;
+  std::shared_ptr<cras::TopicStatus<F>> subscriberDiag;
 
   //! The chain of filters to apply to the incoming scans.
   cras::FilterChain<F> filterChain;
@@ -134,8 +135,9 @@ protected:
           this->filteredPublisher, this->getDiagUpdater(), publisherParams);
 
       const auto subscriberParams = privateParams->paramsInNamespace("subscriber");
-      this->subscriberDiag = std::make_unique<cras::TopicDiagnostic>(
-          this->nodeHandle.resolveName(this->topicIn), this->getDiagUpdater(), subscriberParams);
+      auto sub = cras::DiagnosedPubSub<F>(subscriberParams, {});
+      sub.attach(this->getDiagUpdater());
+      this->subscriberDiag = sub.getDiagnosticTask();
     }
 
     if (!this->lazySubscription) {
@@ -164,7 +166,7 @@ protected:
       {
         this->subscribe();
         if (this->subscriberDiag != nullptr)
-          this->subscriberDiag->addTo(this->getDiagUpdater());
+          this->getDiagUpdater().add(*this->subscriberDiag);
       }
     }
   }
@@ -188,7 +190,7 @@ protected:
   virtual void dataCallback(const typename F::ConstPtr& data)
   {
     if (this->subscriberDiag != nullptr)
-      this->subscriberDiag->tick(data->header.stamp);
+      this->subscriberDiag->tick(data);
 
     const auto age = ros::Time::now() - data->header.stamp;
     if (age > this->maxAge) {

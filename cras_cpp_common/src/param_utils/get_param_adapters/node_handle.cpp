@@ -3,6 +3,7 @@
 
 #include <ros/exceptions.h>
 #include <ros/node_handle.h>
+#include <ros/param.h>
 #include <XmlRpcValue.h>
 
 #include <cras_cpp_common/param_utils/get_param_adapters/node_handle.hpp>
@@ -19,7 +20,11 @@ bool NodeHandleGetParamAdapter::getParam(const ::std::string& name, ::XmlRpc::Xm
 {
   try
   {
-    return this->nh.getParam(name, v);
+    // NodeHandle::getParam("/") gets "cleaned" to NodeHandle::getParam("~") which we don't want
+    if (name != "/")
+      return this->nh.getParam(name, v);
+    else
+      return ros::param::get(name, v);
   }
   catch (const ::ros::InvalidNameException&)
   {

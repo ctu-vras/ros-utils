@@ -1113,6 +1113,7 @@ TEST(GetParam, Options)
 TEST(ParamHelper, Bool)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testBool();
 }
@@ -1120,6 +1121,7 @@ TEST(ParamHelper, Bool)
 TEST(ParamHelper, Int)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testInt();
 }
@@ -1127,6 +1129,7 @@ TEST(ParamHelper, Int)
 TEST(ParamHelper, Float)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testFloat();
 }
@@ -1134,6 +1137,7 @@ TEST(ParamHelper, Float)
 TEST(ParamHelper, Double)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testDouble();
 }
@@ -1141,6 +1145,7 @@ TEST(ParamHelper, Double)
 TEST(ParamHelper, Cstring)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testCstring();
 }
@@ -1148,6 +1153,7 @@ TEST(ParamHelper, Cstring)
 TEST(ParamHelper, String)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testString();
 }
@@ -1155,6 +1161,7 @@ TEST(ParamHelper, String)
 TEST(ParamHelper, List)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testList();
 }
@@ -1162,6 +1169,7 @@ TEST(ParamHelper, List)
 TEST(ParamHelper, Dict)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testDict();
 }
@@ -1169,6 +1177,7 @@ TEST(ParamHelper, Dict)
 TEST(ParamHelper, Ros)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   ros::Time::init();
   t.testRos();
@@ -1177,6 +1186,7 @@ TEST(ParamHelper, Ros)
 TEST(ParamHelper, GeometryMsgs)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testGeometryMsgs();
 }
@@ -1184,6 +1194,7 @@ TEST(ParamHelper, GeometryMsgs)
 TEST(ParamHelper, TF2)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testTF2();
 }
@@ -1191,6 +1202,7 @@ TEST(ParamHelper, TF2)
 TEST(ParamHelper, Eigen)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testEigen();
 }
@@ -1198,6 +1210,7 @@ TEST(ParamHelper, Eigen)
 TEST(ParamHelper, Nested)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testNested();
 }
@@ -1205,6 +1218,7 @@ TEST(ParamHelper, Nested)
 TEST(ParamHelper, Misc)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testMisc();
 }
@@ -1212,6 +1226,7 @@ TEST(ParamHelper, Misc)
 TEST(ParamHelper, Options)
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
+  EXPECT_NE(nullptr, p.getLogger());
   ParamHelperGetParamTest t { .p = &p, .params = getParams()};
   t.testOptions();
 }
@@ -1219,6 +1234,7 @@ TEST(ParamHelper, Options)
 TEST(BoundParamHelper, Bool)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testBool();
 }
@@ -1226,6 +1242,7 @@ TEST(BoundParamHelper, Bool)
 TEST(BoundParamHelper, Int)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testInt();
 }
@@ -1233,6 +1250,7 @@ TEST(BoundParamHelper, Int)
 TEST(BoundParamHelper, Float)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testFloat();
 }
@@ -1240,6 +1258,7 @@ TEST(BoundParamHelper, Float)
 TEST(BoundParamHelper, Double)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testDouble();
 }
@@ -1247,6 +1266,7 @@ TEST(BoundParamHelper, Double)
 TEST(BoundParamHelper, Cstring)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testCstring();
 }
@@ -1254,6 +1274,7 @@ TEST(BoundParamHelper, Cstring)
 TEST(BoundParamHelper, String)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testString();
 }
@@ -1261,6 +1282,7 @@ TEST(BoundParamHelper, String)
 TEST(BoundParamHelper, List)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testList();
 }
@@ -1268,6 +1290,7 @@ TEST(BoundParamHelper, List)
 TEST(BoundParamHelper, Dict)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testDict();
 }
@@ -1275,6 +1298,7 @@ TEST(BoundParamHelper, Dict)
 TEST(BoundParamHelper, Ros)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   ros::Time::init();
   t.testRos();
@@ -1283,6 +1307,7 @@ TEST(BoundParamHelper, Ros)
 TEST(BoundParamHelper, GeometryMsgs)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testGeometryMsgs();
 }
@@ -1290,6 +1315,7 @@ TEST(BoundParamHelper, GeometryMsgs)
 TEST(BoundParamHelper, TF2)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testTF2();
 }
@@ -1297,6 +1323,7 @@ TEST(BoundParamHelper, TF2)
 TEST(BoundParamHelper, Eigen)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testEigen();
 }
@@ -1304,6 +1331,7 @@ TEST(BoundParamHelper, Eigen)
 TEST(BoundParamHelper, Nested)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testNested();
 }
@@ -1311,6 +1339,7 @@ TEST(BoundParamHelper, Nested)
 TEST(BoundParamHelper, Misc)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testMisc();
 }
@@ -1318,6 +1347,7 @@ TEST(BoundParamHelper, Misc)
 TEST(BoundParamHelper, Options)
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_NE(nullptr, p.getLogger());
   BoundParamHelperGetParamTest t { .p = &p };
   t.testOptions();
 }
@@ -1360,6 +1390,12 @@ TEST(BoundParamHelper, ParamsInNamespace)
   EXPECT_EQ(1.1, p2->getParam("inflation/scale", 1.0));
 }
 
+TEST(BoundParamHelper, GetNamespace)
+{
+  TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
+  EXPECT_EQ("dict", p.getNamespace());
+}
+
 TEST(GetParamAdapters, NodeHandle)
 {
   ros::NodeHandle nh;
@@ -1381,6 +1417,17 @@ TEST(GetParamAdapters, NodeHandle)
   // if lookup fails, x is not changed
   EXPECT_FALSE(aPub.getParam("nonexistent", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType());
   EXPECT_FALSE(aPub.getParam("1", x));  // no exception is thrown when an invalid name is passed
+  
+  // Getting / works from any namespace
+  EXPECT_TRUE(aPub.getParam("/", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType()); auto xPub = x;
+  EXPECT_TRUE(aPrivate.getParam("/", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType()); auto xPrivate = x;
+  
+  EXPECT_LE(2u, xPub.size());
+  EXPECT_LE(2u, xPrivate.size());
+  EXPECT_TRUE(xPub.hasMember("test_dict_config"));
+  EXPECT_TRUE(xPrivate.hasMember("test_dict_config"));
+  EXPECT_TRUE(xPub.hasMember("test_chain_config"));
+  EXPECT_TRUE(xPrivate.hasMember("test_chain_config"));
   
   ros::NodeHandle dnh("test_dict_config");
   cras::NodeHandleGetParamAdapter aDict(dnh);

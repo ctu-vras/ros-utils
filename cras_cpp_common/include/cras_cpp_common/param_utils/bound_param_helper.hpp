@@ -263,6 +263,17 @@ public:
   {
     return ::std::make_shared<::cras::BoundParamHelper>(this->log, this->param->getNamespaced(ns));
   }
+  
+  /**
+   * \brief Return the namespace this helper operates in.
+   * \return The namespace.
+   */
+  inline ::std::string getNamespace() const
+  {
+    return this->param->getNamespace();
+  }
+
+  using ::cras::ParamHelper::getLogger;
 
 protected:
   //! \brief The bound parameter adapter.

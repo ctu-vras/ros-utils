@@ -153,7 +153,8 @@ struct GetParamOptions
       }
     ) const
   {
-    GetParamOptions<ResultType, NewParamServerType> options = {.toResult = newToResult, .toParam = newToParam};
+    // We can't initialize the object with the default values of toParam and toResult because they are ill-formed
+    GetParamOptions<ResultType, NewParamServerType> options = {{}, {}, {}, {}, {}, {}, {}, {}, newToResult, newToParam};
     options = *this;
     options.resultToStr = this->resultToStr;
     options.paramToStr = newParamToStr;

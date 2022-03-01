@@ -18,7 +18,7 @@ namespace cras
 /**
  * Log helper redirecting the logging calls to ROS_ macros.
  */
-  class NodeLogHelper : public ::cras::LogHelper
+class NodeLogHelper : public ::cras::LogHelper
 {
 protected:
   void printDebug(const ::std::string& text) const override;

@@ -20,9 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
   topic_tools
 )
 
-find_package(diagnostic_updater 1.9.6 QUIET)
-set(HAS_SLOW_TOPIC_UPDATER ${diagnostic_updater_FOUND})
-
 # find pthread and provide it as Threads::Threads imported target
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -33,8 +30,30 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS diagnostic_updater dynamic_reconfigure filters nodelet rosconsole roscpp sensor_msgs tf2_ros topic_tools
-  LIBRARIES cloud diag_utils cras_filter_chain improved_updater log_utils nodelet_utils param_utils slow_topic_diag_updater string_utils tf2_sensor_msgs_cras tf2_utils time_utils thread_utils
+  CATKIN_DEPENDS
+    diagnostic_updater
+    dynamic_reconfigure
+    filters
+    nodelet
+    rosconsole
+    roscpp
+    sensor_msgs
+    tf2_ros
+    topic_tools
+  LIBRARIES
+    cloud
+    cras_diag_updater
+    cras_filter_chain
+    diag_utils
+    log_utils
+    node_utils
+    nodelet_utils
+    param_utils
+    string_utils
+    tf2_sensor_msgs_cras
+    tf2_utils
+    time_utils
+    thread_utils
   CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
 )
 
@@ -74,23 +93,17 @@ target_sources(param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param
 target_link_libraries(param_utils log_utils string_utils type_utils xmlrpc_value_traits ${catkin_LIBRARIES})
 add_dependencies(param_utils ${catkin_EXPORTED_TARGETS})
 
-add_library(node_utils INTERFACE)
+add_library(node_utils src/node_utils/node_handle_with_diagnostics.cpp src/node_utils/param_helper.cpp)
 target_sources(node_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/node_utils.hpp>)
-target_link_libraries(node_utils INTERFACE log_utils string_utils param_utils ${catkin_LIBRARIES})
+target_link_libraries(node_utils diag_utils log_utils string_utils param_utils ${catkin_LIBRARIES})
+add_dependencies(node_utils ${catkin_EXPORTED_TARGETS})
 
-add_library(improved_updater src/diagnostics/ImprovedUpdater.cpp)
-target_link_libraries(improved_updater ${catkin_LIBRARIES})
-add_dependencies(improved_updater ${catkin_EXPORTED_TARGETS})
-
-add_library(slow_topic_diag_updater src/diagnostics/SlowTopicDiagUpdater.cpp)
-target_link_libraries(slow_topic_diag_updater improved_updater ${catkin_LIBRARIES})
-add_dependencies(slow_topic_diag_updater ${catkin_EXPORTED_TARGETS})
-if (HAS_SLOW_TOPIC_UPDATER)
-  target_compile_definitions(slow_topic_diag_updater PUBLIC HAS_SLOW_TOPIC_UPDATER=1)
-endif()
+add_library(cras_diag_updater src/diag_utils/updater.cpp)
+target_link_libraries(cras_diag_updater ${catkin_LIBRARIES})
+add_dependencies(cras_diag_updater ${catkin_EXPORTED_TARGETS})
 
 add_library(nodelet_utils src/nodelet_utils/nodelet_aware_tf_buffer.cpp src/nodelet_utils/stateful_nodelet.cpp)
-target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC thread_utils log_utils improved_updater param_utils time_utils tf2_utils ${catkin_LIBRARIES} slow_topic_diag_updater)
+target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC thread_utils log_utils cras_diag_updater param_utils time_utils tf2_utils ${catkin_LIBRARIES})
 add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(cras_filter_base INTERFACE)
@@ -99,7 +112,7 @@ target_link_libraries(cras_filter_base INTERFACE string_utils param_utils)
 
 add_library(cras_filter_chain src/filter_chain.cpp)
 target_link_libraries(cras_filter_chain cras_filter_base string_utils ${catkin_LIBRARIES})
-add_dependencies(cras_filter_chain log_utils)
+add_dependencies(cras_filter_chain log_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(time_utils src/time_utils.cpp src/time_utils/interruptible_sleep_interface.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})
@@ -132,8 +145,8 @@ add_library(xmlrpc_value_utils INTERFACE)
 target_sources(xmlrpc_value_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/xmlrpc_value_utils.hpp>)
 target_link_libraries(xmlrpc_value_utils INTERFACE xmlrpc_value_traits)
 
-add_library(diag_utils src/diag_utils.cpp)
-target_link_libraries(diag_utils PUBLIC slow_topic_diag_updater ${catkin_LIBRARIES})
+add_library(diag_utils src/diag_utils/topic_status_param.cpp src/diag_utils/topic_diagnostic.cpp)
+target_link_libraries(diag_utils PUBLIC log_utils param_utils time_utils type_utils cras_diag_updater ${catkin_LIBRARIES})
 add_dependencies(diag_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(filter_chain_nodelet INTERFACE)
@@ -156,8 +169,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY cmake/Modules
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
-install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain improved_updater joy_repeater
-  nodelet_manager_sharing_tf_buffer repeater slow_topic_diag_updater string_utils
+install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_updater joy_repeater
+  nodelet_manager_sharing_tf_buffer repeater string_utils
   tf2_sensor_msgs_cras tf2_utils time_utils
 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -181,6 +194,10 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
   target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 
+  add_rostest_gtest(test_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
+  target_link_libraries(test_diag_utils diag_utils ${catkin_LIBRARIES})
+  target_compile_options(test_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+
   catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
   target_link_libraries(test_thread_utils thread_utils string_utils Threads::Threads)
 
@@ -194,10 +211,20 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_param_utils test/test_param_utils.test test/test_param_utils.cpp)
   target_link_libraries(test_param_utils param_utils ${catkin_LIBRARIES})
   target_compile_options(test_param_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+
+  # node_utils runs multiple tests from a single rostest launch file
+
+  catkin_add_executable_with_gtest(test_node_utils_get_param test/test_node_utils_get_param.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_node_utils_get_param param_utils node_utils ${catkin_LIBRARIES})
+  target_compile_options(test_node_utils_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_dependencies(tests test_node_utils_get_param)
   
-  add_rostest_gtest(test_node_utils test/test_node_utils.test test/test_node_utils.cpp)
-  target_link_libraries(test_node_utils param_utils node_utils ${catkin_LIBRARIES})
-  target_compile_options(test_node_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+  catkin_add_executable_with_gtest(test_node_utils_diagnostics test/test_node_utils_diagnostics.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_node_utils_diagnostics param_utils node_utils ${catkin_LIBRARIES})
+  target_compile_options(test_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_dependencies(tests test_node_utils_diagnostics)
+
+  add_rostest(test/test_node_utils.test DEPENDENCIES test_node_utils_get_param test_node_utils_diagnostics)
   
   add_rostest_gtest(test_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
   target_link_libraries(test_nodelet_get_param param_utils nodelet_utils ${catkin_LIBRARIES})
@@ -220,5 +247,10 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(test_nodelet_with_shared_tf_buffer nodelet_utils ${catkin_LIBRARIES})
   add_dependencies(tests test_nodelet_with_shared_tf_buffer)
   
-  add_rostest(test/test_nodelet_utils.test DEPENDENCIES test_nodelet_aware_tf_buffer test_stateful_nodelet test_nodelet_log_macros test_nodelet_with_shared_tf_buffer)
+  catkin_add_executable_with_gtest(test_nodelet_diagnostics test/test_nodelet_diagnostics.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_nodelet_diagnostics nodelet_utils diag_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_nodelet_diagnostics)
+  target_compile_options(test_nodelet_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
+  
+  add_rostest(test/test_nodelet_utils.test DEPENDENCIES test_nodelet_aware_tf_buffer test_stateful_nodelet test_nodelet_log_macros test_nodelet_with_shared_tf_buffer test_nodelet_diagnostics)
 endif()

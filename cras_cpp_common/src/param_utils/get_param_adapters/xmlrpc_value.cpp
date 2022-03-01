@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include <ros/names.h>
 #include <XmlRpcValue.h>
 
 #include <cras_cpp_common/param_utils/get_param_adapter.hpp>
@@ -51,7 +52,7 @@ bool XmlRpcValueGetParamAdapter::hasParam(const ::std::string& name) const noexc
 ::std::shared_ptr<::cras::GetParamAdapter>
 XmlRpcValueGetParamAdapter::getNamespaced(const ::std::string &ns) const noexcept(false)
 {
-  const auto newNs = this->getNamespace() + "/" + ns;
+  const auto newNs = ros::names::append(this->getNamespace(), ns);
   if (!this->hasParam(ns))
     throw ::std::runtime_error("Cannot find namespace " + newNs);
   ::XmlRpc::XmlRpcValue values;

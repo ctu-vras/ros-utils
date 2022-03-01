@@ -108,25 +108,30 @@ std::vector<std::string> split(const std::string& str, const std::string& delimi
  * @param args Arguments of the format string.
  * @return The formatted string.
  */
-inline std::string format(const char* format, va_list args)
+inline ::std::string format(const char* format, ::va_list args)
 {
   constexpr size_t BUF_LEN = 1024u;
   char buf[BUF_LEN];
 
-  const auto len = vsnprintf(buf, BUF_LEN, format, args);
+  ::va_list argsCopy;
+  ::va_copy(argsCopy, args);
 
+  const auto len = ::vsnprintf(buf, BUF_LEN, format, args);
+
+  ::std::string result;
   if (len < BUF_LEN)
   {
-    return std::string(buf);
+    result = buf;
   }
   else
   {
     char* buf2 = new char[len + 1];
-    vsnprintf(buf2, len + 1, format, args);
-    const std::string result(buf2);
+    ::vsnprintf(buf2, len + 1, format, argsCopy);
+    result = buf2;
     delete[] buf2;
-    return result;
   }
+  ::va_end(argsCopy);
+  return result;
 }
 
 /**

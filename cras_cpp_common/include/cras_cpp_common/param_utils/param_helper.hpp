@@ -242,6 +242,15 @@ public:
   {
     return ::cras::getParam(param, name, defaultValue, unit, options, this->log.get());
   }
+  
+  /**
+   * \brief Return the log helper used for logging.
+   * \return The log helper.
+   */
+  ::cras::LogHelperPtr getLogger() const
+  {
+    return this->log;
+  }
 
 protected:
   //! \brief The log helper to use for logging parameter read messages.

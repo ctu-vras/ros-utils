@@ -24,7 +24,7 @@ struct GetParamAdapter
   virtual ~GetParamAdapter() = default;
 
   /**
-   * \brief Get the value of a paramater as XmlRpcValue.
+   * \brief Get the value of a parameter as XmlRpcValue.
    * \param[in] name Name of the parameter.
    * \param[out] value Value of the parameter (unchanged if getting the parameter failed).
    * \return Whether getting the parameter succeeded.
@@ -45,7 +45,7 @@ struct GetParamAdapter
   virtual std::string getNamespace() const noexcept = 0;
   
   /**
-   * \brief Construct another adapter whose source are parameters that are in a sub-namespce of this adapter.
+   * \brief Construct another adapter whose source are parameters that are in a sub-namespace of this adapter.
    * \param[in] ns The namespace to search parameters in. 
    * \return The constructed adapter. The function should never return null (throw an exception on failure).
    * \throws std::runtime_error If something fails.
