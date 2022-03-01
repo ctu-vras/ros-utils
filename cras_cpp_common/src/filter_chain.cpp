@@ -18,7 +18,7 @@
 #endif
 #undef private
 
-#include <cras_cpp_common/filter_chain.hpp>
+#include "cras_cpp_common/filter_utils/filter_chain.hpp"
 
 #include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/Image.h>

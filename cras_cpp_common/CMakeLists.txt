@@ -107,7 +107,7 @@ target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC thread_utils log
 add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(cras_filter_base INTERFACE)
-target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_base.hpp>)
+target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_base.hpp>)
 target_link_libraries(cras_filter_base INTERFACE string_utils param_utils)
 
 add_library(cras_filter_chain src/filter_chain.cpp)

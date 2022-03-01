@@ -14,5 +14,5 @@
 #warning Using deprecated header filter_utils.hpp. Use filter_base.hpp or filter_chain.hpp instead.
 #endif
 
-#include "filter_base.hpp"
-#include "filter_chain.hpp"
+#include <cras_cpp_common/filter_utils/filter_base.hpp>
+#include <cras_cpp_common/filter_utils/filter_chain.hpp>

@@ -7,7 +7,7 @@
  */
 
 #include "gtest/gtest.h"
-#include <cras_cpp_common/filter_chain.hpp>
+#include <cras_cpp_common/filter_utils/filter_chain.hpp>
 
 #define TRACE SCOPED_TRACE("Failure happened here");
 

@@ -23,7 +23,7 @@
 #include <XmlRpcValue.h>
 
 #include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/filter_base.hpp>
+#include <cras_cpp_common/filter_utils/filter_base.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapter.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/xmlrpc_value.hpp>
 

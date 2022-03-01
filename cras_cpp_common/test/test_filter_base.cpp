@@ -7,7 +7,7 @@
  */
 
 #include "gtest/gtest.h"
-#include <cras_cpp_common/filter_base.hpp>
+#include <cras_cpp_common/filter_utils/filter_base.hpp>
 
 #include "get_param_test.inc" 
 

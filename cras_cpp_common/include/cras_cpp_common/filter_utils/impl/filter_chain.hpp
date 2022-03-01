@@ -10,8 +10,8 @@
 
 #include <rosconsole/macros_generated.h>
 
-#include <cras_cpp_common/filter_chain.hpp>
-#include <cras_cpp_common/filter_base.hpp>
+#include <cras_cpp_common/filter_utils/filter_chain.hpp>
+#include <cras_cpp_common/filter_utils/filter_base.hpp>
 
 namespace cras
 {
