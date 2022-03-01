@@ -198,6 +198,9 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(test_diag_utils diag_utils ${catkin_LIBRARIES})
   target_compile_options(test_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
 
+  catkin_add_gtest(test_log_utils test/test_log_utils.cpp)
+  target_link_libraries(test_log_utils log_utils ${catkin_LIBRARIES})
+
   catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
   target_link_libraries(test_thread_utils thread_utils string_utils Threads::Threads)
 

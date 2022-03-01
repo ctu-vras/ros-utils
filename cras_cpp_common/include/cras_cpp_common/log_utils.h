@@ -147,7 +147,7 @@ public:
         this->printFatal(text);
         break;
       default:
-        this->logError("Invalid log level level %i. Printing as error level.", level);
+        this->logError("Invalid log level %i. Printing as error level.", level);
         this->printError(text);
         break;
     }
