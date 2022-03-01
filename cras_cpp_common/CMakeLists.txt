@@ -54,6 +54,7 @@ catkin_package(
     tf2_utils
     time_utils
     thread_utils
+    type_utils
   CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
 )
 
@@ -77,7 +78,7 @@ target_link_libraries(joy_repeater ${catkin_LIBRARIES})
 add_dependencies(joy_repeater ${catkin_EXPORTED_TARGETS})
 
 add_library(string_utils src/string_utils.cpp)
-target_link_libraries(string_utils ${catkin_LIBRARIES})
+target_link_libraries(string_utils time_utils ${catkin_LIBRARIES})
 add_dependencies(string_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(log_utils src/log_utils/node.cpp src/log_utils/nodelet.cpp)
@@ -133,9 +134,8 @@ target_sources(math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_u
 add_library(set_utils INTERFACE)
 target_sources(set_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/set_utils.hpp>)
 
-add_library(type_utils INTERFACE)
-target_sources(type_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils.hpp>)
-target_link_libraries(type_utils INTERFACE string_utils)
+add_library(type_utils src/type_utils.cpp)
+target_link_libraries(type_utils PRIVATE string_utils)
 
 add_library(xmlrpc_value_traits INTERFACE)
 target_sources(xmlrpc_value_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/xmlrpc_value_traits.hpp>)
@@ -180,6 +180,9 @@ install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_up
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
+  catkin_add_gtest(test_string_utils test/test_string_utils.cpp)
+  target_link_libraries(test_string_utils string_utils ${catkin_LIBRARIES})
 
   catkin_add_gtest(test_cloud test/test_cloud.cpp)
   target_link_libraries(test_cloud cloud ${catkin_LIBRARIES})

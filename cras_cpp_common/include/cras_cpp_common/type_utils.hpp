@@ -1,13 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 #include <type_traits>
-#include <cras_cpp_common/string_utils.hpp>
-
-#if __has_include(<cxxabi.h>)
-#define HAS_CXX_ABI 1
-#include <cxxabi.h>
-#endif
 
 /**
  * This operator allows you to write size_t literals like 5_sz.
@@ -25,45 +20,14 @@ namespace cras
  * \param[in] typeName Name of a demangled C++ type.
  * \return A better name.
  */
-inline ::std::string cleanTypeName(const ::std::string& typeName)
-{
-  auto result = typeName;
-  ::cras::replace(result, "::__cxx11", "");
-  ::cras::replace(result, "basic_string", "string");
-  ::cras::replace(result, "string<char>", "string");
-  ::cras::replace(result, " >", ">");
-  return result;
-}
+::std::string cleanTypeName(const ::std::string& typeName);
 
 /**
  * \brief Demangle the given mangle C++ type identifier.
  * \param[in] mangled The mangled name.
  * \return The demangled name if demangling succeeded. Otherwise, return `mangled`.
  */
-inline ::std::string demangle(const ::std::string& mangled)
-{
-#if HAS_CXX_ABI
-  int status;
-  const auto demangled = ::abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
-  if (demangled && status == 0)
-  {
-    ::std::string result {demangled};
-    ::std::free(demangled);
-    return result;
-  }
-  else
-  {
-    return mangled;
-  }
-#else
-#if defined(__clang__)
-  #warning Install package libc++abi-dev to enable name demangling.
-#else
-  #warning Demangling is not supported for this compiler.
-#endif
-  return mangled;
-#endif
-}
+::std::string demangle(const ::std::string& mangled);
 
 /**
  * \brief Get a human-readable name of T.
@@ -103,10 +67,7 @@ inline ::std::string getTypeName()
  * \param[in] typeInfo Info about the type.
  * \return Human-readable name.
  */
-inline ::std::string getTypeName(const ::std::type_info& typeInfo)
-{
-  return ::cras::cleanTypeName(::cras::demangle(typeInfo.name()));
-}
+::std::string getTypeName(const ::std::type_info& typeInfo);
 
 template<typename T>
 struct is_c_string : public std::false_type {};
@@ -128,5 +89,14 @@ struct is_c_string<char[I]> : public std::true_type {};
 
 template<int I>
 struct is_c_string<const char[I]> : public std::true_type {};
+
+template<typename T, typename = void>
+struct is_string : public std::false_type {};
+
+template<typename T>
+struct is_string<T, ::std::enable_if_t<::cras::is_c_string<T>::value>> : public std::true_type {};
+
+template<typename T>
+struct is_string<T, ::std::enable_if_t<::std::is_same<T, ::std::string>::value>> : public std::true_type {};
 
 }

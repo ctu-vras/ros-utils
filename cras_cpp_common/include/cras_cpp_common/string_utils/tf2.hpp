@@ -1,4 +1,14 @@
+/**
+ * \file
+ * \brief Specializations of cras::to_string() for TF2 types.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
 #pragma once
+
+#include <string>
 
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -8,14 +18,14 @@
 namespace cras
 {
 
-inline std::string to_string(const tf2::Vector3& value)
+inline ::std::string to_string(const ::tf2::Vector3& value)
 {
   return ::cras::format("[%.6f, %.6f, %.6f]", value.getX(), value.getY(), value.getZ());
 }
 
-inline std::string to_string(const tf2::Quaternion& value)
+inline ::std::string to_string(const ::tf2::Quaternion& value)
 {
-  tf2::Matrix3x3 m;
+  ::tf2::Matrix3x3 m;
   m.setRotation(value);
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
@@ -23,7 +33,7 @@ inline std::string to_string(const tf2::Quaternion& value)
                         value.getX(), value.getY(), value.getZ(), value.getW(), roll, pitch, yaw);
 }
 
-inline std::string to_string(const tf2::Matrix3x3& value)
+inline ::std::string to_string(const ::tf2::Matrix3x3& value)
 {
   return ::cras::format("[[%.6f, %.6f, %.6f]; [%.6f, %.6f, %.6f]; [%.6f, %.6f, %.6f]]",
                         value.getRow(0).getX(), value.getRow(0).getY(), value.getRow(0).getZ(),
@@ -31,7 +41,7 @@ inline std::string to_string(const tf2::Matrix3x3& value)
                         value.getRow(2).getX(), value.getRow(2).getY(), value.getRow(2).getZ());
 }
 
-inline std::string to_string(const tf2::Transform& value)
+inline ::std::string to_string(const ::tf2::Transform& value)
 {
   return "Transform(t=" + ::cras::to_string(value.getOrigin()) + ", r=" +
     ::cras::to_string(value.getRotation()) + ")";
