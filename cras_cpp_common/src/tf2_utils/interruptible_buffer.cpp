@@ -138,7 +138,8 @@ bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const 
   }
 
   const auto retval = buffer->canTransform(target_frame, source_frame, time, errstr);
-  conditionallyAppendTimeoutInfo(errstr, startTime, timeout);
+  if (!retval)
+    conditionallyAppendTimeoutInfo(errstr, startTime, timeout);
   return retval;
 }
 
@@ -177,7 +178,7 @@ bool InterruptibleTFBuffer::canTransform(
   while (
     ros::Time::now() < endTime &&
     !buffer->canTransform(target_frame, target_time, source_frame, source_time, fixed_frame) &&
-    (ros::Time::now()+ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
+    (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
     (ros::ok() || !ros::isInitialized()) &&  // Make sure we haven't been stopped
     this->ok()  // Make sure the buffer is not requested to stop
   )
@@ -201,7 +202,8 @@ bool InterruptibleTFBuffer::canTransform(
 
   const auto retval = buffer->canTransform(
     target_frame, target_time, source_frame, source_time, fixed_frame, errstr);
-  conditionallyAppendTimeoutInfo(errstr, startTime, timeout);
+  if (!retval)
+    conditionallyAppendTimeoutInfo(errstr, startTime, timeout);
   return retval;
 }
 

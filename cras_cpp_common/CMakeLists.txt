@@ -125,7 +125,7 @@ add_dependencies(tf2_sensor_msgs_cras ${catkin_EXPORTED_TARGETS})
 target_compile_options(tf2_sensor_msgs_cras PRIVATE -march=native)
 
 add_library(tf2_utils src/tf2_utils.cpp src/tf2_utils/interruptible_buffer.cpp)
-target_link_libraries(tf2_utils thread_utils ${catkin_LIBRARIES})
+target_link_libraries(tf2_utils thread_utils time_utils ${catkin_LIBRARIES})
 add_dependencies(tf2_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(math_utils INTERFACE)
@@ -203,6 +203,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_log_utils test/test_log_utils.cpp)
   target_link_libraries(test_log_utils log_utils ${catkin_LIBRARIES})
+
+  catkin_add_gtest(test_tf2_utils test/test_tf2_utils.cpp)
+  target_link_libraries(test_tf2_utils tf2_utils ${catkin_LIBRARIES})
 
   catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
   target_link_libraries(test_thread_utils thread_utils string_utils Threads::Threads)
