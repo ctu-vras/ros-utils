@@ -8,9 +8,13 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <string>
+
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/PointField.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
-#include <cras_cpp_common/cloud-impl.hpp>
+
+#include "cloud/impl/cloud.hpp"
 
 namespace cras
 {
@@ -33,7 +37,6 @@ typedef ::sensor_msgs::PointCloud2ConstIterator<int> CloudIndexConstIter;
 //! \brief Shorthand for sensor_msgs::PointCloud2Modifier.
 typedef ::sensor_msgs::PointCloud2Modifier CloudModifier;
 
-// from cloud-impl.hpp
 /**
  * \brief GenericCloudIter and GenericCloudConstIter are iterators of fields of types unknown at compile time.
  *
@@ -41,17 +44,21 @@ typedef ::sensor_msgs::PointCloud2Modifier CloudModifier;
  * The iterators allow you to dereference them into an unsigned char, which doesn't however need to be the actual data,
  * as they may span multiple bytes.
  *
- * It adds function getData() which returns a pointer to the current position in the uchar data stream. You can use
+ * It adds function rawData() which returns a pointer to the current position in the uchar data stream. You can use
  * reinterpret_cast to transform the data into some desired type and get or set the value. Any kind of data safety is on
  * you.
+ * 
+ * Another provided function is dataAs<Type>() which returns the current iterator position as a pointer to data of the
+ * requested type. This function does a basic check that the requested data type has the same size as the type of the
+ * iterated field.
  *
  * The non-const iterator also provides method copyData() which can copy the field data from another generic iterator.
  * This can be used to copy fields of types which are not known at compile time.
  */
-typedef ::cras::impl::GenericCloudIterator<unsigned char> GenericCloudIter;
+typedef ::cras::impl::GenericCloudIterator<> GenericCloudIter;
 
 //! \copydoc :cras::GenericCloudIter
-typedef ::cras::impl::GenericCloudConstIterator<unsigned char> GenericCloudConstIter;
+typedef ::cras::impl::GenericCloudConstIterator<> GenericCloudConstIter;
 
 /**
  * \brief Return the number of points the given pointcloud contains.
