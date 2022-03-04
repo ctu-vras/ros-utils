@@ -683,6 +683,50 @@ TEST(SemaphoreGuard, Acquired)  // NOLINT
   EXPECT_TRUE(finished);
 }
 
+/**
+ * \brief Test the `isEnabled()` method.
+ */
+TEST(SemaphoreGuard, IsEnabled)  // NOLINT
+{
+  cras::ReverseSemaphore sem(false);
+  EXPECT_TRUE(sem.isEnabled());
+  sem.disable();
+  EXPECT_FALSE(sem.isEnabled());
+  sem.enable();
+  EXPECT_TRUE(sem.isEnabled());
+}
+
+/**
+ * \brief Test the `getCount()` method.
+ */
+TEST(SemaphoreGuard, GetCount)  // NOLINT
+{
+  cras::ReverseSemaphore sem(false);
+  EXPECT_EQ(0u, sem.getCount());
+  sem.acquire();
+  EXPECT_EQ(1u, sem.getCount());
+  sem.release();
+  EXPECT_EQ(0u, sem.getCount());
+  sem.release();  // writes a warning, but should work
+  EXPECT_EQ(0u, sem.getCount());
+  sem.acquire();
+  EXPECT_EQ(1u, sem.getCount());
+  sem.acquire();
+  EXPECT_EQ(2u, sem.getCount());
+  sem.acquire();
+  EXPECT_EQ(3u, sem.getCount());
+  sem.release();
+  EXPECT_EQ(2u, sem.getCount());
+  sem.acquire();
+  EXPECT_EQ(3u, sem.getCount());
+  sem.release();
+  EXPECT_EQ(2u, sem.getCount());
+  sem.release();
+  EXPECT_EQ(1u, sem.getCount());
+  sem.release();
+  EXPECT_EQ(0u, sem.getCount());
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

@@ -11,28 +11,45 @@
 #include <ros/init.h>
 #include <ros/time.h>
 
-using namespace cras;
+#include <cras_cpp_common/thread_utils/semaphore.hpp>
+
+namespace cras
+{
+
+struct InterruptibleSleepInterfacePrivate
+{
+  //! \brief This semaphore prevents the object to be destructed before pending sleeps finish.
+  mutable cras::ReverseSemaphore semaphore;
+};
+
+InterruptibleSleepInterface::InterruptibleSleepInterface() : data(new InterruptibleSleepInterfacePrivate)
+{
+}
 
 InterruptibleSleepInterface::~InterruptibleSleepInterface()
 {
-  std::lock_guard<std::mutex> lock(this->mutex);
+  this->data->semaphore.disable();
+  this->data->semaphore.waitZero();
 }
 
 bool InterruptibleSleepInterface::ok() const
 {
-  return false;  // false by default; this should only be called when the object is partially destroyed
+  // This should only be called when the object is partially destroyed. Normally, the override method is called.
+  return this->data->semaphore.isEnabled();
 }
 
 bool InterruptibleSleepInterface::sleep(const ros::Duration& duration) const
 {
   if (duration.isZero())
     return true;
-  
+
   // Fast-track exit in case ok() is false to prevent additional locks of the mutex that is needed for object
   // destruction.
   if (!this->ok() || (ros::isInitialized() && !ros::ok()))
     return false;
 
+  cras::SemaphoreGuard<cras::ReverseSemaphore> guard(this->data->semaphore);
+  
   // code heavily inspired by BSD-licensed https://github.com/ros/roscpp_core/blob/noetic-devel/rostime/src/time.cpp
   // what is added is the this->ok() check in the while loop and making the system time sleep also interruptible
 
@@ -43,15 +60,13 @@ bool InterruptibleSleepInterface::sleep(const ros::Duration& duration) const
     const auto pollWallDuration = wallDuration * 0.01;
     const auto end = start + wallDuration;
 
-    std::lock_guard<std::mutex> lock(this->mutex);
-    
     bool rc = ros::WallTime::now() >= end;  // if the duration was veery short, we might already have finished now
     while ((ros::ok() || !ros::isInitialized()) && this->ok() && (ros::WallTime::now() < end))
     {
       pollWallDuration.sleep();
       rc = true;
     }
-    
+
     return rc && (ros::ok() || !ros::isInitialized()) && this->ok();
   }
 
@@ -60,8 +75,6 @@ bool InterruptibleSleepInterface::sleep(const ros::Duration& duration) const
   if (start.isZero())
     end = ros::TIME_MAX;
 
-  std::lock_guard<std::mutex> lock(this->mutex);
-  
   bool rc = ros::Time::now() >= end;  // if the duration was veery short, we might already have finished now
   while ((ros::ok() || !ros::isInitialized()) && this->ok() && (ros::Time::now() < end))
   {
@@ -83,3 +96,4 @@ bool InterruptibleSleepInterface::sleep(const ros::Duration& duration) const
   return rc && (ros::ok() || !ros::isInitialized()) && this->ok();
 }
 
+}

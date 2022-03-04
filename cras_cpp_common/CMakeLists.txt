@@ -44,6 +44,7 @@ catkin_package(
     cloud
     cras_diag_updater
     cras_filter_chain
+    cras_semaphore
     diag_utils
     log_utils
     node_utils
@@ -116,7 +117,7 @@ target_link_libraries(cras_filter_chain cras_filter_base string_utils ${catkin_L
 add_dependencies(cras_filter_chain log_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(time_utils src/time_utils.cpp src/time_utils/interruptible_sleep_interface.cpp)
-target_link_libraries(time_utils ${catkin_LIBRARIES})
+target_link_libraries(time_utils PUBLIC ${catkin_LIBRARIES} PRIVATE cras_semaphore)
 add_dependencies(time_utils ${catkin_EXPORTED_TARGETS})
 
 add_library(tf2_sensor_msgs_cras src/tf2_sensor_msgs.cpp)
@@ -154,8 +155,10 @@ target_sources(filter_chain_nodelet INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BA
 target_link_libraries(filter_chain_nodelet INTERFACE diag_utils nodelet_utils cras_filter_chain)
 add_dependencies(filter_chain_nodelet INTERFACE ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_library(thread_utils src/thread_utils.cpp src/thread_utils/semaphore.cpp)
-target_link_libraries(thread_utils PRIVATE string_utils Threads::Threads)
+add_library(cras_semaphore src/thread_utils/semaphore.cpp)
+
+add_library(thread_utils src/thread_utils.cpp)
+target_link_libraries(thread_utils PUBLIC cras_semaphore PRIVATE string_utils Threads::Threads)
 
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
@@ -180,6 +183,10 @@ install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_up
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+
+
+  catkin_add_gtest(test_time_utils test/test_time_utils.cpp)
+  target_link_libraries(test_time_utils time_utils ${catkin_LIBRARIES})
 
   catkin_add_gtest(test_string_utils test/test_string_utils.cpp)
   target_link_libraries(test_string_utils string_utils ${catkin_LIBRARIES})

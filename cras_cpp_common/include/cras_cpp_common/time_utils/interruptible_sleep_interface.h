@@ -8,21 +8,26 @@
 
 #pragma once
 
-#include <mutex>
+#include <memory>
 
 #include <ros/duration.h>
 
 namespace cras
 {
 
+struct InterruptibleSleepInterfacePrivate;
+
 /**
- * \brief Interface to an object whose `sleep()` calls can be interrupted externally. Only one `sleep()` call can be
- * happening at a time (they are protected by mutex). The object waits for the last `sleep()` call to finish on
- * destruction. Make sure that `ok()` returns false when this object is about to be destroyed.
+ * \brief Interface to an object whose `sleep()` calls can be interrupted externally. Multiple `sleep()` calls can be
+ * happening at a time. The object waits for the last `sleep()` call to finish on destruction. No more `sleep()` calls
+ * can be made once destruction of the object started (`sleep()` will return false in such case).
+ * Make sure that `ok()` returns false when this object is about to be destroyed.
  */
 struct InterruptibleSleepInterface
 {
 public:
+  InterruptibleSleepInterface();
+  
   /**
    * \brief Destroy the object waiting for a pending `sleep()` call to finish.
    */
@@ -48,8 +53,8 @@ protected:
   ::ros::WallDuration pollDuration {0, 1000000};
 
 private:
-  //! \brief This mutex prevents the object to be destructed before a pending sleep finishes.
-  mutable ::std::mutex mutex;
+  //! \brief PIMPL data container.
+  ::std::unique_ptr<InterruptibleSleepInterfacePrivate> data;
 };
 
 }

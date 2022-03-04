@@ -64,6 +64,18 @@ public:
    * \brief Enable the semaphore. Calling `acquire()` works normally after this call.
    */
   void enable();
+  
+  /**
+   * \brief Whether the semaphore is enabled or not.
+   */
+  bool isEnabled() const;
+  
+  /**
+   * \brief Get the current number of unreleased `acquire()`s.
+   * \note Do not use this to tell when all `acquire()`s are released. Use `waitZero()` for that.
+   * \return The number of unreleased `acquire()`s.
+   */
+  size_t getCount() const;
 
 private:
   //! \brief Whether to wait for zero when the object is being destroyed.
@@ -79,7 +91,7 @@ private:
   volatile bool disabled {false};
   
   //! \brief Mutex protecting `cv`, `count` and `disabled`.
-  ::std::mutex mutex;
+  mutable ::std::mutex mutex;
   
   //! \brief Condition variable used for signalling between `release()` and `waitZero()`.
   ::std::condition_variable cv;

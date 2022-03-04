@@ -75,3 +75,15 @@ void ReverseSemaphore::enable()
   std::lock_guard<decltype(this->mutex)> lock(this->mutex);
   this->disabled = false;
 }
+
+bool ReverseSemaphore::isEnabled() const
+{
+  std::lock_guard<decltype(this->mutex)> lock(this->mutex);
+  return !this->disabled;
+}
+
+size_t ReverseSemaphore::getCount() const
+{
+  std::lock_guard<decltype(this->mutex)> lock(this->mutex);
+  return this->count;
+}
