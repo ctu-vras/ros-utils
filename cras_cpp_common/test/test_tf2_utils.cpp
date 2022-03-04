@@ -155,16 +155,19 @@ void testInterruptibleBuffer(
 {
   ros::Time::setNow({10, 0});
   
-  size_t shouldRun {0}, hasRun {0};
+  std::mutex taskMutex;
+  std::vector<bool> hasRun;
+  auto addTask = [&]() {std::lock_guard<std::mutex> l(taskMutex); hasRun.push_back(false);};
+  auto endTask = [&](const size_t i) {std::lock_guard<std::mutex> l(taskMutex); hasRun[i] = true;};
   
   // Test with 0 timeout, should not block
 
-  std::thread([&](){shouldRun++; EXPECT_TRUE(buf.canTransform("b", "a", {10, 0}, {0, 0})); hasRun++;}).detach();
-  std::thread([&](){shouldRun++; EXPECT_FALSE(buf.canTransform("b", "a", {11, 0}, {0, 0})); hasRun++;}).detach();
-  std::thread([&](){shouldRun++; EXPECT_FALSE(buf.canTransform("d", "a", {10, 0}, {0, 0})); hasRun++;}).detach();
-  std::thread([&](){shouldRun++; EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {0, 0})); hasRun++;}).detach();
+  addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("b", "a", {10, 0}, {0, 0})); endTask(0);}).detach();
+  addTask(); std::thread([&](){EXPECT_FALSE(buf.canTransform("b", "a", {11, 0}, {0, 0})); endTask(1);}).detach();
+  addTask(); std::thread([&](){EXPECT_FALSE(buf.canTransform("d", "a", {10, 0}, {0, 0})); endTask(2);}).detach();
+  addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {0, 0})); endTask(3);}).detach();
   
-  std::thread([&](){shouldRun++;
+  addTask(); std::thread([&](){
     try
     {
       auto res = buf.lookupTransform("b", "a", {10, 0}, {0, 0});
@@ -177,9 +180,9 @@ void testInterruptibleBuffer(
     {
       GTEST_NONFATAL_FAILURE_(e.what());
     }
-  hasRun++;}).detach();
+  endTask(4);}).detach();
   
-  std::thread([&](){shouldRun++;
+  addTask(); std::thread([&](){
     try
     {
       auto res = buf.lookupTransform("c", "b", {10, 0}, {0, 0});
@@ -192,23 +195,23 @@ void testInterruptibleBuffer(
     {
       GTEST_NONFATAL_FAILURE_(e.what());
     }
-  hasRun++;}).detach();
+  endTask(5);}).detach();
 
-  std::thread([&](){shouldRun++;
+  addTask(); std::thread([&](){
     EXPECT_THROW(buf.lookupTransform("b", "a", {11, 0}, {0, 0}), tf2::ExtrapolationException);
-  hasRun++;}).detach();
-  std::thread([&](){shouldRun++;
+  endTask(6);}).detach();
+  addTask(); std::thread([&](){
     EXPECT_THROW(buf.lookupTransform("d", "a", {10, 0}, {0, 0}), tf2::LookupException);
-  hasRun++;}).detach();
+  endTask(7);}).detach();
 
   // Test with nonzero timeout, should block if transform is not available
 
-  std::thread([&](){shouldRun++; EXPECT_TRUE(buf.canTransform("b", "a", {10, 0}, {1, 0})); hasRun++;}).detach();
-  std::thread([&](){shouldRun++; EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {1, 0})); hasRun++;}).detach();
+  addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("b", "a", {10, 0}, {1, 0})); endTask(8);}).detach();
+  addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {1, 0})); endTask(9);}).detach();
 
   // Test that lookupTransform() for known transforms with a timeout works.
   
-  std::thread([&](){shouldRun++;
+  addTask(); std::thread([&](){
     try
     {
       auto res = buf.lookupTransform("b", "a", {10, 0}, {1, 0});
@@ -221,9 +224,9 @@ void testInterruptibleBuffer(
     {
       GTEST_NONFATAL_FAILURE_(e.what());
     }
-  hasRun++;}).detach();
+  endTask(10);}).detach();
 
-  std::thread([&](){shouldRun++;
+  addTask(); std::thread([&](){
     try
     {
       auto res = buf.lookupTransform("c", "b", {10, 0}, {1, 0});
@@ -236,7 +239,7 @@ void testInterruptibleBuffer(
     {
       GTEST_NONFATAL_FAILURE_(e.what());
     }
-  hasRun++;}).detach();
+  endTask(11);}).detach();
 
   // There is no data for time 11, so the buffer waits; but we do not advance time. Normally, the canTransform() call
   // should wait infinitely (until rostime reaches 11, which it never will), but if we request the buffer to stop, the
@@ -493,6 +496,7 @@ void testInterruptibleBuffer(
   
   // Wait for finish of all the simpler tasks from the beginning (at most 1 second).
 
+  std::vector<bool> shouldRun(hasRun.size(), true);
   end = ros::WallTime::now() + ros::WallDuration(1.0);
   while (shouldRun != hasRun && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
