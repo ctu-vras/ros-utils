@@ -100,6 +100,12 @@ public:
   void setDisabledFilters(::std::unordered_set<::std::string> filters);
   
   /**
+   * \brief Get which filters are temporarily disabled.
+   * \return The disabled filters. 
+   */
+  ::std::unordered_set<::std::string> getDisabledFilters() const;
+  
+  /**
    * \brief Clear all filters from this chain.
    * This function intentionally shadows filters::FilterChain::clear() which is non-virtual.
    * \return Always true.

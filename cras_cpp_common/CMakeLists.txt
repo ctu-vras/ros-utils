@@ -204,6 +204,9 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
   target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 
+  add_rostest_gtest(test_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
+  target_link_libraries(test_filter_chain_nodelet filter_chain_nodelet ${catkin_LIBRARIES})
+
   add_rostest_gtest(test_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
   target_link_libraries(test_diag_utils diag_utils ${catkin_LIBRARIES})
   target_compile_options(test_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build

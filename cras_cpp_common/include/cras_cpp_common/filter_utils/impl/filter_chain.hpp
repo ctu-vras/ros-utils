@@ -68,7 +68,7 @@ bool FilterChain<F>::update(const F &data_in, F &data_out)
   {
     result = this->activeFilters[0]->update(data_in, this->buffer0);
     if (result == false) return false;  //don't keep processing on failure
-    if (this->filterCallback) this->callCallback(this->buffer0, 0);
+    this->callCallback(this->buffer0, 0);
     result = result && this->activeFilters[1]->update(this->buffer0, data_out);
     if (result) this->callCallback(data_out, 1);
   }
@@ -148,6 +148,12 @@ void FilterChain<F>::setDisabledFilters(::std::unordered_set<::std::string> filt
 {
   this->disabledFilters = ::std::move(filters);
   this->updateActiveFilters();
+}
+
+template<typename F>
+::std::unordered_set<::std::string> FilterChain<F>::getDisabledFilters() const
+{
+  return this->disabledFilters;
 }
 
 template<typename F>
