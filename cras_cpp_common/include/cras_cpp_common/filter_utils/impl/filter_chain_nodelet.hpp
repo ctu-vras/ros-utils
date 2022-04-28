@@ -2,13 +2,12 @@
 
 /**
  * \file
- * \brief A versatile nodelet that can load and run a filter chain.
+ * \brief A versatile nodelet that can load and run a filter chain  (implementation details, do not include directly).
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -19,6 +18,8 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <dynamic_reconfigure/server.h>
 #include <ros/advertise_options.h>
 #include <ros/duration.h>
@@ -29,7 +30,11 @@
 
 #include <cras_cpp_common/FilterChainConfig.h>
 
+#include <cras_cpp_common/diag_utils/duration_status.h>
+#include <cras_cpp_common/diag_utils/duration_status_param.h>
+#include <cras_cpp_common/filter_utils/filter_chain.hpp>
 #include <cras_cpp_common/filter_utils/filter_chain_nodelet.hpp>
+#include <cras_cpp_common/functional.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 
 namespace cras
@@ -38,9 +43,8 @@ namespace cras
 template <class F>
 FilterChainNodelet<F>::FilterChainNodelet(const ::std::string& dataType,
   const ::std::string& topicIn, const ::std::string& topicFiltered, const ::std::string& configNamespace) :
-    filterChain(dataType,
-      [this](const F& data, const size_t filterNum, const ::std::string& name, const ::std::string& type)
-        { this->filterCallback(data, filterNum, name, type); }),
+    filterChain(dataType, ::cras::bind_front(&FilterChainNodelet::filterFinishedCallback, this),
+      ::cras::bind_front(&FilterChainNodelet::filterStartCallback, this), this->log),
     topicIn(topicIn), topicFiltered(topicFiltered), configNamespace(configNamespace)
 {
 }
@@ -48,13 +52,13 @@ FilterChainNodelet<F>::FilterChainNodelet(const ::std::string& dataType,
 template <class F>
 FilterChainNodelet<F>::FilterChainNodelet(const ::std::string& topicIn, const ::std::string& topicFiltered,
   const ::std::string& configNamespace) :
-    FilterChainNodelet<F>(::cras::replace(MsgDataType::value(), "/", "::"), topicIn, topicFiltered, configNamespace)
+    FilterChainNodelet(::cras::replace(MsgDataType::value(), "/", "::"), topicIn, topicFiltered, configNamespace)
 {
 }
 
 template <class F>
 FilterChainNodelet<F>::FilterChainNodelet(const ::std::string& configNamespace) :
-  FilterChainNodelet<F>("in", "out", configNamespace)
+  FilterChainNodelet("in", "out", configNamespace)
 {
 }
 
@@ -157,13 +161,16 @@ void FilterChainNodelet<F>::onInit()
 
   this->dynreconfServer = ::std::make_unique<::dynamic_reconfigure::Server<::cras_cpp_common::FilterChainConfig>>(
     this->configMutex, this->privateNodeHandle);
-  this->dynreconfServer->setCallback([this](auto& config, auto level){ this->dynreconfCallback(config, level); });
+  this->dynreconfServer->setCallback(::cras::bind_front(&FilterChainNodelet::dynreconfCallback, this));
 
   const auto privateParams = this->privateParams();
   this->lazySubscription = privateParams->getParam("lazy_subscription", true);
   this->subscriberQueueSize = privateParams->getParam("subscriber_queue_size", this->subscriberQueueSize);
   this->publisherQueueSize = privateParams->getParam("publisher_queue_size", this->publisherQueueSize);
-  this->publishDiagnostics = privateParams->getParam("publish_diagnostics", this->publishDiagnostics);
+  const auto publishDiagnostics = privateParams->getParam("publish_diagnostics", false);
+  this->publishTopicDiagnostics = privateParams->getParam("publish_topic_diagnostics", publishDiagnostics);
+  this->publishDurationDiagnostics = privateParams->getParam("publish_duration_diagnostics", publishDiagnostics);
+  this->publishChainDiagnostics = privateParams->getParam("publish_chain_diagnostics", publishDiagnostics);
 
   // setup filters
   this->filterChain.configure(this->configNamespace, this->privateNodeHandle);
@@ -172,9 +179,10 @@ void FilterChainNodelet<F>::onInit()
   // filtered data publisher
   ::ros::AdvertiseOptions opts;
   opts.template init<F>(this->topicFiltered, this->publisherQueueSize,
-    [this](const auto& pub){ this->connectCb(pub); }, [this](const auto& pub){ this->disconnectCb(pub); });
+    ::cras::bind_front(&FilterChainNodelet::connectCb, this),
+    ::cras::bind_front(&FilterChainNodelet::disconnectCb, this));
   
-  if (this->publishDiagnostics)
+  if (this->publishTopicDiagnostics)
   {
     this->publisherDiag = this->template advertiseDiagnosed<F>(opts);
     this->filteredPublisher = this->publisherDiag->getPublisher();
@@ -184,10 +192,33 @@ void FilterChainNodelet<F>::onInit()
     this->filteredPublisher = this->nodeHandle.advertise(opts); 
   }
 
+  if (this->publishDurationDiagnostics)
+  {
+    this->callbackDurationDiag = ::std::make_unique<::cras::DurationStatus>("All filters callback duration",
+      privateParams->paramsInNamespace("update_duration"), ::cras::SimpleDurationStatusParam());
+    this->getDiagUpdater().add(*this->callbackDurationDiag);
+    
+    const auto& constFilterChain = this->filterChain;
+    for (const auto& filter : constFilterChain.getFilters())
+    {
+      const auto& name = filter->getName();
+      this->filterCallbackDurationDiags[name] = ::std::make_unique<::cras::DurationStatus>(name + " callback duration",
+        privateParams->paramsInNamespace(name + "/update_duration"), ::cras::SimpleDurationStatusParam());
+      this->getDiagUpdater().add(*this->filterCallbackDurationDiags[name]);
+    }
+  }
+  
+  if (this->publishChainDiagnostics)
+  {
+    this->chainDiag = ::std::make_unique<::cras::FilterChainDiagnostics<F>>(
+      "Filter chain performance", this->filterChain);
+    this->getDiagUpdater().add(*this->chainDiag);
+  }
+
   if (!this->lazySubscription)
     this->subscribe();
 
-  if (this->publishDiagnostics)
+  if (this->publishTopicDiagnostics || this->publishDurationDiagnostics || this->publishChainDiagnostics)
     this->startDiagTimer();
 }
 
@@ -196,9 +227,10 @@ void FilterChainNodelet<F>::subscribe()
 {
   NODELET_DEBUG("Connecting to input topic.");
   ::ros::SubscribeOptions opts;
-  opts.template init<F>(this->topicIn, this->subscriberQueueSize, [this](const auto& data){ dataCallback(data); });
+  opts.template init<F>(this->topicIn, this->subscriberQueueSize,
+    ::cras::bind_front(&FilterChainNodelet::dataCallback, this));
   
-  if (this->publishDiagnostics)
+  if (this->publishTopicDiagnostics)
   {
     this->subscriberDiag = this->template subscribeDiagnosed<F>(opts);
     this->subscriber = this->subscriberDiag->getSubscriber();
@@ -272,10 +304,16 @@ void FilterChainNodelet<F>::dataCallback(const typename F::ConstPtr& data)
   this->updateThreadName();
 
   typename F::Ptr dataFiltered(new F);
+  
+  if (this->publishDurationDiagnostics)
+    this->callbackDurationDiag->start(::ros::WallTime::now());
 
   // apply the filter chain
   if (this->filterChain.update(*data, *dataFiltered))
   {
+    if (this->publishDurationDiagnostics)
+      this->callbackDurationDiag->stop(::ros::WallTime::now());
+    
     // publish the filtered result
     if (this->publisherDiag != nullptr)
       this->publisherDiag->publish(dataFiltered);
@@ -291,9 +329,20 @@ void FilterChainNodelet<F>::dataCallback(const typename F::ConstPtr& data)
 }
 
 template <class F>
-void FilterChainNodelet<F>::filterCallback(const F& data, const size_t filterNum,
-  const ::std::string& name, const ::std::string& type)
+void FilterChainNodelet<F>::filterFinishedCallback(const F& data, const size_t filterNum,
+  const ::std::string& name, const ::std::string& type, const bool success)
 {
+  if (this->publishDurationDiagnostics)
+  {
+    if (this->filterCallbackDurationDiags.find(name) != this->filterCallbackDurationDiags.end())
+    {
+      this->filterCallbackDurationDiags[name]->stop(::ros::WallTime::now());
+    }
+  }
+  
+  if (this->publishChainDiagnostics)
+    this->chainDiag->addReport(name, success);
+
   if (!this->publishFilters)
     return;
   
@@ -306,6 +355,83 @@ void FilterChainNodelet<F>::filterCallback(const F& data, const size_t filterNum
   }
 
   this->filterPublishers[name].publish(data);
+}
+
+template <class F>
+void FilterChainNodelet<F>::filterStartCallback(const F& data, const size_t filterNum,
+  const ::std::string& name, const ::std::string& type)
+{
+  if (!this->publishDurationDiagnostics)
+    return;
+
+  if (this->filterCallbackDurationDiags.find(name) != this->filterCallbackDurationDiags.end())
+  {
+    this->filterCallbackDurationDiags[name]->start(::ros::WallTime::now());
+  }
+}
+
+template<typename F>
+FilterChainDiagnostics<F>::FilterChainDiagnostics(const ::std::string& name, const ::cras::FilterChain<F>& chain) :
+  ::diagnostic_updater::DiagnosticTask(name), chain(chain)
+{
+}
+
+template<typename F>
+void FilterChainDiagnostics<F>::run(::diagnostic_updater::DiagnosticStatusWrapper& stat)
+{
+  ::std::lock_guard<::std::mutex> lock(this->mutex);
+
+  size_t totalCallbacks = 0;
+  size_t totalFailures = 0;
+
+  for (const auto& nameAndVal : this->numCallbacks)
+    totalCallbacks += nameAndVal.second;
+
+  for (const auto& nameAndVal : this->numFailures)
+    totalFailures += nameAndVal.second;
+
+  if (totalFailures == 0)
+  {
+    stat.level = ::diagnostic_msgs::DiagnosticStatus::OK;
+    stat.message = ::cras::format("Filters running ok (processed %lu messages since last update)", totalCallbacks);
+  }
+  else
+  {
+    stat.level = ::diagnostic_msgs::DiagnosticStatus::ERROR;
+    stat.message = ::cras::format("Some filters are failing (processed %lu messages since last update, %ul errors "
+                                  "encountered)", totalCallbacks, totalFailures);
+  }
+
+  auto allFilters = this->chain.getFilters();
+  auto disabledFilters = this->chain.getDisabledFilters();
+  for (const auto& filter : allFilters)
+  {
+    const auto& name = filter->getName();
+    if (disabledFilters.find(name) == disabledFilters.end())
+    {
+      stat.addf("Filter " + name, "Active, processed %lu callbacks, %lu successful, %lu failures.",
+                this->numCallbacks[name], this->numSuccesses[name], this->numFailures[name]);
+    }
+    else
+    {
+      stat.add("Filter " + name, "Disabled");
+    }
+  }
+
+  this->numCallbacks.clear();
+  this->numSuccesses.clear();
+  this->numFailures.clear();
+}
+
+template<typename F>
+void FilterChainDiagnostics<F>::addReport(const ::std::string& filterName, const bool success)
+{
+  ::std::lock_guard<::std::mutex> lock(this->mutex);
+  this->numCallbacks[filterName]++;
+  if (success)
+    this->numSuccesses[filterName]++;
+  else
+    this->numFailures[filterName]++;
 }
 
 }

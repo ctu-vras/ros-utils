@@ -9,6 +9,7 @@
  */
 
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -27,12 +28,16 @@
 
 #include <nodelet/nodelet.h>
 
+#include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/log_utils/node.h>
+
 namespace cras
 {
 
 /**
  * This filter chain implementation allows for selectively disabling/enabling filters during run time.
- * It also adds a callback with the result of each filter run, so that you can e.g. publish the output of each filter.
+ * It also adds a callback with the input and result of each filter run, so that you can e.g. publish the output of
+ * each filter.
  * @tparam F Type of the filtered data.
  */
 template<typename F>
@@ -40,22 +45,40 @@ class FilterChain : public ::filters::FilterChain<F>
 {
 public:
   /**
+   * \brief Callback to be called before each filter processes the data.
+   *
+   * \param[in] data The data before application of the filter.
+   * \param[in] filterNum The number of the filter in the filtering chain.
+   * \param[in] name Name of the filter that processed the data.
+   * \param[in] type Type of the filter that processed the data.
+   */
+  typedef ::std::function<
+    void(const F& data, const size_t filterNum, const ::std::string& name, const ::std::string& type)>
+    FilterStartCallback;
+  
+  /**
    * \brief Callback to be called after each filter processes the data.
    *
-   * \param data The data after application of the filter.
-   * \param filterNum The number of the filter in the filtering chain.
-   * \param name Name of the filter that processed the data.
-   * \param type Type of the filter that processed the data.
+   * \param[in] data The data after application of the filter.
+   * \param[in] filterNum The number of the filter in the filtering chain.
+   * \param[in] name Name of the filter that processed the data.
+   * \param[in] type Type of the filter that processed the data.
+   * \param[in] success Whether the filter succeeded (its update() function returned true).
    */
-  typedef std::function<
-    void(const F& data, const size_t filterNum, const ::std::string& name, const ::std::string& type)> FilterCallback;
+  typedef ::std::function<
+    void(const F& data, const size_t filterNum, const ::std::string& name, const ::std::string& type, bool success)>
+    FilterFinishedCallback;
 
   /**
    * \brief Construct a filter chain.
-   * \param dataType Textual representation of the data type.
-   * \param filterCallback Optional callback to be called after each filter finishes its work.
+   * \param[in] dataType Textual representation of the data type.
+   * \param[in] filterFinishedCallback Optional callback to be called after each filter finishes its work.
+   * \param[in] filterStartCallback Optional callback to be called before each filter starts its work.
+   * \param[in] logHelper The log helper used for printing console messages.
    */
-  explicit FilterChain(const ::std::string& dataType, const FilterCallback& filterCallback = {});
+  explicit FilterChain(const ::std::string& dataType, const FilterFinishedCallback& filterFinishedCallback = {},
+    const FilterStartCallback& filterStartCallback = {},
+    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
   
   /**
    * \brief Inform this chain that it is running in the given nodelet, so that it can do appropriate optimizations.
@@ -64,12 +87,18 @@ public:
    *                    Setting to nullptr will inform the chain it is not running inside a nodelet. 
    */
   void setNodelet(const ::nodelet::Nodelet* nodelet);
+
+  /**
+   * \brief Set the filter start callback.
+   * \param[in] callback The callback to set.
+   */
+  void setFilterStartCallback(const FilterStartCallback& callback);
   
   /**
-   * \brief Set the filter callback.
-   * \param callback The callback to set.
+   * \brief Set the filter finished callback.
+   * \param[in] callback The callback to set.
    */
-  void setFilterCallback(const FilterCallback& callback);
+  void setFilterFinishedCallback(const FilterFinishedCallback& callback);
   
   /**
    * \brief Do the filtering.
@@ -112,13 +141,33 @@ public:
    */
   bool clear();
 
+  /**
+   * \brief Get the list of filters configured for this chain.
+   * \return The filters.
+   */
+  const ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters() const;
+
+  /**
+   * \brief Get a copy of the list of active filters.
+   * \return The active filters.
+   */
+  ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> getActiveFilters() const;
+
 protected:
   /**
-   * \brief If filterCallback is set, call it.
-   * \param data The filtered data to pass to the callback.
-   * \param filterNum Number of the filter to pass to the callback.
+   * \brief If filterStartCallback is set, call it.
+   * \param[in] data The filtered data to pass to the callback.
+   * \param[in] filterNum Number of the filter to pass to the callback.
    */
-  void callCallback(const F& data, size_t filterNum);
+  void callStartCallback(const F& data, size_t filterNum);
+
+  /**
+   * \brief If filterFinishedCallback is set, call it.
+   * \param[in] data The filtered data to pass to the callback.
+   * \param[in] filterNum Number of the filter to pass to the callback.
+   * \param[in] succeeded Whether the filter succeeded (its update() function returned true).
+   */
+  void callFinishedCallback(const F& data, size_t filterNum, bool succeeded);
 
   /**
    * \brief Update the contents of activeFilters with just the filters that have not been disabled.
@@ -131,14 +180,11 @@ protected:
    */
   ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters();
 
-  /**
-   * \brief Get the list of filters configured for this chain.
-   * \return The filters.
-   */
-  const ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters() const; 
+  //! \brief The optional callback to call when a filter starts its work.
+  FilterStartCallback filterStartCallback;
 
   //! \brief The optional callback to call when a filter finishes its work.
-  FilterCallback filterCallback;
+  FilterFinishedCallback filterFinishedCallback;
   
   //! \brief A set of filters that have been temporarily disabled.
   ::std::unordered_set<::std::string> disabledFilters;
@@ -147,7 +193,10 @@ protected:
   ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> activeFilters;
   
   //! \brief Mutex protecting activeFilters access.
-  ::std::mutex activeFiltersMutex;
+  mutable ::std::mutex activeFiltersMutex;
+
+  //! \brief The log helper used for printing console messages.
+  ::cras::LogHelperPtr logHelper;
 
   //! \brief Whether this filter chain has been initialized (gets set by first `update()` and cleared by `clear()`).
   bool initialized {false};

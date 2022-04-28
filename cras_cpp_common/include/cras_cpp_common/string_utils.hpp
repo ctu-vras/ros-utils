@@ -384,4 +384,31 @@ DECLARE_TO_STRING_VECTOR(::std::unordered_set, "{", "}")
 
 DECLARE_TO_STRING_MAP(::std::map)
 DECLARE_TO_STRING_MAP(::std::unordered_map)
+
+/**
+ * \brief Return a string that is a concatenation of elements of `strings` delimited by `delimiter`.
+ * \tparam T An iterable type (must support `size()` and foreach).
+ * \param[in] strings The elements to put into a string.
+ * \param[in] delimiter Delimiter put between elements.
+ * \return The concatenated string.
+ */
+template<typename T>
+::std::string join(const T& strings, const ::std::string& delimiter)
+{
+  const auto numStrings = strings.size();
+  if (numStrings == 0)
+    return "";
+
+  ::std::stringstream ss;
+  size_t i = 0;
+  for (const auto& s : strings)
+  {
+    ss << ::cras::to_string(s);
+    if (i < numStrings - 1)
+      ss << delimiter;
+    i++;
+  }
+  return ss.str();
+}
+
 }

@@ -29,7 +29,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS external include
   CATKIN_DEPENDS
     diagnostic_updater
     dynamic_reconfigure
@@ -60,6 +60,7 @@ catkin_package(
 )
 
 include_directories(
+  external
   include
   ${catkin_INCLUDE_DIRS}
 )
@@ -129,8 +130,12 @@ add_library(tf2_utils src/tf2_utils.cpp src/tf2_utils/interruptible_buffer.cpp)
 target_link_libraries(tf2_utils thread_utils time_utils ${catkin_LIBRARIES})
 add_dependencies(tf2_utils ${catkin_EXPORTED_TARGETS})
 
-add_library(math_utils INTERFACE)
-target_sources(math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils.hpp>)
+add_library(cras_math_utils INTERFACE)
+target_sources(cras_math_utils INTERFACE 
+  $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils.hpp>
+  $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats.hpp>
+  $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats_duration.hpp>)
+target_link_libraries(cras_math_utils INTERFACE ${catkin_LIBRARIES})
 
 add_library(set_utils INTERFACE)
 target_sources(set_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/set_utils.hpp>)
@@ -146,7 +151,7 @@ add_library(xmlrpc_value_utils INTERFACE)
 target_sources(xmlrpc_value_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/xmlrpc_value_utils.hpp>)
 target_link_libraries(xmlrpc_value_utils INTERFACE xmlrpc_value_traits)
 
-add_library(diag_utils src/diag_utils/topic_status_param.cpp src/diag_utils/topic_diagnostic.cpp)
+add_library(diag_utils src/diag_utils/topic_status_param.cpp src/diag_utils/topic_diagnostic.cpp src/diag_utils/duration_status_param.cpp src/diag_utils/duration_status.cpp)
 target_link_libraries(diag_utils PUBLIC log_utils param_utils time_utils type_utils cras_diag_updater ${catkin_LIBRARIES})
 add_dependencies(diag_utils ${catkin_EXPORTED_TARGETS})
 
@@ -203,6 +208,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
   target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
+
+  catkin_add_gtest(test_math_utils test/test_math_utils.cpp)
+  target_link_libraries(test_math_utils cras_math_utils ${catkin_LIBRARIES})
 
   add_rostest_gtest(test_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
   target_link_libraries(test_filter_chain_nodelet filter_chain_nodelet ${catkin_LIBRARIES})

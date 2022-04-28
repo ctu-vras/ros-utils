@@ -568,6 +568,19 @@ TEST(StringUtils, QuoteIfStringType)  // NOLINT
   EXPECT_EQ("cras", cras::quoteIfStringType("cras", ros::DURATION_MAX));
 }
 
+TEST(StringUtils, Join)  // NOLINT
+{
+  EXPECT_EQ("1,2,3", cras::join(std::vector<int>({1, 2, 3}), ","));
+  EXPECT_EQ("1, 2, 3", cras::join(std::vector<int>({1, 2, 3}), ", "));
+  EXPECT_EQ("", cras::join(std::vector<int>(), ","));
+  EXPECT_EQ("1", cras::join(std::vector<int>({1}), ","));
+  EXPECT_EQ("[1, 2],[3],[4, 5]", cras::join(std::vector<std::vector<int>>({{1, 2}, {3}, {4, 5}}), ","));
+  EXPECT_EQ("1,2,3", cras::join(std::list<int>({1, 2, 3}), ","));
+  EXPECT_EQ("1,2,3", cras::join(std::set<int>({1, 2, 3}), ","));
+  EXPECT_EQ("abc-def-ghi", cras::join(std::vector<std::string>({"abc", "def", "ghi"}), "-"));
+  EXPECT_EQ("0.000000000;1.000000000", cras::join(std::vector<ros::Duration>({{0, 0}, {1, 0}}), ";"));
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

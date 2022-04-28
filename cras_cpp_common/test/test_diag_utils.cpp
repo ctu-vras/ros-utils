@@ -12,6 +12,8 @@
 #include <std_msgs/Bool.h>
 
 #include <cras_cpp_common/diag_utils/diagnosed_pub_sub.hpp>
+#include <cras_cpp_common/diag_utils/duration_status.h>
+#include <cras_cpp_common/diag_utils/duration_status_param.h>
 #include <cras_cpp_common/diag_utils/topic_status.hpp>
 #include <cras_cpp_common/diag_utils/topic_status_param.hpp>
 #include <cras_cpp_common/log_utils/node.h>
@@ -850,6 +852,231 @@ TEST(TopicStatus, TickAndUpdateParamsUsePointer)  // NOLINT
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, withHeaderWrapper.level);
   EXPECT_EQ("", noHeaderWrapper.message);
   EXPECT_EQ("", withHeaderWrapper.message);
+}
+
+TEST(SimpleDurationStatusParam, BracedInit)  // NOLINT
+{
+  SimpleDurationStatusParam p = {{1, 0}, {2, 0}, 3, 4, true};
+  EXPECT_EQ(ros::Duration(1, 0), p.minDuration);
+  EXPECT_EQ(ros::Duration(2, 0), p.maxDuration);
+  EXPECT_EQ(3.0, p.tolerance);
+  EXPECT_EQ(4, p.windowSize);
+  EXPECT_EQ(true, p.noEventsIsOk);
+}
+
+TEST(SimpleDurationStatusParam, EmptyBracedInit)  // NOLINT
+{
+  SimpleDurationStatusParam p = {};
+  EXPECT_EQ(ros::Duration(0, 0), p.minDuration);
+  EXPECT_EQ(ros::DURATION_MAX, p.maxDuration);
+  EXPECT_EQ(0.1, p.tolerance);
+  EXPECT_EQ(5u, p.windowSize);
+  EXPECT_EQ(true, p.noEventsIsOk);
+}
+
+TEST(SimpleDurationStatusParam, DesignatedBracedInit)  // NOLINT
+{
+  SimpleDurationStatusParam p = {.windowSize = 10};
+  EXPECT_EQ(ros::Duration(0, 0), p.minDuration);
+  EXPECT_EQ(ros::DURATION_MAX, p.maxDuration);
+  EXPECT_EQ(0.1, p.tolerance);
+  EXPECT_EQ(10u, p.windowSize);
+  EXPECT_EQ(true, p.noEventsIsOk);
+}
+
+TEST(DurationStatusParam, Init)  // NOLINT
+{
+  DurationStatusParam p({1, 0}, {2, 0}, 3, 4, true);
+  EXPECT_EQ(ros::Duration(1, 0), p.minDuration);
+  EXPECT_EQ(ros::Duration(2, 0), p.maxDuration);
+  EXPECT_EQ(3.0, p.tolerance);
+  EXPECT_EQ(4, p.windowSize);
+  EXPECT_EQ(true, p.noEventsIsOk);
+}
+
+TEST(DurationStatusParam, EmptyInit)  // NOLINT
+{
+  DurationStatusParam p;
+  EXPECT_EQ(ros::Duration(0, 0), p.minDuration);
+  EXPECT_EQ(ros::DURATION_MAX, p.maxDuration);
+  EXPECT_EQ(0.1, p.tolerance);
+  EXPECT_EQ(5u, p.windowSize);
+  EXPECT_EQ(true, p.noEventsIsOk);
+}
+
+TEST(DurationStatus, Constructors)  // NOLINT
+{
+  XmlRpc::XmlRpcValue xmlParams;
+  xmlParams.begin();  // morph into a struct
+  xmlParams["min_duration"] = 1.0;
+  xmlParams["max_duration"] = 2.0;
+  xmlParams["tolerance"] = 3.0;
+  xmlParams["window_size"] = 4;
+  xmlParams["no_events_is_ok"] = true;
+  auto paramsAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(xmlParams, "");
+  auto params = std::make_shared<cras::BoundParamHelper>(std::make_shared<cras::NodeLogHelper>(), paramsAdapter);
+  
+  DurationStatus s1("a", ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true);
+  DurationStatus s2("a", DurationStatusParam(ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true));
+  DurationStatus s3("a", SimpleDurationStatusParam({ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true}));
+  DurationStatus s4("a", params, DurationStatusParam());
+  DurationStatus s5("a", params, SimpleDurationStatusParam());
+  
+  EXPECT_EQ("a", s1.getName());
+  EXPECT_EQ(ros::Duration(1, 0), s1.getMinDuration());
+  EXPECT_EQ(ros::Duration(2, 0), s1.getMaxDuration());
+  EXPECT_EQ(3.0, s1.getTolerance());
+  EXPECT_EQ(4, s1.getWindowSize());
+  
+  EXPECT_EQ("a", s2.getName());
+  EXPECT_EQ(ros::Duration(1, 0), s2.getMinDuration());
+  EXPECT_EQ(ros::Duration(2, 0), s2.getMaxDuration());
+  EXPECT_EQ(3.0, s2.getTolerance());
+  EXPECT_EQ(4, s2.getWindowSize());
+  
+  EXPECT_EQ("a", s3.getName());
+  EXPECT_EQ(ros::Duration(1, 0), s3.getMinDuration());
+  EXPECT_EQ(ros::Duration(2, 0), s3.getMaxDuration());
+  EXPECT_EQ(3.0, s3.getTolerance());
+  EXPECT_EQ(4, s3.getWindowSize());
+  
+  EXPECT_EQ("a", s4.getName());
+  EXPECT_EQ(ros::Duration(1, 0), s4.getMinDuration());
+  EXPECT_EQ(ros::Duration(2, 0), s4.getMaxDuration());
+  EXPECT_EQ(3.0, s4.getTolerance());
+  EXPECT_EQ(4, s4.getWindowSize());
+  
+  EXPECT_EQ("a", s5.getName());
+  EXPECT_EQ(ros::Duration(1, 0), s5.getMinDuration());
+  EXPECT_EQ(ros::Duration(2, 0), s5.getMaxDuration());
+  EXPECT_EQ(3.0, s5.getTolerance());
+  EXPECT_EQ(4, s5.getWindowSize());
+}
+
+TEST(DurationStatus, TickAndUpdateOk)  // NOLINT
+{
+  ros::Time::setNow({10, 0});
+
+  DurationStatus status("a", {10, 0}, {12, 0});
+
+  auto prevTime = ros::Time::now();
+  for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
+  {
+    ros::Time::setNow(time);
+    status.start(prevTime);
+    status.stop(ros::Time(time.toSec() * 2));
+    prevTime = time;
+  }
+  
+  diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
+  status.run(statusWrapper);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, statusWrapper.level);
+  EXPECT_EQ("Duration within limits.", statusWrapper.message);
+  EXPECT_EQ(10, statusWrapper.values.size());
+  EXPECT_EQ("Events in window", statusWrapper.values[0].key);
+  EXPECT_EQ("10", statusWrapper.values[0].value);
+  EXPECT_EQ("Events since startup", statusWrapper.values[1].key);
+  EXPECT_EQ("10", statusWrapper.values[1].value);
+  EXPECT_EQ("Duration of window (s)", statusWrapper.values[2].key);
+  EXPECT_EQ("1.000000", statusWrapper.values[2].value);
+  EXPECT_EQ("Minimum observed duration (s)", statusWrapper.values[3].key);
+  EXPECT_EQ("10.200000000", statusWrapper.values[3].value);
+  EXPECT_EQ("Maximum observed duration (s)", statusWrapper.values[4].key);
+  EXPECT_EQ("11.100000000", statusWrapper.values[4].value);
+  EXPECT_EQ("Mean observed duration (s)", statusWrapper.values[5].key);
+  EXPECT_EQ("10.650000000", statusWrapper.values[5].value);
+  EXPECT_EQ("Observed duration standard deviation (s)", statusWrapper.values[6].key);
+  EXPECT_EQ("0.302765036", statusWrapper.values[6].value);
+  EXPECT_EQ("Minimum acceptable duration (s)", statusWrapper.values[7].key);
+  EXPECT_EQ("9.000000000", statusWrapper.values[7].value);
+  EXPECT_EQ("Maximum acceptable duration (s)", statusWrapper.values[8].key);
+  EXPECT_EQ("13.200000000", statusWrapper.values[8].value);
+  EXPECT_EQ("Time mode", statusWrapper.values[9].key);
+  EXPECT_EQ("Sim time", statusWrapper.values[9].value);
+}
+
+TEST(DurationStatus, TickAndUpdateTooShort)  // NOLINT
+{
+  ros::Time::setNow({10, 0});
+
+  DurationStatus status("a", {20, 0}, {30, 0});
+
+  auto prevTime = ros::Time::now();
+  for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
+  {
+    ros::Time::setNow(time);
+    status.start(prevTime);
+    status.stop(ros::Time(time.toSec() * 2));
+    prevTime = time;
+  }
+  
+  diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
+  status.run(statusWrapper);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, statusWrapper.level);
+  EXPECT_EQ("Duration too short.", statusWrapper.message);
+  EXPECT_EQ(10, statusWrapper.values.size());
+  EXPECT_EQ("Events in window", statusWrapper.values[0].key);
+  EXPECT_EQ("10", statusWrapper.values[0].value);
+  EXPECT_EQ("Events since startup", statusWrapper.values[1].key);
+  EXPECT_EQ("10", statusWrapper.values[1].value);
+  EXPECT_EQ("Duration of window (s)", statusWrapper.values[2].key);
+  EXPECT_EQ("1.000000", statusWrapper.values[2].value);
+  EXPECT_EQ("Minimum observed duration (s)", statusWrapper.values[3].key);
+  EXPECT_EQ("10.200000000", statusWrapper.values[3].value);
+  EXPECT_EQ("Maximum observed duration (s)", statusWrapper.values[4].key);
+  EXPECT_EQ("11.100000000", statusWrapper.values[4].value);
+  EXPECT_EQ("Mean observed duration (s)", statusWrapper.values[5].key);
+  EXPECT_EQ("10.650000000", statusWrapper.values[5].value);
+  EXPECT_EQ("Observed duration standard deviation (s)", statusWrapper.values[6].key);
+  EXPECT_EQ("0.302765036", statusWrapper.values[6].value);
+  EXPECT_EQ("Minimum acceptable duration (s)", statusWrapper.values[7].key);
+  EXPECT_EQ("18.000000000", statusWrapper.values[7].value);
+  EXPECT_EQ("Maximum acceptable duration (s)", statusWrapper.values[8].key);
+  EXPECT_EQ("33.000000000", statusWrapper.values[8].value);
+  EXPECT_EQ("Time mode", statusWrapper.values[9].key);
+  EXPECT_EQ("Sim time", statusWrapper.values[9].value);
+}
+
+TEST(DurationStatus, TickAndUpdateTooLong)  // NOLINT
+{
+  ros::Time::setNow({10, 0});
+
+  DurationStatus status("a", {0, 0}, ros::Duration(0.01));
+
+  auto prevTime = ros::Time::now();
+  for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
+  {
+    ros::Time::setNow(time);
+    status.start(prevTime);
+    status.stop(ros::Time(time.toSec() * 2));
+    prevTime = time;
+  }
+  
+  diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
+  status.run(statusWrapper);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, statusWrapper.level);
+  EXPECT_EQ("Duration too long.", statusWrapper.message);
+  EXPECT_EQ(10, statusWrapper.values.size());
+  EXPECT_EQ("Events in window", statusWrapper.values[0].key);
+  EXPECT_EQ("10", statusWrapper.values[0].value);
+  EXPECT_EQ("Events since startup", statusWrapper.values[1].key);
+  EXPECT_EQ("10", statusWrapper.values[1].value);
+  EXPECT_EQ("Duration of window (s)", statusWrapper.values[2].key);
+  EXPECT_EQ("1.000000", statusWrapper.values[2].value);
+  EXPECT_EQ("Minimum observed duration (s)", statusWrapper.values[3].key);
+  EXPECT_EQ("10.200000000", statusWrapper.values[3].value);
+  EXPECT_EQ("Maximum observed duration (s)", statusWrapper.values[4].key);
+  EXPECT_EQ("11.100000000", statusWrapper.values[4].value);
+  EXPECT_EQ("Mean observed duration (s)", statusWrapper.values[5].key);
+  EXPECT_EQ("10.650000000", statusWrapper.values[5].value);
+  EXPECT_EQ("Observed duration standard deviation (s)", statusWrapper.values[6].key);
+  EXPECT_EQ("0.302765036", statusWrapper.values[6].value);
+  EXPECT_EQ("Minimum acceptable duration (s)", statusWrapper.values[7].key);
+  EXPECT_EQ("0.000000000", statusWrapper.values[7].value);
+  EXPECT_EQ("Maximum acceptable duration (s)", statusWrapper.values[8].key);
+  EXPECT_EQ("0.011000000", statusWrapper.values[8].value);
+  EXPECT_EQ("Time mode", statusWrapper.values[9].key);
+  EXPECT_EQ("Sim time", statusWrapper.values[9].value);
 }
 
 TEST(DiagnosedPubSub, ConstructorsNoHeader)  // NOLINT

@@ -79,6 +79,7 @@ public:
     ros::param::del("/nodelet/disabled_filters");
     ros::param::del("/nodelet/publish_each_filter");
     ros::param::del("/nodelet/lazy_subscription");
+    ros::param::del("/nodelet/publish_diagnostics");
   }
   
   ~TestChainNodelet() override
@@ -250,7 +251,6 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
   EXPECT_EQ(9.0, filteredMsg->data);
 }
 
-
 TEST(FilterChainNodelet, PublishDiagnostics)
 {
   TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("one_filter");
@@ -305,11 +305,17 @@ TEST(FilterChainNodelet, PublishDiagnostics)
   
   EXPECT_EQ(1u, numReceived);
   ASSERT_NE(nullptr, diagMsg);
-  ASSERT_EQ(2u, diagMsg->status.size());
+  ASSERT_EQ(5u, diagMsg->status.size());
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[0].level);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[1].level);
-  EXPECT_EQ(4u, diagMsg->status[0].values.size());
-  EXPECT_EQ(4u, diagMsg->status[1].values.size());
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[2].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[3].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[4].level);
+  EXPECT_EQ(4u, diagMsg->status[0].values.size());  // out topic
+  EXPECT_EQ(10u, diagMsg->status[1].values.size());  // all filters duration
+  EXPECT_EQ(10u, diagMsg->status[2].values.size());  // chain filter duration
+  EXPECT_EQ(1u, diagMsg->status[3].values.size());  // chain diagnostics
+  EXPECT_EQ(4u, diagMsg->status[4].values.size());  // in topic (lazy subscription, so it is last...)
 }
 
 void updateConfig(dynamic_reconfigure::Client<cras_cpp_common::FilterChainConfig>& client,

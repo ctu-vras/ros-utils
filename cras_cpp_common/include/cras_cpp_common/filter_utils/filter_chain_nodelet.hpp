@@ -2,22 +2,24 @@
 
 /**
  * \file
- * \brief A versatile nodelet that can load and run a filter chain.
+ * \brief A versatile nodelet that can load and run a filter chain, run its diagnostics, and enable/disable single
+ *        filters using dynamic reconfigure.
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 #include <boost/thread/recursive_mutex.hpp>
 
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <dynamic_reconfigure/server.h>
 #include <ros/duration.h>
 #include <ros/message_traits.h>
@@ -30,11 +32,16 @@
 #include <cras_cpp_common/FilterChainConfig.h>
 
 #include <cras_cpp_common/diag_utils.hpp>
+#include <cras_cpp_common/diag_utils/diagnosed_pub_sub.hpp>
+#include <cras_cpp_common/diag_utils/duration_status.h>
 #include <cras_cpp_common/filter_utils/filter_chain.hpp>
 #include <cras_cpp_common/nodelet_utils.hpp>
 
 namespace cras
 {
+
+template <typename F>
+class FilterChainDiagnostics;
 
 /**
  * \brief A versatile nodelet that can load and run a filter chain.
@@ -45,7 +52,32 @@ namespace cras
  *                              subscriber for the output (filtered) topic. Default is true.
  * - ~subscriber_queue_size (uint): Queue size for the input topic subscriber. Default is 15.
  * - ~publisher_queue_size (uint): Queue size for the output topic publisher. Default is 15.
- * - ~publish_diagnostics (bool): Whether to create and publish topic diagnostics. Default is false.
+ * - ~publish_diagnostics (bool): Whether to publish all the following diagnostics (single diagnostics can be turned off
+ *                                by the respective config if this is set to true). Default is false.
+ * - ~publish_topic_diagnostics (bool): Whether to create and publish topic diagnostics.
+ *                                      Default is {publish_diagnostics}.
+ * - ~publish_duration_diagnostics (bool): Whether to diagnose callback duration. Default is {publish_diagnostics}.
+ * - ~publish_chain_diagnostics (bool): Whether to diagnose overall chain performance. Default is {publish_diagnostics}.
+ * - ~{TOPIC_IN} (struct): Configuration of the topic diagnostics of the input topic. {TOPIC_IN} is the name passed as
+ *                         `topicIn` parameter in the constructor (by default `in`). This name is not affected by
+ *                         remapping the input topic to another name. This parameter is only read when
+ *                         `publish_diagnostics` is true.
+ * - ~{TOPIC_FILTERED} (struct): Configuration of the topic diagnostics of the filtered topic. {TOPIC_FILTERED} is the
+ *                               name passed as `topicFiltered` parameter in the constructor (by default `out`).
+ *                               This name is not affected by remapping the filtered topic to another name.
+ *                               This parameter is only read when `publish_diagnostics` is true.
+ * - ~update_duration (struct): Configuration of duration diagnostics for the overall callback. See DurationStatus task.
+ * - ~{FILTER_NAME}/update_duration (struct): Configuration of callback duration diagnostics for filter {FILTER_NAME}.
+ * 
+ * Subscribed topics:
+ * - {TOPIC_IN} (F): The input data. {TOPIC_IN} is the name passed as `topicIn` parameter in the constructor
+ *                   (by default `in`).
+ *                   
+ * Published topics:
+ * - {TOPIC_FILTERED} (F): The filtered data. {TOPIC_FILTERED} is the name passed as `topicFiltered` parameter in the
+ *                         constructor (by default `out`).
+ * - ~filter{I}/{FILTER_NAME} (F): Output of {I}-th filter with name {FILTER_NAME} (if `publish_each_filter` is true).
+ * - /diagnostics: Standard diagnostics output (if any diagnostics are enabled).
  * 
  * The following options can be set at runtime via dynamic reconfigure:
  * - publish_each_filter (bool): If true, an additional publisher will be created for each filter in the chain and it
@@ -100,7 +132,7 @@ public:
    *        ROS::init() is assumed to have been called before. Topic "in" is subscribed and "out" is published.
    * \param[in] configNamespace ROS parameter namespace from which configuration should be read.
    */
-  FilterChainNodelet(const ::std::string& configNamespace);
+  explicit FilterChainNodelet(const ::std::string& configNamespace);
 
   ~FilterChainNodelet() override;
 
@@ -185,13 +217,25 @@ protected:
   virtual void dataCallback(const typename F::ConstPtr& data);
 
   /**
+   * \brief Callback called before each filter starts working on a message.
+   * \param[in] data The filtered message (before filter application).
+   * \param[in] filterNum Order of the applied filter in the chain.
+   * \param[in] name Name of the applied filter.
+   * \param[in] type Type of the applied filter.
+   */
+  virtual void filterStartCallback(const F& data, size_t filterNum, const ::std::string& name,
+    const ::std::string& type);
+
+  /**
    * \brief Callback called after each filter finishes working on a message.
    * \param[in] data The filtered message (after filter application).
    * \param[in] filterNum Order of the applied filter in the chain.
    * \param[in] name Name of the applied filter.
    * \param[in] type Type of the applied filter.
+   * \param[in] success Whether the filter succeeded (its update() function returned true).
    */
-  virtual void filterCallback(const F& data, size_t filterNum, const ::std::string& name, const ::std::string& type);
+  virtual void filterFinishedCallback(const F& data, size_t filterNum, const ::std::string& name,
+    const ::std::string& type, bool success);
   
   //! \brief Public NodeHandle.
   ::ros::NodeHandle nodeHandle;
@@ -245,7 +289,13 @@ protected:
   size_t subscriberQueueSize {15_sz};
   
   //! \brief Whether topic frequency/delay statistics should be published to diagnostics.
-  bool publishDiagnostics {false};
+  bool publishTopicDiagnostics {false};
+  
+  //! \brief Whether callback duration statistics should be published to diagnostics.
+  bool publishDurationDiagnostics {false};
+  
+  //! \brief Whether overall chain diagnostics should be published to diagnostics.
+  bool publishChainDiagnostics {false};
 
   //! \brief Maximum age of a message for it to be considered. Older messages are thrown away when received.
   ::ros::Duration maxAge;
@@ -255,6 +305,55 @@ protected:
 
   //! \brief Dynamic reconfigure server.
   ::std::unique_ptr<::dynamic_reconfigure::Server<::cras_cpp_common::FilterChainConfig>> dynreconfServer;
+  
+  //! \brief Diagnostic task for overall callback duration.
+  ::std::unique_ptr<::cras::DurationStatus> callbackDurationDiag;
+  
+  //! \brief Diagnostic tasks for duration of each filter callback.
+  ::std::unordered_map<::std::string, ::std::unique_ptr<::cras::DurationStatus>> filterCallbackDurationDiags;
+
+  //! \brief Diagnostic task for overall chain performance.
+  ::std::unique_ptr<::cras::FilterChainDiagnostics<F>> chainDiag;
+};
+
+/**
+ * \brief Diagnostics of performance of a filter chain. 
+ * \tparam F Type of filtered data.
+ */
+template <typename F>
+class FilterChainDiagnostics : public ::diagnostic_updater::DiagnosticTask
+{
+public:
+  /**
+   * \param[in] name Name of the diagnostic task.
+   * \param[in] chain The diagnosed chain.
+   */
+  FilterChainDiagnostics(const ::std::string& name, const ::cras::FilterChain<F>& chain);
+  
+  /**
+   * \brief Call this function every time a filter finished callback is called.
+   * \param[in] filterName Name of the filter.
+   * \param[in] success Whether the filter has succeeded.
+   */
+  void addReport(const ::std::string& filterName, bool success);
+
+  void run(::diagnostic_updater::DiagnosticStatusWrapper& stat) override;
+  
+protected:
+  //! \brief The diagnosed chain.
+  const ::cras::FilterChain<F>& chain;
+  
+  //! \brief Mutex protecting numCallbacks, numSuccesses and numFailures.
+  ::std::mutex mutex;
+  
+  //! \brief The overall number of callbacks since last update.
+  ::std::unordered_map<::std::string, size_t> numCallbacks;
+  
+  //! \brief The number of successful filter runs since last update.
+  ::std::unordered_map<::std::string, size_t> numSuccesses;
+  
+  //! \brief The number of failed filter runs since last update.
+  ::std::unordered_map<::std::string, size_t> numFailures;
 };
 
 }

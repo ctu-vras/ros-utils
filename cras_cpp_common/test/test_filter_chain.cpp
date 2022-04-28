@@ -15,8 +15,10 @@ template <typename T>
 class TestChain : public cras::FilterChain<T>
 {
 public:
-  TestChain(const std::string& dataType, const typename cras::FilterChain<T>::FilterCallback& filterCallback = {}) :
-    cras::FilterChain<T>(dataType, filterCallback)
+  TestChain(const std::string& dataType,
+            const typename cras::FilterChain<T>::FilterFinishedCallback& filterCallback = {},
+            const typename cras::FilterChain<T>::FilterStartCallback& filterStartCallback = {}) :
+    cras::FilterChain<T>(dataType, filterCallback, filterStartCallback)
   {
   }
 
@@ -201,24 +203,46 @@ TEST(FilterChain, Callback)
   config[2]["type"] = "filters/IncrementFilterInt";
 
   size_t numCalled = 0;
-  auto cb = [&numCalled](const int& data, const size_t filterNum, const std::string& name, const std::string& type)
+  auto cb = [&numCalled](const int& data, const size_t filterNum, const std::string& name, const std::string& type,
+    const bool success)
   {
     if (filterNum < 3)
     {
       EXPECT_EQ(filterNum + 1, data);
       EXPECT_EQ("inc" + std::to_string(filterNum + 1), name);
       EXPECT_EQ("filters/IncrementFilterInt", type);
+      EXPECT_TRUE(success);
     }
     else
     {
       EXPECT_EQ(10, data);
       EXPECT_EQ("test_filter", name);
       EXPECT_EQ("cras_cpp_common/TestFilter", type);
+      EXPECT_TRUE(success);
     }
     numCalled++;
   };
 
-  TestChain<int> chain("int", cb);
+  size_t numStartedCalled = 0;
+  auto cbStarted = [&numStartedCalled](const int& data, const size_t filterNum, const std::string& name,
+    const std::string& type)
+  {
+    if (filterNum < 3)
+    {
+      EXPECT_EQ(filterNum, data);
+      EXPECT_EQ("inc" + std::to_string(filterNum + 1), name);
+      EXPECT_EQ("filters/IncrementFilterInt", type);
+    }
+    else
+    {
+      EXPECT_EQ(3, data);
+      EXPECT_EQ("test_filter", name);
+      EXPECT_EQ("cras_cpp_common/TestFilter", type);
+    }
+    numStartedCalled++;
+  };
+
+  TestChain<int> chain("int", cb, cbStarted);
   EXPECT_TRUE(chain.configure(config, "test"));
 
   auto f = boost::make_shared<TestFilter<int>>(10);
@@ -227,50 +251,75 @@ TEST(FilterChain, Callback)
   int out = 1;
 
   numCalled = 0;
+  numStartedCalled = 0;
   {TRACE; EXPECT_TRUE(chain.update(0.0, out));}
   EXPECT_EQ(10, out);
   EXPECT_EQ(4, numCalled);
+  EXPECT_EQ(4, numStartedCalled);
   
   chain.disableFilter("test_filter");
 
   numCalled = 0;
+  numStartedCalled = 0;
   {TRACE; EXPECT_TRUE(chain.update(0.0, out));}
   EXPECT_EQ(3, out);
   EXPECT_EQ(3, numCalled);
+  EXPECT_EQ(3, numStartedCalled);
   
   chain.enableFilter("test_filter");
 
   numCalled = 0;
+  numStartedCalled = 0;
   {TRACE; EXPECT_TRUE(chain.update(0.0, out));}
   EXPECT_EQ(10, out);
   EXPECT_EQ(4, numCalled);
+  EXPECT_EQ(4, numStartedCalled);
 
   chain.disableFilter("inc3");
   chain.disableFilter("test_filter");
 
   numCalled = 0;
+  numStartedCalled = 0;
   {TRACE; EXPECT_TRUE(chain.update(0.0, out));}
   EXPECT_EQ(2, out);
   EXPECT_EQ(2, numCalled);
+  EXPECT_EQ(2, numStartedCalled);
 
   size_t numCalled2 = 0;
-  auto cb2 = [&numCalled2](const int& data, const size_t filterNum, const std::string& name, const std::string& type)
+  auto cb2 = [&numCalled2](const int& data, const size_t filterNum, const std::string& name, const std::string& type,
+    const bool success)
   {
     EXPECT_EQ(1, data);
     EXPECT_EQ("inc2", name);
     EXPECT_EQ("filters/IncrementFilterInt", type);
+    EXPECT_TRUE(success);
     numCalled2++;
   };
 
+  size_t numStartedCalled2 = 0;
+  auto cbStarted2 = [&numStartedCalled2](const int& data, const size_t filterNum, const std::string& name,
+    const std::string& type)
+  {
+    EXPECT_EQ(0, data);
+    EXPECT_EQ("inc2", name);
+    EXPECT_EQ("filters/IncrementFilterInt", type);
+    numStartedCalled2++;
+  };
+
   chain.disableFilter("inc1");
-  chain.setFilterCallback(cb2);
+  chain.setFilterStartCallback(cbStarted2);
+  chain.setFilterFinishedCallback(cb2);
 
   numCalled = 0;
   numCalled2 = 0;
+  numStartedCalled = 0;
+  numStartedCalled2 = 0;
   {TRACE; EXPECT_TRUE(chain.update(0.0, out));}
   EXPECT_EQ(1, out);
   EXPECT_EQ(0, numCalled);
   EXPECT_EQ(1, numCalled2);
+  EXPECT_EQ(0, numStartedCalled);
+  EXPECT_EQ(1, numStartedCalled2);
 }
 
 class TestNodelet : public nodelet::Nodelet
