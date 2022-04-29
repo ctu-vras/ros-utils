@@ -189,6 +189,9 @@ install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_up
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
+  catkin_add_gtest(test_set_utils test/test_set_utils.cpp)
+  target_link_libraries(test_set_utils set_utils)
+
 
   catkin_add_gtest(test_time_utils test/test_time_utils.cpp)
   target_link_libraries(test_time_utils time_utils ${catkin_LIBRARIES})
