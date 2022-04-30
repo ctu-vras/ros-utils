@@ -202,6 +202,8 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_cloud test/test_cloud.cpp)
   target_link_libraries(test_cloud cloud ${catkin_LIBRARIES})
 
+  catkin_add_gtest(test_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
+  target_link_libraries(test_tf2_sensor_msgs tf2_sensor_msgs_cras ${catkin_LIBRARIES})
   
   catkin_add_gtest(test_xmlrpc_value_traits test/test_xmlrpc_value_traits.cpp)
   target_link_libraries(test_xmlrpc_value_traits xmlrpc_value_traits ${catkin_LIBRARIES})
@@ -225,7 +227,7 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_log_utils test/test_log_utils.cpp)
   target_link_libraries(test_log_utils log_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_tf2_utils test/test_tf2_utils.cpp)
+  add_rostest_gtest(test_tf2_utils test/test_tf2_utils.test test/test_tf2_utils.cpp)
   target_link_libraries(test_tf2_utils tf2_utils ${catkin_LIBRARIES})
 
   catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
