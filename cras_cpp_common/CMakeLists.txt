@@ -248,6 +248,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
   target_link_libraries(test_thread_name_updating_nodelet nodelet_utils)
+
+  catkin_add_gtest(test_type_utils test/test_type_utils.cpp)
+  target_link_libraries(test_type_utils type_utils)
   
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})

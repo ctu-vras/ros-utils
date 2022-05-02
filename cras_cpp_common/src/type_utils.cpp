@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
-#include <cras_cpp_common/type_utils.hpp>
+
+#include <regex>
+#include <string>
 
 #if __has_include(<cxxabi.h>)
 #define HAS_CXX_ABI 1
@@ -14,17 +15,40 @@
 #endif
 
 #include <cras_cpp_common/string_utils.hpp>
+#include <cras_cpp_common/type_utils.hpp>
 
 namespace cras
 {
 
+std::regex charTraitsRegex("(.*), std::char_traits<\\1>");  // NOLINT
+std::regex allocatorRegex("(.*), std::allocator<\\1>");  // NOLINT
+std::regex mapRegex("<(.*), (.*), std::less<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
+std::regex unorderedMapRegex(  // NOLINT
+	"<(.*), (.*), std::hash<\\1>, std::equal_to<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
+std::regex setRegex("<(.*), std::less<\\1>");  // NOLINT
+std::regex unorderedSetRegex("<(.*), std::hash<\\1>, std::equal_to<\\1>");  // NOLINT
+
 std::string cleanTypeName(const std::string& typeName)
 {
   auto result = typeName;
-  ::cras::replace(result, "::__cxx11", "");
-  ::cras::replace(result, "basic_string", "string");
-  ::cras::replace(result, "string<char>", "string");
-  ::cras::replace(result, " >", ">");
+
+	cras::replace(result, " >", ">");
+	cras::replace(result, "::__cxx11", "");
+
+	result = std::regex_replace(result, mapRegex, "<$1, $2");
+	result = std::regex_replace(result, unorderedMapRegex, "<$1, $2");
+	result = std::regex_replace(result, setRegex, "<$1");
+	result = std::regex_replace(result, unorderedSetRegex, "<$1");
+
+	while (std::regex_search(result, charTraitsRegex) || std::regex_search(result, allocatorRegex))
+	{
+		result = std::regex_replace(result, charTraitsRegex, "$1");
+		result = std::regex_replace(result, allocatorRegex, "$1");
+	}
+
+	cras::replace(result, "basic_string", "string");
+	cras::replace(result, "string<char>", "string");
+
   return result;
 }
 
