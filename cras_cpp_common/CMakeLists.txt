@@ -24,6 +24,8 @@ find_package(catkin REQUIRED COMPONENTS
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+find_package(Boost REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 
 find_package(urdfdom_headers REQUIRED)
@@ -45,6 +47,7 @@ catkin_package(
     tf2_ros
     topic_tools
   DEPENDS
+    Boost
     EIGEN3
     urdfdom_headers
   LIBRARIES
@@ -64,6 +67,10 @@ catkin_package(
     thread_utils
     type_utils
   CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
+)
+
+include_directories(SYSTEM
+  ${Boost_INCLUDE_DIR}
 )
 
 include_directories(
@@ -176,6 +183,10 @@ add_library(urdf_utils src/urdf_utils.cpp)
 target_link_libraries(urdf_utils Eigen3::Eigen)
 target_include_directories(urdf_utils PUBLIC ${urdfdom_headers_INCLUDE_DIRS})
 
+add_library(cras_pool_allocator INTERFACE)
+target_sources(cras_pool_allocator INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/pool_allocator.hpp>)
+target_link_libraries(cras_pool_allocator INTERFACE ${Boost_LIBRARIES})
+
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
 add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
@@ -251,6 +262,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_type_utils test/test_type_utils.cpp)
   target_link_libraries(test_type_utils type_utils)
+
+  catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
+  target_link_libraries(test_pool_allocator cras_pool_allocator)
   
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
