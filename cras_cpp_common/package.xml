@@ -14,6 +14,7 @@
   <depend>diagnostic_updater</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>filters</depend>
+  <depend>liburdfdom-headers-dev</depend>
   <depend>nodelet</depend>
   <depend>roscpp</depend>
   <depend>rosconsole</depend>
@@ -22,10 +23,13 @@
   <depend>topic_tools</depend>
 
   <build_depend>bondcpp</build_depend>
+  <build_depend>eigen</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>tf2_eigen</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
   <build_depend>tf2_sensor_msgs</build_depend>
+  
+  <build_export_depend>eigen</build_export_depend>
 
   <exec_depend>tf2</exec_depend>
 

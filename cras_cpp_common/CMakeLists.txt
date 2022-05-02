@@ -24,6 +24,10 @@ find_package(catkin REQUIRED COMPONENTS
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+find_package(Eigen3 REQUIRED)
+
+find_package(urdfdom_headers REQUIRED)
+
 generate_dynamic_reconfigure_options(
   cfg/FilterChain.cfg
 )
@@ -40,6 +44,9 @@ catkin_package(
     sensor_msgs
     tf2_ros
     topic_tools
+  DEPENDS
+    EIGEN3
+    urdfdom_headers
   LIBRARIES
     cloud
     cras_diag_updater
@@ -165,6 +172,10 @@ add_library(cras_semaphore src/thread_utils/semaphore.cpp)
 add_library(thread_utils src/thread_utils.cpp)
 target_link_libraries(thread_utils PUBLIC cras_semaphore PRIVATE string_utils Threads::Threads)
 
+add_library(urdf_utils src/urdf_utils.cpp)
+target_link_libraries(urdf_utils Eigen3::Eigen)
+target_include_directories(urdf_utils PUBLIC ${urdfdom_headers_INCLUDE_DIRS})
+
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
 add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
@@ -192,6 +203,8 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_set_utils test/test_set_utils.cpp)
   target_link_libraries(test_set_utils set_utils)
 
+  catkin_add_gtest(test_urdf_utils test/test_urdf_utils.cpp)
+  target_link_libraries(test_urdf_utils urdf_utils)
 
   catkin_add_gtest(test_time_utils test/test_time_utils.cpp)
   target_link_libraries(test_time_utils time_utils ${catkin_LIBRARIES})
