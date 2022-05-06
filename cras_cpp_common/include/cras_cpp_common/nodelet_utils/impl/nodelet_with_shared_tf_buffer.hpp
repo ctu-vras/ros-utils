@@ -33,7 +33,7 @@ namespace impl
 struct NodeletWithSharedTfBufferPrivate
 {
   //! \brief The TF buffer used for lookups.
-  ::std::shared_ptr<::tf2_ros::Buffer> buffer {};
+  ::std::shared_ptr<::cras::NodeletAwareTFBuffer> buffer {};
 
   //! \brief Transform listener for standaloneBuffer.
   ::std::unique_ptr<::tf2_ros::TransformListener> listener {nullptr};
@@ -73,12 +73,13 @@ void NodeletWithSharedTfBuffer<NodeletType>::setBuffer(const ::std::shared_ptr<:
 }
 
 template <typename NodeletType>
-::tf2_ros::Buffer& NodeletWithSharedTfBuffer<NodeletType>::getBuffer() const
+::cras::NodeletAwareTFBuffer& NodeletWithSharedTfBuffer<NodeletType>::getBuffer() const
 {
   if (this->data->buffer == nullptr)
   {
     this->data->buffer = ::std::make_shared<::cras::NodeletAwareTFBuffer>(*this);
-    this->data->listener = ::std::make_unique<::tf2_ros::TransformListener>(*this->data->buffer, this->getNodeHandle());
+    this->data->listener = ::std::make_unique<::tf2_ros::TransformListener>(
+			this->data->buffer->getRawBuffer(), this->getNodeHandle());
     this->data->usesSharedBuffer = false;
     NODELET_INFO("Initialized standalone tf2 buffer");
   }

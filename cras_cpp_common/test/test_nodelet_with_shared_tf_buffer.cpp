@@ -90,15 +90,13 @@ TEST(NodeletWithSharedTfBuffer, Shared)  // NOLINT
 
     EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {10, 0}, {0, 0}));
 
-    // setTransform() on a shared getBuffer() doesn't do anything 
     nodelet.getBuffer().setTransform(getTransform("a", "b", {11, 0}), "test");
-    EXPECT_FALSE(nodelet.getBuffer().canTransform("a", "b", {11, 0}, {0, 0}));
-    EXPECT_FALSE(buf->canTransform("a", "b", {11, 0}, {0, 0}));
+		EXPECT_TRUE(buf->canTransform("a", "b", {11, 0}, {0, 0}));
+		EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {11, 0}, {0, 0}));
 
-    // setTransform() on the original buffer works
-    buf->setTransform(getTransform("a", "b", {11, 0}), "test");
-    EXPECT_TRUE(buf->canTransform("a", "b", {11, 0}, {0, 0}));
-    EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {11, 0}, {0, 0}));
+    buf->setTransform(getTransform("a", "b", {12, 0}), "test");
+    EXPECT_TRUE(buf->canTransform("a", "b", {12, 0}, {0, 0}));
+    EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {12, 0}, {0, 0}));
   }
 
   // Check that buf is working even after the nodelet has been destroyed.
@@ -292,7 +290,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadStandalone)  // NOLINT
   ASSERT_TRUE(ros::Time::isSimTime());
 
   auto& buf = nodelet->getBuffer();
-  tf2_ros::TransformListener l(buf, nodelet->getNodeHandle());
+  tf2_ros::TransformListener l(buf.getRawBuffer(), nodelet->getNodeHandle());
   ros::WallDuration(0.2).sleep();  // Give the TF thread some time to register subscribers.
 
   ros::NodeHandle nh;

@@ -148,6 +148,11 @@ void fillBuffer(tf2::BufferCore& buf)
   buf.setTransform(tf, "test");
 }
 
+void fillBuffer(cras::InterruptibleTFBuffer& buf)
+{
+	fillBuffer(buf.getRawBuffer());
+}
+
 void testInterruptibleBuffer(
   cras::InterruptibleTFBuffer& buf, cras::InterruptibleTFBuffer& buf2, cras::InterruptibleTFBuffer& buf3,
   cras::InterruptibleTFBuffer& buf4, cras::InterruptibleTFBuffer& buf5, cras::InterruptibleTFBuffer& buf6,

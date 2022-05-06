@@ -15,6 +15,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <cras_cpp_common/nodelet_utils/nodelet_aware_tf_buffer.h>
+
 namespace cras
 {
 
@@ -41,11 +43,11 @@ public:
    * \brief Get the TF buffer used by the nodelet. If none has been set by `setBuffer()`, a buffer is automatically
    * created.
    * \return The buffer.
-   * \note This buffer is only valid for the timeouting versions of canTransform() and lookupTransform().
-   *       getCacheLength() returns the same value as the original shared buffer. Most notably, do not call
-   *       setTransform() on this buffer or create a TransformListener using it.
+   * \note This buffer is only offers the timeouting versions of canTransform() and lookupTransform().
+   *       It does not offer setTransform() and many other functions. User getRawBuffer() on the returned instance to
+   *       get a tf2::BufferCore that offers the missing non-time-aware functionality.
    */
-  virtual ::tf2_ros::Buffer& getBuffer() const = 0;
+  virtual ::cras::NodeletAwareTFBuffer& getBuffer() const = 0;
   
   /**
    * \brief Whether the buffer set using `setBuffer()` is used or a standalone buffer has been automatically created.
@@ -70,7 +72,7 @@ public:
   virtual ~NodeletWithSharedTfBuffer();
   
   void setBuffer(const ::std::shared_ptr<::tf2_ros::Buffer>& buffer) override;
-  ::tf2_ros::Buffer& getBuffer() const override;
+  ::cras::NodeletAwareTFBuffer& getBuffer() const override;
   bool usesSharedBuffer() const override;
 
 protected:

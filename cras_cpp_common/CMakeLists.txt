@@ -54,10 +54,12 @@ catkin_package(
     cloud
     cras_diag_updater
     cras_filter_chain
+    cras_nodelet_manager
     cras_semaphore
     diag_utils
     log_utils
     node_utils
+    nodelet_manager_sharing_tf_buffer_lib
     nodelet_utils
     param_utils
     string_utils
@@ -123,6 +125,10 @@ add_library(nodelet_utils src/nodelet_utils/nodelet_aware_tf_buffer.cpp src/node
 target_link_libraries(nodelet_utils PRIVATE string_utils PUBLIC thread_utils log_utils cras_diag_updater param_utils time_utils tf2_utils ${catkin_LIBRARIES})
 add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 
+add_library(cras_nodelet_manager src/nodelet_utils/loader_ros.cpp src/nodelet_utils/nodelet_manager.cpp)
+target_link_libraries(cras_nodelet_manager ${catkin_LIBRARIES})
+add_dependencies(cras_nodelet_manager ${catkin_EXPORTED_TARGETS})
+
 add_library(cras_filter_base INTERFACE)
 target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_base.hpp>)
 target_link_libraries(cras_filter_base INTERFACE string_utils param_utils)
@@ -187,9 +193,16 @@ add_library(cras_pool_allocator INTERFACE)
 target_sources(cras_pool_allocator INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/pool_allocator.hpp>)
 target_link_libraries(cras_pool_allocator INTERFACE ${Boost_LIBRARIES})
 
+add_library(nodelet_manager_sharing_tf_buffer_lib src/nodelet_utils/nodelet_manager_sharing_tf_buffer.cpp)
+target_link_libraries(nodelet_manager_sharing_tf_buffer_lib nodelet_utils cras_nodelet_manager ${catkin_LIBRARIES})
+add_dependencies(nodelet_manager_sharing_tf_buffer_lib ${catkin_EXPORTED_TARGETS})
+
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
-target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_utils ${catkin_LIBRARIES})
-add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
+target_link_libraries(nodelet_manager_sharing_tf_buffer nodelet_manager_sharing_tf_buffer_lib ${catkin_LIBRARIES})
+
+add_library(cras_test_utils INTERFACE)
+target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils/preloading_class_loader.hpp>)
+target_link_libraries(cras_test_utils INTERFACE type_utils)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -265,6 +278,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
   target_link_libraries(test_pool_allocator cras_pool_allocator)
+
+  catkin_add_gtest(test_nodelet_manager test/test_nodelet_manager.cpp)
+  target_link_libraries(test_nodelet_manager cras_nodelet_manager nodelet_manager_sharing_tf_buffer_lib ${catkin_LIBRARIES} cras_test_utils)
   
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})

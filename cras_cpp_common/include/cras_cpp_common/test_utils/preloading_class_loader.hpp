@@ -14,6 +14,17 @@
 
 #include <cras_cpp_common/type_utils.hpp>
 
+/*
+ * In the classes where you need to use this classloader, insert the following code at the very beginning of the CPP
+ * file:
+ * 
+// HACK: we need to alter the private lowlever_class_loader_ of pluginlib::ClassLoader
+#define private public
+#include <pluginlib/class_loader.hpp>
+#undef private
+ *
+ */
+
 /**
  * \brief This pluginlib classloader alternative can load compiled-in classes and provide them as if they were loaded
  *        via the standard pluginlib search mechanism - without even triggering the search.
