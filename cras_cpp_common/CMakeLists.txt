@@ -55,6 +55,7 @@ catkin_package(
     cras_diag_updater
     cras_filter_chain
     cras_nodelet_manager
+    cras_rate_limiter
     cras_semaphore
     diag_utils
     log_utils
@@ -204,6 +205,9 @@ add_library(cras_test_utils INTERFACE)
 target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils/preloading_class_loader.hpp>)
 target_link_libraries(cras_test_utils INTERFACE type_utils)
 
+add_library(cras_rate_limiter src/rate_limiter.cpp)
+target_link_libraries(cras_rate_limiter time_utils ${catkin_LIBRARIES})
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING REGEX ".*\\.hp?p?$"
@@ -281,6 +285,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_nodelet_manager test/test_nodelet_manager.cpp)
   target_link_libraries(test_nodelet_manager cras_nodelet_manager nodelet_manager_sharing_tf_buffer_lib ${catkin_LIBRARIES} cras_test_utils)
+
+  catkin_add_gtest(test_rate_limiter test/test_rate_limiter.cpp)
+  target_link_libraries(test_rate_limiter cras_rate_limiter ${catkin_LIBRARIES})
   
   add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})

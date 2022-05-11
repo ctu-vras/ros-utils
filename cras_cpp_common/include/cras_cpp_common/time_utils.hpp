@@ -84,4 +84,40 @@ bool operator==(const ::ros::Rate& r1, const ::ros::Rate& r2);
  */
 bool operator==(const ::ros::WallRate& r1, const ::ros::WallRate& r2);
 
+/**
+ * \brief Multiply two durations. The units of the result are [s^2].
+ * \param[in] val1 Duration to multiply. 
+ * \param[in] val2 Duration to multiply. 
+ * \return The multiple.
+ * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
+ */
+::ros::Duration operator*(const ::ros::Duration& val1, const ::ros::Duration& val2);
+
+/**
+ * \brief Divide duration val1 by val2. The result is unitless.
+ * \param[in] numerator Duration to multiply. 
+ * \param[in] denominator Duration to multiply. 
+ * \return The fraction.
+ * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
+ */
+::ros::Duration operator/(const ::ros::Duration& numerator, const ::ros::Duration& denominator);
+
+/**
+ * \brief Multiply two durations. The units of the result are [s^2].
+ * \param[in] val1 Duration to multiply. 
+ * \param[in] val2 Duration to multiply. 
+ * \return The multiple.
+ * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
+ */
+::ros::WallDuration operator*(const ::ros::WallDuration& val1, const ::ros::WallDuration& val2);
+
+/**
+ * \brief Divide duration val1 by val2. The result is unitless.
+ * \param[in] numerator Duration to multiply. 
+ * \param[in] denominator Duration to multiply. 
+ * \return The fraction.
+ * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
+ */
+::ros::WallDuration operator/(const ::ros::WallDuration& numerator, const ::ros::WallDuration& denominator);
+
 }
