@@ -26,14 +26,14 @@
 #include <ros/subscribe_options.h>
 #include <ros/timer.h>
 
-#include <cras_cpp_common/node_utils.hpp>
 #include <cras_cpp_common/diag_utils/diagnosed_pub_sub.hpp>
 #include <cras_cpp_common/diag_utils/topic_status_param.hpp>
 #include <cras_cpp_common/diag_utils/updater.h>
+#include <cras_cpp_common/log_utils/nodelet.h>
 #include <cras_cpp_common/node_utils.hpp>
 #include <cras_cpp_common/nodelet_utils/param_helper.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/xmlrpc_value.hpp>
-#include <cras_cpp_common/log_utils/nodelet.h>
+#include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
 {
@@ -294,7 +294,7 @@ template<typename T>
   const ::ros::Rate& defaultRate, const ::ros::Rate& defaultMinRate, const ::ros::Rate& defaultMaxRate)
 {
   return ::std::move(this->template advertiseDiagnosed<T>(
-    nh, this->getPrivateNodeHandle(), {defaultMinRate, defaultMaxRate}, paramNamespace, topic, queueSize, false));
+    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultMinRate), ::cras::frequency(defaultMaxRate)}, paramNamespace, topic, queueSize, false));
 }
 
 template <typename NodeletType>
@@ -304,7 +304,7 @@ template<typename T>
   const ::ros::Rate& defaultRate)
 {
   return ::std::move(this->template advertiseDiagnosed<T>(
-    nh, this->getPrivateNodeHandle(), {defaultRate, defaultRate}, paramNamespace, topic, queueSize, false));
+    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultRate), ::cras::frequency(defaultRate)}, paramNamespace, topic, queueSize, false));
 }
 
 template <typename NodeletType>
@@ -313,7 +313,7 @@ template<typename T>
   ::ros::NodeHandle nh, const ::std::string& topic, size_t queueSize, const ::std::string& paramNamespace)
 {
   return ::std::move(this->template advertiseDiagnosed<T>(
-    nh, this->getPrivateNodeHandle(), {}, paramNamespace, topic, queueSize, false));
+    nh, this->getPrivateNodeHandle(), ::cras::SimpleTopicStatusParam<T>(), paramNamespace, topic, queueSize, false));
 }
 
 
