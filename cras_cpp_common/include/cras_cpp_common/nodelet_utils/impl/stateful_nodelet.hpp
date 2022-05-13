@@ -39,4 +39,10 @@ void ::cras::StatefulNodelet<NodeletType>::requestStop()
   this->shouldStop = true;
 }
 
+template <typename NodeletType>
+void ::cras::StatefulNodelet<NodeletType>::shutdown()
+{
+  this->requestStop();
+}
+
 }
