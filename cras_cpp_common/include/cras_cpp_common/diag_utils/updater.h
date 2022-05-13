@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Diagnostic updater that automatically sets its Hardware ID to hostname of the machine.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <string>
 

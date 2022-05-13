@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief TF buffer whose functions with timeout can be interrupted.
@@ -6,7 +8,6 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#pragma once
 #include <memory>
 #include <mutex>
 #include <string>

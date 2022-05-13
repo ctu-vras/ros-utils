@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Utilities for working with transforms.
@@ -6,10 +8,8 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#pragma once
-
-#include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 namespace cras
 {

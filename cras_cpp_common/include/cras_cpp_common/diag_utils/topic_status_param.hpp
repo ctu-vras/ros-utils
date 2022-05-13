@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Definitions of parameters for a TopicStatus diagnostic task.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <limits>
 #include <type_traits>

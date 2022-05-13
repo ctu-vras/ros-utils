@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Utils for getting node parameters.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <string>
 

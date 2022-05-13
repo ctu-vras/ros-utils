@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief NodeletWithSharedTfBuffer allows you to use a tf2_ros::Buffer provided by the nodelet manager (private
@@ -6,8 +8,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include "../nodelet_with_shared_tf_buffer.hpp"
 

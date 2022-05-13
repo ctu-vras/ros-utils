@@ -6,13 +6,13 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/diag_utils/updater.h>
-
 #include <string>
 #include <unistd.h>
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <ros/node_handle.h>
+
+#include <cras_cpp_common/diag_utils/updater.h>
 
 using namespace cras;
 

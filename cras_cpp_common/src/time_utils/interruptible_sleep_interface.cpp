@@ -6,11 +6,10 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/time_utils/interruptible_sleep_interface.h>
-
 #include <ros/init.h>
 #include <ros/time.h>
 
+#include <cras_cpp_common/time_utils/interruptible_sleep_interface.h>
 #include <cras_cpp_common/thread_utils/semaphore.hpp>
 
 namespace cras

@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief ROS message publisher and subscriber with automatic rate and delay diagnostics.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <functional>
 #include <memory>

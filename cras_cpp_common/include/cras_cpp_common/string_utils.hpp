@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Utils for working with strings.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <cstdarg>
 #include <functional>
@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <cras_cpp_common/type_utils.hpp>
+#include <cras_cpp_common/type_utils/string_traits.hpp>
 
 namespace cras
 {

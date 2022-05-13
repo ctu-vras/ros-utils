@@ -6,11 +6,11 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/time_utils.hpp>
-
 #include <ros/duration.h>
 #include <ros/rate.h>
 #include <ros/time.h>
+
+#include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
 {

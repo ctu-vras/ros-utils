@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Diagnostic task for topic frequency and timestamp delay (combining FrequencyStatus and TimeStampStatus tasks).
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <limits>
 #include <memory>

@@ -6,12 +6,11 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/thread_utils.h>
-
 #include <pthread.h>
 #include <string>
 
 #include <cras_cpp_common/string_utils.hpp>
+#include <cras_cpp_common/thread_utils.h>
 
 namespace cras
 {

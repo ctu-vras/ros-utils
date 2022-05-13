@@ -6,12 +6,12 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
  
-#include <cras_cpp_common/tf2_utils.hpp>
-
-#include <geometry_msgs//Quaternion.h>
+#include <geometry_msgs/Quaternion.h>
 #include <tf2/convert.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <cras_cpp_common/tf2_utils.hpp>
 
 namespace cras
 {

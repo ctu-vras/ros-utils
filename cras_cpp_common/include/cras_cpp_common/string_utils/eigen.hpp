@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Specializations of cras::to_string() for Eigen types.
@@ -6,8 +8,6 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
  
-#pragma once
-
 #include <sstream>
 #include <string>
 

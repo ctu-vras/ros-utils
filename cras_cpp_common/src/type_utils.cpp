@@ -8,6 +8,7 @@
 
 #include <regex>
 #include <string>
+#include <typeinfo>
 
 #if __has_include(<cxxabi.h>)
 #define HAS_CXX_ABI 1

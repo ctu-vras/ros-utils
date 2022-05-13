@@ -9,6 +9,7 @@
  */
  
 #include <Eigen/Geometry>
+
 #include <urdf_model/pose.h>
 
 namespace cras

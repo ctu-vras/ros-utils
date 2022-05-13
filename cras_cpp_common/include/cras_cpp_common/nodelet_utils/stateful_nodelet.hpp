@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief A nodelet mixin that can report that it is being unloaded.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <nodelet/nodelet.h>
 #include <ros/duration.h>

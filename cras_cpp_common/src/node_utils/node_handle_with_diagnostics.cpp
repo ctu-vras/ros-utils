@@ -6,14 +6,13 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/node_utils/node_handle_with_diagnostics.h>
-
 #include <string>
 
 #include <diagnostic_updater/diagnostic_updater.h>
 #include <ros/node_handle.h>
 #include <ros/this_node.h>
 
+#include <cras_cpp_common/node_utils/node_handle_with_diagnostics.h>
 #include <cras_cpp_common/node_utils/param_helper.h>
 #include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/xmlrpc_value.hpp>

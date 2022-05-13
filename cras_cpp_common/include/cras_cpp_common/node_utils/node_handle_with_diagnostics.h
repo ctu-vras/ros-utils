@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Utils for adding diagnostics to a topic via node handle.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <memory>
 #include <string>

@@ -6,8 +6,6 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
-
 #include <memory>
 #include <string>
 
@@ -16,6 +14,8 @@
 #include <ros/time.h>
 #include <tf2/buffer_core.h>
 #include <tf2_ros/buffer.h>
+
+#include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
 
 using namespace cras;
 

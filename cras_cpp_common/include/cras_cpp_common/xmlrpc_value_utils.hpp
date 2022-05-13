@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Utilities for working with XmlRpcValues.
@@ -6,7 +8,13 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#pragma once
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include <XmlRpcValue.h>
 #include <XmlRpcException.h>

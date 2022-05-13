@@ -6,9 +6,9 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/thread_utils/semaphore.hpp>
-
 #include <iostream>
+
+#include <cras_cpp_common/thread_utils/semaphore.hpp>
 
 using namespace cras;
 

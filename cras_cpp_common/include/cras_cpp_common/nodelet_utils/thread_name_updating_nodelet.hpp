@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief ThreadNameUpdatingNodelet mixin allows nodelet to update the name of the thread it gets executed in. 
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <nodelet/nodelet.h>
 

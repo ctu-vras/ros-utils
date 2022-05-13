@@ -6,8 +6,6 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/node_utils/param_helper.h>
-
 #include <memory>
 #include <string>
 
@@ -15,6 +13,7 @@
 #include <ros/node_handle.h>
 
 #include <cras_cpp_common/log_utils/node.h>
+#include <cras_cpp_common/node_utils/param_helper.h>
 #include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/node_handle.hpp>
 

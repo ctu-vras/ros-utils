@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Helpers for setting up diagnostics for nodelets (private implementation details, do not include this
@@ -6,8 +8,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include "../nodelet_with_diagnostics.hpp"
 

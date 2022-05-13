@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * \file
  * \brief Object implementing an `ok()` method that can interrupt pending sleeps when it returns false.
@@ -5,8 +7,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
-
-#pragma once
 
 #include <memory>
 

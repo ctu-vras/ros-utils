@@ -6,14 +6,13 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/nodelet_utils/nodelet_aware_tf_buffer.h>
-
 #include <memory>
 
 #include <nodelet/nodelet.h>
 #include <ros/duration.h>
 #include <tf2/buffer_core.h>
 
+#include <cras_cpp_common/nodelet_utils/nodelet_aware_tf_buffer.h>
 #include <cras_cpp_common/nodelet_utils/stateful_nodelet.hpp>
 #include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
 

@@ -6,14 +6,14 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
  
-#include <cras_cpp_common/string_utils.hpp>
-
 #include <string>
 #include <sstream>
 #include <vector>
 
 #include <ros/console.h>
 #include <rosconsole/macros_generated.h>
+
+#include <cras_cpp_common/string_utils.hpp>
 
 namespace cras
 {
