@@ -88,14 +88,6 @@ add_library(cloud src/cloud.cpp)
 target_link_libraries(cloud ${catkin_LIBRARIES})
 add_dependencies(cloud ${catkin_EXPORTED_TARGETS})
 
-add_executable(repeater src/repeater.cpp)
-target_link_libraries(repeater ${catkin_LIBRARIES})
-add_dependencies(repeater ${catkin_EXPORTED_TARGETS})
-
-add_executable(joy_repeater src/joy_repeater.cpp)
-target_link_libraries(joy_repeater ${catkin_LIBRARIES})
-add_dependencies(joy_repeater ${catkin_EXPORTED_TARGETS})
-
 add_library(string_utils src/string_utils.cpp)
 target_link_libraries(string_utils time_utils ${catkin_LIBRARIES})
 add_dependencies(string_utils ${catkin_EXPORTED_TARGETS})
@@ -216,8 +208,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY cmake/Modules
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
-install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_updater joy_repeater
-  nodelet_manager_sharing_tf_buffer repeater string_utils
+install(TARGETS cloud diag_utils cras_filter_base cras_filter_chain cras_diag_updater
+  nodelet_manager_sharing_tf_buffer string_utils
   tf2_sensor_msgs_cras tf2_utils time_utils
 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
