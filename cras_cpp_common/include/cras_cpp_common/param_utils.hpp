@@ -69,7 +69,8 @@ using check_get_param_types = typename std::enable_if_t<
  *
  * \details Overloads defining conversion to various types can be defined in several forms. You can either overload
  *          cras::convert() that converts the XmlRpcValue to an intermediate value, or you can make the intermediate
- *          value autoconvertible to the result type, or you can overload getParamVerbose() itself.
+ *          value autoconvertible to the result type, or you can create a specialization of DefaultToResultFn and
+ *          DefaultParamServerType, or you can overload getParamVerbose() itself.
  * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
  *                    using options.toResult function (which defaults to static_cast).
  * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
@@ -86,7 +87,7 @@ using check_get_param_types = typename std::enable_if_t<
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType,
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
   ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ::cras::GetParamResult<ResultType> getParamVerbose(
   const ::cras::GetParamAdapter& param, const ::std::string& name,
@@ -283,7 +284,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-template<typename ResultType, typename ParamServerType = ResultType,
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
   ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ::cras::GetParamResult<ResultType> getParamVerbose(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
@@ -314,7 +315,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType,
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
   ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
@@ -344,7 +345,7 @@ inline ResultType getParam(
  * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
  * \return The loaded parameter value.
  */
-template<typename ResultType, typename ParamServerType = ResultType,
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
   ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
 inline ResultType getParam(
   const ::cras::GetParamAdapter& param, const ::std::string &name,
@@ -453,68 +454,50 @@ inline ::std::string getParam(
 }
 
 /**
- * \brief Generate definitions of overloads of getParam(Verbose) that use different ResultType and ParamServerType.
- *        These overloads will be automatically used when the user requests a parameter of type ResultType.
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType.
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
  * \param convertToResultFn The ToResultFn to use for parameter conversion.
  */
 #define DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, convertToResultFn) \
-template<> \
-inline ::cras::GetParamResult<resultType> getParamVerbose(const ::cras::GetParamAdapter& param, const ::std::string &name, \
-  const ::cras::optional<resultType>& defaultValue, const ::std::string& unit, \
-  const ::cras::GetParamOptions<resultType>& options, const ::cras::LogHelper* const logger) \
-{ \
-  return ::cras::getParamVerbose(param, name, defaultValue, unit.empty() ? (defaultUnit) : unit, \
-    options.asType<paramServerType>((convertToResultFn)), logger); \
-} \
-template<> \
-inline ::cras::GetParamResult<resultType> getParamVerbose(const ::cras::GetParamAdapter& param, const ::std::string &name, \
-  const resultType& defaultValue, const ::std::string& unit, \
-  const ::cras::GetParamOptions<resultType>& options, const ::cras::LogHelper* const logger) \
-{ \
-  return ::cras::getParamVerbose(param, name, ::cras::optional<resultType>(defaultValue),        \
-    unit.empty() ? (defaultUnit) : unit, options, logger); \
-} \
-template<> \
-inline resultType getParam(const ::cras::GetParamAdapter& param, const ::std::string &name, \
-  const ::cras::optional<resultType>& defaultValue, const ::std::string& unit, \
-  const ::cras::GetParamOptions<resultType>& options, const ::cras::LogHelper* const logger) \
-{ \
-  return ::cras::getParamVerbose(param, name, defaultValue, unit.empty() ? (defaultUnit) : unit, \
-    options, logger).value; \
-} \
-template<> \
-inline resultType getParam(const ::cras::GetParamAdapter& param, const ::std::string &name, \
-  const resultType& defaultValue, const ::std::string& unit, \
-  const ::cras::GetParamOptions<resultType>& options, const ::cras::LogHelper* const logger) \
-{ \
-  return ::cras::getParamVerbose(param, name, defaultValue, unit.empty() ? (defaultUnit) : unit, \
-    options, logger).value; \
-}
+template<>\
+struct DefaultToResultFn<resultType, paramServerType>\
+{\
+	static resultType toResult(const paramServerType& v){ return convertToResultFn(v); };\
+};\
+\
+template<>\
+struct DefaultParamServerType<resultType>\
+{\
+	typedef paramServerType type;\
+};
 
 /**
- * \brief Generate definitions of overloads of getParam(Verbose) that use different ResultType and ParamServerType.
- *        These overloads will be automatically used when the user requests a parameter of type ResultType.
- *        paramServerType is converted to resultType via resultType one-arg constructor. 
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType. paramServerType is converted to resultType via resultType one-arg constructor. 
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
  */
 #define DEFINE_CONVERTING_GET_PARAM_WITH_CONSTRUCTOR(resultType, paramServerType, defaultUnit) \
-DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, ([](const paramServerType& v) { return resultType(v); }))
+DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
+  ([](const paramServerType& v) { return resultType(v); }))
 
 /**
- * \brief Generate definitions of overloads of getParam(Verbose) that use different ResultType and ParamServerType.
- *        These overloads will be automatically used when the user requests a parameter of type ResultType.
- *        paramServerType is converted to resultType via static_cast.
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType. paramServerType is converted to resultType via static_cast.
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
  */
 #define DEFINE_CONVERTING_GET_PARAM_WITH_CAST(resultType, paramServerType, defaultUnit) \
-DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, ([](const paramServerType& v) { return static_cast<resultType>(v); }))
+DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
+  ([](const paramServerType& v) { return static_cast<resultType>(v); }))
 }
 
 #if __has_include(<ros/duration.h>)

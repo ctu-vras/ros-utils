@@ -59,7 +59,7 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
-  template<typename ResultType, typename ParamServerType = ResultType,
+  template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
     ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ::cras::GetParamResult<ResultType> getParamVerbose(
     const ::std::string& name, const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -84,7 +84,7 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
-  template<typename ResultType, typename ParamServerType = ResultType,
+  template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
     ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ::cras::GetParamResult<ResultType> getParamVerbose(
     const ::std::string& name, const ResultType& defaultValue = ResultType(),
@@ -111,7 +111,7 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return The loaded parameter value.
    */
-  template<typename ResultType, typename ParamServerType = ResultType,
+  template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
     ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ResultType getParam(
     const ::std::string& name, const ::cras::optional<ResultType>& defaultValue = ResultType(),
@@ -136,7 +136,7 @@ public:
    *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
    * \return The loaded parameter value.
    */
-  template<typename ResultType, typename ParamServerType = ResultType,
+  template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
     ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
   inline ResultType getParam(
     const ::std::string& name, const ResultType& defaultValue = ResultType(),

@@ -352,10 +352,6 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_math_utils test/test_math_utils.cpp)
   target_link_libraries(test_math_utils cras_math_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_nodelet_manager test/test_nodelet_manager.cpp)
-  target_link_libraries(test_nodelet_manager
-    cras_nodelet_manager cras_nodelet_manager_sharing_tf_buffer cras_test_utils ${catkin_LIBRARIES})
-
   catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
   target_link_libraries(test_pool_allocator cras_pool_allocator)
 
@@ -399,6 +395,10 @@ if (CATKIN_ENABLE_TESTING)
 
   add_rostest_gtest(test_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
   target_link_libraries(test_filter_chain_nodelet cras_filter_chain_nodelet ${catkin_LIBRARIES})
+
+  add_rostest_gtest(test_nodelet_manager test/test_nodelet_manager.test test/test_nodelet_manager.cpp)
+  target_link_libraries(test_nodelet_manager
+    cras_nodelet_manager cras_nodelet_manager_sharing_tf_buffer cras_test_utils ${catkin_LIBRARIES})
 
   add_rostest_gtest(test_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
   target_link_libraries(test_diag_utils cras_diag_utils ${catkin_LIBRARIES})
