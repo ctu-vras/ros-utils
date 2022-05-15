@@ -2,5 +2,5 @@
 <!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
 <launch>
     <rosparam command="load" file="$(dirname)/test_filter_chain_nodelet.yaml" />
-    <test test-name="test_filter_chain_nodelet" pkg="cras_cpp_common" type="test_filter_chain_nodelet"/>
+    <test test-name="test_filter_chain_nodelet" pkg="cras_cpp_common" type="test_cras_filter_chain_nodelet"/>
 </launch>

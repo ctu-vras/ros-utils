@@ -340,125 +340,125 @@ if (CATKIN_ENABLE_TESTING)
 
   # GTEST tests (no rosmaster required)
   
-  catkin_add_gtest(test_cloud test/test_cloud.cpp)
-  target_link_libraries(test_cloud cras_cloud ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_cloud test/test_cloud.cpp)
+  target_link_libraries(test_cras_cloud cras_cloud ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_filter_chain test/test_filter_chain.cpp)
-  target_link_libraries(test_filter_chain cras_filter_chain ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_filter_chain test/test_filter_chain.cpp)
+  target_link_libraries(test_cras_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_log_utils test/test_log_utils.cpp)
-  target_link_libraries(test_log_utils cras_log_utils ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_log_utils test/test_log_utils.cpp)
+  target_link_libraries(test_cras_log_utils cras_log_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_math_utils test/test_math_utils.cpp)
-  target_link_libraries(test_math_utils cras_math_utils ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_math_utils test/test_math_utils.cpp)
+  target_link_libraries(test_cras_math_utils cras_math_utils ${catkin_LIBRARIES})
 
   catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
   target_link_libraries(test_pool_allocator cras_pool_allocator)
 
-  catkin_add_gtest(test_rate_limiter test/test_rate_limiter.cpp)
-  target_link_libraries(test_rate_limiter cras_rate_limiter ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_rate_limiter test/test_rate_limiter.cpp)
+  target_link_libraries(test_cras_rate_limiter cras_rate_limiter ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_set_utils test/test_set_utils.cpp)
-  target_link_libraries(test_set_utils cras_set_utils)
+  catkin_add_gtest(test_cras_set_utils test/test_set_utils.cpp)
+  target_link_libraries(test_cras_set_utils cras_set_utils)
 
-  catkin_add_gtest(test_string_utils test/test_string_utils.cpp)
-  target_link_libraries(test_string_utils cras_string_utils ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_string_utils test/test_string_utils.cpp)
+  target_link_libraries(test_cras_string_utils cras_string_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
-  target_link_libraries(test_tf2_sensor_msgs cras_tf2_sensor_msgs ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
+  target_link_libraries(test_cras_tf2_sensor_msgs cras_tf2_sensor_msgs ${catkin_LIBRARIES})
 
-  add_rostest_gtest(test_tf2_utils test/test_tf2_utils.test test/test_tf2_utils.cpp)
-  target_link_libraries(test_tf2_utils cras_tf2_utils ${catkin_LIBRARIES})
+  add_rostest_gtest(test_cras_tf2_utils test/test_tf2_utils.test test/test_tf2_utils.cpp)
+  target_link_libraries(test_cras_tf2_utils cras_tf2_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
-  target_link_libraries(test_thread_name_updating_nodelet cras_nodelet_utils)
+  catkin_add_gtest(test_cras_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
+  target_link_libraries(test_cras_thread_name_updating_nodelet cras_nodelet_utils)
 
-  catkin_add_gtest(test_thread_utils test/test_thread_utils.cpp)
-  target_link_libraries(test_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)
+  catkin_add_gtest(test_cras_thread_utils test/test_thread_utils.cpp)
+  target_link_libraries(test_cras_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)
 
-  catkin_add_gtest(test_time_utils test/test_time_utils.cpp)
-  target_link_libraries(test_time_utils cras_time_utils ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
+  target_link_libraries(test_cras_time_utils cras_time_utils ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_type_utils test/test_type_utils.cpp)
-  target_link_libraries(test_type_utils cras_type_utils)
+  catkin_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
+  target_link_libraries(test_cras_type_utils cras_type_utils)
 
-  catkin_add_gtest(test_urdf_utils test/test_urdf_utils.cpp)
-  target_link_libraries(test_urdf_utils cras_urdf_utils)
+  catkin_add_gtest(test_cras_urdf_utils test/test_urdf_utils.cpp)
+  target_link_libraries(test_cras_urdf_utils cras_urdf_utils)
   
-  catkin_add_gtest(test_xmlrpc_value_traits test/test_xmlrpc_value_traits.cpp)
-  target_link_libraries(test_xmlrpc_value_traits xmlrpc_value_traits ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_xmlrpc_value_traits test/test_xmlrpc_value_traits.cpp)
+  target_link_libraries(test_cras_xmlrpc_value_traits xmlrpc_value_traits ${catkin_LIBRARIES})
 
-  catkin_add_gtest(test_xmlrpc_value_utils test/test_xmlrpc_value_utils.cpp)
-  target_link_libraries(test_xmlrpc_value_utils xmlrpc_value_utils ${catkin_LIBRARIES})
+  catkin_add_gtest(test_cras_xmlrpc_value_utils test/test_xmlrpc_value_utils.cpp)
+  target_link_libraries(test_cras_xmlrpc_value_utils xmlrpc_value_utils ${catkin_LIBRARIES})
 
   # ROSTEST tests (need rosmaster)
 
-  add_rostest_gtest(test_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
-  target_link_libraries(test_filter_chain_nodelet cras_filter_chain_nodelet ${catkin_LIBRARIES})
+  add_rostest_gtest(test_cras_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
+  target_link_libraries(test_cras_filter_chain_nodelet cras_filter_chain_nodelet ${catkin_LIBRARIES})
 
-  add_rostest_gtest(test_nodelet_manager test/test_nodelet_manager.test test/test_nodelet_manager.cpp)
-  target_link_libraries(test_nodelet_manager
+  add_rostest_gtest(test_cras_nodelet_manager test/test_nodelet_manager.test test/test_nodelet_manager.cpp)
+  target_link_libraries(test_cras_nodelet_manager
     cras_nodelet_manager cras_nodelet_manager_sharing_tf_buffer cras_test_utils ${catkin_LIBRARIES})
 
-  add_rostest_gtest(test_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
-  target_link_libraries(test_diag_utils cras_diag_utils ${catkin_LIBRARIES})
-  target_compile_options(test_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_rostest_gtest(test_cras_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
+  target_link_libraries(test_cras_diag_utils cras_diag_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
   
-  add_rostest_gtest(test_filter_base test/test_filter_base.test test/test_filter_base.cpp)
-  target_link_libraries(test_filter_base cras_filter_base ${catkin_LIBRARIES})
-  target_compile_options(test_filter_base PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_rostest_gtest(test_cras_filter_base test/test_filter_base.test test/test_filter_base.cpp)
+  target_link_libraries(test_cras_filter_base cras_filter_base ${catkin_LIBRARIES})
+  target_compile_options(test_cras_filter_base PRIVATE -fno-var-tracking-assignments)  # speed up build
   
-  add_rostest_gtest(test_param_utils test/test_param_utils.test test/test_param_utils.cpp)
-  target_link_libraries(test_param_utils cras_param_utils ${catkin_LIBRARIES})
-  target_compile_options(test_param_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_rostest_gtest(test_cras_param_utils test/test_param_utils.test test/test_param_utils.cpp)
+  target_link_libraries(test_cras_param_utils cras_param_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_param_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
 
-  add_rostest_gtest(test_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
-  target_link_libraries(test_nodelet_get_param cras_nodelet_utils cras_param_utils ${catkin_LIBRARIES})
-  target_compile_options(test_nodelet_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_rostest_gtest(test_cras_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
+  target_link_libraries(test_cras_nodelet_get_param cras_nodelet_utils cras_param_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_nodelet_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
 
   # node_utils runs multiple tests from a single rostest launch file
 
-  catkin_add_executable_with_gtest(test_node_utils_get_param test/test_node_utils_get_param.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_node_utils_get_param cras_node_utils cras_param_utils ${catkin_LIBRARIES})
-  target_compile_options(test_node_utils_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
-  add_dependencies(tests test_node_utils_get_param)
+  catkin_add_executable_with_gtest(test_cras_node_utils_get_param test/test_node_utils_get_param.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_node_utils_get_param cras_node_utils cras_param_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_node_utils_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_dependencies(tests test_cras_node_utils_get_param)
   
-  catkin_add_executable_with_gtest(test_node_utils_diagnostics test/test_node_utils_diagnostics.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_node_utils_diagnostics cras_node_utils cras_param_utils ${catkin_LIBRARIES})
-  target_compile_options(test_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
-  add_dependencies(tests test_node_utils_diagnostics)
+  catkin_add_executable_with_gtest(test_cras_node_utils_diagnostics test/test_node_utils_diagnostics.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_node_utils_diagnostics cras_node_utils cras_param_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
+  add_dependencies(tests test_cras_node_utils_diagnostics)
 
   add_rostest(test/test_node_utils.test DEPENDENCIES
-    test_node_utils_diagnostics
-    test_node_utils_get_param)
+    test_cras_node_utils_diagnostics
+    test_cras_node_utils_get_param)
 
   # nodelet_utils runs multiple tests from a single rostest launch file
 
-  catkin_add_executable_with_gtest(test_nodelet_aware_tf_buffer test/test_nodelet_aware_tf_buffer.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_nodelet_aware_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
-  add_dependencies(tests test_nodelet_aware_tf_buffer)
+  catkin_add_executable_with_gtest(test_cras_nodelet_aware_tf_buffer test/test_nodelet_aware_tf_buffer.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_nodelet_aware_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_nodelet_aware_tf_buffer)
   
-  catkin_add_executable_with_gtest(test_stateful_nodelet test/test_stateful_nodelet.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_stateful_nodelet cras_nodelet_utils ${catkin_LIBRARIES})
-  add_dependencies(tests test_stateful_nodelet)
+  catkin_add_executable_with_gtest(test_cras_stateful_nodelet test/test_stateful_nodelet.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_stateful_nodelet cras_nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_stateful_nodelet)
   
-  catkin_add_executable_with_gtest(test_nodelet_log_macros test/test_nodelet_log_macros.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_nodelet_log_macros cras_nodelet_utils ${catkin_LIBRARIES})
-  add_dependencies(tests test_nodelet_log_macros)
+  catkin_add_executable_with_gtest(test_cras_nodelet_log_macros test/test_nodelet_log_macros.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_nodelet_log_macros cras_nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_nodelet_log_macros)
   
-  catkin_add_executable_with_gtest(test_nodelet_with_shared_tf_buffer test/test_nodelet_with_shared_tf_buffer.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_nodelet_with_shared_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
-  add_dependencies(tests test_nodelet_with_shared_tf_buffer)
+  catkin_add_executable_with_gtest(test_cras_nodelet_with_shared_tf_buffer test/test_nodelet_with_shared_tf_buffer.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_nodelet_with_shared_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_nodelet_with_shared_tf_buffer)
   
-  catkin_add_executable_with_gtest(test_nodelet_diagnostics test/test_nodelet_diagnostics.cpp EXCLUDE_FROM_ALL)
-  target_link_libraries(test_nodelet_diagnostics cras_diag_utils cras_nodelet_utils ${catkin_LIBRARIES})
-  add_dependencies(tests test_nodelet_diagnostics)
-  target_compile_options(test_nodelet_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
+  catkin_add_executable_with_gtest(test_cras_nodelet_diagnostics test/test_nodelet_diagnostics.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_nodelet_diagnostics cras_diag_utils cras_nodelet_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_nodelet_diagnostics)
+  target_compile_options(test_cras_nodelet_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
   
   add_rostest(test/test_nodelet_utils.test DEPENDENCIES
-    test_nodelet_aware_tf_buffer
-    test_nodelet_diagnostics
-    test_nodelet_log_macros
-    test_nodelet_with_shared_tf_buffer
-    test_stateful_nodelet)
+    test_cras_nodelet_aware_tf_buffer
+    test_cras_nodelet_diagnostics
+    test_cras_nodelet_log_macros
+    test_cras_nodelet_with_shared_tf_buffer
+    test_cras_stateful_nodelet)
 endif()
