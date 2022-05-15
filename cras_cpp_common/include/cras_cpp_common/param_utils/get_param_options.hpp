@@ -35,7 +35,61 @@ struct DefaultToResultFn
    * \return The converted value.
    * \throws std::runtime_error If the conversion failed.
    */
-	static ResultType toResult(const ParamServerType& value){ return static_cast<ResultType>(value); };
+	static ResultType toResult(const ParamServerType& value)
+	{
+		return static_cast<ResultType>(value);
+	};
+};
+
+/**
+ * \brief Default function for converting XmlRpcValue to an intermediate value of type ParamServerType.
+ * \tparam ParamServerType Type of the intermediate value to which the XmlRpcValue param is converted.
+ * \note Create a specialization of this struct in case you need a different implementation of the conversion or if you
+ *       add an overload of ::cras::convert() that can be included after this file (and declare the specialization
+ *       after the declaration of your overload).
+ */
+template<typename ParamServerType>
+struct DefaultToParamFn
+{
+	/**
+   * \brief Function converting XmlRpcValue to an intermediate value of type ParamServerType.
+   * \param[in] xmlValue The XmlRpcValue read from parameter server.
+   * \param[out] value The converted value. It is not valid if this function returns false.
+   * \param[in] skipNonConvertible If true and the target value is a container, all non-convertible items will be
+   *                               skipped. If false, non-convertible values mean failure of the whole conversion.
+   *                               If all items of a container are skipped (and there were some),
+   *                               the conversion also fails.
+   * \param[out] errors If non-null, any error messages coming from the conversion can be appended to this list.
+   * \return Whether the conversion succeeded.
+   * \note This function should not throw.
+   */
+	static bool toParam(const ::XmlRpc::XmlRpcValue& x, ParamServerType& v, bool skipNonConvertible = false,
+		::std::list<::std::string>* errors = nullptr)
+	{
+		return ::cras::convert(x, v, skipNonConvertible, errors);
+	};
+};
+
+/**
+ * \brief Default function for converting values to string in getParam(Verbose) functions. Uses ::cras::to_string().
+ * \tparam T Type of the value to convert to string.
+ * \note Create a specialization of this struct in case you need a different implementation of the conversion or if you
+ *       add an overload of ::cras::to_string() that can be included after this file (and declare the specialization
+ *       after the declaration of your overload).
+ */
+template<typename T>
+struct ParamToStringFn
+{
+	/**
+	 * \brief Convert the given value to a string representation.
+	 * \tparam T Type of the value.
+	 * \param[in] value The value to convert.
+	 * \return The string representation.
+	 */
+	static ::std::string to_string(const T& value)
+	{
+		return ::cras::to_string(value);
+	};
 };
 
 /**
@@ -107,24 +161,16 @@ struct GetParamOptions
   ::std::string origParamName {};
   
   //! \brief A function that converts ParamServerType values to string for use in log messages.
-  ::cras::ToStringFn<ParamServerType> paramToStr = [](const ParamServerType& s){ return ::cras::to_string(s); };
+  ::cras::ToStringFn<ParamServerType> paramToStr = &::cras::ParamToStringFn<ParamServerType>::to_string;
 
   //! \brief A function that converts ResultType values to string for use in log messages.
-  ::cras::ToStringFn<ResultType> resultToStr = [](const ResultType& s){ return ::cras::to_string(s); };
+  ::cras::ToStringFn<ResultType> resultToStr = &::cras::ParamToStringFn<ResultType>::to_string;
 
   //! \brief A function converting ParamServerType values to ResultType.
   ToResultFn toResult = &::cras::DefaultToResultFn<ResultType, ParamServerType>::toResult;
   
   //! \brief A function converting XmlRpcValue to an intermediate value of type ParamServerType.
-  ToParamFn toParam = [](
-      const ::XmlRpc::XmlRpcValue& x,
-      ParamServerType& v,
-      bool skipNonConvertible = false,
-      ::std::list<::std::string>* errors = nullptr
-    ) -> bool
-		{
-      return ::cras::convert(x, v, skipNonConvertible, errors);
-    };
+  ToParamFn toParam = &::cras::DefaultToParamFn<ParamServerType>::toParam;
   
   /**
    * \brief Assign from options of a different type. Only the non-function members are copied!

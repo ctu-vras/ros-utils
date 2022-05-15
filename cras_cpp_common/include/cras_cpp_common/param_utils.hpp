@@ -456,23 +456,33 @@ inline ::std::string getParam(
 /**
  * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
  *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
- *        of type ResultType.
+ *        of type ResultType. If ::cras::to_string() cannot convert ResultType to string, you have to declare
+ *        overload ::cras::to_string(const ResultType&) prior to calling this macro.
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
  * \param convertToResultFn The ToResultFn to use for parameter conversion.
+ * \note This macro has to be called in the `::cras` namespace.
+ * \note If ::cras::convert() cannot convert XmlRpcValue to paramServerType, you have to define specialization
+ *       ::cras::DefaultToParamFn<paramServerType> which implements the toParam() conversion function.
  */
 #define DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, convertToResultFn) \
 template<>\
+struct ParamToStringFn<resultType>\
+{\
+  static ::std::string to_string(const resultType& v){ return ::cras::to_string(v); };\
+};\
+\
+template<>\
 struct DefaultToResultFn<resultType, paramServerType>\
 {\
-	static resultType toResult(const paramServerType& v){ return convertToResultFn(v); };\
+  static resultType toResult(const paramServerType& v){ return convertToResultFn(v); };\
 };\
 \
 template<>\
 struct DefaultParamServerType<resultType>\
 {\
-	typedef paramServerType type;\
+  typedef paramServerType type;\
 };
 
 /**
@@ -482,6 +492,7 @@ struct DefaultParamServerType<resultType>\
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
+ * \note This macro has to be called in the `::cras` namespace.
  */
 #define DEFINE_CONVERTING_GET_PARAM_WITH_CONSTRUCTOR(resultType, paramServerType, defaultUnit) \
 DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
@@ -494,6 +505,7 @@ DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.
+ * \note This macro has to be called in the `::cras` namespace.
  */
 #define DEFINE_CONVERTING_GET_PARAM_WITH_CAST(resultType, paramServerType, defaultUnit) \
 DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \

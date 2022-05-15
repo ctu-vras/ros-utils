@@ -261,6 +261,18 @@ inline decltype(::std::to_string(::std::declval<T>())) to_string(const T& value)
   return ::std::to_string(value);
 }
 
+/**
+ * \brief Convert the given value to a string representation.
+ * \tparam T Type of the value.
+ * \param[in] value The value to convert.
+ * \return The string representation.
+ */
+template<typename T>
+inline decltype(static_cast<::std::string>(::std::declval<T>())) to_string(const T& value)
+{
+  return static_cast<::std::string>(value);
+}
+
 /** \brief Type of function that converts anything to a string. */
 template<typename T> using ToStringFn = ::std::function<::std::string(const T&)>;
 
