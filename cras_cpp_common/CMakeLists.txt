@@ -83,7 +83,9 @@ catkin_package(
     cras_time_utils
     cras_type_utils
     cras_urdf_utils
-  CFG_EXTRAS ${PROJECT_NAME}-extras.cmake
+  CFG_EXTRAS
+    ${PROJECT_NAME}-extras.cmake
+    ${PROJECT_NAME}-node_from_nodelet.cmake
 )
 
 include_directories(
@@ -293,6 +295,9 @@ install(DIRECTORY external/
 )
 
 install(DIRECTORY cmake/Modules
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
+
+install(FILES cmake/node_from_nodelet.cpp.in
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
 install(TARGETS

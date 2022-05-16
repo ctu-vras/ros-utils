@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(cras_topic_tools)
 
 find_package(catkin REQUIRED COMPONENTS
+  cras_cpp_common
   nodelet
   roscpp
   topic_tools
@@ -9,15 +10,17 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet throttle_messages)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_relay_nodelet ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet relay)
 
 add_executable(repeater src/repeater.cpp)
 target_link_libraries(repeater ${catkin_LIBRARIES})
@@ -34,7 +37,7 @@ install(TARGETS cras_throttle_messages_nodelet cras_relay_nodelet
 )
 
 install(FILES
-  ../cras_topic_tools/nodelet.xml
+  nodelet.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

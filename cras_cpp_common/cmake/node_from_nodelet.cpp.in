@@ -1,0 +1,23 @@
+/**
+ * \file
+ * \brief Template for node made from a nodelet.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
+#include <ros/datatypes.h>
+#include <ros/init.h>
+#include <ros/this_node.h>
+
+#include <@NODELET_INCLUDE_FILE@>
+
+int main(int argc, char** argv)
+{
+	@NODELET_CLASS@ n;
+	ros::V_string my_argv;
+	ros::removeROSArgs(argc, argv, my_argv);
+	ros::init(argc, argv, "@NODE_NAME@");
+	n.init(ros::this_node::getName(), {}, my_argv);
+	ros::spin();
+}
