@@ -43,6 +43,21 @@ public:
     va_end(args);
 #endif
   };
+  
+  /**
+   * \brief Log a debug message.
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void logDebug(const ::std::string format, ...) const
+  {
+#if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
+    va_list(args);
+    va_start(args, format);
+    this->printDebug(::cras::format(format, args));
+    va_end(args);
+#endif
+  };
 
   /**
    * \brief Log an info message.
@@ -50,6 +65,21 @@ public:
    * \param[in] ... Arguments to print.
    */
   inline void logInfo(const char* format, ...) const
+  {
+#if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
+    va_list(args);
+    va_start(args, format);
+    this->printInfo(::cras::format(format, args));
+    va_end(args);
+#endif
+  };
+
+  /**
+   * \brief Log an info message.
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void logInfo(const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -75,11 +105,41 @@ public:
   };
 
   /**
+   * \brief Log a warning message.
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void logWarn(const ::std::string format, ...) const
+  {
+#if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
+    va_list(args);
+    va_start(args, format);
+    this->printWarn(::cras::format(format, args));
+    va_end(args);
+#endif
+  };
+
+  /**
    * \brief Log an error message.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logError(const char* format, ...) const
+  {
+#if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
+    va_list(args);
+    va_start(args, format);
+    this->printError(::cras::format(format, args));
+    va_end(args);
+#endif
+  };
+
+  /**
+   * \brief Log an error message.
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void logError(const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -105,12 +165,45 @@ public:
   };
 
   /**
+   * \brief Log a fatal message.
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void logFatal(const ::std::string format, ...) const
+  {
+#if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
+    va_list(args);
+    va_start(args, format);
+    this->printFatal(::cras::format(format, args));
+    va_end(args);
+#endif
+  };
+
+  /**
    * \brief Log a message using the given log severity.
    * \param[in] level Log severity level (one of the ros::console::Level enum constants).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void log(::ros::console::Level level, const char* format, ...) const
+  {
+    if (level < ROSCONSOLE_MIN_SEVERITY)
+      return;
+
+    va_list(args);
+    va_start(args, format);
+    const auto& text = ::cras::format(format, args);
+    va_end(args);
+    this->print(level, text);
+  }
+
+  /**
+   * \brief Log a message using the given log severity.
+   * \param[in] level Log severity level (one of the ros::console::Level enum constants).
+   * \param[in] format printf-like format string.
+   * \param[in] ... Arguments to print.
+   */
+  inline void log(::ros::console::Level level, const ::std::string format, ...) const
   {
     if (level < ROSCONSOLE_MIN_SEVERITY)
       return;

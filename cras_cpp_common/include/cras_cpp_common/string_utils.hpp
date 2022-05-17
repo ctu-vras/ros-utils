@@ -226,6 +226,17 @@ inline ::std::string format(::std::string format, ...)
 }
 
 /**
+ * printf-like support working with std::string and automatically managing memory.
+ * \param[in] format The printf-like format string.
+ * \param[in] args Arguments of the format string.
+ * \return The formatted string.
+ */
+inline ::std::string format(::std::string format, ::va_list args)
+{
+  return ::cras::format(format.c_str(), args);
+}
+
+/**
  * \brief Put `s` in double quotes if `T` is a string type (std::string or char*).
  * \tparam T The type to check.
  * \param[in] s The input string. 

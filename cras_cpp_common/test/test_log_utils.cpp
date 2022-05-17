@@ -132,6 +132,22 @@ TEST(LogUtils, PrintfArgs)  // NOLINT
 }
 
 /**
+ * \brief Test logging in printf-style.
+ */
+TEST(LogUtils, PrintfStringArgs)  // NOLINT
+{
+  TestLogger log;
+	using s = std::string;
+  
+  log.reset(); log.logInfo(s("%s"), std::string("cras").c_str()); EXPECT_EQ("cras", log.infoMsg);
+  log.reset(); log.logInfo(s("%i"), -42); EXPECT_EQ("-42", log.infoMsg);
+  log.reset(); log.logInfo(s("%u"), 42); EXPECT_EQ("42", log.infoMsg);
+  log.reset(); log.logInfo(s("%f"), 42.0); EXPECT_EQ("42.000000", log.infoMsg);
+  log.reset(); log.logInfo(s("%f"), 3.14); EXPECT_EQ("3.140000", log.infoMsg);
+  log.reset(); log.logInfo(s("%s %i %f"), "cras", -42, 3.14); EXPECT_EQ("cras -42 3.140000", log.infoMsg);
+}
+
+/**
  * \brief Test logging of very long strings.
  */
 TEST(LogUtils, LongStrings)  // NOLINT
@@ -204,6 +220,49 @@ TEST(NodeLogUtils, Log)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
 }
 
+/**
+ * \brief Test that node logger logs using ROS_* macros when passing a std::string format.
+ */
+TEST(NodeLogUtils, LogString)  // NOLINT
+{
+  cras::NodeLogHelper log;
+
+	using s = std::string;
+	
+  logger.reset(); log.logDebug(s("cras")); logger.afterLog();
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logInfo(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logWarn(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logError(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logFatal(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+  
+  logger.reset(); log.log(ros::console::Level::Debug, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Info, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Warn, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Error, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Fatal, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+  
+  logger.reset(); log.print(ros::console::Level::Debug, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Info, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Warn, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Error, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Fatal, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+}
+
 const inline std::string name {"test"};  // NOLINT
 
 const std::string& testGetName()
@@ -217,6 +276,9 @@ const std::string& testGetName()
 TEST(NodeletLogUtils, Log)  // NOLINT
 {
   cras::NodeletLogHelper log(&testGetName);
+
+	if (ros::console::set_logger_level(std::string(ROSCONSOLE_DEFAULT_NAME) + ".test", ros::console::levels::Debug))
+		ros::console::notifyLoggerLevelsChanged();
 
   logger.reset(); log.logDebug("cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
@@ -264,6 +326,66 @@ TEST(NodeletLogUtils, Log)  // NOLINT
   logger.reset(); log.logError("cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logFatal("cras");
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+}
+
+/**
+ * \brief Test that nodelet logger logs using NODELET_* macros when passing std::string format.
+ */
+TEST(NodeletLogUtils, LogString)  // NOLINT
+{
+  cras::NodeletLogHelper log(&testGetName);
+	using s = std::string;
+
+	if (ros::console::set_logger_level(std::string(ROSCONSOLE_DEFAULT_NAME) + ".test", ros::console::levels::Debug))
+		ros::console::notifyLoggerLevelsChanged();
+
+  logger.reset(); log.logDebug(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logInfo(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logWarn(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logError(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logFatal(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+  
+  logger.reset(); log.log(ros::console::Level::Debug, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Info, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Warn, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Error, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.log(ros::console::Level::Fatal, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+  
+  logger.reset(); log.print(ros::console::Level::Debug, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Info, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Warn, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Error, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.print(ros::console::Level::Fatal, s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+
+  // Test that setting the logger level of the nodelet's named logger actually affects the logging.
+  if (ros::console::set_logger_level(std::string(ROSCONSOLE_DEFAULT_NAME) + ".test", ros::console::levels::Error))
+    ros::console::notifyLoggerLevelsChanged();
+
+  logger.reset(); log.logDebug(s("cras"));
+  EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
+  logger.reset(); log.logInfo(s("cras"));
+  EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
+  logger.reset(); log.logWarn(s("cras"));
+  EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
+  logger.reset(); log.logError(s("cras"));
+  EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
+  logger.reset(); log.logFatal(s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
 }
 
