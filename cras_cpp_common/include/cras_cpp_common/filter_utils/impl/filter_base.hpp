@@ -22,7 +22,7 @@
 #include <rosconsole/macros_generated.h>
 #include <XmlRpcValue.h>
 
-#include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/log_utils/nodelet.h>
 #include <cras_cpp_common/filter_utils/filter_base.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapter.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/xmlrpc_value.hpp>
@@ -36,7 +36,7 @@ namespace cras
  * \tparam F Type of the filtered data.
  */
 template <typename F>
-class FilterLogHelper : public ::cras::LogHelper
+class FilterLogHelper : public ::cras::NodeletLogHelper
 {
 public:
   /**
@@ -44,16 +44,14 @@ public:
    * \param filter The filter whose name will be used in the log prints.
    *               Make sure the object is not destroyed for the whole lifetime of this helper.
    */
-  explicit FilterLogHelper(const ::filters::FilterBase<F>& filter) : filter(filter) {}
+  explicit FilterLogHelper(const ::filters::FilterBase<F>& filter) :
+	  ::cras::NodeletLogHelper(::std::bind(&::filters::FilterBase<F>::getName, &filter)), filter(filter)
+	{
+	}
   FilterLogHelper(::filters::FilterBase<F>&& filter) = delete;  // don't allow temporaries
   ~FilterLogHelper() = default;
 
 protected:
-  void printDebug(const ::std::string& text) const override { ROS_DEBUG_NAMED(filter.getName(), "%s", text.c_str()); }
-  void printInfo(const ::std::string& text) const override { ROS_INFO_NAMED(filter.getName(), "%s", text.c_str()); }
-  void printWarn(const ::std::string& text) const override { ROS_WARN_NAMED(filter.getName(), "%s", text.c_str()); }
-  void printError(const ::std::string& text) const override { ROS_ERROR_NAMED(filter.getName(), "%s", text.c_str()); }
-  void printFatal(const ::std::string& text) const override { ROS_FATAL_NAMED(filter.getName(), "%s", text.c_str()); }
   
   //! The filter whose name is used in the log prints.
   const ::filters::FilterBase<F>& filter;

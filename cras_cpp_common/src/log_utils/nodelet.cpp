@@ -10,7 +10,10 @@
 
 #include <cras_cpp_common/log_utils/nodelet.h>
 
-using namespace ::cras;
+namespace cras
+{
+
+const std::string NOT_SET {"getNameFn is not set!"};
 
 NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNameFn)
 {
@@ -18,7 +21,17 @@ NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNa
 
 NodeletLogHelper::~NodeletLogHelper() = default;
 
-const ::std::string& NodeletLogHelper::getName() const
+const std::string& NodeletLogHelper::getName() const
 {
-  return this->getNameFn();
+	if (this->getNameFn)
+		return this->getNameFn();
+	else
+		return NOT_SET;
+}
+
+std::string NodeletLogHelper::getSuffixedName(const std::string& suffix) const
+{
+	return this->getNameFn() + "." + suffix;
+}
+
 }
