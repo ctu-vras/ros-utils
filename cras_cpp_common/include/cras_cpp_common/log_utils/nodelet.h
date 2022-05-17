@@ -11,6 +11,8 @@
 #include <functional>
 #include <string>
 
+#include <nodelet/nodelet.h>
+
 #include <cras_cpp_common/log_utils.h>
 
 namespace cras
@@ -39,11 +41,30 @@ protected:
    */
   const ::std::string& getName() const;
 
-  void printDebug(const ::std::string& text) const override;
-  void printInfo(const ::std::string& text) const override;
-  void printWarn(const ::std::string& text) const override;
-  void printError(const ::std::string& text) const override;
-  void printFatal(const ::std::string& text) const override;
+  void printDebug(const ::std::string& text) const override
+	{
+		NODELET_DEBUG("%s", text.c_str());
+	}
+	
+  void printInfo(const ::std::string& text) const override
+	{
+		NODELET_INFO("%s", text.c_str());
+	}
+	
+  void printWarn(const ::std::string& text) const override
+	{
+		NODELET_WARN("%s", text.c_str());
+	}
+	
+  void printError(const ::std::string& text) const override
+	{
+		NODELET_ERROR("%s", text.c_str());
+	}
+	
+  void printFatal(const ::std::string& text) const override
+	{
+		NODELET_FATAL("%s", text.c_str());
+	}
 
   //! \brief Function returning the name of the nodelet.
   GetNameFn getNameFn;

@@ -10,6 +10,8 @@
 
 #include <string>
 
+#include <rosconsole/macros_generated.h>
+
 #include <cras_cpp_common/log_utils.h>
 
 namespace cras
@@ -21,11 +23,26 @@ namespace cras
 class NodeLogHelper : public ::cras::LogHelper
 {
 protected:
-  void printDebug(const ::std::string& text) const override;
-  void printInfo(const ::std::string& text) const override;
-  void printWarn(const ::std::string& text) const override;
-  void printError(const ::std::string& text) const override;
-  void printFatal(const ::std::string& text) const override;
+  void printDebug(const ::std::string& text) const override
+	{
+		ROS_DEBUG("%s", text.c_str());
+	}
+  void printInfo(const ::std::string& text) const override
+	{
+		ROS_INFO("%s", text.c_str());
+	}
+  void printWarn(const ::std::string& text) const override
+	{
+		ROS_WARN("%s", text.c_str());
+	}
+  void printError(const ::std::string& text) const override
+	{
+		ROS_ERROR("%s", text.c_str());
+	}
+  void printFatal(const ::std::string& text) const override
+	{
+		ROS_FATAL("%s", text.c_str());
+	}
 };
 
 }

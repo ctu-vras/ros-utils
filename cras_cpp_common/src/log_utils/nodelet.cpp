@@ -18,31 +18,6 @@ NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNa
 
 NodeletLogHelper::~NodeletLogHelper() = default;
 
-void NodeletLogHelper::printDebug(const ::std::string& text) const
-{
-  NODELET_DEBUG("%s", text.c_str());
-}
-
-void NodeletLogHelper::printInfo(const ::std::string& text) const
-{
-  NODELET_INFO("%s", text.c_str());
-}
-
-void NodeletLogHelper::printWarn(const ::std::string& text) const
-{
-  NODELET_WARN("%s", text.c_str());
-}
-
-void NodeletLogHelper::printError(const ::std::string& text) const
-{
-  NODELET_ERROR("%s", text.c_str());
-}
-
-void NodeletLogHelper::printFatal(const ::std::string& text) const
-{
-  NODELET_FATAL("%s", text.c_str());
-}
-
 const ::std::string& NodeletLogHelper::getName() const
 {
   return this->getNameFn();
