@@ -37,7 +37,7 @@ namespace cras
  *                        are provided (and it has to provide a `getTopic()` function).
  */
 template<typename M, typename SubscriberType = ::ros::Subscriber>
-class LazyPubSub
+class LazySubscriber
 {
 public:
 	//! \brief Type of the function that connects the subscriber.
@@ -55,13 +55,13 @@ public:
 	 *                         the one created previously by `connectFn`. The passed subscriber should be invalidated.
 	 * \param[in] logHelper Logging helper.
 	 */
-	LazyPubSub(const ::ros::Publisher& pub, const ConnectFn& connectFn,
+	LazySubscriber(const ::ros::Publisher& pub, const ConnectFn& connectFn,
 		const DisconnectFn& disconnectFn = [](SubscriberType& sub) { sub.shutdown(); },
 		::cras::LogHelperPtr logHelper = ::std::make_shared<::cras::NodeLogHelper>()) :
 		  connectFn(connectFn), disconnectFn(disconnectFn), logHelper(::std::move(logHelper))
 	{
 		::ros::AdvertiseOptions opts;
-		auto cb = ::boost::bind(&LazyPubSub<M>::connectCb, this, ::boost::placeholders::_1);
+		auto cb = ::boost::bind(&LazySubscriber<M>::connectCb, this, ::boost::placeholders::_1);
 		opts.template init<M>(pub.getTopic(), 10, cb, cb);
 
 		const auto ns = ::ros::names::parentNamespace(pub.getTopic());
@@ -74,9 +74,9 @@ public:
 	}
 	
 	/**
-	 * \brief Destroy the pubsub object and unsubscribe the subscriber if it was subscribed.
+	 * \brief Destroy this object and unsubscribe the subscriber if it was subscribed.
 	 */
-	virtual ~LazyPubSub()
+	virtual ~LazySubscriber()
 	{
 		::std::lock_guard<::std::mutex> lock(this->connectMutex);
 		if (this->subscribed)
@@ -135,7 +135,7 @@ protected:
 	//! \brief The publisher whose number of subscribers decides whether to connect or not.
 	::ros::Publisher pub;	
 	
-	//! \brief The subscriber (valid only when `subscribed` is true).
+	//! \brief The underlying subscriber (valid only when `subscribed` is true).
 	SubscriberType sub;
 
 	//! \brief Whether the subscriber is currently subscribed to its topic or not.

@@ -16,9 +16,9 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 set(INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
-add_library(cras_lazy_pubsub INTERFACE)
-target_sources(cras_lazy_pubsub INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_pubsub.hpp>)
-target_link_libraries(cras_lazy_pubsub INTERFACE ${catkin_LIBRARIES} Boost::boost)
+add_library(cras_lazy_subscriber INTERFACE)
+target_sources(cras_lazy_subscriber INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_subscriber.hpp>)
+target_link_libraries(cras_lazy_subscriber INTERFACE ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -60,6 +60,6 @@ catkin_install_python(PROGRAMS nodes/filter nodes/repeat
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
-  add_rostest_gtest(test_cras_lazy_pubsub test/test_lazy_pubsub.test test/test_lazy_pubsub.cpp)
-  target_link_libraries(test_cras_lazy_pubsub cras_lazy_pubsub ${catkin_LIBRARIES})
+  add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
+  target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})
 endif()
