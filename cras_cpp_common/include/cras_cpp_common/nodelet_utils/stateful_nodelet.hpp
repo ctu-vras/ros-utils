@@ -52,8 +52,8 @@ public:
   virtual ~StatefulNodelet();
   bool ok() const override;
   void requestStop() override;
-	
-	[[deprecated("Use requestStop() instead.")]] void shutdown();
+  
+  [[deprecated("Use requestStop() instead.")]] void shutdown();
 
 protected:
   using NodeletType::getName;

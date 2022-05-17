@@ -15,5 +15,5 @@ int main(int argc, char** argv)
   cras::NodeletManagerSharingTfBuffer manager(ros::NodeHandle("~"));
   manager.init();
   ros::spin();
-	return 0;
+  return 0;
 }

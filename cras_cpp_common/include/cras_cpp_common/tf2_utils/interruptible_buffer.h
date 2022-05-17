@@ -128,241 +128,241 @@ public:
    * \return Whether the given duration is valid and was set.
    */
   bool setMinPollingDuration(const ::ros::Duration& duration);
-	
-	/**
-	 * \brief Get the raw tf2::BufferCore that actually stores the transforms.
-	 * \return The raw buffer.
-	 */
-	::tf2::BufferCore& getRawBuffer();
-	
-	/**
-	 * \brief Get the raw tf2::BufferCore that actually stores the transforms.
-	 * \return The raw buffer.
-	 */
-	const ::tf2::BufferCore& getRawBuffer() const;
-
-	// The transform() functions internally use the overridden lookupTransform(), so it is okay to just call the parent
-	// implementation.
-	
-	/** \brief Transform an input into the target frame.
-	 * This function is templated and can take as input any valid mathematical object that tf knows
-	 * how to apply a transform to, by way of the templated math conversions interface.
-	 * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
-	 * type (as defined in geometry_msgs).
-	 * \tparam T The type of the object to transform.
-	 * \param[in] in The object to transform
-	 * \param[out] out The transformed output, preallocated by the caller.
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 */
-	template <class T>
-	T& transform(const T& in, T& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
-	}
-
-	/** \brief Transform an input into the target frame.
-	 * This function is templated and can take as input any valid mathematical object that tf knows
-	 * how to apply a transform to, by way of the templated math conversions interface.
-	 * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
-	 * type (as defined in geometry_msgs).
-	 * \tparam T The type of the object to transform.
-	 * \param[in] in The object to transform.
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 * \return The transformed output.
-	 */
-	template <class T>
-	T transform(const T& in, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		T out;
-		return ::tf2_ros::Buffer::transform(in, target_frame, timeout);
-	}
-
-	/** \brief Transform an input into the target frame and convert to a specified output type.
-	 * It is templated on two types: the type of the input object and the type of the
-	 * transformed output.
-	 * For example, the template types could be Transform, Pose, Vector, or Quaternion messages
-	 * type (as defined in geometry_msgs).
-	 * The function will calculate the transformation and then convert the result into the
-	 * specified output type.
-	 * Compilation will fail if a known conversion does not exist bewteen the two template
-	 * parameters.
-	 * \tparam A The type of the object to transform.
-	 * \tparam B The type of the transformed output.
-	 * \param[in] in The object to transform
-	 * \param[out] out The transformed output, converted to the specified type.
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 * \return The transformed output, converted to the specified type.
-	 */
-	template <class A, class B>
-	B& transform(const A& in, B& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
-	}
-
-	/** \brief Transform an input into the target frame (advanced).
-	 * This function is templated and can take as input any valid mathematical object that tf knows
-	 * how to apply a transform to, by way of the templated math conversions interface.
-	 * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
-	 * type (as defined in geometry_msgs).
-	 * This function follows the advanced API, which allows transforming between different time
-	 * points, and specifying a fixed frame that does not varying in time.
-	 * \tparam T The type of the object to transform.
-	 * \param[in] in The object to transform
-	 * \param[out] out The transformed output, preallocated by the caller.
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] target_time The time into which to transform
-	 * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 */
-	template <class T>
-	T& transform(const T& in, T& out, const ::std::string& target_frame, const ::ros::Time& target_time,
-		const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
-	}
-
-
-	/** \brief Transform an input into the target frame (advanced).
-	 * This function is templated and can take as input any valid mathematical object that tf knows
-	 * how to apply a transform to, by way of the templated math conversions interface.
-	 * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
-	 * type (as defined in geometry_msgs).
-	 * This function follows the advanced API, which allows transforming between different time
-	 * points, and specifying a fixed frame that does not varying in time.
-	 * \tparam T The type of the object to transform.
-	 * \param[in] in The object to transform
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] target_time The time into which to transform
-	 * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 * \return The transformed output.
-	 */
-	template <class T>
-	T transform(const T& in, const ::std::string& target_frame, const ::ros::Time& target_time,
-		const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		return ::tf2_ros::Buffer::transform(in, target_frame, target_time, fixed_frame, timeout);
-	}
-
-	/** \brief Transform an input into the target frame and convert to a specified output type (advanced).
-	 * It is templated on two types: the type of the input object and the type of the
-	 * transformed output.
-	 * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
-	 * type (as defined in geometry_msgs).
-	 * The function will calculate the transformation and then convert the result into the
-	 * specified output type.
-	 * Compilation will fail if a known conversion does not exist bewteen the two template
-	 * parameters.
-	 * This function follows the advanced API, which allows transforming between different time
-	 * points, and specifying a fixed frame that does not varying in time.
-	 * \tparam A The type of the object to transform.
-	 * \tparam B The type of the transformed output.
-	 * \param[in] in The object to transform
-	 * \param[in] out The transformed output, converted to the specified output type.
-	 * \param[in] target_frame The string identifer for the frame to transform into.
-	 * \param[in] target_time The time into which to transform
-	 * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
-	 * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
-	 * \return The transformed output, converted to the specified output type.
-	 */
-	template <class A, class B>
-	B& transform(const A& in, B& out, const ::std::string& target_frame, const ::ros::Time& target_time,
-		const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
-	{
-		return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
-	}
-	
-	// Methods copied from BufferCore, they do not rely on time.
-
-	/**
-	 * \brief Get the duration over which this transformer will cache.
-	 */
-	::ros::Duration getCacheLength();
-	
-	/**
-	 * \brief Clear all data.
+  
+  /**
+   * \brief Get the raw tf2::BufferCore that actually stores the transforms.
+   * \return The raw buffer.
    */
-	void clear();
+  ::tf2::BufferCore& getRawBuffer();
+  
+  /**
+   * \brief Get the raw tf2::BufferCore that actually stores the transforms.
+   * \return The raw buffer.
+   */
+  const ::tf2::BufferCore& getRawBuffer() const;
 
-	/**
-	 * \brief Add transform information to the tf data structure
-	 * \param[in] transform The transform to store
-	 * \param[in] authority The source of the information for this transform
-	 * \param[in] is_static Record this transform as a static transform.  It will be good across all time.
-	 * 										  (This cannot be changed after the first call.)
-	 * \return True unless an error occurred.
-	 */
-	bool setTransform(const ::geometry_msgs::TransformStamped& transform, const ::std::string& authority,
-		bool is_static = false);
+  // The transform() functions internally use the overridden lookupTransform(), so it is okay to just call the parent
+  // implementation.
+  
+  /** \brief Transform an input into the target frame.
+   * This function is templated and can take as input any valid mathematical object that tf knows
+   * how to apply a transform to, by way of the templated math conversions interface.
+   * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
+   * type (as defined in geometry_msgs).
+   * \tparam T The type of the object to transform.
+   * \param[in] in The object to transform
+   * \param[out] out The transformed output, preallocated by the caller.
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   */
+  template <class T>
+  T& transform(const T& in, T& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
+  }
 
-	/**
-	 * \brief Get the transform between two frames by frame ID.
-	 * \param[in] target_frame The frame to which data should be transformed
-	 * \param[in] source_frame The frame where the data originated
-	 * \param[in] time The time at which the value of the transform is desired. (0 will get the latest)
-	 * \return The transform between the frames.
-	 * \throws tf2::LookupException, tf2::ConnectivityException, tf2::ExtrapolationException,
-	 *         tf2::InvalidArgumentException
-	 */
-	::geometry_msgs::TransformStamped lookupTransform(const ::std::string& target_frame,
-		const ::std::string& source_frame, const ::ros::Time& time) const;
+  /** \brief Transform an input into the target frame.
+   * This function is templated and can take as input any valid mathematical object that tf knows
+   * how to apply a transform to, by way of the templated math conversions interface.
+   * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
+   * type (as defined in geometry_msgs).
+   * \tparam T The type of the object to transform.
+   * \param[in] in The object to transform.
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   * \return The transformed output.
+   */
+  template <class T>
+  T transform(const T& in, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    T out;
+    return ::tf2_ros::Buffer::transform(in, target_frame, timeout);
+  }
 
-	/**
-	 * \brief Get the transform between two frames by frame ID assuming fixed frame.
-	 * \param[in] target_frame The frame to which data should be transformed
-	 * \param[in] target_time The time to which the data should be transformed. (0 will get the latest)
-	 * \param[in] source_frame The frame where the data originated
-	 * \param[in] source_time The time at which the source_frame should be evaluated. (0 will get the latest)
-	 * \param[in] fixed_frame The frame in which to assume the transform is constant in time. 
-	 * \return The transform between the frames.
-	 * \throws tf2::LookupException, tf2::ConnectivityException, tf2::ExtrapolationException,
-	 *         tf2::InvalidArgumentException
-	 */
-	::geometry_msgs::TransformStamped lookupTransform(const ::std::string& target_frame, const ::ros::Time& target_time,
-		const ::std::string& source_frame, const ::ros::Time& source_time, const ::std::string& fixed_frame) const;
+  /** \brief Transform an input into the target frame and convert to a specified output type.
+   * It is templated on two types: the type of the input object and the type of the
+   * transformed output.
+   * For example, the template types could be Transform, Pose, Vector, or Quaternion messages
+   * type (as defined in geometry_msgs).
+   * The function will calculate the transformation and then convert the result into the
+   * specified output type.
+   * Compilation will fail if a known conversion does not exist bewteen the two template
+   * parameters.
+   * \tparam A The type of the object to transform.
+   * \tparam B The type of the transformed output.
+   * \param[in] in The object to transform
+   * \param[out] out The transformed output, converted to the specified type.
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   * \return The transformed output, converted to the specified type.
+   */
+  template <class A, class B>
+  B& transform(const A& in, B& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
+  }
 
-	/**
-	 * \brief Test if a transform is possible
-	 * \param[in] target_frame The frame into which to transform
-	 * \param[in] source_frame The frame from which to transform
-	 * \param[in] time The time at which to transform
-	 * \param[out] error_msg A pointer to a string which will be filled with why the transform failed, if not NULL.
-	 * \return True if the transform is possible, false otherwise.
-	 */
-	bool canTransform(const ::std::string& target_frame, const ::std::string& source_frame, const ::ros::Time& time,
-		::std::string* error_msg = nullptr) const;
+  /** \brief Transform an input into the target frame (advanced).
+   * This function is templated and can take as input any valid mathematical object that tf knows
+   * how to apply a transform to, by way of the templated math conversions interface.
+   * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
+   * type (as defined in geometry_msgs).
+   * This function follows the advanced API, which allows transforming between different time
+   * points, and specifying a fixed frame that does not varying in time.
+   * \tparam T The type of the object to transform.
+   * \param[in] in The object to transform
+   * \param[out] out The transformed output, preallocated by the caller.
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] target_time The time into which to transform
+   * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   */
+  template <class T>
+  T& transform(const T& in, T& out, const ::std::string& target_frame, const ::ros::Time& target_time,
+    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
+  }
 
-	/**
-	 * \brief Test if a transform is possible
-	 * \param[in] target_frame The frame into which to transform
-	 * \param[in] target_time The time into which to transform
-	 * \param[in] source_frame The frame from which to transform
-	 * \param[in] source_time The time from which to transform
-	 * \param[in] fixed_frame The frame in which to treat the transform as constant in time
-	 * \param[out] error_msg A pointer to a string which will be filled with why the transform failed, if not NULL.
-	 * \return True if the transform is possible, false otherwise.
-	 */
-	bool canTransform(const ::std::string& target_frame, const ::ros::Time& target_time,
-		const ::std::string& source_frame, const ::ros::Time& source_time, const ::std::string& fixed_frame,
-		::std::string* error_msg = nullptr) const;
 
-	/**
-	 * \brief A way to see what frames have been cached in yaml format. Useful for debugging tools.
-	 */
-	::std::string allFramesAsYAML(double current_time) const;
+  /** \brief Transform an input into the target frame (advanced).
+   * This function is templated and can take as input any valid mathematical object that tf knows
+   * how to apply a transform to, by way of the templated math conversions interface.
+   * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
+   * type (as defined in geometry_msgs).
+   * This function follows the advanced API, which allows transforming between different time
+   * points, and specifying a fixed frame that does not varying in time.
+   * \tparam T The type of the object to transform.
+   * \param[in] in The object to transform
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] target_time The time into which to transform
+   * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   * \return The transformed output.
+   */
+  template <class T>
+  T transform(const T& in, const ::std::string& target_frame, const ::ros::Time& target_time,
+    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    return ::tf2_ros::Buffer::transform(in, target_frame, target_time, fixed_frame, timeout);
+  }
 
-	/**
-	 * \brief Backwards compatibility for #84.
-	 */
-	::std::string allFramesAsYAML() const;
+  /** \brief Transform an input into the target frame and convert to a specified output type (advanced).
+   * It is templated on two types: the type of the input object and the type of the
+   * transformed output.
+   * For example, the template type could be a Transform, Pose, Vector, or Quaternion message
+   * type (as defined in geometry_msgs).
+   * The function will calculate the transformation and then convert the result into the
+   * specified output type.
+   * Compilation will fail if a known conversion does not exist bewteen the two template
+   * parameters.
+   * This function follows the advanced API, which allows transforming between different time
+   * points, and specifying a fixed frame that does not varying in time.
+   * \tparam A The type of the object to transform.
+   * \tparam B The type of the transformed output.
+   * \param[in] in The object to transform
+   * \param[in] out The transformed output, converted to the specified output type.
+   * \param[in] target_frame The string identifer for the frame to transform into.
+   * \param[in] target_time The time into which to transform
+   * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
+   * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
+   * \return The transformed output, converted to the specified output type.
+   */
+  template <class A, class B>
+  B& transform(const A& in, B& out, const ::std::string& target_frame, const ::ros::Time& target_time,
+    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+  {
+    return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
+  }
+  
+  // Methods copied from BufferCore, they do not rely on time.
 
-	/**
-	 * \brief A way to see what frames have been cached. Useful for debugging.
-	 */
-	::std::string allFramesAsString() const;
+  /**
+   * \brief Get the duration over which this transformer will cache.
+   */
+  ::ros::Duration getCacheLength();
+  
+  /**
+   * \brief Clear all data.
+   */
+  void clear();
+
+  /**
+   * \brief Add transform information to the tf data structure
+   * \param[in] transform The transform to store
+   * \param[in] authority The source of the information for this transform
+   * \param[in] is_static Record this transform as a static transform.  It will be good across all time.
+   *                      (This cannot be changed after the first call.)
+   * \return True unless an error occurred.
+   */
+  bool setTransform(const ::geometry_msgs::TransformStamped& transform, const ::std::string& authority,
+    bool is_static = false);
+
+  /**
+   * \brief Get the transform between two frames by frame ID.
+   * \param[in] target_frame The frame to which data should be transformed
+   * \param[in] source_frame The frame where the data originated
+   * \param[in] time The time at which the value of the transform is desired. (0 will get the latest)
+   * \return The transform between the frames.
+   * \throws tf2::LookupException, tf2::ConnectivityException, tf2::ExtrapolationException,
+   *         tf2::InvalidArgumentException
+   */
+  ::geometry_msgs::TransformStamped lookupTransform(const ::std::string& target_frame,
+    const ::std::string& source_frame, const ::ros::Time& time) const;
+
+  /**
+   * \brief Get the transform between two frames by frame ID assuming fixed frame.
+   * \param[in] target_frame The frame to which data should be transformed
+   * \param[in] target_time The time to which the data should be transformed. (0 will get the latest)
+   * \param[in] source_frame The frame where the data originated
+   * \param[in] source_time The time at which the source_frame should be evaluated. (0 will get the latest)
+   * \param[in] fixed_frame The frame in which to assume the transform is constant in time. 
+   * \return The transform between the frames.
+   * \throws tf2::LookupException, tf2::ConnectivityException, tf2::ExtrapolationException,
+   *         tf2::InvalidArgumentException
+   */
+  ::geometry_msgs::TransformStamped lookupTransform(const ::std::string& target_frame, const ::ros::Time& target_time,
+    const ::std::string& source_frame, const ::ros::Time& source_time, const ::std::string& fixed_frame) const;
+
+  /**
+   * \brief Test if a transform is possible
+   * \param[in] target_frame The frame into which to transform
+   * \param[in] source_frame The frame from which to transform
+   * \param[in] time The time at which to transform
+   * \param[out] error_msg A pointer to a string which will be filled with why the transform failed, if not NULL.
+   * \return True if the transform is possible, false otherwise.
+   */
+  bool canTransform(const ::std::string& target_frame, const ::std::string& source_frame, const ::ros::Time& time,
+    ::std::string* error_msg = nullptr) const;
+
+  /**
+   * \brief Test if a transform is possible
+   * \param[in] target_frame The frame into which to transform
+   * \param[in] target_time The time into which to transform
+   * \param[in] source_frame The frame from which to transform
+   * \param[in] source_time The time from which to transform
+   * \param[in] fixed_frame The frame in which to treat the transform as constant in time
+   * \param[out] error_msg A pointer to a string which will be filled with why the transform failed, if not NULL.
+   * \return True if the transform is possible, false otherwise.
+   */
+  bool canTransform(const ::std::string& target_frame, const ::ros::Time& target_time,
+    const ::std::string& source_frame, const ::ros::Time& source_time, const ::std::string& fixed_frame,
+    ::std::string* error_msg = nullptr) const;
+
+  /**
+   * \brief A way to see what frames have been cached in yaml format. Useful for debugging tools.
+   */
+  ::std::string allFramesAsYAML(double current_time) const;
+
+  /**
+   * \brief Backwards compatibility for #84.
+   */
+  ::std::string allFramesAsYAML() const;
+
+  /**
+   * \brief A way to see what frames have been cached. Useful for debugging.
+   */
+  ::std::string allFramesAsString() const;
 
 protected:
   //! \brief If not null, this class relays all lookups to parentBuffer.

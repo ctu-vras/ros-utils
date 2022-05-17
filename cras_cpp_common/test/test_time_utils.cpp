@@ -155,68 +155,68 @@ TEST(TimeUtils, WallRateEquals)  // NOLINT
 
 TEST(TimeUtils, DurationMultiply)  // NOLINT
 {
-	EXPECT_EQ(ros::Duration(2, 0), ros::Duration(1, 0) * ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(400, 0), ros::Duration(20, 0) * ros::Duration(20, 0));
-	EXPECT_EQ(ros::Duration(0, 250000000), ros::Duration(0, 500000000) * ros::Duration(0, 500000000));
-	EXPECT_EQ(ros::Duration(0, 0), ros::Duration(0, 1) * ros::Duration(0, 1));  // too small value
-	EXPECT_EQ(ros::Duration(0, 0), ros::Duration(1000, 0) * ros::Duration(0, 0));
-	EXPECT_EQ(ros::Duration(-1000, 0), ros::Duration(-1000, 0) * ros::Duration(1, 0));
-	EXPECT_EQ(ros::Duration(-1000, 0), ros::Duration(1, 0) * ros::Duration(-1000, 0));
-	EXPECT_EQ(ros::Duration(1000000, 0), ros::Duration(-1000, 0) * ros::Duration(-1000, 0));
-	EXPECT_THROW(ros::Duration(1000000000, 0) * ros::Duration(1000000000, 0), std::runtime_error);
+  EXPECT_EQ(ros::Duration(2, 0), ros::Duration(1, 0) * ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(400, 0), ros::Duration(20, 0) * ros::Duration(20, 0));
+  EXPECT_EQ(ros::Duration(0, 250000000), ros::Duration(0, 500000000) * ros::Duration(0, 500000000));
+  EXPECT_EQ(ros::Duration(0, 0), ros::Duration(0, 1) * ros::Duration(0, 1));  // too small value
+  EXPECT_EQ(ros::Duration(0, 0), ros::Duration(1000, 0) * ros::Duration(0, 0));
+  EXPECT_EQ(ros::Duration(-1000, 0), ros::Duration(-1000, 0) * ros::Duration(1, 0));
+  EXPECT_EQ(ros::Duration(-1000, 0), ros::Duration(1, 0) * ros::Duration(-1000, 0));
+  EXPECT_EQ(ros::Duration(1000000, 0), ros::Duration(-1000, 0) * ros::Duration(-1000, 0));
+  EXPECT_THROW(ros::Duration(1000000000, 0) * ros::Duration(1000000000, 0), std::runtime_error);
 }
 
 TEST(TimeUtils, WallDurationMultiply)  // NOLINT
 {
-	EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(1, 0) * ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(400, 0), ros::WallDuration(20, 0) * ros::WallDuration(20, 0));
-	EXPECT_EQ(ros::WallDuration(0, 250000000), ros::WallDuration(0, 500000000) * ros::WallDuration(0, 500000000));
-	EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(0, 1) * ros::WallDuration(0, 1));  // too small value
-	EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(1000, 0) * ros::WallDuration(0, 0));
-	EXPECT_EQ(ros::WallDuration(-1000, 0), ros::WallDuration(-1000, 0) * ros::WallDuration(1, 0));
-	EXPECT_EQ(ros::WallDuration(-1000, 0), ros::WallDuration(1, 0) * ros::WallDuration(-1000, 0));
-	EXPECT_EQ(ros::WallDuration(1000000, 0), ros::WallDuration(-1000, 0) * ros::WallDuration(-1000, 0));
-	EXPECT_THROW(ros::WallDuration(1000000000, 0) * ros::WallDuration(1000000000, 0), std::runtime_error);
+  EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(1, 0) * ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(400, 0), ros::WallDuration(20, 0) * ros::WallDuration(20, 0));
+  EXPECT_EQ(ros::WallDuration(0, 250000000), ros::WallDuration(0, 500000000) * ros::WallDuration(0, 500000000));
+  EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(0, 1) * ros::WallDuration(0, 1));  // too small value
+  EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(1000, 0) * ros::WallDuration(0, 0));
+  EXPECT_EQ(ros::WallDuration(-1000, 0), ros::WallDuration(-1000, 0) * ros::WallDuration(1, 0));
+  EXPECT_EQ(ros::WallDuration(-1000, 0), ros::WallDuration(1, 0) * ros::WallDuration(-1000, 0));
+  EXPECT_EQ(ros::WallDuration(1000000, 0), ros::WallDuration(-1000, 0) * ros::WallDuration(-1000, 0));
+  EXPECT_THROW(ros::WallDuration(1000000000, 0) * ros::WallDuration(1000000000, 0), std::runtime_error);
 }
 
 TEST(TimeUtils, DurationDivide)  // NOLINT
 {
-	EXPECT_EQ(ros::Duration(1, 0), ros::Duration(2, 0) / ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(0, 0), ros::Duration(0, 0) / ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(0, 500000000), ros::Duration(1, 0) / ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(0, 250000000), ros::Duration(1, 0) / ros::Duration(4, 0));
-	EXPECT_EQ(ros::Duration(0, 125000000), ros::Duration(1, 0) / ros::Duration(8, 0));
-	EXPECT_EQ(ros::Duration(0, 125000000), ros::Duration(2, 0) / ros::Duration(16, 0));
-	EXPECT_EQ(ros::Duration(2, 0), ros::Duration(2, 0) / ros::Duration(1, 0));
-	EXPECT_EQ(ros::Duration(4, 0), ros::Duration(4, 0) / ros::Duration(1, 0));
-	EXPECT_EQ(ros::Duration(8, 0), ros::Duration(8, 0) / ros::Duration(1, 0));
-	EXPECT_EQ(ros::Duration(8, 0), ros::Duration(16, 0) / ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(1, 0), ros::Duration(1000000000, 0) / ros::Duration(1000000000, 0));
-	EXPECT_EQ(ros::Duration(-2, 0), ros::Duration(-4, 0) / ros::Duration(2, 0));
-	EXPECT_EQ(ros::Duration(-2, 0), ros::Duration(4, 0) / ros::Duration(-2, 0));
-	EXPECT_EQ(ros::Duration(2, 0), ros::Duration(-4, 0) / ros::Duration(-2, 0));
-	EXPECT_THROW(ros::Duration(1, 0) / ros::Duration(0, 0), std::runtime_error);
-	EXPECT_THROW(ros::Duration(1, 0) / ros::Duration(-0, 0), std::runtime_error);
+  EXPECT_EQ(ros::Duration(1, 0), ros::Duration(2, 0) / ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(0, 0), ros::Duration(0, 0) / ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(0, 500000000), ros::Duration(1, 0) / ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(0, 250000000), ros::Duration(1, 0) / ros::Duration(4, 0));
+  EXPECT_EQ(ros::Duration(0, 125000000), ros::Duration(1, 0) / ros::Duration(8, 0));
+  EXPECT_EQ(ros::Duration(0, 125000000), ros::Duration(2, 0) / ros::Duration(16, 0));
+  EXPECT_EQ(ros::Duration(2, 0), ros::Duration(2, 0) / ros::Duration(1, 0));
+  EXPECT_EQ(ros::Duration(4, 0), ros::Duration(4, 0) / ros::Duration(1, 0));
+  EXPECT_EQ(ros::Duration(8, 0), ros::Duration(8, 0) / ros::Duration(1, 0));
+  EXPECT_EQ(ros::Duration(8, 0), ros::Duration(16, 0) / ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(1, 0), ros::Duration(1000000000, 0) / ros::Duration(1000000000, 0));
+  EXPECT_EQ(ros::Duration(-2, 0), ros::Duration(-4, 0) / ros::Duration(2, 0));
+  EXPECT_EQ(ros::Duration(-2, 0), ros::Duration(4, 0) / ros::Duration(-2, 0));
+  EXPECT_EQ(ros::Duration(2, 0), ros::Duration(-4, 0) / ros::Duration(-2, 0));
+  EXPECT_THROW(ros::Duration(1, 0) / ros::Duration(0, 0), std::runtime_error);
+  EXPECT_THROW(ros::Duration(1, 0) / ros::Duration(-0, 0), std::runtime_error);
 }
 
 TEST(TimeUtils, WallDurationDivide)  // NOLINT
 {
-	EXPECT_EQ(ros::WallDuration(1, 0), ros::WallDuration(2, 0) / ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(0, 0) / ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(0, 500000000), ros::WallDuration(1, 0) / ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(0, 250000000), ros::WallDuration(1, 0) / ros::WallDuration(4, 0));
-	EXPECT_EQ(ros::WallDuration(0, 125000000), ros::WallDuration(1, 0) / ros::WallDuration(8, 0));
-	EXPECT_EQ(ros::WallDuration(0, 125000000), ros::WallDuration(2, 0) / ros::WallDuration(16, 0));
-	EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(2, 0) / ros::WallDuration(1, 0));
-	EXPECT_EQ(ros::WallDuration(4, 0), ros::WallDuration(4, 0) / ros::WallDuration(1, 0));
-	EXPECT_EQ(ros::WallDuration(8, 0), ros::WallDuration(8, 0) / ros::WallDuration(1, 0));
-	EXPECT_EQ(ros::WallDuration(8, 0), ros::WallDuration(16, 0) / ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(1, 0), ros::WallDuration(1000000000, 0) / ros::WallDuration(1000000000, 0));
-	EXPECT_EQ(ros::WallDuration(-2, 0), ros::WallDuration(-4, 0) / ros::WallDuration(2, 0));
-	EXPECT_EQ(ros::WallDuration(-2, 0), ros::WallDuration(4, 0) / ros::WallDuration(-2, 0));
-	EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(-4, 0) / ros::WallDuration(-2, 0));
-	EXPECT_THROW(ros::WallDuration(1, 0) / ros::WallDuration(0, 0), std::runtime_error);
-	EXPECT_THROW(ros::WallDuration(1, 0) / ros::WallDuration(-0, 0), std::runtime_error);
+  EXPECT_EQ(ros::WallDuration(1, 0), ros::WallDuration(2, 0) / ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(0, 0), ros::WallDuration(0, 0) / ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(0, 500000000), ros::WallDuration(1, 0) / ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(0, 250000000), ros::WallDuration(1, 0) / ros::WallDuration(4, 0));
+  EXPECT_EQ(ros::WallDuration(0, 125000000), ros::WallDuration(1, 0) / ros::WallDuration(8, 0));
+  EXPECT_EQ(ros::WallDuration(0, 125000000), ros::WallDuration(2, 0) / ros::WallDuration(16, 0));
+  EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(2, 0) / ros::WallDuration(1, 0));
+  EXPECT_EQ(ros::WallDuration(4, 0), ros::WallDuration(4, 0) / ros::WallDuration(1, 0));
+  EXPECT_EQ(ros::WallDuration(8, 0), ros::WallDuration(8, 0) / ros::WallDuration(1, 0));
+  EXPECT_EQ(ros::WallDuration(8, 0), ros::WallDuration(16, 0) / ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(1, 0), ros::WallDuration(1000000000, 0) / ros::WallDuration(1000000000, 0));
+  EXPECT_EQ(ros::WallDuration(-2, 0), ros::WallDuration(-4, 0) / ros::WallDuration(2, 0));
+  EXPECT_EQ(ros::WallDuration(-2, 0), ros::WallDuration(4, 0) / ros::WallDuration(-2, 0));
+  EXPECT_EQ(ros::WallDuration(2, 0), ros::WallDuration(-4, 0) / ros::WallDuration(-2, 0));
+  EXPECT_THROW(ros::WallDuration(1, 0) / ros::WallDuration(0, 0), std::runtime_error);
+  EXPECT_THROW(ros::WallDuration(1, 0) / ros::WallDuration(-0, 0), std::runtime_error);
 }
 
 class TestSleepInterface : public cras::InterruptibleSleepInterface

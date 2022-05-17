@@ -79,7 +79,7 @@ template <typename NodeletType>
   {
     this->data->buffer = ::std::make_shared<::cras::NodeletAwareTFBuffer>(*this);
     this->data->listener = ::std::make_unique<::tf2_ros::TransformListener>(
-			this->data->buffer->getRawBuffer(), this->getNodeHandle());
+      this->data->buffer->getRawBuffer(), this->getNodeHandle());
     this->data->usesSharedBuffer = false;
     NODELET_INFO("Initialized standalone tf2 buffer");
   }

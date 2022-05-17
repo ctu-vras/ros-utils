@@ -29,310 +29,310 @@ protected:
     this->str = text;
     this->level = ros::console::Level::Debug;
   }
-	void printDebugNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugCond(bool condition, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugCondNamed(bool condition, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugOnce(const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugOnceNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugDelayedThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugFilter(::ros::console::FilterBase* filter, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
-	void printDebugFilterNamed(
-		::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Debug;
-	}
+  void printDebugNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugCond(bool condition, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugCondNamed(bool condition, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugOnce(const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugOnceNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugDelayedThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugFilter(::ros::console::FilterBase* filter, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
+  void printDebugFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Debug;
+  }
 
-	void printInfo(const std::string& text) const override
+  void printInfo(const std::string& text) const override
   {
     this->str = text;
     this->level = ros::console::Level::Info;
   }
-	void printInfoNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoCond(bool condition, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoCondNamed(bool condition, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoOnce(const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoOnceNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoDelayedThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoFilter(::ros::console::FilterBase* filter, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	void printInfoFilterNamed(
-		::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Info;
-	}
-	
+  void printInfoNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoCond(bool condition, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoCondNamed(bool condition, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoOnce(const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoOnceNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoDelayedThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoFilter(::ros::console::FilterBase* filter, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  void printInfoFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Info;
+  }
+  
   void printWarn(const std::string& text) const override
   {
     this->str = text;
     this->level = ros::console::Level::Warn;
   }
-	void printWarnNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnCond(bool condition, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnCondNamed(bool condition, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnOnce(const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnOnceNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnDelayedThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnFilter(::ros::console::FilterBase* filter, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	void printWarnFilterNamed(
-		::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Warn;
-	}
-	
+  void printWarnNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnCond(bool condition, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnCondNamed(bool condition, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnOnce(const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnOnceNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnDelayedThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnFilter(::ros::console::FilterBase* filter, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  void printWarnFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Warn;
+  }
+  
   void printError(const std::string& text) const override
   {
     this->str = text;
     this->level = ros::console::Level::Error;
   }
-	void printErrorNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorCond(bool condition, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorCondNamed(bool condition, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorOnce(const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorOnceNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorDelayedThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorFilter(::ros::console::FilterBase* filter, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	void printErrorFilterNamed(
-		::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Error;
-	}
-	
+  void printErrorNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorCond(bool condition, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorCondNamed(bool condition, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorOnce(const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorOnceNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorDelayedThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorFilter(::ros::console::FilterBase* filter, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  void printErrorFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Error;
+  }
+  
   void printFatal(const std::string& text) const override
   {
     this->str = text;
     this->level = ros::console::Level::Fatal;
   }
-	void printFatalNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalCond(bool condition, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalCondNamed(bool condition, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalOnce(const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalOnceNamed(const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalDelayedThrottle(double period, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalFilter(::ros::console::FilterBase* filter, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
-	void printFatalFilterNamed(
-		::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
-	{
-		this->str = text;
-		this->level = ros::console::Level::Fatal;
-	}
+  void printFatalNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalCond(bool condition, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalCondNamed(bool condition, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalOnce(const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalOnceNamed(const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalDelayedThrottle(double period, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalDelayedThrottleNamed(double period, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalFilter(::ros::console::FilterBase* filter, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
+  void printFatalFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  {
+    this->str = text;
+    this->level = ros::console::Level::Fatal;
+  }
 public:
   void reset()
   {
@@ -1864,8 +1864,8 @@ TEST(GetParamOptions, Copy)  // NOLINT
 class CustomDataType
 {
 public:
-	std::string param;
-	explicit CustomDataType(const std::string& s) : param(s) {}
+  std::string param;
+  explicit CustomDataType(const std::string& s) : param(s) {}
 };
 
 namespace cras
@@ -1873,7 +1873,7 @@ namespace cras
 
 std::string to_string(const CustomDataType& c)
 {
-	return c.param;
+  return c.param;
 }
 
 DEFINE_CONVERTING_GET_PARAM(CustomDataType, std::string, "units", [](const std::string& s) {return CustomDataType(s);})
@@ -1881,23 +1881,23 @@ DEFINE_CONVERTING_GET_PARAM(CustomDataType, std::string, "units", [](const std::
 
 TEST(GetParamOptions, CustomType)  // NOLINT
 {
-	// Test support for completely custom datatypes in GetParamOptions.
-	GetParamOptions<CustomDataType> o;
-	EXPECT_EQ("test", o.toResult("test").param);
-	
-	XmlRpc::XmlRpcValue v("tes");
-	std::string s;
-	EXPECT_TRUE(o.toParam(v, s, false, nullptr));
-	EXPECT_EQ("tes", s);
+  // Test support for completely custom datatypes in GetParamOptions.
+  GetParamOptions<CustomDataType> o;
+  EXPECT_EQ("test", o.toResult("test").param);
+  
+  XmlRpc::XmlRpcValue v("tes");
+  std::string s;
+  EXPECT_TRUE(o.toParam(v, s, false, nullptr));
+  EXPECT_EQ("tes", s);
 
-	EXPECT_EQ("te", o.resultToStr(CustomDataType("te")));
-	EXPECT_EQ("t", o.paramToStr("t"));
-	
-	XmlRpc::XmlRpcValue xml;
-	xml["p"] = "p";
-	CustomDataType c("");
-	const auto res = cras::getParam(cras::XmlRpcValueGetParamAdapter(xml, ""), "p", c);
-	EXPECT_EQ("p", res.param);
+  EXPECT_EQ("te", o.resultToStr(CustomDataType("te")));
+  EXPECT_EQ("t", o.paramToStr("t"));
+  
+  XmlRpc::XmlRpcValue xml;
+  xml["p"] = "p";
+  CustomDataType c("");
+  const auto res = cras::getParam(cras::XmlRpcValueGetParamAdapter(xml, ""), "p", c);
+  EXPECT_EQ("p", res.param);
 }
 
 TEST(GetParamOptions, AsType)  // NOLINT

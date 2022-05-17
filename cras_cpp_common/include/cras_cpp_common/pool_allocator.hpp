@@ -20,7 +20,7 @@ namespace cras
 
 /**
  * \brief Make a shared instance of an object from Boost fast pool (suitable for e.g. elements of a std::list or single
- * 			  object allocations).
+ *        object allocations).
  * \tparam T Type of the object to allocate.
  * \tparam Args Constructor argument types.
  * \param[in] args Constructor arguments.
@@ -37,7 +37,7 @@ template <typename T, class... Args>
 
 /**
  * \brief Make a shared instance of an object from Boost pool (suitable for e.g. elements of a std::vector or
- * 			  allocations of multiple objects at once).
+ *        allocations of multiple objects at once).
  * \tparam T Type of the object to allocate.
  * \tparam Args Constructor argument types.
  * \param[in] args Constructor arguments.

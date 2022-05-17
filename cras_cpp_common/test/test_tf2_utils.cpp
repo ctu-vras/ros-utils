@@ -150,7 +150,7 @@ void fillBuffer(tf2::BufferCore& buf)
 
 void fillBuffer(cras::InterruptibleTFBuffer& buf)
 {
-	fillBuffer(buf.getRawBuffer());
+  fillBuffer(buf.getRawBuffer());
 }
 
 void testInterruptibleBuffer(

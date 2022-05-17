@@ -29,9 +29,9 @@ NodeletManagerSharingTfBuffer::NodeletManagerSharingTfBuffer(ros::NodeHandle nh)
 
 void NodeletManagerSharingTfBuffer::init()
 {
-	cras::NodeletManager::init();
-	this->buffer = std::make_shared<tf2_ros::Buffer>();
-	this->listener = std::make_unique<tf2_ros::TransformListener>(*this->buffer, this->nh);
+  cras::NodeletManager::init();
+  this->buffer = std::make_shared<tf2_ros::Buffer>();
+  this->listener = std::make_unique<tf2_ros::TransformListener>(*this->buffer, this->nh);
 }
 
 boost::shared_ptr<nodelet::Nodelet> NodeletManagerSharingTfBuffer::createInstance(const std::string& lookupName)

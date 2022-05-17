@@ -23,15 +23,15 @@ NodeletLogHelper::~NodeletLogHelper() = default;
 
 const std::string& NodeletLogHelper::getName() const
 {
-	if (this->getNameFn)
-		return this->getNameFn();
-	else
-		return NOT_SET;
+  if (this->getNameFn)
+    return this->getNameFn();
+  else
+    return NOT_SET;
 }
 
 std::string NodeletLogHelper::getSuffixedName(const std::string& suffix) const
 {
-	return this->getNameFn() + "." + suffix;
+  return this->getNameFn() + "." + suffix;
 }
 
 }

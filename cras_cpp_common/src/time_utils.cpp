@@ -84,36 +84,36 @@ bool operator==(const WallRate& r1, const WallRate& r2)
 
 ros::Duration operator*(const ros::Duration& val1, const ros::Duration& val2)
 {
-	const auto s1 = static_cast<int64_t>(val1.sec);
-	const auto s2 = static_cast<int64_t>(val2.sec);
-	const auto ns1 = static_cast<int64_t>(val1.nsec);
-	const auto ns2 = static_cast<int64_t>(val2.nsec);
-	return ros::Duration().fromNSec(s1 * s2 * 1000000000LL + s1 * ns2 + s2 * ns1 + (ns1 * ns2) / 1000000000LL);
+  const auto s1 = static_cast<int64_t>(val1.sec);
+  const auto s2 = static_cast<int64_t>(val2.sec);
+  const auto ns1 = static_cast<int64_t>(val1.nsec);
+  const auto ns2 = static_cast<int64_t>(val2.nsec);
+  return ros::Duration().fromNSec(s1 * s2 * 1000000000LL + s1 * ns2 + s2 * ns1 + (ns1 * ns2) / 1000000000LL);
 }
 
 ros::Duration operator/(const ros::Duration& numerator, const ros::Duration& denominator)
 {
-	if (denominator.sec == 0 && denominator.nsec == 0)
-		throw std::runtime_error("Division by zero");
-	const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
-	return ros::Duration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
+  if (denominator.sec == 0 && denominator.nsec == 0)
+    throw std::runtime_error("Division by zero");
+  const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
+  return ros::Duration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
 }
 
 ros::WallDuration operator*(const ros::WallDuration& val1, const ros::WallDuration& val2)
 {
-	const auto s1 = static_cast<int64_t>(val1.sec);
-	const auto s2 = static_cast<int64_t>(val2.sec);
-	const auto ns1 = static_cast<int64_t>(val1.nsec);
-	const auto ns2 = static_cast<int64_t>(val2.nsec);
-	return ros::WallDuration().fromNSec(s1 * s2 * 1000000000LL + s1 * ns2 + s2 * ns1 + (ns1 * ns2) / 1000000000LL);
+  const auto s1 = static_cast<int64_t>(val1.sec);
+  const auto s2 = static_cast<int64_t>(val2.sec);
+  const auto ns1 = static_cast<int64_t>(val1.nsec);
+  const auto ns2 = static_cast<int64_t>(val2.nsec);
+  return ros::WallDuration().fromNSec(s1 * s2 * 1000000000LL + s1 * ns2 + s2 * ns1 + (ns1 * ns2) / 1000000000LL);
 }
 
 ros::WallDuration operator/(const ros::WallDuration& numerator, const ros::WallDuration& denominator)
 {
-	if (denominator.sec == 0 && denominator.nsec == 0)
-		throw std::runtime_error("Division by zero");
-	const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
-	return ros::WallDuration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
+  if (denominator.sec == 0 && denominator.nsec == 0)
+    throw std::runtime_error("Division by zero");
+  const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
+  return ros::WallDuration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
 }
 
 }

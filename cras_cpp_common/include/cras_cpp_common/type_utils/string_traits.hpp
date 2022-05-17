@@ -49,10 +49,10 @@ struct is_string : public std::false_type {};
 
 template<typename T>
 struct is_string<T, ::std::enable_if_t<::cras::is_c_string<typename std::decay<T>::type>::value>> :
-	public std::true_type {};
+  public std::true_type {};
 
 template<typename T>
 struct is_string<T, ::std::enable_if_t<::std::is_same<typename std::decay<T>::type, ::std::string>::value>> :
-	public std::true_type {};
+  public std::true_type {};
 
 }

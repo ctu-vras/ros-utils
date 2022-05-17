@@ -29,7 +29,7 @@ class LogHelper
 public:
   virtual ~LogHelper() = default;
   
-	// DEBUG //
+  // DEBUG //
 
   /**
    * \brief Log a debug message.
@@ -191,7 +191,7 @@ public:
   
   /**
    * \brief Log a debug message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -207,7 +207,7 @@ public:
   
   /**
    * \brief Log a debug message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -223,7 +223,7 @@ public:
   
   /**
    * \brief Log a debug message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -239,7 +239,7 @@ public:
   
   /**
    * \brief Log a debug message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -255,8 +255,8 @@ public:
   
   /**
    * \brief Log a debug message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -272,13 +272,13 @@ public:
   
   /**
    * \brief Log a debug message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logDebugThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
     va_list(args);
@@ -290,7 +290,7 @@ public:
   
   /**
    * \brief Log a debug message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -306,7 +306,7 @@ public:
   
   /**
    * \brief Log a debug message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -323,13 +323,13 @@ public:
   /**
    * \brief Log a debug message at most once per period using a named logger, waiting period before printing the
    *        first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logDebugDelayedThrottleNamed(
-		const double period, const ::std::string& name, const char* format, ...) const
+    const double period, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
     va_list(args);
@@ -341,14 +341,14 @@ public:
   
   /**
    * \brief Log a debug message at most once per period using a named logger, waiting period before printing the
-   * 			  first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   *        first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logDebugDelayedThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
     va_list(args);
@@ -360,7 +360,7 @@ public:
   
   /**
    * \brief Log a debug message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -376,7 +376,7 @@ public:
   
   /**
    * \brief Log a debug message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -389,16 +389,16 @@ public:
     va_end(args);
 #endif
   };
-	
+  
   /**
    * \brief Log a debug message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logDebugFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
     va_list(args);
@@ -410,13 +410,13 @@ public:
   
   /**
    * \brief Log a debug message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logDebugFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_DEBUG
     va_list(args);
@@ -426,7 +426,7 @@ public:
 #endif
   };
 
-	// INFO //
+  // INFO //
 
   /**
    * \brief Log an info message.
@@ -588,7 +588,7 @@ public:
   
   /**
    * \brief Log a info message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -604,7 +604,7 @@ public:
   
   /**
    * \brief Log a info message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -620,7 +620,7 @@ public:
   
   /**
    * \brief Log a info message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -636,7 +636,7 @@ public:
   
   /**
    * \brief Log a info message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -652,8 +652,8 @@ public:
   
   /**
    * \brief Log a info message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -669,13 +669,13 @@ public:
   
   /**
    * \brief Log a info message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logInfoThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -687,7 +687,7 @@ public:
   
   /**
    * \brief Log a info message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -703,7 +703,7 @@ public:
   
   /**
    * \brief Log a info message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -720,13 +720,13 @@ public:
   /**
    * \brief Log a info message at most once per period using a named logger, waiting period before printing the
    *        first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logInfoDelayedThrottleNamed(
-		const double period, const ::std::string& name, const char* format, ...) const
+    const double period, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -738,14 +738,14 @@ public:
   
   /**
    * \brief Log a info message at most once per period using a named logger, waiting period before printing the
-   * 			  first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   *        first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logInfoDelayedThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -757,7 +757,7 @@ public:
   
   /**
    * \brief Log a info message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -773,7 +773,7 @@ public:
   
   /**
    * \brief Log a info message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -786,16 +786,16 @@ public:
     va_end(args);
 #endif
   };
-	
+  
   /**
    * \brief Log a info message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logInfoFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -807,13 +807,13 @@ public:
   
   /**
    * \brief Log a info message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logInfoFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_INFO
     va_list(args);
@@ -822,8 +822,8 @@ public:
     va_end(args);
 #endif
   };
-	
-	// WARN //
+  
+  // WARN //
 
   /**
    * \brief Log a warning message.
@@ -985,7 +985,7 @@ public:
   
   /**
    * \brief Log a warn message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1001,7 +1001,7 @@ public:
   
   /**
    * \brief Log a warn message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1017,7 +1017,7 @@ public:
   
   /**
    * \brief Log a warn message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1033,7 +1033,7 @@ public:
   
   /**
    * \brief Log a warn message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1049,8 +1049,8 @@ public:
   
   /**
    * \brief Log a warn message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1066,13 +1066,13 @@ public:
   
   /**
    * \brief Log a warn message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logWarnThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
     va_list(args);
@@ -1084,7 +1084,7 @@ public:
   
   /**
    * \brief Log a warn message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1100,7 +1100,7 @@ public:
   
   /**
    * \brief Log a warn message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1117,13 +1117,13 @@ public:
   /**
    * \brief Log a warn message at most once per period using a named logger, waiting period before printing the
    *        first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logWarnDelayedThrottleNamed(
-		const double period, const ::std::string& name, const char* format, ...) const
+    const double period, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
     va_list(args);
@@ -1135,14 +1135,14 @@ public:
   
   /**
    * \brief Log a warn message at most once per period using a named logger, waiting period before printing the
-   * 			  first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   *        first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logWarnDelayedThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
     va_list(args);
@@ -1154,7 +1154,7 @@ public:
   
   /**
    * \brief Log a warn message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1170,7 +1170,7 @@ public:
   
   /**
    * \brief Log a warn message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1183,16 +1183,16 @@ public:
     va_end(args);
 #endif
   };
-	
+  
   /**
    * \brief Log a warn message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logWarnFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
     va_list(args);
@@ -1204,13 +1204,13 @@ public:
   
   /**
    * \brief Log a warn message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logWarnFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_WARN
     va_list(args);
@@ -1219,8 +1219,8 @@ public:
     va_end(args);
 #endif
   };
-	
-	// ERROR //
+  
+  // ERROR //
 
   /**
    * \brief Log an error message.
@@ -1382,7 +1382,7 @@ public:
   
   /**
    * \brief Log a error message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1398,7 +1398,7 @@ public:
   
   /**
    * \brief Log a error message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1414,7 +1414,7 @@ public:
   
   /**
    * \brief Log a error message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1430,7 +1430,7 @@ public:
   
   /**
    * \brief Log a error message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1446,8 +1446,8 @@ public:
   
   /**
    * \brief Log a error message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1463,13 +1463,13 @@ public:
   
   /**
    * \brief Log a error message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logErrorThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1481,7 +1481,7 @@ public:
   
   /**
    * \brief Log a error message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1497,7 +1497,7 @@ public:
   
   /**
    * \brief Log a error message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1514,13 +1514,13 @@ public:
   /**
    * \brief Log a error message at most once per period using a named logger, waiting period before printing the
    *        first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logErrorDelayedThrottleNamed(
-		const double period, const ::std::string& name, const char* format, ...) const
+    const double period, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1532,14 +1532,14 @@ public:
   
   /**
    * \brief Log a error message at most once per period using a named logger, waiting period before printing the
-   * 			  first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   *        first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logErrorDelayedThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1551,11 +1551,11 @@ public:
   
   /**
    * \brief Log a error message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
-	inline void logErrorFilter(::ros::console::FilterBase* filter, const char* format, ...) const
+  inline void logErrorFilter(::ros::console::FilterBase* filter, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1567,7 +1567,7 @@ public:
   
   /**
    * \brief Log a error message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1580,16 +1580,16 @@ public:
     va_end(args);
 #endif
   };
-	
+  
   /**
    * \brief Log a error message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logErrorFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1601,13 +1601,13 @@ public:
   
   /**
    * \brief Log a error message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logErrorFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_ERROR
     va_list(args);
@@ -1616,8 +1616,8 @@ public:
     va_end(args);
 #endif
   };
-	
-	// FATAL //
+  
+  // FATAL //
 
   /**
    * \brief Log a fatal message.
@@ -1779,7 +1779,7 @@ public:
   
   /**
    * \brief Log a fatal message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1795,7 +1795,7 @@ public:
   
   /**
    * \brief Log a fatal message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1811,7 +1811,7 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1827,7 +1827,7 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1843,8 +1843,8 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1860,13 +1860,13 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logFatalThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
     va_list(args);
@@ -1878,7 +1878,7 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1894,7 +1894,7 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
+   * \param[in] period The throttling period (s).
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1911,13 +1911,13 @@ public:
   /**
    * \brief Log a fatal message at most once per period using a named logger, waiting period before printing the
    *        first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logFatalDelayedThrottleNamed(
-		const double period, const ::std::string& name, const char* format, ...) const
+    const double period, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
     va_list(args);
@@ -1929,14 +1929,14 @@ public:
   
   /**
    * \brief Log a fatal message at most once per period using a named logger, waiting period before printing the
-   * 			  first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
+   *        first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logFatalDelayedThrottleNamed(
-		const double period, const ::std::string& name, const ::std::string format, ...) const
+    const double period, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
     va_list(args);
@@ -1948,7 +1948,7 @@ public:
   
   /**
    * \brief Log a fatal message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1964,7 +1964,7 @@ public:
   
   /**
    * \brief Log a fatal message passing it through the given filter.
-	 * \param[in] filter The filter.
+   * \param[in] filter The filter.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
@@ -1977,16 +1977,16 @@ public:
     va_end(args);
 #endif
   };
-	
+  
   /**
    * \brief Log a fatal message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logFatalFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const char* format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
     va_list(args);
@@ -1998,13 +1998,13 @@ public:
   
   /**
    * \brief Log a fatal message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
    * \param[in] format printf-like format string.
    * \param[in] ... Arguments to print.
    */
   inline void logFatalFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string format, ...) const
   {
 #if ROSCONSOLE_MIN_SEVERITY <= ROSCONSOLE_SEVERITY_FATAL
     va_list(args);
@@ -2013,8 +2013,8 @@ public:
     va_end(args);
 #endif
   };
-	
-	// GENERIC LOGGING //
+  
+  // GENERIC LOGGING //
 
   /**
    * \brief Log a message using the given log severity.
@@ -2089,21 +2089,21 @@ protected:
    * \param[in] text The message to log. 
    */
   virtual void printDebug(const ::std::string& text) const = 0;
-	
+  
   /**
    * \brief Log a debug message using a named logger.
    * \param[in] name Name (suffix) of the named logger.
    * \param[in] text The message to log. 
    */
   virtual void printDebugNamed(const ::std::string& name, const ::std::string& text) const = 0;
-	
+  
   /**
    * \brief Log a debug message if condition is true.
    * \param[in] condition If true, the message will be logged.
    * \param[in] text The message to log. 
    */
   virtual void printDebugCond(bool condition, const ::std::string& text) const = 0;
-	
+  
   /**
    * \brief Log a debug message using a named logger if condition is true.
    * \param[in] condition If true, the message will be logged.
@@ -2111,67 +2111,67 @@ protected:
    * \param[in] text The message to log. 
    */
   virtual void printDebugCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message once.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugOnce(const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message at most once per period.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugThrottle(double period, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugDelayedThrottle(double period, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message at most once per period using a named logger, waiting period before printing the first
-	 *        message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugDelayedThrottleNamed(
-		double period, const ::std::string& name, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
-	
-	/**
-	 * \brief Log a debug message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printDebugFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message once.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugOnce(const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message once using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message at most once per period.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugThrottle(double period, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message at most once per period using a named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message at most once per period, waiting period before printing the first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugDelayedThrottle(double period, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message at most once per period using a named logger, waiting period before printing the first
+   *        message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugDelayedThrottleNamed(
+    double period, const ::std::string& name, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
+  
+  /**
+   * \brief Log a debug message using a named logger passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printDebugFilterNamed(
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
 
   /**
    * \brief Log an info message.
@@ -2179,88 +2179,88 @@ protected:
    */
   virtual void printInfo(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoCond(bool condition, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoCond(bool condition, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message using a named logger if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message using a named logger if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message once.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoOnce(const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message once.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoOnce(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message once using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message at most once per period.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message at most once per period.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message at most once per period using a named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoDelayedThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message at most once per period, waiting period before printing the first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoDelayedThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message at most once per period using a named logger, waiting period before printing the first
-	 *        message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoDelayedThrottleNamed(
-		double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message at most once per period using a named logger, waiting period before printing the first
+   *        message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoDelayedThrottleNamed(
+    double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a info message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printInfoFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a info message using a named logger passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printInfoFilterNamed(
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
 
   /**
    * \brief Log a warning message.
@@ -2268,88 +2268,88 @@ protected:
    */
   virtual void printWarn(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnCond(bool condition, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnCond(bool condition, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message using a named logger if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message using a named logger if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message once.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnOnce(const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message once.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnOnce(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message once using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message at most once per period.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message at most once per period.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message at most once per period using a named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnDelayedThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message at most once per period, waiting period before printing the first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnDelayedThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message at most once per period using a named logger, waiting period before printing the first
-	 *        message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnDelayedThrottleNamed(
-		double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message at most once per period using a named logger, waiting period before printing the first
+   *        message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnDelayedThrottleNamed(
+    double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a warn message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printWarnFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a warn message using a named logger passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printWarnFilterNamed(
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
 
   /**
    * \brief Log an error message.
@@ -2357,88 +2357,88 @@ protected:
    */
   virtual void printError(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorCond(bool condition, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorCond(bool condition, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message using a named logger if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message using a named logger if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message once.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorOnce(const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message once.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorOnce(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message once using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message at most once per period.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message at most once per period.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message at most once per period using a named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorDelayedThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message at most once per period, waiting period before printing the first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorDelayedThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message at most once per period using a named logger, waiting period before printing the first
-	 *        message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorDelayedThrottleNamed(
-		double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message at most once per period using a named logger, waiting period before printing the first
+   *        message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorDelayedThrottleNamed(
+    double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a error message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printErrorFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a error message using a named logger passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printErrorFilterNamed(
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
 
   /**
    * \brief Log a fatal message.
@@ -2446,88 +2446,88 @@ protected:
    */
   virtual void printFatal(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalCond(bool condition, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalCond(bool condition, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message using a named logger if condition is true.
-	 * \param[in] condition If true, the message will be logged.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message using a named logger if condition is true.
+   * \param[in] condition If true, the message will be logged.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalCondNamed(bool condition, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message once.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalOnce(const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message once.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalOnce(const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message once using a named logger.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message once using a named logger.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalOnceNamed(const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message at most once per period.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message at most once per period.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message at most once per period using a named logger.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message at most once per period using a named logger.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalThrottleNamed(double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message at most once per period, waiting period before printing the first message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalDelayedThrottle(double period, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message at most once per period, waiting period before printing the first message.
+   * \param[in] period The throttling period (s).
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalDelayedThrottle(double period, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message at most once per period using a named logger, waiting period before printing the first
-	 *        message.
-	 * \param[in] period The throttling period (s).
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalDelayedThrottleNamed(
-		double period, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message at most once per period using a named logger, waiting period before printing the first
+   *        message.
+   * \param[in] period The throttling period (s).
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalDelayedThrottleNamed(
+    double period, const ::std::string& name, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalFilter(::ros::console::FilterBase* filter, const ::std::string& text) const = 0;
 
-	/**
-	 * \brief Log a fatal message using a named logger passing it through the given filter.
-	 * \param[in] filter The filter.
-	 * \param[in] name Name (suffix) of the named logger.
-	 * \param[in] text The message to log. 
-	 */
-	virtual void printFatalFilterNamed(
-		::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
+  /**
+   * \brief Log a fatal message using a named logger passing it through the given filter.
+   * \param[in] filter The filter.
+   * \param[in] name Name (suffix) of the named logger.
+   * \param[in] text The message to log. 
+   */
+  virtual void printFatalFilterNamed(
+    ::ros::console::FilterBase* filter, const ::std::string& name, const ::std::string& text) const = 0;
 };
 
 typedef ::std::shared_ptr<::cras::LogHelper> LogHelperPtr;

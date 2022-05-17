@@ -30,22 +30,22 @@ namespace cras
 class NodeletManagerSharingTfBuffer : public ::cras::NodeletManager
 {
 public:
-	/**
-	 * \brief Create the nodelet manager.
-	 * \param[in] nh The nodehandle used for nodelet load/unload ROS services.
-	 */
-	explicit NodeletManagerSharingTfBuffer(::ros::NodeHandle nh = {"~"});
-	
-	void init() override;
+  /**
+   * \brief Create the nodelet manager.
+   * \param[in] nh The nodehandle used for nodelet load/unload ROS services.
+   */
+  explicit NodeletManagerSharingTfBuffer(::ros::NodeHandle nh = {"~"});
+  
+  void init() override;
 
 protected:
-	::boost::shared_ptr<::nodelet::Nodelet> createInstance(const ::std::string& lookupName) override;
+  ::boost::shared_ptr<::nodelet::Nodelet> createInstance(const ::std::string& lookupName) override;
 
-	//! \brief The shared TF buffer.
-	::std::shared_ptr<::tf2_ros::Buffer> buffer;
-	
-	//! \brief TF listener filling the shared buffer.
-	::std::unique_ptr<::tf2_ros::TransformListener> listener;
+  //! \brief The shared TF buffer.
+  ::std::shared_ptr<::tf2_ros::Buffer> buffer;
+  
+  //! \brief TF listener filling the shared buffer.
+  ::std::unique_ptr<::tf2_ros::TransformListener> listener;
 };
 
 }

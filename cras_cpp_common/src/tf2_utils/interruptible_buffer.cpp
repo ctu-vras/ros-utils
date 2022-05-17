@@ -250,68 +250,68 @@ bool InterruptibleTFBuffer::setMinPollingDuration(const ros::Duration& duration)
 
 tf2::BufferCore& InterruptibleTFBuffer::getRawBuffer()
 {
-	return (this->parentBuffer ? *this->parentBuffer : *this);
+  return (this->parentBuffer ? *this->parentBuffer : *this);
 }
 
 const tf2::BufferCore& InterruptibleTFBuffer::getRawBuffer() const
 {
-	return (this->parentBuffer ? *static_cast<const tf2::BufferCore*>(this->parentBuffer.get()) : *this);
+  return (this->parentBuffer ? *static_cast<const tf2::BufferCore*>(this->parentBuffer.get()) : *this);
 }
 
 ros::Duration InterruptibleTFBuffer::getCacheLength()
 {
-	return this->getRawBuffer().getCacheLength();
+  return this->getRawBuffer().getCacheLength();
 }
 
 void InterruptibleTFBuffer::clear()
 {
-	this->getRawBuffer().clear();
+  this->getRawBuffer().clear();
 }
 
 bool InterruptibleTFBuffer::setTransform(const geometry_msgs::TransformStamped& transform, const std::string& authority,
-	const bool is_static)
+  const bool is_static)
 {
-	return this->getRawBuffer().setTransform(transform, authority, is_static);
+  return this->getRawBuffer().setTransform(transform, authority, is_static);
 }
 
 geometry_msgs::TransformStamped InterruptibleTFBuffer::lookupTransform(const std::string& target_frame,
-	const std::string& source_frame, const ros::Time& time) const
+  const std::string& source_frame, const ros::Time& time) const
 {
-	return this->getRawBuffer().lookupTransform(target_frame, source_frame, time);
+  return this->getRawBuffer().lookupTransform(target_frame, source_frame, time);
 }
 
 geometry_msgs::TransformStamped InterruptibleTFBuffer::lookupTransform(const std::string& target_frame,
   const ros::Time& target_time, const std::string& source_frame, const ros::Time& source_time,
-	const std::string& fixed_frame) const
+  const std::string& fixed_frame) const
 {
-	return this->getRawBuffer().lookupTransform(target_frame, target_time, source_frame, source_time, fixed_frame);
+  return this->getRawBuffer().lookupTransform(target_frame, target_time, source_frame, source_time, fixed_frame);
 }
 
 bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const std::string& source_frame,
-	const ros::Time& time, std::string* error_msg) const
+  const ros::Time& time, std::string* error_msg) const
 {
-	return this->getRawBuffer().canTransform(target_frame, source_frame, time, error_msg);
+  return this->getRawBuffer().canTransform(target_frame, source_frame, time, error_msg);
 }
 
 bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const ros::Time& target_time,
-	const std::string& source_frame, const ros::Time& source_time, const std::string& fixed_frame,
-	std::string* error_msg) const
+  const std::string& source_frame, const ros::Time& source_time, const std::string& fixed_frame,
+  std::string* error_msg) const
 {
-	return this->getRawBuffer().canTransform(
-		target_frame, target_time, source_frame, source_time, fixed_frame, error_msg);
+  return this->getRawBuffer().canTransform(
+    target_frame, target_time, source_frame, source_time, fixed_frame, error_msg);
 }
 
 std::string InterruptibleTFBuffer::allFramesAsYAML(const double current_time) const
 {
-	return this->getRawBuffer().allFramesAsYAML(current_time);
+  return this->getRawBuffer().allFramesAsYAML(current_time);
 }
 
 std::string InterruptibleTFBuffer::allFramesAsYAML() const
 {
-	return this->getRawBuffer().allFramesAsYAML();
+  return this->getRawBuffer().allFramesAsYAML();
 }
 
 std::string InterruptibleTFBuffer::allFramesAsString() const
 {
-	return this->getRawBuffer().allFramesAsString();
+  return this->getRawBuffer().allFramesAsString();
 }

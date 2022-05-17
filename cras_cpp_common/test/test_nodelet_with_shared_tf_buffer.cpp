@@ -91,8 +91,8 @@ TEST(NodeletWithSharedTfBuffer, Shared)  // NOLINT
     EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {10, 0}, {0, 0}));
 
     nodelet.getBuffer().setTransform(getTransform("a", "b", {11, 0}), "test");
-		EXPECT_TRUE(buf->canTransform("a", "b", {11, 0}, {0, 0}));
-		EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {11, 0}, {0, 0}));
+    EXPECT_TRUE(buf->canTransform("a", "b", {11, 0}, {0, 0}));
+    EXPECT_TRUE(nodelet.getBuffer().canTransform("a", "b", {11, 0}, {0, 0}));
 
     buf->setTransform(getTransform("a", "b", {12, 0}), "test");
     EXPECT_TRUE(buf->canTransform("a", "b", {12, 0}, {0, 0}));

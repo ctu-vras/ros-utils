@@ -29,16 +29,16 @@ namespace cras
 template<typename ResultType, typename ParamServerType>
 struct DefaultToResultFn
 {
-	/**
+  /**
    * \brief Function converting ParamServerType values to ResultType.
    * \param[in] value The value to convert.
    * \return The converted value.
    * \throws std::runtime_error If the conversion failed.
    */
-	static ResultType toResult(const ParamServerType& value)
-	{
-		return static_cast<ResultType>(value);
-	};
+  static ResultType toResult(const ParamServerType& value)
+  {
+    return static_cast<ResultType>(value);
+  };
 };
 
 /**
@@ -51,7 +51,7 @@ struct DefaultToResultFn
 template<typename ParamServerType>
 struct DefaultToParamFn
 {
-	/**
+  /**
    * \brief Function converting XmlRpcValue to an intermediate value of type ParamServerType.
    * \param[in] xmlValue The XmlRpcValue read from parameter server.
    * \param[out] value The converted value. It is not valid if this function returns false.
@@ -63,11 +63,11 @@ struct DefaultToParamFn
    * \return Whether the conversion succeeded.
    * \note This function should not throw.
    */
-	static bool toParam(const ::XmlRpc::XmlRpcValue& x, ParamServerType& v, bool skipNonConvertible = false,
-		::std::list<::std::string>* errors = nullptr)
-	{
-		return ::cras::convert(x, v, skipNonConvertible, errors);
-	};
+  static bool toParam(const ::XmlRpc::XmlRpcValue& x, ParamServerType& v, bool skipNonConvertible = false,
+    ::std::list<::std::string>* errors = nullptr)
+  {
+    return ::cras::convert(x, v, skipNonConvertible, errors);
+  };
 };
 
 /**
@@ -80,16 +80,16 @@ struct DefaultToParamFn
 template<typename T>
 struct ParamToStringFn
 {
-	/**
-	 * \brief Convert the given value to a string representation.
-	 * \tparam T Type of the value.
-	 * \param[in] value The value to convert.
-	 * \return The string representation.
-	 */
-	static ::std::string to_string(const T& value)
-	{
-		return ::cras::to_string(value);
-	};
+  /**
+   * \brief Convert the given value to a string representation.
+   * \tparam T Type of the value.
+   * \param[in] value The value to convert.
+   * \return The string representation.
+   */
+  static ::std::string to_string(const T& value)
+  {
+    return ::cras::to_string(value);
+  };
 };
 
 /**
@@ -101,8 +101,8 @@ struct ParamToStringFn
 template<typename ResultType>
 struct DefaultParamServerType
 {
-	//! \brief The ParamServerType to be used as intermediate type when reading values of type ResultType.
-	typedef ResultType type;
+  //! \brief The ParamServerType to be used as intermediate type when reading values of type ResultType.
+  typedef ResultType type;
 };
 
 /**
@@ -222,9 +222,9 @@ struct GetParamOptions
   template<typename NewParamServerType>
   ::cras::GetParamOptions<ResultType, NewParamServerType> asType(
     typename ::cras::GetParamOptions<ResultType, NewParamServerType>::ToResultFn newToResult =
-			&::cras::DefaultToResultFn<ResultType, NewParamServerType>::toResult,
+      &::cras::DefaultToResultFn<ResultType, NewParamServerType>::toResult,
     ::cras::ToStringFn<NewParamServerType> newParamToStr =
-			[](const NewParamServerType& s){ return ::cras::to_string(s); },
+      [](const NewParamServerType& s){ return ::cras::to_string(s); },
     typename ::cras::GetParamOptions<ResultType, NewParamServerType>::ToParamFn newToParam =
       [](const ::XmlRpc::XmlRpcValue& x, NewParamServerType& v, bool skipNonConvertible = false,
           ::std::list<::std::string>* errors = nullptr) -> bool {
@@ -234,7 +234,7 @@ struct GetParamOptions
   {
     // We can't initialize the object with the default values of toParam and toResult because they are ill-formed
     ::cras::GetParamOptions<ResultType, NewParamServerType> options =
-			{{}, {}, {}, {}, {}, {}, {}, {}, newToResult, newToParam};
+      {{}, {}, {}, {}, {}, {}, {}, {}, newToResult, newToParam};
     options = *this;
     options.resultToStr = this->resultToStr;
     options.paramToStr = newParamToStr;

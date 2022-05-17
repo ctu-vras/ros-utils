@@ -64,73 +64,73 @@ namespace cras
 class LoaderROS
 {
 public:
-	/**
-	 * \brief Construct the ROS interface for the given loader.
-	 * \param[in] parent The loader to use for the actual nodelet loading/unloading.
-	 * \param[in] nh The node handle to use for the advertised services.
-	 */
+  /**
+   * \brief Construct the ROS interface for the given loader.
+   * \param[in] parent The loader to use for the actual nodelet loading/unloading.
+   * \param[in] nh The node handle to use for the advertised services.
+   */
   LoaderROS(::nodelet::Loader* parent, const ::ros::NodeHandle& nh);
 
 protected:
-	/**
-	 * \brief Load a nodelet.
-	 * \param[in] req Parameters of the nodelet.
-	 * \param[out] res Whether the loading succeeded.
-	 * \return res.success.
-	 */
+  /**
+   * \brief Load a nodelet.
+   * \param[in] req Parameters of the nodelet.
+   * \param[out] res Whether the loading succeeded.
+   * \return res.success.
+   */
   bool serviceLoad(::nodelet::NodeletLoad::Request& req, ::nodelet::NodeletLoad::Response& res);
 
-	/**
-	 * \brief Unload a nodelet.
-	 * \param[in] req Parameters of the nodelet.
-	 * \param[out] res Whether the unloading succeeded.
-	 * \return res.success.
-	 */
+  /**
+   * \brief Unload a nodelet.
+   * \param[in] req Parameters of the nodelet.
+   * \param[out] res Whether the unloading succeeded.
+   * \return res.success.
+   */
   bool serviceUnload(::nodelet::NodeletUnload::Request& req, ::nodelet::NodeletUnload::Response& res);
 
-	/**
-	 * \brief Unload a nodelet of the given name.
-	 * \param[in] name Name of the nodelet to unload.
-	 * \return Whether the unloading succeeded.
-	 */
+  /**
+   * \brief Unload a nodelet of the given name.
+   * \param[in] name Name of the nodelet to unload.
+   * \return Whether the unloading succeeded.
+   */
   bool unload(const ::std::string& name);
 
-	/**
-	 * \brief List all loaded nodelets.
-	 * \param[in] req Unused.
-	 * \param[out] res The loaded nodelet names.
-	 * \return True.
-	 */
+  /**
+   * \brief List all loaded nodelets.
+   * \param[in] req Unused.
+   * \param[out] res The loaded nodelet names.
+   * \return True.
+   */
   bool serviceList(::nodelet::NodeletList::Request& req, ::nodelet::NodeletList::Response& res);
 
-	//! \brief The actual nodelet loader to use.
+  //! \brief The actual nodelet loader to use.
   ::nodelet::Loader* parent_;
-	
-	//! \brief The node handle to use for the advertised services.
+  
+  //! \brief The node handle to use for the advertised services.
   ::ros::NodeHandle nh_;
-	
-	//! \brief Service server for load_nodelet service.
+  
+  //! \brief Service server for load_nodelet service.
   ::ros::ServiceServer load_server_;
 
-	//! \brief Service server for unload_nodelet service.
+  //! \brief Service server for unload_nodelet service.
   ::ros::ServiceServer unload_server_;
 
-	//! \brief Service server for list service.
+  //! \brief Service server for list service.
   ::ros::ServiceServer list_server_;
 
-	//! \brief Lock protecting access to parent_ and bond_map_.
+  //! \brief Lock protecting access to parent_ and bond_map_.
   ::boost::mutex lock_;
 
-	//! \brief Callback queue used for the created bonds.
+  //! \brief Callback queue used for the created bonds.
   ::ros::CallbackQueue bond_callback_queue_;
-	
-	//! \brief Spinner of bond_callback_queue_.
+  
+  //! \brief Spinner of bond_callback_queue_.
   ::ros::AsyncSpinner bond_spinner_;
-	
-	//! \brief Type of the map of nodelet name->bond.
+  
+  //! \brief Type of the map of nodelet name->bond.
   typedef ::boost::ptr_map<::std::string, ::bond::Bond> M_stringToBond;
 
-	//! \brief Map of nodelet name->bond.
+  //! \brief Map of nodelet name->bond.
   M_stringToBond bond_map_;
 };
 

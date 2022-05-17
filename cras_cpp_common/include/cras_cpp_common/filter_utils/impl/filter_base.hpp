@@ -45,9 +45,9 @@ public:
    *               Make sure the object is not destroyed for the whole lifetime of this helper.
    */
   explicit FilterLogHelper(const ::filters::FilterBase<F>& filter) :
-	  ::cras::NodeletLogHelper(::std::bind(&::filters::FilterBase<F>::getName, &filter)), filter(filter)
-	{
-	}
+    ::cras::NodeletLogHelper(::std::bind(&::filters::FilterBase<F>::getName, &filter)), filter(filter)
+  {
+  }
   FilterLogHelper(::filters::FilterBase<F>&& filter) = delete;  // don't allow temporaries
   ~FilterLogHelper() = default;
 
