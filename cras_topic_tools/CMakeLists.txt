@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.7.2)
 project(cras_topic_tools)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -8,9 +8,17 @@ find_package(catkin REQUIRED COMPONENTS
   topic_tools
 )
 
+find_package(Boost REQUIRED)
+
 catkin_package()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
+
+set(INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
+
+add_library(cras_lazy_pubsub INTERFACE)
+target_sources(cras_lazy_pubsub INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_pubsub.hpp>)
+target_link_libraries(cras_lazy_pubsub INTERFACE ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -30,6 +38,11 @@ add_executable(joy_repeater src/joy_repeater.cpp)
 target_link_libraries(joy_repeater ${catkin_LIBRARIES})
 add_dependencies(joy_repeater ${catkin_EXPORTED_TARGETS})
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING REGEX ".*\\.hp?p?$"
+)
+
 install(TARGETS cras_throttle_messages_nodelet cras_relay_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -43,3 +56,10 @@ install(FILES
 
 catkin_install_python(PROGRAMS nodes/filter nodes/repeat
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+
+  add_rostest_gtest(test_cras_lazy_pubsub test/test_lazy_pubsub.test test/test_lazy_pubsub.cpp)
+  target_link_libraries(test_cras_lazy_pubsub cras_lazy_pubsub ${catkin_LIBRARIES})
+endif()

@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <test test-name="test_lazy_pubsub" pkg="cras_topic_tools" type="test_cras_lazy_pubsub"/>
+</launch>

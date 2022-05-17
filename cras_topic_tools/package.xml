@@ -11,16 +11,22 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>boost</build_depend>
   <build_depend>cras_cpp_common</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>topic_tools</build_depend>
+
+  <build_export_depend>boost</build_export_depend>
 
   <exec_depend>nodelet</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>topic_tools</exec_depend>
+  
+  <test_depend>rostest</test_depend>
+  <test_depend>std_msgs</test_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet.xml" />
