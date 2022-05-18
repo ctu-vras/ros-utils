@@ -84,6 +84,43 @@ public:
   }
   
   /**
+   * \brief Tell whether this subscriber has the lazy behavior enabled.
+   * \return Whether lazy behavior is enabled.
+   */
+  bool isLazy() const
+  {
+    return this->lazy;
+  }
+  
+  /**
+   * \brief Set whether the subscriber behaves in the lazy way.
+   * \param[in] lazy If set to false, the subscriber is switched to always subscribed mode.
+   */
+  void setLazy(const bool lazy)
+  {
+    ::std::lock_guard<::std::mutex> lock(this->connectMutex);
+
+    if (lazy == this->lazy)
+      return;
+    
+    this->lazy = lazy;
+    
+    if (lazy)
+      this->logHelper->logDebug("Switching to lazy subscription mode");
+    else
+      this->logHelper->logDebug("Switching to non-lazy subscription mode");
+    
+    if (lazy && this->subscribed && this->pub.getNumSubscribers() == 0)
+    {
+      this->disconnectNoLock();
+    }
+    else if (!lazy && !this->subscribed)
+    {
+      this->connectNoLock();
+    }
+  }
+  
+  /**
    * \brief Whether the subscriber is currently subscribed to its topic or not.
    * \return Whether the subscriber is currently subscribed to its topic or not.
    */
@@ -100,6 +137,10 @@ protected:
   void connectCb(const ::ros::SingleSubscriberPublisher&)
   {
     ::std::lock_guard<::std::mutex> lock(this->connectMutex);
+
+    if (!this->lazy)
+      return;
+
     if (this->subscribed && this->pub.getNumSubscribers() == 0)
     {
       this->disconnectNoLock();
@@ -137,6 +178,9 @@ protected:
   
   //! \brief The underlying subscriber (valid only when `subscribed` is true).
   SubscriberType sub;
+  
+  //! \brief Whether the lazy behavior is enabled (if false, the subscriber is always subscribed).
+  bool lazy {true};
 
   //! \brief Whether the subscriber is currently subscribed to its topic or not.
   bool subscribed {false};
