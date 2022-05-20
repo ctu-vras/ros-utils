@@ -10,7 +10,7 @@
 namespace cras
 {
 
-void RelayNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter>& event)
+void RelayNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event)
 {
   const auto& msg = event.getConstMessage();
 
@@ -47,7 +47,8 @@ void RelayNodelet::onInit()
   this->outQueueSize = pnh.param("out_queue_size", inQueueSize);
 
   ros::SubscribeOptions ops;
-  ops.template init<topic_tools::ShapeShifter>("input", inQueueSize, boost::bind(&RelayNodelet::cb, this, _1));
+  ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
+    "input", inQueueSize, boost::bind(&RelayNodelet::cb, this, _1));
   // allow concurrent processing even for messages on a single subscriber
   ops.allow_concurrent_callbacks = true;
   this->sub = pnh.subscribe(ops);

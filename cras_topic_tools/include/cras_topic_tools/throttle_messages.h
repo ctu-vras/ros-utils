@@ -17,7 +17,7 @@ class ThrottleMessagesNodelet : public nodelet::Nodelet
   ros::Time lastPubTime;
   ros::Duration minPubPeriod;
 
-  void cb(const ros::MessageEvent<topic_tools::ShapeShifter>& event);
+  void cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event);
 
   void onInit() override;
 };

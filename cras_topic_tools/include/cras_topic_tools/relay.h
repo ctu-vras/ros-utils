@@ -20,7 +20,7 @@ class RelayNodelet : public nodelet::Nodelet
   bool advertised {false};
   std::mutex mutex;
   
-  void cb(const ros::MessageEvent<topic_tools::ShapeShifter>& event);
+  void cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event);
   
   void onInit() override;
 };

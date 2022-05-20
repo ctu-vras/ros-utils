@@ -9,7 +9,7 @@
 namespace cras
 {
 
-void ThrottleMessagesNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter>& event)
+void ThrottleMessagesNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event)
 {
   const auto& now = ros::Time::now();
   if (now < this->lastPubTime)
@@ -57,7 +57,8 @@ void ThrottleMessagesNodelet::onInit()
 
   // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from https://github.com/ros/ros_comm/pull/1722
   ros::SubscribeOptions ops;
-  ops.template init<topic_tools::ShapeShifter>("input", inQueueSize, boost::bind(&ThrottleMessagesNodelet::cb, this, _1));
+  ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
+    "input", inQueueSize, boost::bind(&ThrottleMessagesNodelet::cb, this, _1));
   this->sub = pnh.subscribe(ops);
 }
 
