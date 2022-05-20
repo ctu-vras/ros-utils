@@ -553,7 +553,7 @@ TEST(LazySubscriber, Chain)  // NOLINT
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "test_param_utils");
+  ros::init(argc, argv, "test_lazy_subscriber");
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
     ros::console::notifyLoggerLevelsChanged();
   // This prevents the ROS background threads from shutting down after the first test's nodehandles disappear
