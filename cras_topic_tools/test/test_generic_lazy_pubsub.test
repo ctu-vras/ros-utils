@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <test test-name="test_generic_lazy_pubsub" pkg="cras_topic_tools" type="test_cras_generic_lazy_pubsub"/>
+
+    <node name="latchted_pub_1" pkg="rostopic" type="rostopic" args="pub /latched std_msgs/Header &quot;{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}&quot;" />
+    <node name="latchted_pub_2" pkg="rostopic" type="rostopic" args="pub /latched std_msgs/Header &quot;{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}&quot;" />
+    <node name="latchted_pub_3" pkg="rostopic" type="rostopic" args="pub /latched std_msgs/Header &quot;{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}&quot;" />
+    <node name="latchted_pub_4" pkg="rostopic" type="rostopic" args="pub /latched std_msgs/Header &quot;{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}&quot;" />
+    <node name="latchted_pub_5" pkg="rostopic" type="rostopic" args="pub /latched std_msgs/Header &quot;{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}&quot;" />
+</launch>

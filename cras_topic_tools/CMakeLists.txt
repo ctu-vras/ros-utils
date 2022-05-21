@@ -20,6 +20,10 @@ add_library(cras_lazy_subscriber INTERFACE)
 target_sources(cras_lazy_subscriber INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_subscriber.hpp>)
 target_link_libraries(cras_lazy_subscriber INTERFACE ${catkin_LIBRARIES} Boost::boost)
 
+add_library(cras_generic_lazy_pubsub INTERFACE)
+target_sources(cras_generic_lazy_pubsub INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/generic_lazy_pubsub.hpp>)
+target_link_libraries(cras_generic_lazy_pubsub INTERFACE ${catkin_LIBRARIES} Boost::boost)
+
 add_library(cras_count_messages_nodelet src/count_messages.cpp)
 add_dependencies(cras_count_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_count_messages_nodelet ${catkin_LIBRARIES})
@@ -67,4 +71,8 @@ if (CATKIN_ENABLE_TESTING)
 
   add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
   target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})
+
+  add_rostest_gtest(test_cras_generic_lazy_pubsub test/test_generic_lazy_pubsub.test test/test_generic_lazy_pubsub.cpp)
+  target_link_libraries(test_cras_generic_lazy_pubsub cras_generic_lazy_pubsub ${catkin_LIBRARIES})
+  add_dependencies(test_cras_generic_lazy_pubsub cras_count_messages_nodelet_node)
 endif()
