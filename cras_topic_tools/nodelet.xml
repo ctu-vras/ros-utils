@@ -1,3 +1,10 @@
+<library path="lib/libcras_count_messages_nodelet">
+  <class name="cras_topic_tools/count_messages" type="cras::CountMessagesNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      throttle
+    </description>
+  </class>
+</library>
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>

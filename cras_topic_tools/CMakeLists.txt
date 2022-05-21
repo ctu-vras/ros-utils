@@ -20,6 +20,11 @@ add_library(cras_lazy_subscriber INTERFACE)
 target_sources(cras_lazy_subscriber INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_subscriber.hpp>)
 target_link_libraries(cras_lazy_subscriber INTERFACE ${catkin_LIBRARIES} Boost::boost)
 
+add_library(cras_count_messages_nodelet src/count_messages.cpp)
+add_dependencies(cras_count_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_count_messages_nodelet ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_messages.h cras::CountMessagesNodelet count_messages)
+
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
@@ -43,7 +48,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
-install(TARGETS cras_throttle_messages_nodelet cras_relay_nodelet
+install(TARGETS cras_count_messages_nodelet cras_throttle_messages_nodelet cras_relay_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
