@@ -1,57 +1,51 @@
-#include <mutex>
+/**
+ * \file
+ * \brief This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
+ *        allowing for maximum throughput.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
+#include <memory>
+#include <string>
 
 #include <nodelet/nodelet.h>
-#include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
-#include <topic_tools/shape_shifter.h>
 
+#include <cras_topic_tools/generic_lazy_pubsub.hpp>
 #include <cras_topic_tools/relay.h>
 
 namespace cras
 {
 
-void RelayNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event)
-{
-  const auto& msg = event.getConstMessage();
-
-  if (!this->advertised)
-  {
-    std::lock_guard<std::mutex> lock(this->mutex);
-    if (!this->advertised)  // the first check is outside mutex, this one is inside
-    {
-      const auto& connectionHeader = event.getConnectionHeaderPtr();
-      bool latch = false;
-      if (connectionHeader)
-      {
-        auto it = connectionHeader->find("latching");
-        if((it != connectionHeader->end()) && (it->second == "1"))
-        {
-          ROS_DEBUG("input topic is latched; latching output topic to match");
-          latch = true;
-        }
-      }
-      this->pub = msg->advertise(this->getMTPrivateNodeHandle(), "output", this->outQueueSize, latch);
-      this->advertised = true;
-      ROS_INFO("advertised as %s\n", this->getMTPrivateNodeHandle().resolveName("output").c_str());
-    }
-  }
-  
-  this->pub.publish(msg);
-}
-
 void RelayNodelet::onInit()
 {
-  auto pnh = this->getMTPrivateNodeHandle();
+  const auto params = this->privateParams();
+  const auto inQueueSize = params->getParam("in_queue_size", 10);
+  const auto outQueueSize = params->getParam("out_queue_size", inQueueSize);
+  const auto lazy = params->getParam("lazy", false);
 
-  const auto inQueueSize = pnh.param("in_queue_size", 10);
-  this->outQueueSize = pnh.param("out_queue_size", inQueueSize);
+  auto nh = this->getMTPrivateNodeHandle();
+  std::string inTopic = "input";
+  std::string outTopic = "output";
+  
+  // Mimic the behavior of topic_tools/relay when called with CLI args
+  if (!this->getMyArgv().empty())
+  {
+    nh = this->getMTNodeHandle();
+    inTopic = this->getMyArgv()[0];
+    outTopic = (this->getMyArgv().size() >= 2 ? this->getMyArgv()[1] : (inTopic + "_relay"));
+  }
+  
+  this->pubSub = std::make_unique<cras::GenericLazyPubSub<>>(
+    inTopic, outTopic, nh, inQueueSize, outQueueSize, this->log);
 
-  ros::SubscribeOptions ops;
-  ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
-    "input", inQueueSize, boost::bind(&RelayNodelet::cb, this, _1));
-  // allow concurrent processing even for messages on a single subscriber
-  ops.allow_concurrent_callbacks = true;
-  this->sub = pnh.subscribe(ops);
+  if (!lazy)
+    this->pubSub->setLazy(false);
+  
+  this->log->logInfo("Created%s relay from %s to %s.",
+    (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str());
 }
 
 }

@@ -8,8 +8,12 @@
 # \param target: The nodelet target.
 # \param include_file: Path to the include file declaring the nodelet class. It will be passed to #include .
 # \param class_name: Full name of the nodelet class (including all namespaces).
-# \param node_name[optional]: If specified, this name will be used as the name for the node executable. If not
-#                             specified, the node will be named ${target}_node.
+# \param OUTPUT_NAME node_name[optional]: If specified, this name will be used as the name for the node executable.
+#                                         If not specified, the node will be named ${target}_node.
+# \param DEFAULT_NUM_THREADS num_threads[optional]: Default number of threads used for multi-threaded node handle.
+#                                                   If not specified, 4 threads are the default value for ROS parameter
+#                                                   ~num_worker_threads.
+# param ANONYMOUS[options]: If specified, the default node name will be anonymous.
 # \note The C++ code for the node is generated from template node_from_nodelet.cpp.in in this directory.
 # \note The name of the generated CMake target will always be ${target}_node regardless of node_name setting (that only
 #       affects the name of the built executable).
@@ -19,13 +23,19 @@ function(cras_node_from_nodelet target include_file class_name)
   @[else]@
     set(cras_cpp_common_CMAKE_DIR "${cras_cpp_common_DIR}")
   @[end if]@
-  
+
+  cmake_parse_arguments(CRAS_NODE "ANONYMOUS" "OUTPUT_NAME;DEFAULT_NUM_THREADS" "" ${ARGN})
+
   set(NODELET_INCLUDE_FILE ${include_file})
   set(NODELET_CLASS ${class_name})
   set(NODE_TARGET_NAME ${target}_node)
   set(NODE_NAME ${NODE_TARGET_NAME})
-  if(NOT "${ARGN}" STREQUAL "")
-    set(NODE_NAME ${ARGN})
+  if(NOT "${CRAS_NODE_OUTPUT_NAME}" STREQUAL "")
+    set(NODE_NAME ${CRAS_NODE_OUTPUT_NAME})
+  endif()
+
+  if(NOT DEFINED CRAS_NODE_DEFAULT_NUM_THREADS)
+    set(CRAS_NODE_DEFAULT_NUM_THREADS 4)
   endif()
   
   message(STATUS "- Generating node ${NODE_NAME} from nodelet ${class_name}")

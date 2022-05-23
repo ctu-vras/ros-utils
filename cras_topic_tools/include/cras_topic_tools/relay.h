@@ -1,26 +1,27 @@
-#include <mutex>
+#pragma once
 
-#include <nodelet/nodelet.h>
-#include <ros/ros.h>
-#include <pluginlib/class_list_macros.h>
-#include <topic_tools/shape_shifter.h>
+/**
+ * \file
+ * \brief This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
+ *        allowing for maximum throughput.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
 
-//! This is the simplest possible implementation of a non-lazy relay nodelet
-//! It can process the messages on a single topic in parallel allowing for
-//! maximum throughput.
+#include <memory>
+
+#include <cras_cpp_common/nodelet_utils.hpp>
+
+#include <cras_topic_tools/generic_lazy_pubsub.hpp>
 
 namespace cras
 {
 
-class RelayNodelet : public nodelet::Nodelet
+class RelayNodelet : public ::cras::Nodelet
 {
-  ros::Subscriber sub;
-  ros::Publisher pub;
-  size_t outQueueSize;
-  bool advertised {false};
-  std::mutex mutex;
-  
-  void cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event);
+protected:
+  ::std::unique_ptr<::cras::GenericLazyPubSub<>> pubSub;
   
   void onInit() override;
 };

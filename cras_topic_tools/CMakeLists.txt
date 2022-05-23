@@ -27,17 +27,17 @@ target_link_libraries(cras_generic_lazy_pubsub INTERFACE ${catkin_LIBRARIES} Boo
 add_library(cras_count_messages_nodelet src/count_messages.cpp)
 add_dependencies(cras_count_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_count_messages_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_messages.h cras::CountMessagesNodelet count_messages)
+cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_messages.h cras::CountMessagesNodelet OUTPUT_NAME count_messages)
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet throttle_messages)
+cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle_messages)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_relay_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet relay)
+cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet OUTPUT_NAME relay ANONYMOUS)
 
 add_executable(repeater src/repeater.cpp)
 target_link_libraries(repeater ${catkin_LIBRARIES})
@@ -75,4 +75,7 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_cras_generic_lazy_pubsub test/test_generic_lazy_pubsub.test test/test_generic_lazy_pubsub.cpp)
   target_link_libraries(test_cras_generic_lazy_pubsub cras_generic_lazy_pubsub ${catkin_LIBRARIES})
   add_dependencies(test_cras_generic_lazy_pubsub cras_count_messages_nodelet_node)
+  
+  add_rostest(test/test_relay.test DEPENDENCIES cras_relay_nodelet_node)
+  add_rostest(test/test_relay_nodelet.test DEPENDENCIES cras_relay_nodelet)
 endif()

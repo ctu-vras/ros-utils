@@ -85,7 +85,7 @@ void ::cras::GenericLazyPubSub<SubscriberType>::cb(const ::ros::MessageEvent<::t
     if (!this->pub)  // the first check is outside mutex, this one is inside
     {
       auto opts = this->createAdvertiseOptions(event);  // cannot be const - advertise requires non-const
-      this->logHelper->logDebug("Creating%s publisher on %s with type %s.",
+      this->logHelper->logInfo("Creating%s publisher on %s with type %s.",
         (opts.latch ? " latched" : ""),
         ::ros::names::resolve(this->nh.getNamespace(), this->topicOut).c_str(),
         msg->getDataType().c_str());
@@ -109,14 +109,9 @@ template<typename SubscriberType>
   const ::ros::MessageEvent<::topic_tools::ShapeShifter const>& event)
 {
   const auto& msg = event.getConstMessage();
-  ::ros::AdvertiseOptions opts;// the first check is outside mutex
-  opts.topic = this->topicOut;
-  opts.queue_size = this->outQueueSize;
-  opts.md5sum = msg->getMD5Sum();
-  opts.datatype = msg->getDataType();
-  opts.message_definition = msg->getMessageDefinition();
   auto cb = ::boost::bind(&::cras::GenericLazyPubSub<SubscriberType>::connectCb, this, ::boost::placeholders::_1);
-  opts.connect_cb = opts.disconnect_cb = cb;
+  ::ros::AdvertiseOptions opts(this->topicOut, this->outQueueSize, msg->getMD5Sum(), msg->getDataType(),
+    msg->getMessageDefinition(), cb, cb);
   if (event.getConnectionHeaderPtr() != nullptr)
   {
     const auto header = event.getConnectionHeader();
