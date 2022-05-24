@@ -1,0 +1,115 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub" args="pub -r 20 node_in std_msgs/String chatter" />
+
+    <!-- Automatic input name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_input">
+        <param name="frequency" value="13" />
+        <remap from="~input" to="node_in" />
+    </node>
+    <test test-name="throttle_hztest_input" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="throttle_input/output"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Automatic output name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle" args="messages node_in 13"/>
+    <test test-name="throttle_hztest" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_in_throttle"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Explicit output name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_explicit" args="messages node_in 13 node_out" output="screen"/>
+    <test test-name="throttle_hztest_explicit" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Lazy + Automatic input name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_input_lazy">
+        <param name="lazy" value="true" />
+        <param name="frequency" value="13" />
+        <remap from="~input" to="node_in" />
+    </node>
+    <test test-name="throttle_hztest_input_lazy" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="throttle_input_lazy/output"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Lazy + Automatic output name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_lazy" args="messages node_in_lazy 13">
+        <param name="lazy" value="true" />
+        <remap from="node_in_lazy" to="node_in" />
+    </node>
+    <test test-name="throttle_hztest_lazy" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_in_lazy_throttle"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Lazy + Explicit output name -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_explicit_lazy" args="messages node_in 13 node_out_lazy" output="screen">
+        <param name="lazy" value="true" />
+    </node>
+    <test test-name="throttle_hztest_explicit_lazy" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out_lazy"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Frequency param has priority over CLI -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_freq_param" args="messages node_in 10 node_out_param">
+        <param name="frequency" value="13.0" />
+    </node>
+    <test test-name="throttle_hztest_param" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out_param"/>
+        <param name="hz" value="13.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- THROTTLE method -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_method">
+        <param name="frequency" value="13" />
+        <param name="method" value="THROTTLE" />
+        <remap from="~input" to="node_in" />
+    </node>
+    <test test-name="throttle_hztest_method" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="throttle_method/output"/>
+        <param name="hz" value="10.0"/>  <!-- Yep, THROTTLE cannot make 20 Hz to 13 Hz correctly. -->
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Invalid rate -->
+    <node pkg="cras_topic_tools" type="throttle" name="throttle_invalid_rate"
+          args="messages node_in rate node_out_invalid_rate" />
+    <test test-name="throttle_hztest_invalid_rate" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out_invalid_rate"/>
+        <param name="hz" value="1.0"/>  <!-- Default is 1 Hz. -->
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+</launch>

@@ -26,7 +26,7 @@
     </test>
 
     <!-- Explicit output name -->
-    <node pkg="topic_tools" type="relay" name="relay_explicit" args="node_in node_out"/>
+    <node pkg="cras_topic_tools" type="relay" name="relay_explicit" args="node_in node_out"/>
     <test test-name="relay_hztest_explicit" pkg="rostest" type="hztest" retry="3">
         <param name="topic" value="node_out"/>
         <param name="hz" value="10.0"/>
@@ -62,7 +62,7 @@
     </test>
 
     <!-- Lazy + Explicit output name -->
-    <node pkg="topic_tools" type="relay" name="relay_explicit_lazy" args="node_in node_out_lazy">
+    <node pkg="cras_topic_tools" type="relay" name="relay_explicit_lazy" args="node_in node_out_lazy">
         <param name="lazy" value="true" />
     </node>
     <test test-name="relay_hztest_explicit_lazy" pkg="rostest" type="hztest" retry="3">

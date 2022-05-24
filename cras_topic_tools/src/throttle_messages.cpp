@@ -1,7 +1,16 @@
+#include <memory>
+#include <stdexcept>
+#include <string>
+
 #include <nodelet/nodelet.h>
-#include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
+#include <ros/message_event.h>
+#include <ros/rate.h>
 #include <topic_tools/shape_shifter.h>
+
+#include <cras_cpp_common/rate_limiter.h>
+#include <cras_cpp_common/string_utils.hpp>
+
 #include <cras_topic_tools/throttle_messages.h>
 
 //! This is the simplest possible implementation of a non-lazy throttle nodelet
@@ -9,57 +18,76 @@
 namespace cras
 {
 
-void ThrottleMessagesNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter const>& event)
-{
-  const auto& now = ros::Time::now();
-  if (now < this->lastPubTime)
-  {
-    ROS_WARN("Detected jump back in time, resetting throttle period to now.");
-    this->lastPubTime = now;
-  }
-  
-  if ((now - this->lastPubTime) < this->minPubPeriod)
-    return;
-  
-  this->lastPubTime = now;
-
-  const auto& msg = event.getConstMessage();
-  
-  if (!this->advertised)
-  {
-    const auto& connectionHeader = event.getConnectionHeaderPtr();
-    bool latch = false;
-    if (connectionHeader)
-    {
-      auto it = connectionHeader->find("latching");
-      if((it != connectionHeader->end()) && (it->second == "1"))
-      {
-        ROS_DEBUG("input topic is latched; latching output topic to match");
-        latch = true;
-      }
-    }
-    this->pub = msg->advertise(this->getMTPrivateNodeHandle(), "output", this->outQueueSize, latch);
-    this->advertised = true;
-    ROS_INFO("advertised as %s\n", this->getMTPrivateNodeHandle().resolveName("output").c_str());
-  }
-
-  this->pub.publish(msg);
-}
-
 void ThrottleMessagesNodelet::onInit()
 {
-  auto pnh = this->getMTPrivateNodeHandle();
+  auto nh = this->getMTPrivateNodeHandle();
+  std::string inTopic = "input";
+  std::string outTopic = "output";
+  ros::Rate defaultRate(1.0);
 
-  const auto inQueueSize = pnh.param("in_queue_size", 10);
-  this->outQueueSize = pnh.param("out_queue_size", inQueueSize);
+  // Mimic the behavior of topic_tools/throttle when called with CLI args
+  if (!this->getMyArgv().empty())
+  {
+    if (this->getMyArgv()[0] != "messages")
+      throw std::runtime_error("First CLI argument of throttle node has to be 'messages'.");
+
+    if (this->getMyArgv().size() < 3)
+      throw std::runtime_error("Not enough arguments.\nUsage: throttle messages IN_TOPIC RATE [OUT_TOPIC].");
+
+    nh = this->getMTNodeHandle();
+    inTopic = this->getMyArgv()[1];
+    outTopic = (this->getMyArgv().size() >= 4 ? this->getMyArgv()[3] : (inTopic + "_throttle"));
+    try
+    {
+      defaultRate = ros::Rate(cras::parseDouble(this->getMyArgv()[2]));
+    }
+    catch (const std::invalid_argument& e)
+    {
+      this->log->logWarn("Could not parse the given throttling rate: %s", e.what());
+    }
+  }
   
-  this->minPubPeriod = ros::Rate(pnh.param("frequency", 1.0)).expectedCycleTime();
+  auto params = this->privateParams();
+  const auto inQueueSize = params->getParam("in_queue_size", 10_sz, "messages");
+  const auto outQueueSize = params->getParam("out_queue_size", inQueueSize, "messages");
+  const auto rate = params->getParam("frequency", defaultRate, "Hz");
+  const auto lazy = params->getParam("lazy", false);
 
-  // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from https://github.com/ros/ros_comm/pull/1722
-  ros::SubscribeOptions ops;
-  ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
-    "input", inQueueSize, boost::bind(&ThrottleMessagesNodelet::cb, this, _1));
-  this->sub = pnh.subscribe(ops);
+  const auto method = params->getParam("method", "TOKEN_BUCKET");  // TOKEN_BUCKET / THROTTLE
+  std::unique_ptr<cras::RateLimiter> limiter;
+
+  if (method == "THROTTLE")
+  {
+    limiter = std::make_unique<cras::ThrottleLimiter>(rate);
+  }
+  else  // TOKEN_BUCKET and other
+  {
+    if (method != "TOKEN_BUCKET")
+      this->log->logWarn("Unknown rate-limitation method %s. Using TOKEN_BUCKET instead.", method.c_str());
+    const auto bucketCapacity = params->getParam("bucket_capacity", 2_sz, "tokens");
+    const auto initialTokens = params->getParam("initial_tokens", 1_sz, "tokens");
+    limiter = std::make_unique<cras::TokenBucketLimiter>(rate, bucketCapacity, initialTokens);
+  }
+
+  this->pubSub = std::make_unique<cras::ThrottleMessagesPubSub<>>(
+    std::move(limiter), inTopic, outTopic, nh, inQueueSize, outQueueSize, this->log);
+
+  if (!lazy)
+    this->pubSub->setLazy(false);
+  
+  ros::SubscribeOptions opts;
+  auto cb = boost::bind(&ThrottleMessagesNodelet::onReset, this, boost::placeholders::_1);
+  opts.initByFullCallbackType<const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&>("reset", 1, cb);
+  this->resetSub = this->getMTPrivateNodeHandle().subscribe(opts);
+
+  this->log->logInfo("Created%s throttle from %s to %s at rate %s Hz.",
+    (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str(),
+    cras::to_string(rate).c_str());
+}
+
+void ThrottleMessagesNodelet::onReset(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&)
+{
+  this->pubSub->reset();
 }
 
 }

@@ -32,7 +32,7 @@ cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_message
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle_messages)
+cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -78,4 +78,6 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest(test/test_relay.test DEPENDENCIES cras_relay_nodelet_node)
   add_rostest(test/test_relay_nodelet.test DEPENDENCIES cras_relay_nodelet)
+  
+  add_rostest(test/test_throttle.test DEPENDENCIES cras_throttle_messages_nodelet_node)
 endif()
