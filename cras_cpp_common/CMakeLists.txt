@@ -94,6 +94,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+try_compile(HAS_FROM_CHARS_FLOAT
+  ${CMAKE_BINARY_DIR}/from_chars ${CMAKE_CURRENT_SOURCE_DIR}/cmake/from_chars_try_compile.cpp
+  CXX_STANDARD 17)
+
 set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
 add_library(cras_functional INTERFACE)
@@ -174,10 +179,13 @@ add_dependencies(cras_tf2_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_tf2_utils
   PUBLIC cras_thread_utils cras_time_utils ${catkin_LIBRARIES})
 
-add_library(cras_string_utils src/string_utils.cpp)
+add_library(cras_string_utils src/string_utils.cpp src/string_utils/from_chars.cpp)
 add_dependencies(cras_string_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_string_utils
   PUBLIC cras_time_utils cras_type_traits ${catkin_LIBRARIES})
+if (HAS_FROM_CHARS_FLOAT)
+  target_compile_definitions(cras_string_utils PRIVATE HAS_FROM_CHARS_FLOAT=1)
+endif()
 
 add_library(cras_thread_utils src/thread_utils.cpp)
 target_link_libraries(cras_thread_utils

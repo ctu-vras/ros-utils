@@ -581,6 +581,548 @@ TEST(StringUtils, Join)  // NOLINT
   EXPECT_EQ("0.000000000;1.000000000", cras::join(std::vector<ros::Duration>({{0, 0}, {1, 0}}), ";"));
 }
 
+TEST(StringUtils, ParseInt8)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseInt8("0"));
+  
+  EXPECT_EQ(1, cras::parseInt8("1"));
+  EXPECT_EQ(1, cras::parseInt8("+1"));
+  EXPECT_EQ(1, cras::parseInt8(" 1"));
+  EXPECT_EQ(1, cras::parseInt8(" +1"));
+  EXPECT_EQ(1, cras::parseInt8(" +1 "));
+  EXPECT_EQ(1, cras::parseInt8("+1 "));
+  EXPECT_EQ(1, cras::parseInt8("1 "));
+  EXPECT_EQ(10, cras::parseInt8("10"));
+  EXPECT_EQ(42, cras::parseInt8("42"));
+  EXPECT_EQ(127, cras::parseInt8("127"));
+  EXPECT_EQ(0b0000'0001, cras::parseInt8("0b00000001"));
+  EXPECT_EQ(0b0000'0001, cras::parseInt8("0B00000001"));
+  EXPECT_EQ(0b0111'1111, cras::parseInt8("0b01111111"));
+  EXPECT_EQ(0b0111'1111, cras::parseInt8("0B01111111"));
+  EXPECT_EQ(0001, cras::parseInt8("0001"));
+  EXPECT_EQ(0177, cras::parseInt8("0177"));
+  EXPECT_EQ(0x01, cras::parseInt8("0x01"));
+  EXPECT_EQ(0x01, cras::parseInt8("0X01"));
+  EXPECT_EQ(0x7f, cras::parseInt8("0x7f"));
+  EXPECT_EQ(0x7f, cras::parseInt8("0x7F"));
+  EXPECT_EQ(0x7f, cras::parseInt8("0X7f"));
+  EXPECT_EQ(0x7f, cras::parseInt8("0X7F"));
+  
+  EXPECT_EQ(-1, cras::parseInt8("-1"));
+  EXPECT_EQ(-1, cras::parseInt8("-1"));
+  EXPECT_EQ(-1, cras::parseInt8(" -1"));
+  EXPECT_EQ(-1, cras::parseInt8(" -1 "));
+  EXPECT_EQ(-1, cras::parseInt8("-1 "));
+  EXPECT_EQ(-10, cras::parseInt8("-10"));
+  EXPECT_EQ(-42, cras::parseInt8("-42"));
+  EXPECT_EQ(-128, cras::parseInt8("-128"));
+  EXPECT_EQ(-0b0000'0001, cras::parseInt8("-0b00000001"));
+  EXPECT_EQ(-0b0000'0001, cras::parseInt8("-0B00000001"));
+  EXPECT_EQ(-0b1000'0000, cras::parseInt8("-0b10000000"));
+  EXPECT_EQ(-0b1000'0000, cras::parseInt8("-0B10000000"));
+  EXPECT_EQ(-0001, cras::parseInt8("-0001"));
+  EXPECT_EQ(-0200, cras::parseInt8("-0200"));
+  EXPECT_EQ(-0x01, cras::parseInt8("-0x01"));
+  EXPECT_EQ(-0x01, cras::parseInt8("-0X01"));
+  EXPECT_EQ(-0x80, cras::parseInt8("-0x80"));
+  EXPECT_EQ(-0x80, cras::parseInt8("-0X80"));
+
+  EXPECT_THROW(cras::parseInt8(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("128"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("-129"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("0b100000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("-0b100000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("-0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("-0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("0XFF"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt8("-0XFF"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseUInt8)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseUInt8("0"));
+  
+  EXPECT_EQ(1, cras::parseUInt8("1"));
+  EXPECT_EQ(1, cras::parseUInt8("+1"));
+  EXPECT_EQ(1, cras::parseUInt8(" 1"));
+  EXPECT_EQ(1, cras::parseUInt8(" +1"));
+  EXPECT_EQ(1, cras::parseUInt8(" +1 "));
+  EXPECT_EQ(1, cras::parseUInt8("+1 "));
+  EXPECT_EQ(1, cras::parseUInt8("1 "));
+  EXPECT_EQ(10, cras::parseUInt8("10"));
+  EXPECT_EQ(42, cras::parseUInt8("42"));
+  EXPECT_EQ(127, cras::parseUInt8("127"));
+  EXPECT_EQ(128, cras::parseUInt8("128"));
+  EXPECT_EQ(255, cras::parseUInt8("255"));
+  EXPECT_EQ(0b0000'0001, cras::parseUInt8("0b00000001"));
+  EXPECT_EQ(0b0000'0001, cras::parseUInt8("0B00000001"));
+  EXPECT_EQ(0b0111'1111, cras::parseUInt8("0b01111111"));
+  EXPECT_EQ(0b0111'1111, cras::parseUInt8("0B01111111"));
+  EXPECT_EQ(0001, cras::parseUInt8("0001"));
+  EXPECT_EQ(0377, cras::parseUInt8("0377"));
+  EXPECT_EQ(0x01, cras::parseUInt8("0x01"));
+  EXPECT_EQ(0x01, cras::parseUInt8("0X01"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0xff"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0xFF"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0xFf"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0xfF"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0Xff"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0XFF"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0XFf"));
+  EXPECT_EQ(0xff, cras::parseUInt8("0XfF"));
+  
+  EXPECT_THROW(cras::parseUInt8("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8(" -1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8(" -1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-10"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-42"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-128"), std::invalid_argument);
+  
+  EXPECT_THROW(cras::parseUInt8(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("256"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-129"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("0b100000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-0b100000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-0700"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("0X100"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt8("-0X100"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseInt16)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseInt16("0"));
+  
+  EXPECT_EQ(1, cras::parseInt16("1"));
+  EXPECT_EQ(1, cras::parseInt16("+1"));
+  EXPECT_EQ(1, cras::parseInt16(" 1"));
+  EXPECT_EQ(1, cras::parseInt16(" +1"));
+  EXPECT_EQ(1, cras::parseInt16(" +1 "));
+  EXPECT_EQ(1, cras::parseInt16("+1 "));
+  EXPECT_EQ(1, cras::parseInt16("1 "));
+  EXPECT_EQ(10, cras::parseInt16("10"));
+  EXPECT_EQ(42, cras::parseInt16("42"));
+  EXPECT_EQ(32767, cras::parseInt16("32767"));
+  EXPECT_EQ(0b0000'0000'0000'0001, cras::parseInt16("0b0000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0001, cras::parseInt16("0B0000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111, cras::parseInt16("0b0111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111, cras::parseInt16("0B0111111111111111"));
+  EXPECT_EQ(0000001, cras::parseInt16("0000001"));
+  EXPECT_EQ(0077777, cras::parseInt16("0077777"));
+  EXPECT_EQ(0x0001, cras::parseInt16("0x0001"));
+  EXPECT_EQ(0x0001, cras::parseInt16("0X0001"));
+  EXPECT_EQ(0x7fff, cras::parseInt16("0x7fff"));
+  EXPECT_EQ(0x7fff, cras::parseInt16("0x7Fff"));
+  EXPECT_EQ(0x7fff, cras::parseInt16("0X7fff"));
+  EXPECT_EQ(0x7fff, cras::parseInt16("0X7Fff"));
+  
+  EXPECT_EQ(-1, cras::parseInt16("-1"));
+  EXPECT_EQ(-1, cras::parseInt16("-1"));
+  EXPECT_EQ(-1, cras::parseInt16(" -1"));
+  EXPECT_EQ(-1, cras::parseInt16(" -1 "));
+  EXPECT_EQ(-1, cras::parseInt16("-1 "));
+  EXPECT_EQ(-10, cras::parseInt16("-10"));
+  EXPECT_EQ(-42, cras::parseInt16("-42"));
+  EXPECT_EQ(-32768, cras::parseInt16("-32768"));
+  EXPECT_EQ(-0b0000'0000'0000'0001, cras::parseInt16("-0b0000000000000001"));
+  EXPECT_EQ(-0b0000'0000'0000'0001, cras::parseInt16("-0B0000000000000001"));
+  EXPECT_EQ(-0b1000'0000'0000'0000, cras::parseInt16("-0b1000000000000000"));
+  EXPECT_EQ(-0b1000'0000'0000'0000, cras::parseInt16("-0B1000000000000000"));
+  EXPECT_EQ(-000001, cras::parseInt16("-000001"));
+  EXPECT_EQ(-0100000, cras::parseInt16("-0100000"));
+  EXPECT_EQ(-0x0001, cras::parseInt16("-0x0001"));
+  EXPECT_EQ(-0x0001, cras::parseInt16("-0X0001"));
+  EXPECT_EQ(-0x8000, cras::parseInt16("-0x8000"));
+  EXPECT_EQ(-0x8000, cras::parseInt16("-0X8000"));
+  
+  EXPECT_THROW(cras::parseInt16(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("32768"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("-32769"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("0b1000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("-0b1000000000000001"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("0100000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("-0100001"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("0XFFFF"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt16("-0XFFFF"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseUInt16)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseUInt16("0"));
+  
+  EXPECT_EQ(1, cras::parseUInt16("1"));
+  EXPECT_EQ(1, cras::parseUInt16("+1"));
+  EXPECT_EQ(1, cras::parseUInt16(" 1"));
+  EXPECT_EQ(1, cras::parseUInt16(" +1"));
+  EXPECT_EQ(1, cras::parseUInt16(" +1 "));
+  EXPECT_EQ(1, cras::parseUInt16("+1 "));
+  EXPECT_EQ(1, cras::parseUInt16("1 "));
+  EXPECT_EQ(10, cras::parseUInt16("10"));
+  EXPECT_EQ(42, cras::parseUInt16("42"));
+  EXPECT_EQ(32767, cras::parseUInt16("32767"));
+  EXPECT_EQ(32768u, cras::parseUInt16("32768"));
+  EXPECT_EQ(65535u, cras::parseUInt16("65535"));
+  EXPECT_EQ(0b0000'0000'0000'0001, cras::parseUInt16("0b0000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0001, cras::parseUInt16("0B0000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111, cras::parseUInt16("0b0111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111, cras::parseUInt16("0B0111111111111111"));
+  EXPECT_EQ(0001, cras::parseUInt16("0001"));
+  EXPECT_EQ(0177777, cras::parseUInt16("0177777"));
+  EXPECT_EQ(0x0001, cras::parseUInt16("0x0001"));
+  EXPECT_EQ(0x0001, cras::parseUInt16("0X0001"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0xffff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0xFFff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0xFfff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0xfFff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0Xffff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0XFFff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0XFfff"));
+  EXPECT_EQ(0xffff, cras::parseUInt16("0XfFff"));
+  
+  EXPECT_THROW(cras::parseUInt16("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16(" -1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16(" -1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-10"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-42"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-32768"), std::invalid_argument);
+  
+  EXPECT_THROW(cras::parseUInt16(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("65536"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-32769"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("0b10000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-0b10000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("0200000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-0200000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("0X10000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt16("-0X10000"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseInt32)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseInt32("0"));
+  
+  EXPECT_EQ(1, cras::parseInt32("1"));
+  EXPECT_EQ(1, cras::parseInt32("+1"));
+  EXPECT_EQ(1, cras::parseInt32(" 1"));
+  EXPECT_EQ(1, cras::parseInt32(" +1"));
+  EXPECT_EQ(1, cras::parseInt32(" +1 "));
+  EXPECT_EQ(1, cras::parseInt32("+1 "));
+  EXPECT_EQ(1, cras::parseInt32("1 "));
+  EXPECT_EQ(10, cras::parseInt32("10"));
+  EXPECT_EQ(42, cras::parseInt32("42"));
+  EXPECT_EQ(2147483647, cras::parseInt32("2147483647"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseInt32("0b00000000000000000000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseInt32("0B00000000000000000000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111, cras::parseInt32("0b01111111111111111111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111, cras::parseInt32("0B01111111111111111111111111111111"));
+  EXPECT_EQ(000000000001, cras::parseInt32("000000000001"));
+  EXPECT_EQ(007777777777, cras::parseInt32("007777777777"));
+  EXPECT_EQ(0x00000001, cras::parseInt32("0x00000001"));
+  EXPECT_EQ(0x00000001, cras::parseInt32("0X00000001"));
+  EXPECT_EQ(0x7fffffff, cras::parseInt32("0x7fffffff"));
+  EXPECT_EQ(0x7fffffff, cras::parseInt32("0x7Fffffff"));
+  EXPECT_EQ(0x7fffffff, cras::parseInt32("0X7fffffff"));
+  EXPECT_EQ(0x7fffffff, cras::parseInt32("0X7Fffffff"));
+  
+  EXPECT_EQ(-1, cras::parseInt32("-1"));
+  EXPECT_EQ(-1, cras::parseInt32("-1"));
+  EXPECT_EQ(-1, cras::parseInt32(" -1"));
+  EXPECT_EQ(-1, cras::parseInt32(" -1 "));
+  EXPECT_EQ(-1, cras::parseInt32("-1 "));
+  EXPECT_EQ(-10, cras::parseInt32("-10"));
+  EXPECT_EQ(-42, cras::parseInt32("-42"));
+  EXPECT_EQ(-2147483648, cras::parseInt32("-2147483648"));
+  EXPECT_EQ(-0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseInt32("-0b00000000000000000000000000000001"));
+  EXPECT_EQ(-0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseInt32("-0B00000000000000000000000000000001"));
+  EXPECT_EQ(-0b1000'0000'0000'0000'0000'0000'0000'0000, cras::parseInt32("-0b10000000000000000000000000000000"));
+  EXPECT_EQ(-0b1000'0000'0000'0000'0000'0000'0000'0000, cras::parseInt32("-0B10000000000000000000000000000000"));
+  EXPECT_EQ(-0000000001, cras::parseInt32("-0000000001"));
+  EXPECT_EQ(-010000000000, cras::parseInt32("-010000000000"));
+  EXPECT_EQ(-0x00000001, cras::parseInt32("-0x00000001"));
+  EXPECT_EQ(-0x00000001, cras::parseInt32("-0X00000001"));
+  EXPECT_EQ(-0x80000000, cras::parseInt32("-0x80000000"));
+  EXPECT_EQ(-0x80000000, cras::parseInt32("-0X80000000"));
+  
+  EXPECT_THROW(cras::parseInt32(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("2147483648"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("-2147483649"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("0b100000000000000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("-0b100000000000000000000000000000001"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("020000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("-020000000001"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("0XFFFFFFFF"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt32("-0XFFFFFFFF"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseUInt32)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseUInt32("0"));
+  
+  EXPECT_EQ(1, cras::parseUInt32("1"));
+  EXPECT_EQ(1, cras::parseUInt32("+1"));
+  EXPECT_EQ(1, cras::parseUInt32(" 1"));
+  EXPECT_EQ(1, cras::parseUInt32(" +1"));
+  EXPECT_EQ(1, cras::parseUInt32(" +1 "));
+  EXPECT_EQ(1, cras::parseUInt32("+1 "));
+  EXPECT_EQ(1, cras::parseUInt32("1 "));
+  EXPECT_EQ(10, cras::parseUInt32("10"));
+  EXPECT_EQ(42, cras::parseUInt32("42"));
+  EXPECT_EQ(2147483647, cras::parseUInt32("2147483647"));
+  EXPECT_EQ(2147483648u, cras::parseUInt32("2147483648"));
+  EXPECT_EQ(4294967295u, cras::parseUInt32("4294967295"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseUInt32("0b00000000000000000000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0001, cras::parseUInt32("0B00000000000000000000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111, cras::parseUInt32("0b01111111111111111111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111, cras::parseUInt32("0B01111111111111111111111111111111"));
+  EXPECT_EQ(000000000001, cras::parseUInt32("000000000001"));
+  EXPECT_EQ(037777777777, cras::parseUInt32("037777777777"));
+  EXPECT_EQ(0x00000001, cras::parseUInt32("0x00000001"));
+  EXPECT_EQ(0x00000001, cras::parseUInt32("0X00000001"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0xffffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0xFFffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0xFfffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0xfFffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0Xffffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0XFFffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0XFfffffff"));
+  EXPECT_EQ(0xffffffff, cras::parseUInt32("0XfFffffff"));
+  
+  EXPECT_THROW(cras::parseUInt32("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32(" -1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32(" -1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-10"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-42"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-2147483648"), std::invalid_argument);
+  
+  EXPECT_THROW(cras::parseUInt32(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("4294967296"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-2147483649"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("0b100000000000000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-0b100000000000000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("040000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-040000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("0X100000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt32("-0X100000000"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseInt64)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseInt64("0"));
+  
+  EXPECT_EQ(1, cras::parseInt64("1"));
+  EXPECT_EQ(1, cras::parseInt64("+1"));
+  EXPECT_EQ(1, cras::parseInt64(" 1"));
+  EXPECT_EQ(1, cras::parseInt64(" +1"));
+  EXPECT_EQ(1, cras::parseInt64(" +1 "));
+  EXPECT_EQ(1, cras::parseInt64("+1 "));
+  EXPECT_EQ(1, cras::parseInt64("1 "));
+  EXPECT_EQ(10, cras::parseInt64("10"));
+  EXPECT_EQ(42, cras::parseInt64("42"));
+  EXPECT_EQ(9223372036854775807LL, cras::parseInt64("9223372036854775807"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseInt64("0b0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseInt64("0B0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111,
+    cras::parseInt64("0b0111111111111111111111111111111111111111111111111111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111,
+    cras::parseInt64("0B0111111111111111111111111111111111111111111111111111111111111111"));
+  EXPECT_EQ(00000000000000000000001, cras::parseInt64("00000000000000000000001"));
+  EXPECT_EQ(00777777777777777777777, cras::parseInt64("00777777777777777777777"));
+  EXPECT_EQ(0x0000000000000001, cras::parseInt64("0x0000000000000001"));
+  EXPECT_EQ(0x0000000000000001, cras::parseInt64("0X0000000000000001"));
+  EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0x7fffffffffffffff"));
+  EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0x7Fffffffffffffff"));
+  EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0X7fffffffffffffff"));
+  EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0X7Fffffffffffffff"));
+  
+  EXPECT_EQ(-1, cras::parseInt64("-1"));
+  EXPECT_EQ(-1, cras::parseInt64("-1"));
+  EXPECT_EQ(-1, cras::parseInt64(" -1"));
+  EXPECT_EQ(-1, cras::parseInt64(" -1 "));
+  EXPECT_EQ(-1, cras::parseInt64("-1 "));
+  EXPECT_EQ(-10, cras::parseInt64("-10"));
+  EXPECT_EQ(-42, cras::parseInt64("-42"));
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), cras::parseInt64("-9223372036854775808"));
+  EXPECT_EQ(-0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseInt64("-0b0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(-0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseInt64("-0B0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(-0b1000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000,
+    cras::parseInt64("-0b1000000000000000000000000000000000000000000000000000000000000000"));
+  EXPECT_EQ(-0b1000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000,
+    cras::parseInt64("-0B1000000000000000000000000000000000000000000000000000000000000000"));
+  EXPECT_EQ(-00000000000000000000001, cras::parseInt64("-00000000000000000000001"));
+  EXPECT_EQ(-01000000000000000000000, cras::parseInt64("-01000000000000000000000"));
+  EXPECT_EQ(-0x0000000000000001, cras::parseInt64("-0x0000000000000001"));
+  EXPECT_EQ(-0x0000000000000001, cras::parseInt64("-0X0000000000000001"));
+  EXPECT_EQ(-0x8000000000000000, cras::parseInt64("-0x8000000000000000"));
+  EXPECT_EQ(-0x8000000000000000, cras::parseInt64("-0X8000000000000000"));
+  
+  EXPECT_THROW(cras::parseInt64(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("9223372036854775808"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("-9223372036854775809"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64( "0b10000000000000000000000000000000000000000000000000000000000000000"),
+    std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("-0b10000000000000000000000000000000000000000000000000000000000000001"),
+    std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("01000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("-01000000000000000000001"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("0XFFFFFFFFFFFFFFFF"), std::invalid_argument);
+  EXPECT_THROW(cras::parseInt64("-0XFFFFFFFFFFFFFFFF"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseUInt64)  // NOLINT
+{
+  EXPECT_EQ(0, cras::parseUInt64("0"));
+  
+  EXPECT_EQ(1, cras::parseUInt64("1"));
+  EXPECT_EQ(1, cras::parseUInt64("+1"));
+  EXPECT_EQ(1, cras::parseUInt64(" 1"));
+  EXPECT_EQ(1, cras::parseUInt64(" +1"));
+  EXPECT_EQ(1, cras::parseUInt64(" +1 "));
+  EXPECT_EQ(1, cras::parseUInt64("+1 "));
+  EXPECT_EQ(1, cras::parseUInt64("1 "));
+  EXPECT_EQ(10, cras::parseUInt64("10"));
+  EXPECT_EQ(42, cras::parseUInt64("42"));
+  EXPECT_EQ(9223372036854775807, cras::parseUInt64("9223372036854775807"));
+  EXPECT_EQ(0x8000000000000000, cras::parseUInt64("9223372036854775808"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("18446744073709551615"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseUInt64("0b0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(0b0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0000'0001,
+    cras::parseUInt64("0B0000000000000000000000000000000000000000000000000000000000000001"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111,
+    cras::parseUInt64("0b0111111111111111111111111111111111111111111111111111111111111111"));
+  EXPECT_EQ(0b0111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111'1111,
+    cras::parseUInt64("0B0111111111111111111111111111111111111111111111111111111111111111"));
+  EXPECT_EQ(00000000000000000000001, cras::parseUInt64("00000000000000000000001"));
+  EXPECT_EQ(01777777777777777777777, cras::parseUInt64("01777777777777777777777"));
+  EXPECT_EQ(0x0000000000000001, cras::parseUInt64("0x0000000000000001"));
+  EXPECT_EQ(0x0000000000000001, cras::parseUInt64("0X0000000000000001"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0xffffffffffffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0xFFffFFffFFffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0xFfffFfffFfffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0xfFfffFfffFffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0Xffffffffffffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XFFffFFffFFffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XFfffFfffFfffffff"));
+  EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XfFfffFfffFffffff"));
+  
+  EXPECT_THROW(cras::parseUInt64("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64(" -1"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64(" -1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-1 "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-10"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-42"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-9223372036854775808"), std::invalid_argument);
+  
+  EXPECT_THROW(cras::parseUInt64(" 1  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("1.0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("3.14"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("18446744073709551616"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-9223372036854775809"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("0b10000000000000000000000000000000000000000000000000000000000000000"),
+    std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-0b10000000000000000000000000000000000000000000000000000000000000000"),
+    std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("02000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("02000000000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("0X10000000000000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseUInt64("-0X10000000000000000"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseFloat)  // NOLINT
+{
+  EXPECT_EQ(1.0f, cras::parseFloat("1"));
+  EXPECT_EQ(1.0f, cras::parseFloat("1.0"));
+  EXPECT_EQ(1.0f, cras::parseFloat("+1.0"));
+  EXPECT_EQ(1.0f, cras::parseFloat(" +1.0"));
+  EXPECT_EQ(1.0f, cras::parseFloat(" 1.0"));
+  EXPECT_EQ(1.0f, cras::parseFloat(" 1.0 "));
+  EXPECT_EQ(1.0f, cras::parseFloat("1.0e0"));
+  EXPECT_EQ(1.0f, cras::parseFloat("0.1e1"));
+  EXPECT_EQ(1.0f, cras::parseFloat("0.1e+1"));
+  EXPECT_EQ(1.0f, cras::parseFloat("10e-1"));
+  EXPECT_EQ(3.141592f, cras::parseFloat("3.141592"));
+  EXPECT_EQ(-1.0f, cras::parseFloat("-1.0"));
+  EXPECT_EQ(-1.0f, cras::parseFloat(" -1.0"));
+  EXPECT_EQ(-1.0f, cras::parseFloat(" -1.0"));
+  EXPECT_EQ(-1.0f, cras::parseFloat(" -1.0 "));
+  EXPECT_EQ(-1.0f, cras::parseFloat("-1.0e0"));
+  EXPECT_EQ(-1.0f, cras::parseFloat("-0.1e1"));
+  EXPECT_EQ(-1.0f, cras::parseFloat("-0.1e+1"));
+  EXPECT_EQ(-1.0f, cras::parseFloat("-10e-1"));
+  EXPECT_EQ(-3.141592f, cras::parseFloat("-3.141592"));
+  EXPECT_EQ(3.402823466e+38f, cras::parseFloat("3.402823466e+38"));
+  EXPECT_EQ(-3.402823466e+38f, cras::parseFloat("-3.402823466e+38"));
+  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::parseFloat("3.5e+38"));
+  EXPECT_EQ(-std::numeric_limits<float>::infinity(), cras::parseFloat("-3.5e+38"));
+  EXPECT_THROW(cras::parseFloat(" 1.0  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("1 .0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("1. 0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("a"), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("1,0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("3,14"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseDouble)  // NOLINT
+{
+  EXPECT_EQ(1.0, cras::parseDouble("1"));
+  EXPECT_EQ(1.0, cras::parseDouble("1.0"));
+  EXPECT_EQ(1.0, cras::parseDouble("+1.0"));
+  EXPECT_EQ(1.0, cras::parseDouble(" +1.0"));
+  EXPECT_EQ(1.0, cras::parseDouble(" 1.0"));
+  EXPECT_EQ(1.0, cras::parseDouble(" 1.0 "));
+  EXPECT_EQ(1.0, cras::parseDouble("1.0e0"));
+  EXPECT_EQ(1.0, cras::parseDouble("0.1e1"));
+  EXPECT_EQ(1.0, cras::parseDouble("0.1e+1"));
+  EXPECT_EQ(1.0, cras::parseDouble("10e-1"));
+  EXPECT_EQ(3.141592, cras::parseDouble("3.141592"));
+  EXPECT_EQ(-1.0, cras::parseDouble("-1.0"));
+  EXPECT_EQ(-1.0, cras::parseDouble(" -1.0"));
+  EXPECT_EQ(-1.0, cras::parseDouble(" -1.0"));
+  EXPECT_EQ(-1.0, cras::parseDouble(" -1.0 "));
+  EXPECT_EQ(-1.0, cras::parseDouble("-1.0e0"));
+  EXPECT_EQ(-1.0, cras::parseDouble("-0.1e1"));
+  EXPECT_EQ(-1.0, cras::parseDouble("-0.1e+1"));
+  EXPECT_EQ(-1.0, cras::parseDouble("-10e-1"));
+  EXPECT_EQ(-3.141592, cras::parseDouble("-3.141592"));
+  EXPECT_EQ(1.79769e+308, cras::parseDouble("1.79769e+308"));
+  EXPECT_EQ(-1.79769e+308, cras::parseDouble("-1.79769e+308"));
+  EXPECT_EQ(std::numeric_limits<double>::infinity(), cras::parseDouble("1.8e+308"));
+  EXPECT_EQ(-std::numeric_limits<double>::infinity(), cras::parseDouble("-1.8e+308"));
+  EXPECT_THROW(cras::parseDouble(" 1.0  "), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("1 .0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("1. 0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("a"), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("1,0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("3,14"), std::invalid_argument);
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

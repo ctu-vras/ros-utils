@@ -1,6 +1,14 @@
 #pragma once
 
 /**
+ * \file
+ * \brief Math utilities.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
+/**
  * \brief Return the sign of the given value (-1, 0 or +1).
  * \tparam T Type of the number.
  * \param val The value to get sign of.
