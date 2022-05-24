@@ -80,4 +80,5 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest(test/test_relay_nodelet.test DEPENDENCIES cras_relay_nodelet)
   
   add_rostest(test/test_throttle.test DEPENDENCIES cras_throttle_messages_nodelet_node)
+  add_rostest(test/test_throttle_nodelet.test DEPENDENCIES cras_throttle_messages_nodelet)
 endif()
