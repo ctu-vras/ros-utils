@@ -11,6 +11,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>rosmsg_cpp</depend>
+  
   <build_depend>boost</build_depend>
   <build_depend>cras_cpp_common</build_depend>
   <build_depend>nodelet</build_depend>
@@ -24,7 +26,8 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>topic_tools</exec_depend>
-  
+
+  <test_depend>geometry_msgs</test_depend>
   <test_depend>rostest</test_depend>
   <test_depend>rostopic</test_depend>
   <test_depend>std_msgs</test_depend>

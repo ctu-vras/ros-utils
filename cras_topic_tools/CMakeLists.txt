@@ -10,11 +10,15 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED)
 
-catkin_package()
+catkin_package(LIBRARIES cras_shape_shifter)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 set(INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
+
+add_library(cras_shape_shifter src/shape_shifter.cpp)
+add_dependencies(cras_shape_shifter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_shape_shifter ${catkin_LIBRARIES})
 
 add_library(cras_lazy_subscriber INTERFACE)
 target_sources(cras_lazy_subscriber INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_subscriber.hpp>)
@@ -52,7 +56,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
-install(TARGETS cras_count_messages_nodelet cras_throttle_messages_nodelet cras_relay_nodelet
+install(TARGETS cras_count_messages_nodelet cras_throttle_messages_nodelet cras_relay_nodelet cras_shape_shifter
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
@@ -68,6 +72,10 @@ catkin_install_python(PROGRAMS nodes/filter nodes/repeat
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  find_package(geometry_msgs REQUIRED)
+
+  catkin_add_gtest(test_shape_shifter test/test_shape_shifter.cpp)
+  target_link_libraries(test_shape_shifter cras_shape_shifter ${catkin_LIBRARIES} ${geometry_msgs_LIBRARIES})
 
   add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
   target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})
