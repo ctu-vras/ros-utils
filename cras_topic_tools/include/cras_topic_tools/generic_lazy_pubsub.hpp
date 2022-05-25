@@ -23,6 +23,7 @@
 
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/node.h>
+#include <cras_cpp_common/optional.hpp>
 
 #include <cras_topic_tools/lazy_subscriber.hpp>
 
@@ -117,6 +118,9 @@ protected:
   
   //! \brief Mutex protecting `pub`. 
   ::std::mutex pubCreateMutex;
+  
+  //! \brief The options used when the publisher was created. `nullopt` before the publisher is created.
+  ::cras::optional<::ros::AdvertiseOptions> advertiseOptions;
 };
 
 }

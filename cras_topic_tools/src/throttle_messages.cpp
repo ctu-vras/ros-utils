@@ -1,3 +1,13 @@
+/**
+ * \file
+ * \brief This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
+ *        parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
+ *        algorithm.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -12,8 +22,6 @@
 #include <cras_cpp_common/string_utils.hpp>
 
 #include <cras_topic_tools/throttle_messages.h>
-
-//! This is the simplest possible implementation of a non-lazy throttle nodelet
 
 namespace cras
 {

@@ -11,8 +11,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>rosmsg_cpp</depend>
-  
   <build_depend>boost</build_depend>
   <build_depend>cras_cpp_common</build_depend>
   <build_depend>nodelet</build_depend>

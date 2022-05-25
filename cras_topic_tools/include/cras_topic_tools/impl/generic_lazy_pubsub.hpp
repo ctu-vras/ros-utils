@@ -84,15 +84,15 @@ void ::cras::GenericLazyPubSub<SubscriberType>::cb(const ::ros::MessageEvent<::t
     ::std::lock_guard<::std::mutex> pubLock(this->pubCreateMutex);
     if (!this->pub)  // the first check is outside mutex, this one is inside
     {
-      auto opts = this->createAdvertiseOptions(event);  // cannot be const - advertise requires non-const
+      this->advertiseOptions = this->createAdvertiseOptions(event);  // cannot be const - advertise requires non-const
       this->logHelper->logInfo("Creating%s publisher on %s with type %s.",
-        (opts.latch ? " latched" : ""),
+        (this->advertiseOptions->latch ? " latched" : ""),
         ::ros::names::resolve(this->nh.getNamespace(), this->topicOut).c_str(),
         msg->getDataType().c_str());
 
       {  // Advertise the publisher
         ::std::lock_guard<::std::mutex> lock(this->connectMutex);
-        this->pub = this->nh.advertise(opts);
+        this->pub = this->nh.advertise(this->advertiseOptions.value());
       }
     }
     
@@ -112,6 +112,10 @@ template<typename SubscriberType>
   auto cb = ::boost::bind(&::cras::GenericLazyPubSub<SubscriberType>::connectCb, this, ::boost::placeholders::_1);
   ::ros::AdvertiseOptions opts(this->topicOut, this->outQueueSize, msg->getMD5Sum(), msg->getDataType(),
     msg->getMessageDefinition(), cb, cb);
+  // This is a bit simplified but there is no really good way to detect it (cannot use rosmsg_cpp as the embedded Python
+  // cannot be run in multiple nodelets; cannot use ros_msg_parse as it has not yet been released).
+  // TODO: Consider using ros_msg_parse when it is released
+  opts.has_header = ::cras::contains(msg->getMessageDefinition(), "Header header");
   if (event.getConnectionHeaderPtr() != nullptr)
   {
     const auto header = event.getConnectionHeader();

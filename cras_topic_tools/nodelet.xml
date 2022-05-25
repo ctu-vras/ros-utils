@@ -19,6 +19,13 @@
   </description>
 </class>
 </library>
+<library path="lib/libcras_repeat_nodelet">
+<class name="cras_topic_tools/repeat" type="cras::RepeatMessagesNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+    relay
+  </description>
+</class>
+</library>
 <!-- Backwards compatibility. These can be deleted after a few months. Do not use in new code. -->
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_nodelet_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">

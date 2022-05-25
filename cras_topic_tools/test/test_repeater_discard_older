@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Test helper for testing the repeater node's discard_older parameter.
+
+import rospy
+import rostest
+import unittest
+import time
+import sys
+
+from geometry_msgs.msg import PointStamped
+
+NAME = "test_repeater_discard_older"
+
+
+class DiscardOlder(unittest.TestCase):
+    def __init__(self, *args):
+        super(DiscardOlder, self).__init__(*args)
+        rospy.init_node(NAME)
+        self.num_msgs = 0
+
+    def cb(self, msg):
+        self.num_msgs += 1
+
+    def wait_until_num_msgs(self, num, deadline):
+        while self.num_msgs < num and time.time() < deadline:
+            time.sleep(0.01)
+
+    def test_max_repeats(self):
+        sub = rospy.Subscriber(rospy.get_param("~subscriber_topic"), rospy.AnyMsg, self.cb, queue_size=100)
+        pub = rospy.Publisher(rospy.get_param("~publisher_topic"), PointStamped, latch=True, queue_size=1)
+        reset_pub = rospy.Publisher("reset", PointStamped, queue_size=1)
+
+        msg = PointStamped()
+        msg.header.stamp = rospy.Time(10)
+        pub.publish(msg)
+
+        wallclock_timeout = time.time() + float(rospy.get_param("~wait_time", 20.0))
+        self.wait_until_num_msgs(1, wallclock_timeout)
+        self.assertEqual(self.num_msgs, 1)
+
+        msg.header.stamp = rospy.Time(9)
+        pub.publish(msg)
+
+        time.sleep(0.1)
+        self.assertEqual(self.num_msgs, 1)
+
+        # Message is newer, should be published
+
+        msg.header.stamp = rospy.Time(11)
+        pub.publish(msg)
+
+        self.wait_until_num_msgs(2, min(wallclock_timeout, time.time() + 0.1))
+        self.assertEqual(self.num_msgs, 2)
+
+        # Message is newer, should be published
+
+        msg.header.stamp = rospy.Time(11.1)
+        pub.publish(msg)
+
+        self.wait_until_num_msgs(3, min(wallclock_timeout, time.time() + 0.1))
+        self.assertEqual(self.num_msgs, 3)
+
+        # Message is older, should not be published
+
+        msg.header.stamp = rospy.Time(11)
+        pub.publish(msg)
+
+        time.sleep(0.1)
+        self.assertEqual(self.num_msgs, 3)
+
+        # Resetting the repeater should discard the previous message, so the new one can be published even if it is
+        # older.
+
+        reset_pub.publish(msg)
+        time.sleep(0.1)
+
+        msg.header.stamp = rospy.Time(11)
+        pub.publish(msg)
+
+        self.wait_until_num_msgs(4, min(wallclock_timeout, time.time() + 0.1))
+        self.assertEqual(self.num_msgs, 4)
+
+        # Message is newer, should be published
+
+        msg.header.stamp = rospy.Time(11.1)
+        pub.publish(msg)
+
+        self.wait_until_num_msgs(5, min(wallclock_timeout, time.time() + 0.1))
+        self.assertEqual(self.num_msgs, 5)
+
+
+if __name__ == "__main__":
+    time.sleep(0.75)
+    try:
+        rostest.run('rostest', NAME, DiscardOlder, sys.argv)
+    except KeyboardInterrupt:
+        pass
+    print("exiting")
