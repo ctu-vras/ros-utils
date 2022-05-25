@@ -15,7 +15,6 @@
 #include <pluginlib/class_list_macros.h>
 #include <ros/message_event.h>
 #include <ros/subscribe_options.h>
-#include <std_srvs/Trigger.h>
 #include <topic_tools/shape_shifter.h>
 
 #include <cras_topic_tools/count_messages.h>
@@ -27,7 +26,9 @@ void CountMessagesNodelet::cb(const ros::MessageEvent<topic_tools::ShapeShifter 
 {
   std::lock_guard<std::mutex> lock(this->mutex);
   this->count++;
-  this->getMTPrivateNodeHandle().setParam("count", this->count);
+  this->bytes += event.getConstMessage()->size();
+  this->getMTPrivateNodeHandle().setParam("count", static_cast<int>(this->count));
+  this->getMTPrivateNodeHandle().setParam("bytes", static_cast<int>(this->bytes));
 }
 
 void CountMessagesNodelet::onInit()
@@ -35,6 +36,7 @@ void CountMessagesNodelet::onInit()
   auto pnh = this->getMTPrivateNodeHandle();
   const auto inQueueSize = pnh.param("in_queue_size", 1000);
 
+  this->getMTPrivateNodeHandle().setParam("bytes", 0);
   this->getMTPrivateNodeHandle().setParam("count", 0);
   
   // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from
@@ -44,15 +46,17 @@ void CountMessagesNodelet::onInit()
     "input", inQueueSize, boost::bind(&CountMessagesNodelet::cb, this, boost::placeholders::_1));
   this->sub = pnh.subscribe(ops);
   
-  this->resetServer = pnh.advertiseService("reset", &CountMessagesNodelet::resetCb, this);
+  ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
+    "reset", inQueueSize, boost::bind(&CountMessagesNodelet::resetCb, this, boost::placeholders::_1));
+  this->resetSub = pnh.subscribe(ops);
 }
 
-bool CountMessagesNodelet::resetCb(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& resp)
+void CountMessagesNodelet::resetCb(const ::ros::MessageEvent<::topic_tools::ShapeShifter const>&)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
-  this->count = 0;
-  this->getMTPrivateNodeHandle().setParam("count", this->count);
-  return true;
+  this->count = this->bytes = 0;
+  this->getMTPrivateNodeHandle().setParam("count", 0);
+  this->getMTPrivateNodeHandle().setParam("bytes", 0);
 }
 
 }

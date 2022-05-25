@@ -77,6 +77,8 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
   target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})
 
+  add_rostest(test/test_count_messages.test DEPENDENCIES cras_count_messages_nodelet cras_count_messages_nodelet_node)
+  
   add_rostest_gtest(test_cras_generic_lazy_pubsub test/test_generic_lazy_pubsub.test test/test_generic_lazy_pubsub.cpp)
   target_link_libraries(test_cras_generic_lazy_pubsub cras_generic_lazy_pubsub ${catkin_LIBRARIES})
   add_dependencies(test_cras_generic_lazy_pubsub cras_count_messages_nodelet_node)
