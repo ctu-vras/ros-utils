@@ -36,20 +36,17 @@ cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_message
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle)
+cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle ANONYMOUS)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_relay_nodelet ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet OUTPUT_NAME relay ANONYMOUS)
 
-add_executable(repeater src/repeater.cpp)
-target_link_libraries(repeater ${catkin_LIBRARIES})
-add_dependencies(repeater ${catkin_EXPORTED_TARGETS})
-
-add_executable(joy_repeater src/joy_repeater.cpp)
-target_link_libraries(joy_repeater ${catkin_LIBRARIES})
-add_dependencies(joy_repeater ${catkin_EXPORTED_TARGETS})
+add_library(cras_repeat_nodelet src/repeat.cpp)
+add_dependencies(cras_repeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_repeat_nodelet cras_shape_shifter ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_repeat_nodelet ${PROJECT_NAME}/repeat.h cras::RepeatMessagesNodelet OUTPUT_NAME repeat ANONYMOUS)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -67,7 +64,7 @@ install(FILES
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-catkin_install_python(PROGRAMS nodes/filter nodes/repeat
+catkin_install_python(PROGRAMS nodes/filter
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
@@ -89,4 +86,7 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest(test/test_throttle.test DEPENDENCIES cras_throttle_messages_nodelet_node)
   add_rostest(test/test_throttle_nodelet.test DEPENDENCIES cras_throttle_messages_nodelet)
+  
+  add_rostest(test/test_repeat.test DEPENDENCIES cras_repeat_nodelet_node)
+  add_rostest(test/test_repeat_nodelet.test DEPENDENCIES cras_repeat_nodelet)
 endif()
