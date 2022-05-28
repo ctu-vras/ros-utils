@@ -21,7 +21,6 @@ void createShifter(const T& msg, topic_tools::ShapeShifter& shifter, std::vector
 {
   // Serialize the message into a byte buffer
   length = ros::serialization::serializationLength(msg);
-  std::cout << length << std::endl;
   buf.resize(length);
   ros::serialization::OStream ostream(buf.data(), length);
   ros::serialization::serialize(ostream, msg);
@@ -152,6 +151,125 @@ TEST(ShapeShifter, GetHeaderFromFakeString)  // NOLINT
   std_msgs::Header fakeHeader;
   fakeHeader.seq = msg.data.size();
   EXPECT_EQ(fakeHeader, header.value());
+}
+
+TEST(ShapeShifter, SetHeaderSameLength)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+  const auto origMsg = msg;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  std::vector<uint8_t> buf;
+  size_t length;
+  createShifter(msg, shifter, buf, length);
+
+  auto newHeader = msg.header;
+  newHeader.frame_id = "abcd";
+  EXPECT_TRUE(cras::setHeader(shifter, newHeader));
+  
+  const auto decodedHeader = cras::getHeader(shifter);
+  ASSERT_TRUE(decodedHeader.has_value());
+  EXPECT_EQ(newHeader, decodedHeader.value());
+  
+  const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
+  EXPECT_EQ(newHeader, newMsg->header);
+  EXPECT_EQ(origMsg.point, newMsg->point);
+}
+
+TEST(ShapeShifter, SetHeaderShorter)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+  const auto origMsg = msg;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  std::vector<uint8_t> buf;
+  size_t length;
+  createShifter(msg, shifter, buf, length);
+
+  auto newHeader = msg.header;
+  newHeader.frame_id = "ab";
+  EXPECT_TRUE(cras::setHeader(shifter, newHeader));
+  
+  const auto decodedHeader = cras::getHeader(shifter);
+  ASSERT_TRUE(decodedHeader.has_value());
+  EXPECT_EQ(newHeader, decodedHeader.value());
+  
+  const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
+  EXPECT_EQ(newHeader, newMsg->header);
+  EXPECT_EQ(origMsg.point, newMsg->point);
+}
+
+TEST(ShapeShifter, SetHeaderLonger)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+  const auto origMsg = msg;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  std::vector<uint8_t> buf;
+  size_t length;
+  createShifter(msg, shifter, buf, length);
+
+  auto newHeader = msg.header;
+  newHeader.frame_id = "abcdefgh";
+  EXPECT_TRUE(cras::setHeader(shifter, newHeader));
+  
+  const auto decodedHeader = cras::getHeader(shifter);
+  ASSERT_TRUE(decodedHeader.has_value());
+  EXPECT_EQ(newHeader, decodedHeader.value());
+  
+  const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
+  EXPECT_EQ(newHeader, newMsg->header);
+  EXPECT_EQ(origMsg.point, newMsg->point);
+}
+
+TEST(ShapeShifter, CopyShapeShifter)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+  const auto origMsg = msg;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  std::vector<uint8_t> buf;
+  size_t length;
+  createShifter(msg, shifter, buf, length);
+
+  topic_tools::ShapeShifter shifter2;
+  // If we used shifter2 = shifter, we'd get a segfault in Melodic when this function ends
+  cras::copyShapeShifter(shifter, shifter2);
+  
+  EXPECT_EQ(*shifter.instantiate<geometry_msgs::PointStamped>(), *shifter2.instantiate<geometry_msgs::PointStamped>());
+  EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter2));
 }
 
 int main(int argc, char **argv)

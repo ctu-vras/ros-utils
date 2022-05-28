@@ -48,6 +48,11 @@ add_dependencies(cras_repeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catki
 target_link_libraries(cras_repeat_nodelet cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_repeat_nodelet ${PROJECT_NAME}/repeat.h cras::RepeatMessagesNodelet OUTPUT_NAME repeat ANONYMOUS)
 
+add_library(cras_change_header_nodelet src/change_header.cpp)
+add_dependencies(cras_change_header_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_change_header_nodelet cras_shape_shifter ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_change_header_nodelet ${PROJECT_NAME}/change_header.h cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING REGEX ".*\\.hp?p?$"
@@ -91,4 +96,7 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest(test/test_repeat.test DEPENDENCIES cras_repeat_nodelet_node)
   add_rostest(test/test_repeat_nodelet.test DEPENDENCIES cras_repeat_nodelet)
+  
+  add_rostest(test/test_change_header.test DEPENDENCIES cras_change_header_nodelet_node)
+  add_rostest(test/test_change_header_nodelet.test DEPENDENCIES cras_change_header_nodelet)
 endif()
