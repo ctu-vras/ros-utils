@@ -429,6 +429,7 @@ TEST(StringUtils, Replace)  // NOLINT
   EXPECT_EQ("", replace("a", "a", ""));
   EXPECT_EQ("", replace("aa", "a", ""));
   EXPECT_EQ("testtest", replace("atestatesta", "a", ""));
+  EXPECT_EQ("štečřstštestš", replace("čřžtečřstčřžtestčřž", "čřž", "š"));
   
   EXPECT_EQ("", replace("test", "test", ""));
   EXPECT_EQ("a", replace("atest", "test", ""));
@@ -447,6 +448,24 @@ TEST(StringUtils, Replace)  // NOLINT
   EXPECT_EQ("ta", replace("tatata", "tata", ""));
   EXPECT_EQ("tata", replace("tatata", "tata", "ta"));  // it is not "recursive"
   EXPECT_EQ("abcd", replace("ababcdcd", "abcd", ""));  // it is not "recursive"
+
+  EXPECT_EQ("test", replace("test", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("test", replace("atest", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("test", replace("čřžtest", "čřž", "", cras::ReplacePosition::START));
+  EXPECT_EQ("", replace("", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("", replace("a", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("", replace("aa", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("testatesta", replace("atestatesta", "a", "", cras::ReplacePosition::START));
+  EXPECT_EQ("cababtestababab", replace("abababtestababab", "ab", "c", cras::ReplacePosition::START));
+
+  EXPECT_EQ("test", replace("test", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("test", replace("testa", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("test", replace("testčřž", "čřž", "", cras::ReplacePosition::END));
+  EXPECT_EQ("", replace("", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("", replace("a", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("a", replace("aa", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("atestatest", replace("atestatesta", "a", "", cras::ReplacePosition::END));
+  EXPECT_EQ("abababtestababc", replace("abababtestababab", "ab", "c", cras::ReplacePosition::END));
 }
 
 TEST(StringUtils, ReplaceInplace)  // NOLINT

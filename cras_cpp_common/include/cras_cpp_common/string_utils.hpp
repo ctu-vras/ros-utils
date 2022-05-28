@@ -122,21 +122,40 @@ bool startsWith(const ::std::string& str, const ::std::string& prefix);
 bool endsWith(const ::std::string& str, const ::std::string& suffix);
 
 /**
+ * \brief Specifies where a replace operation should act.
+ */
+enum class ReplacePosition
+{
+  //! \brief Act in the whole string.
+  EVERYWHERE,
+  
+  //! \brief Act only on the beginning of the string.
+  START,
+  
+  //! \brief Act only on the end of the string.
+  END
+};
+
+/**
  * \brief Replace all occurrences of `from` in `str` with `to`.
  * \param[in] str The string to replace in.
  * \param[in] from The string to replace.
  * \param[in] to The replacement.
+ * \param[in] where Where to do the replacement.
  * \return `str` with all occurrences of `from` replaced with `to`.
  */
-::std::string replace(const ::std::string& str, const ::std::string& from, const ::std::string& to);
+::std::string replace(const ::std::string& str, const ::std::string& from, const ::std::string& to,
+  const ::cras::ReplacePosition& where = ::cras::ReplacePosition::EVERYWHERE);
 
 /**
  * \brief Replace all occurrences of `from` in `str` with `to`.
  * \param[in,out] str The string to replace in.
  * \param[in] from The string to replace.
  * \param[in] to The replacement.
+ * \param[in] where Where to do the replacement.
  */
-void replace(::std::string& str, const ::std::string& from, const ::std::string& to);
+void replace(::std::string& str, const ::std::string& from, const ::std::string& to,
+  const ::cras::ReplacePosition& where = ::cras::ReplacePosition::EVERYWHERE);
 
 /**
  * \brief Check whether `str` contains character `c`.

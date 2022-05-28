@@ -113,20 +113,29 @@ bool endsWith(const std::string& str, const std::string& suffix)
   return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
-void replace(std::string& str, const std::string& from, const std::string& to)
+void replace(std::string& str, const std::string& from, const std::string& to, const ::cras::ReplacePosition& where)
 {
-  size_t start_pos = 0;
-  while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+  size_t startPos = 0;
+  while ((startPos = str.find(from, startPos)) != std::string::npos)
   {
-    str.replace(start_pos, from.length(), to);
-    start_pos += to.length();
+    if (where == cras::ReplacePosition::START && startPos != 0)
+      break;
+    const auto endPos = startPos + from.length();
+    if (where == cras::ReplacePosition::END && endPos != str.length())
+    {
+      startPos += 1;
+      continue;
+    }
+    str.replace(startPos, from.length(), to);
+    startPos += to.length();
   }
 }
 
-std::string replace(const std::string& str, const std::string& from, const std::string& to)
+std::string replace(const std::string& str, const std::string& from, const std::string& to,
+  const ::cras::ReplacePosition& where)
 {
   std::string s = str;
-  cras::replace(s, from, to);
+  cras::replace(s, from, to, where);
   return s;
 }
 
