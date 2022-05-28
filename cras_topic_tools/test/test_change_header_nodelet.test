@@ -191,6 +191,21 @@
         <param name="wait_time" value="10.0" />
     </test>
 
+    <!-- Do not modify anything -->
+    <node pkg="nodelet" type="nodelet" name="nothing" args="load cras_topic_tools/change_header manager node_in node_out_nothing" />
+    <node pkg="cras_topic_tools" type="filter" name="nothing_filter"
+          args="&quot;m.header.frame_id == 'test' and m.header.stamp.secs == 11&quot;" >
+        <remap from="in" to="node_out_nothing" />
+        <remap from="out" to="node_out_nothing_filtered" />
+    </node>
+    <test test-name="nothing_hztest" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out_nothing_filtered"/>
+        <param name="hz" value="10.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
     <!-- No header -->
     <node pkg="nodelet" type="nodelet" name="change_header_no_header" args="load cras_topic_tools/change_header manager node_in_no_header node_out_no_header">
         <param name="frame_id" value="test" />

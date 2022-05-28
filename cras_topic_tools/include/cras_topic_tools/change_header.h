@@ -109,6 +109,7 @@ protected:
         "Ignoring the message.", this->advertiseOptions->datatype.c_str());
       return;
     }
+    const auto origHeader = header.value();
 
     if (this->params.newFrameIdReplaceStart.has_value())
     {
@@ -152,6 +153,12 @@ protected:
 
     if (this->params.newStampAbs.has_value())
       header->stamp = this->params.newStampAbs.value();
+    
+    if (header.value() == origHeader)
+    {
+      this->pub.template publish(msg);
+      return;
+    }
 
     ::topic_tools::ShapeShifter newMsg;
     // cannot use newMsg = *msg in Melodic, that would segfault
