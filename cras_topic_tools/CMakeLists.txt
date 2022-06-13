@@ -10,7 +10,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED)
 
-catkin_package(LIBRARIES cras_shape_shifter)
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES cras_shape_shifter
+)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
