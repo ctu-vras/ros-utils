@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 """
 Remap `mux/selected` from a bagfile to `selected` and `mux` to the name of a mux, and this node will
 re-trigger the mux selection commands as they happened when the recorded system was running, so the
@@ -10,6 +13,12 @@ live mux to the `selected` input topic of this node. It should recognize such si
 only to messages that do not originate from the mux. This logic can, however, get broken in many
 ways, so always test it prior to usage in a particular scenario. Third-party nodes will observe
 all messages on the `mux/selected` topic doubled in case a loop exists.
+
+Subscriptions:
+- selected (std_msgs/String): Name of a selected output from a mux.
+
+Service clients:
+- mux/select (topic_tools/MuxSelect): Service called to switch the mux.
 """
 
 import rospy
@@ -18,6 +27,12 @@ from topic_tools.srv import MuxSelect, MuxSelectRequest
 
 
 def cb(msg):
+    """
+    Process the incoming "selected" message.
+    :param String msg: The message containing name of the selected topic.
+    """
+
+    # noinspection PyProtectedMember
     callerid = msg._connection_header['callerid']
 
     # update the service server in case it changed
@@ -28,6 +43,8 @@ def cb(msg):
     # do not react to messages published by the mux to the mux/selected topic in case the user
     # creates a loop
     if callerid == service_server:
+        rospy.logerr_once("Detected loop between mux %s and mux replay node %s! Please, use a separate "
+                          "'selected' topic for the replay node." % (rospy.resolve_name("mux"), rospy.get_name()))
         return
 
     req = MuxSelectRequest()
@@ -37,6 +54,11 @@ def cb(msg):
 
 
 def get_service_server():
+    """
+    Tries to get the name of the node that is providing the mux/select service.
+    :return: Name of the node, or empty string if this information cannot be extracted.
+    :rtype: str
+    """
     state = rospy.get_master().getSystemState()
     if len(state) >= 3 and len(state[2]) >= 3:
         services = dict(state[2][2])
@@ -50,19 +72,21 @@ if __name__ == "__main__":
 
     service = rospy.resolve_name("mux") + "/select"
 
-    waited = False
     while not rospy.is_shutdown():
         try:
             rospy.wait_for_service(service, rospy.Duration(1))
             break
         except rospy.ROSException:
             rospy.logwarn("Waiting for service " + service + " to appear")
-            waited = True
-    if waited:
-        rospy.loginfo("Service " + service + " found")
+
+    rospy.loginfo("Service " + service + " found")
 
     service_server = get_service_server()
 
     select = rospy.ServiceProxy(service, MuxSelect)
     sub = rospy.Subscriber('selected', String, cb, queue_size=10)
-    rospy.spin()
+
+    try:
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass

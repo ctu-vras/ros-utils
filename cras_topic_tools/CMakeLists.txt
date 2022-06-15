@@ -72,7 +72,7 @@ install(FILES
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-catkin_install_python(PROGRAMS nodes/filter
+catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
@@ -102,4 +102,7 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest(test/test_change_header.test DEPENDENCIES cras_change_header_nodelet_node)
   add_rostest(test/test_change_header_nodelet.test DEPENDENCIES cras_change_header_nodelet)
+  
+  add_rostest(test/test_mux_replay.test)
+  add_rostest(test/test_mux_replay_loop.test)
 endif()
