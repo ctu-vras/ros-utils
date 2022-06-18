@@ -19,6 +19,7 @@
 
   <build_export_depend>boost</build_export_depend>
 
+  <exec_depend>cras_py_common</exec_depend>
   <exec_depend>nodelet</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>

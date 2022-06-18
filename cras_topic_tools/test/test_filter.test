@@ -1,0 +1,188 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub"
+          args="pub -s -r 10 in geometry_msgs/Vector3Stamped &quot;{header: 'auto', vector: {'x': 0, 'y': 0, 'z': 0}}&quot;" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_str" args="pub -r 10 in_str std_msgs/String chatter" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_latch" args="pub -l in_latch std_msgs/String chatter" />
+
+    <!-- Pass all messages -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_all" args="'True'">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="node_out" />
+    </node>
+    <test test-name="filter_hztest_all" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="node_out"/>
+        <param name="hz" value="10.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+    
+    <!-- Input topic config in CLI args -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_all_in" args="in 'True'">
+        <remap from="~output" to="all_in_out" />
+    </node>
+    <test test-name="filter_hztest_all_in" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="all_in_out"/>
+        <param name="hz" value="10.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+    
+    <!-- Input and output topic config in CLI args -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_all_inout" args="in all_inout_out 'True'" />
+    <test test-name="filter_hztest_all_inout" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="all_inout_out"/>
+        <param name="hz" value="10.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Pass no messages -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_none" args="'False'">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="none_out" />
+    </node>
+    <test test-name="filter_hztest_none" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="none_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Pass every second message -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_half" args="'m.header.seq % 2 == 0'">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="half_out" />
+    </node>
+    <test test-name="filter_hztest_half" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="half_out"/>
+        <param name="hz" value="5.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Import a package in the filter function -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_import" args="'__import__(&quot;random&quot;).random() &gt; 0.5'">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="import_out" />
+    </node>
+    <test test-name="filter_hztest_import" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="import_out"/>
+        <param name="hz" value="5.0"/>
+        <param name="hzerror" value="1.0"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Exception in filter node does not kill the node, but discards the messages. -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_exception" args="'m.seq'" required="true">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="exception_out" />
+    </node>
+    <test test-name="filter_hztest_exception" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="exception_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Syntax error in filter node does not kill the node, but discards the messages. -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_syntax" args="'a:'" required="true">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="syntax_out" />
+    </node>
+    <test test-name="filter_hztest_syntax" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="syntax_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Return in filter node does not kill the node, but discards the messages. -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_return" args="'return True'" required="true">
+        <remap from="~input" to="in" />
+        <remap from="~output" to="return_out" />
+    </node>
+    <test test-name="filter_hztest_return" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="return_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- pass_only_header parameter works -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_header" args="'m.seq %2 == 0'" required="true">
+        <param name="pass_only_header" value="True" />
+        <remap from="~input" to="in" />
+        <remap from="~output" to="header_out" />
+    </node>
+    <test test-name="filter_hztest_header" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="header_out"/>
+        <param name="hz" value="5.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- pass_only_header parameter when the topic does not have a header -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_header_wrong" args="'True'" required="true">
+        <param name="pass_only_header" value="True" />
+        <remap from="~input" to="in_str" />
+        <remap from="~output" to="header_wrong_out" />
+    </node>
+    <test test-name="filter_hztest_header_wrong" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="header_wrong_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- pass_raw_buffer parameter -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_raw" args="'25 &lt; len(m) &lt; 50'" required="true">
+        <param name="pass_raw_buffer" value="True" />
+        <remap from="~input" to="in" />
+        <remap from="~output" to="raw_out" />
+    </node>
+    <test test-name="filter_hztest_raw" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="raw_out"/>
+        <param name="hz" value="10.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- pass_raw_buffer and pass_only_header do not work together -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_wrong" args="'True'">
+        <param name="pass_raw_buffer" value="True" />
+        <param name="pass_only_header" value="True" />
+        <remap from="~input" to="in" />
+        <remap from="~output" to="wrong_out" />
+    </node>
+    <test test-name="filter_hztest_wrong" pkg="rostest" type="hztest" retry="3">
+        <param name="topic" value="wrong_out"/>
+        <param name="hz" value="0.0"/>
+        <param name="hzerror" value="0.5"/>
+        <param name="test_duration" value="2.0" />
+        <param name="wait_time" value="10.0" />
+    </test>
+
+    <!-- Test latching topics are latched on the output, too -->
+    <node pkg="cras_topic_tools" type="filter" name="filter_latch" args="'True'">
+        <remap from="~input" to="in_latch" />
+        <remap from="~output" to="latch_out" />
+    </node>
+    <test test-name="filter_publishtest_latch" pkg="rostest" type="publishtest" retry="0" launch-prefix="bash -c 'sleep 5; $0 $@' ">
+        <rosparam>topics: [{name: "latch_out"}]</rosparam>
+    </test>
+
+</launch>

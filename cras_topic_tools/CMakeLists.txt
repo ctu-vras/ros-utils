@@ -105,4 +105,6 @@ if (CATKIN_ENABLE_TESTING)
   
   add_rostest(test/test_mux_replay.test)
   add_rostest(test/test_mux_replay_loop.test)
+  
+  add_rostest(test/test_filter.test)
 endif()
