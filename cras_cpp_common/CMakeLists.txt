@@ -23,6 +23,18 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(diagnostic_updater 1.9.6 QUIET)
 set(HAS_SLOW_TOPIC_UPDATER ${diagnostic_updater_FOUND})
 
+# detect https://github.com/ros/filters/pull/60 in the filters package added in 1.8.3 and 1.9.2
+find_package(filters QUIET)
+if(filters_VERSION VERSION_LESS 1.9.0)
+  if(filters_VERSION VERSION_GREATER_EQUAL 1.8.3)
+    set(HAS_FILTERCHAIN_GET_FILTERS ${filters_FOUND})
+  endif()
+else()
+  if(filters_VERSION VERSION_GREATER_EQUAL 1.9.2)
+    set(HAS_FILTERCHAIN_GET_FILTERS ${filters_FOUND})
+  endif()
+endif()
+
 generate_dynamic_reconfigure_options(
         cfg/FilterChain.cfg
 )
@@ -91,6 +103,9 @@ add_dependencies(nodelet_utils ${catkin_EXPORTED_TARGETS})
 add_library(filter_utils src/filter_utils.cpp)
 target_link_libraries(filter_utils string_utils ${catkin_LIBRARIES})
 add_dependencies(filter_utils ${catkin_EXPORTED_TARGETS})
+if (HAS_FILTERCHAIN_GET_FILTERS)
+  target_compile_definitions(filter_utils PRIVATE HAS_FILTERCHAIN_GET_FILTERS=1)
+endif()
 
 add_library(time_utils src/time_utils.cpp)
 target_link_libraries(time_utils ${catkin_LIBRARIES})

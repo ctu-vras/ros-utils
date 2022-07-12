@@ -19,6 +19,8 @@
 namespace cras
 {
 
+template<typename F> struct FilterChainPrivate;
+
 /**
  * This filterchain implementation allows for selectively disabling/enabling filters during run time.
  * It also adds a callback with the result of each filter run, so that you can e.g. publish the output of each filter.
@@ -44,20 +46,17 @@ public:
    * \param filterCallback Optional callback to be called after each filter finishes its work.
    */
   explicit FilterChain(const std::string &dataType, const FilterCallback& filterCallback = {});
+  virtual ~FilterChain();
   void setNodelet(const nodelet::Nodelet* nodelet);
   bool update(const F& data_in, F& data_out);
   void disableFilter(const std::string& name);
   void enableFilter(const std::string& name);
   void setDisabledFilters(std::unordered_set<std::string> filters);
 protected:
-  FilterCallback filterCallback;
-
   void callCallback(const F& data, size_t filterNum);
-
   void updateActiveFilters();
-  std::unordered_set<std::string> disabledFilters;
-  std::vector<boost::shared_ptr<filters::FilterBase<F> > > activeFilters;
-
+private:
+  std::unique_ptr<FilterChainPrivate<F>> data;
 };
 
 
