@@ -35,6 +35,18 @@ find_package(Eigen3 REQUIRED)
 
 find_package(urdfdom_headers REQUIRED)
 
+# Require https://github.com/ros/filters/pull/60 in the filters package (added in 1.8.3 and 1.9.2)
+find_package(filters QUIET)
+if(filters_VERSION VERSION_LESS 1.9.0)
+  if(filters_VERSION VERSION_LESS 1.8.3)
+    message(FATAL_ERROR "Please update package 'filters' to version 1.8.3 or newer.")
+  endif()
+else()
+  if(filters_VERSION VERSION_LESS 1.9.2)
+    message(FATAL_ERROR "Please update package 'filters' to version 1.9.2 or newer.")
+  endif()
+endif()
+
 generate_dynamic_reconfigure_options(
   cfg/FilterChain.cfg
 )
@@ -67,7 +79,6 @@ catkin_package(
     cras_cloud
     cras_diag_updater
     cras_diag_utils
-    cras_filter_chain
     cras_log_utils
     cras_node_utils
     cras_nodelet_manager
@@ -237,10 +248,10 @@ target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/
 target_link_libraries(cras_filter_base
   INTERFACE cras_log_utils cras_param_utils cras_string_utils ${catkin_LIBRARIES})
 
-add_library(cras_filter_chain src/filter_chain.cpp)
-add_dependencies(cras_filter_chain ${catkin_EXPORTED_TARGETS})
+add_library(cras_filter_chain INTERFACE)
+target_sources(cras_filter_chain INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_chain.hpp>)
 target_link_libraries(cras_filter_chain
-  PUBLIC cras_filter_base cras_log_utils cras_string_utils cras_type_utils ${catkin_LIBRARIES} Boost::boost)
+  INTERFACE cras_filter_base cras_log_utils cras_string_utils cras_type_utils ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_diag_utils
   src/diag_utils/topic_status_param.cpp

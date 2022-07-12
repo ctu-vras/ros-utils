@@ -6,6 +6,18 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+// HACK: to enable dynamically adding instances of filters
+// TODO: find a non-hack way to test it (probably configure()/clear() calls)
+#include <sstream>  // has to be there, otherwise we encounter build problems
+#include <ros/common.h>
+#define private protected
+#if ROS_VERSION_MINIMUM(1, 15, 0)
+#include <filters/filter_chain.hpp>
+#else
+#include <filters/filter_chain.h>
+#endif
+#undef private
+
 #include "gtest/gtest.h"
 #include <cras_cpp_common/filter_utils/filter_chain.hpp>
 
@@ -22,9 +34,9 @@ public:
   {
   }
 
-  void addFilter(boost::shared_ptr<filters::FilterBase<T>> filter)
+  void addFilter(std::shared_ptr<filters::FilterBase<T>> filter)
   {
-    this->getFilters().push_back(filter);
+    this->reference_pointers_.push_back(filter);
     this->updateActiveFilters();
   }
 };
@@ -84,7 +96,7 @@ TEST(FilterChain, Basic)
   EXPECT_TRUE(chain.update(20.0, out));
   EXPECT_EQ(10.0, out);
 
-  auto f = boost::make_shared<TestFilter<double>>(3.0);
+  auto f = std::make_shared<TestFilter<double>>(3.0);
   chain.addFilter(f);
 
   chain.disableFilter("test_filter");
@@ -245,7 +257,7 @@ TEST(FilterChain, Callback)
   TestChain<int> chain("int", cb, cbStarted);
   EXPECT_TRUE(chain.configure(config, "test"));
 
-  auto f = boost::make_shared<TestFilter<int>>(10);
+  auto f = std::make_shared<TestFilter<int>>(10);
   chain.addFilter(f);
 
   int out = 1;
@@ -339,7 +351,7 @@ TEST(FilterChain, SetNodelet)
   TestChain<int> chain("int");
   EXPECT_TRUE(chain.configure(config, "test"));
 
-  auto f = boost::make_shared<TestFilter<int>>(10);
+  auto f = std::make_shared<TestFilter<int>>(10);
   chain.addFilter(f);
 
   EXPECT_EQ(nullptr, f->getNodelet());

@@ -15,8 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include <ros/common.h>
 #if ROS_VERSION_MINIMUM(1, 15, 0)
 #include <filters/filter_base.hpp>
@@ -142,16 +140,10 @@ public:
   bool clear();
 
   /**
-   * \brief Get the list of filters configured for this chain.
-   * \return The filters.
-   */
-  const ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters() const;
-
-  /**
    * \brief Get a copy of the list of active filters.
    * \return The active filters.
    */
-  ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> getActiveFilters() const;
+  ::std::vector<::std::shared_ptr<::filters::FilterBase<F>>> getActiveFilters() const;
 
 protected:
   /**
@@ -174,12 +166,6 @@ protected:
    */
   void updateActiveFilters();
   
-  /**
-   * \brief Get the list of filters configured for this chain.
-   * \return The filters.
-   */
-  ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>>& getFilters();
-
   //! \brief The optional callback to call when a filter starts its work.
   FilterStartCallback filterStartCallback;
 
@@ -190,7 +176,7 @@ protected:
   ::std::unordered_set<::std::string> disabledFilters;
   
   //! \brief A list of filters that should be treated as active and should act on the input data.
-  ::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> activeFilters;
+  ::std::vector<::std::shared_ptr<::filters::FilterBase<F>>> activeFilters;
   
   //! \brief Mutex protecting activeFilters access.
   mutable ::std::mutex activeFiltersMutex;

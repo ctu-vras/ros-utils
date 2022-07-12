@@ -14,8 +14,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include <ros/common.h>
 #if ROS_VERSION_MINIMUM(1, 15, 0)
 #include <filters/filter_base.hpp>
@@ -50,7 +48,7 @@ void FilterChain<F>::setNodelet(const ::nodelet::Nodelet* nodelet)
 {
   for (const auto& filter : this->getFilters())
   {
-    auto crasFilter = ::boost::dynamic_pointer_cast<::cras::FilterBase<F>>(filter);
+    auto crasFilter = ::std::dynamic_pointer_cast<::cras::FilterBase<F>>(filter);
     if (crasFilter != nullptr)
       crasFilter->setNodelet(nodelet);
   }
@@ -209,7 +207,7 @@ template<typename F>
 }
 
 template<typename F>
-::std::vector<::boost::shared_ptr<::filters::FilterBase<F>>> FilterChain<F>::getActiveFilters() const
+::std::vector<::std::shared_ptr<::filters::FilterBase<F>>> FilterChain<F>::getActiveFilters() const
 {
   ::std::lock_guard<::std::mutex> lock(this->activeFiltersMutex);
   return this->activeFilters;
