@@ -29,4 +29,46 @@ void getRPY(const geometry_msgs::Quaternion& quat, double& roll, double& pitch, 
   getRPY(tmpQuat, roll, pitch, yaw);
 }
 
+double getRoll(const tf2::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return roll;
+}
+
+double getRoll(const geometry_msgs::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return roll;
+}
+
+double getPitch(const tf2::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return pitch;
+}
+
+double getPitch(const geometry_msgs::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return pitch;
+}
+
+double getYaw(const tf2::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return yaw;
+}
+
+double getYaw(const geometry_msgs::Quaternion& quat)
+{
+  double roll, pitch, yaw;
+  getRPY(quat, roll, pitch, yaw);
+  return yaw;
+}
+
 }

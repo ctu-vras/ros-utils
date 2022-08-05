@@ -27,51 +27,67 @@ TEST(TF2Utils, TF2GetRPY)  // NOLINT
   
   m.setRPY(0, 0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_EQ(0, roll); EXPECT_EQ(0, pitch); EXPECT_EQ(0, yaw);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q)); 
   
   m.setRPY(M_PI_2, 0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(M_PI_2, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0, M_PI_2, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(M_PI_2, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0, 0, M_PI_2); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(M_PI_2, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.1, 0.1, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.5, 0.5, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(1.0, 1.0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0, 0.1, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0, 0.5, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0, 1.0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.1, 0, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.5, 0, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(1.0, 0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.1, 0.1, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(0.5, 0.5, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
   
   m.setRPY(1.0, 1.0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
 }
 
 /**
@@ -86,51 +102,67 @@ TEST(TF2Utils, GeometryGetRPY)  // NOLINT
   
   m.setRPY(0, 0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_EQ(0, roll); EXPECT_EQ(0, pitch); EXPECT_EQ(0, yaw);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(M_PI_2, 0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(M_PI_2, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0, M_PI_2, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(M_PI_2, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0, 0, M_PI_2); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(M_PI_2, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.1, 0.1, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.5, 0.5, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(1.0, 1.0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0, 0.1, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0, 0.5, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0, 1.0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.1, 0, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.5, 0, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(1.0, 0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.1, 0.1, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(0.5, 0.5, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
   
   m.setRPY(1.0, 1.0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
+  EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
 }
 
 void fillBuffer(tf2::BufferCore& buf)

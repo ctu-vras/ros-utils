@@ -32,4 +32,46 @@ void getRPY(const ::tf2::Quaternion& quat, double& roll, double& pitch, double& 
  */
 void getRPY(const ::geometry_msgs::Quaternion& quat, double& roll, double& pitch, double& yaw);
 
+/**
+ * \brief Get roll from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Roll in radians.
+ */
+double getRoll(const ::tf2::Quaternion& quat);
+
+/**
+ * \brief Get roll from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Roll in radians.
+ */
+double getRoll(const ::geometry_msgs::Quaternion& quat);
+
+/**
+ * \brief Get pitch from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Pitch in radians.
+ */
+double getPitch(const ::tf2::Quaternion& quat);
+
+/**
+ * \brief Get pitch from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Pitch in radians.
+ */
+double getPitch(const ::geometry_msgs::Quaternion& quat);
+
+/**
+ * \brief Get yaw from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Yaw in radians.
+ */
+double getYaw(const ::tf2::Quaternion& quat);
+
+/**
+ * \brief Get yaw from the given quaternion.
+ * \param[in] quat The quaternion to convert.
+ * \return Yaw in radians.
+ */
+double getYaw(const ::geometry_msgs::Quaternion& quat);
+
 }
