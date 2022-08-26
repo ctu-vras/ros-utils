@@ -247,7 +247,7 @@ TEST(TimeUtils, SleepInterfaceSimTime)  // NOLINT
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
   
-  auto end = ros::WallTime::now() + ros::WallDuration(0.1);
+  auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -256,19 +256,19 @@ TEST(TimeUtils, SleepInterfaceSimTime)  // NOLINT
   
   ros::Time::setNow(ros::Time(10.99));
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   EXPECT_FALSE(executed);
   
   ros::Time::setNow(ros::Time(11, 0));
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   EXPECT_TRUE(executed);
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 }
@@ -295,7 +295,7 @@ TEST(TimeUtils, SleepInterfaceWallTime)  // NOLINT
     EXPECT_LT(1.0, duration.toSec());
   executed = true;}).detach();
   
-  auto end = ros::WallTime::now() + ros::WallDuration(1.2);
+  auto end = ros::WallTime::now() + ros::WallDuration(1.5);
   while ((!started || !executed) && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -321,19 +321,19 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
   
-  auto end = ros::WallTime::now() + ros::WallDuration(0.1);
+  auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
-  ros::WallDuration(0.1).sleep();
+  ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
   
   ros::Time::setNow({11, 1000});
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -349,19 +349,19 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_FALSE(i.sleep({1, 0}));
   executed = true;}).detach();
   
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
-  ros::WallDuration(0.1).sleep();
+  ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
   
   i.isOk = false;
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -378,7 +378,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
   
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -391,7 +391,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_TRUE(i.sleep(ros::Duration(0.1)));
   executed2 = true;}).detach();
   
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -400,13 +400,13 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
 
-  ros::WallDuration(0.1).sleep();
+  ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
   
   ros::Time::setNow(ros::Time(10.11));
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -415,7 +415,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   
   ros::Time::setNow({11, 1000});
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -432,7 +432,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_FALSE(i.sleep({1, 0}));
   executed = true;}).detach();
   
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -445,7 +445,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     EXPECT_FALSE(i.sleep({1, 0}));
   executed2 = true;}).detach();
   
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -460,7 +460,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   
   ros::Time::setNow(ros::Time(10.1));
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   
@@ -469,7 +469,7 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   
   i.isOk = false;
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -497,19 +497,19 @@ TEST(TimeUtils, SleepInterfaceInterruptWallTime)  // NOLINT
     EXPECT_FALSE(i->sleep({10, 0}));
   executed = true;}).detach();
 
-  auto end = ros::WallTime::now() + ros::WallDuration(0.1);
+  auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
-  ros::WallDuration(0.1).sleep();
+  ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
 
   i->isOk = false;
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
@@ -535,14 +535,14 @@ TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
     EXPECT_FALSE(i->sleep({1, 0}));
   executed = true;}).detach();
 
-  auto end = ros::WallTime::now() + ros::WallDuration(0.1);
+  auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
-  ros::WallDuration(0.1).sleep();
+  ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
 
   bool started2 = false;
@@ -554,7 +554,7 @@ TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
     i.reset();
   executed2 = true;}).detach();
 
-  end = ros::WallTime::now() + ros::WallDuration(0.1);
+  end = ros::WallTime::now() + ros::WallDuration(0.2);
   while ((!started2 || !executed2 || !executed) && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
 
