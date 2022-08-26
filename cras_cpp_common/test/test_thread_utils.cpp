@@ -30,7 +30,7 @@ TEST(SetThreadName, SetPerformance)  // NOLINT
     ++i;
   }
   
-  EXPECT_LT(500000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
+  EXPECT_LT(250000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
 }
 
 /**
@@ -47,7 +47,7 @@ TEST(SetThreadName, SetPerformanceLong)  // NOLINT
     ++i;
   }
   
-  EXPECT_LT(500000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
+  EXPECT_LT(250000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
 }
 
 /**
@@ -68,7 +68,7 @@ TEST(SetThreadName, SetGetPerformance)  // NOLINT
     ++i;
   }
 
-  EXPECT_LT(500000, i);  // about 1.4M in debug mode, 2.2M in release mode, but keep some slack
+  EXPECT_LT(250000, i);  // about 1.4M in debug mode, 2.2M in release mode, but keep some slack
 }
 
 /**
