@@ -287,97 +287,97 @@ cras::NodeParamHelper& getNodeHandle()
 
 TEST(NodeUtils, XmlRpcValue)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testXmlRpcValue(false);
 }
 
 TEST(NodeUtils, Bool)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testBool();
 }
 
 TEST(NodeUtils, Int)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testInt();
 }
 
 TEST(NodeUtils, Float)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testFloat();
 }
 
 TEST(NodeUtils, Double)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testDouble();
 }
 
 TEST(NodeUtils, Cstring)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testCstring();
 }
 
 TEST(NodeUtils, String)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testString();
 }
 
 TEST(NodeUtils, List)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testList();
 }
 
 TEST(NodeUtils, Dict)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testDict();
 }
 
 TEST(NodeUtils, Ros)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testRos();
 }
 
 TEST(NodeUtils, GeometryMsgs)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testGeometryMsgs();
 }
 
 TEST(NodeUtils, TF2)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testTF2();
 }
 
 TEST(NodeUtils, Eigen)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testEigen();
 }
 
 TEST(NodeUtils, Nested)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testNested();
 }
 
 TEST(NodeUtils, Misc)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testMisc();
 }
 
 TEST(NodeUtils, Options)
 {
-  NodeUtilsGetParamTest t {.nh = getNodeHandle()};
+  NodeUtilsGetParamTest t; t.nh = getNodeHandle();
   t.testOptions();
 }
 

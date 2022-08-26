@@ -62,6 +62,7 @@ TEST(SimpleTopicStatusParam, EmptyBracedInit)  // NOLINT
   EXPECT_EQ(5.0, d.maxDelay);
 }
 
+#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(SimpleTopicStatusParam, DesignatedBracedInit)  // NOLINT
 {
   SimpleTopicStatusParam<std_msgs::Header> h = {.rateWindowSize = 10};
@@ -78,6 +79,7 @@ TEST(SimpleTopicStatusParam, DesignatedBracedInit)  // NOLINT
   EXPECT_EQ(-1.0, d.minDelay);
   EXPECT_EQ(10.0, d.maxDelay);
 }
+#endif
 
 TEST(TopicStatusParams, Values)  // NOLINT
 {
@@ -505,7 +507,9 @@ TEST(TopicStatus, NoHeaderConstructors)  // NOLINT
   TopicStatus<std_msgs::Header> s2("a", TopicStatusParam<std_msgs::Header>(1.0, 2.0, 3.0, 4));
   TopicStatus<std_msgs::Header> s3("a", SimpleTopicStatusParam<std_msgs::Header>({1.0, 2.0, 3.0, 4}));
   TopicStatus<std_msgs::Header> s4("a", {1.0, 2.0, 3.0, 4});
+#ifdef HAS_DESIGNATED_INITIALIZERS
   TopicStatus<std_msgs::Header> s5("a", {.maxRate = 10.0, .rateTolerance = 1.0});
+#endif
   
   EXPECT_EQ("a", s1.getName());
   EXPECT_EQ(ros::Rate(1.0), s1.getMinRate());
@@ -534,13 +538,15 @@ TEST(TopicStatus, NoHeaderConstructors)  // NOLINT
   EXPECT_EQ(ros::Rate(1.5), s4.getExpectedRate());
   EXPECT_EQ(3.0, s4.getRateTolerance());
   EXPECT_EQ(4, s4.getRateWindowSize());
-  
+
+#ifdef HAS_DESIGNATED_INITIALIZERS
   EXPECT_EQ("a", s5.getName());
   EXPECT_EQ(ros::Rate(ros::DURATION_MAX), s5.getMinRate());
   EXPECT_EQ(ros::Rate(10.0), s5.getMaxRate());
   EXPECT_EQ(ros::Rate(10.0), s5.getExpectedRate());
   EXPECT_EQ(1.0, s5.getRateTolerance());
   EXPECT_EQ(5, s5.getRateWindowSize());
+#endif
 }
 
 TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
@@ -551,7 +557,9 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
   TopicStatus<diagnostic_msgs::DiagnosticArray> s3("a",
     SimpleTopicStatusParam<diagnostic_msgs::DiagnosticArray>({1.0, 2.0, 3.0, 4, 5.0, 6.0}));
   TopicStatus<diagnostic_msgs::DiagnosticArray> s4("a", {1.0, 2.0, 3.0, 4, 5.0, 6.0});
+#ifdef HAS_DESIGNATED_INITIALIZERS
   TopicStatus<diagnostic_msgs::DiagnosticArray> s5("a", {.maxRate = 10.0, .rateTolerance = 1.0});
+#endif
   
   EXPECT_EQ("a", s1.getName());
   EXPECT_EQ(ros::Rate(1.0), s1.getMinRate());
@@ -588,7 +596,8 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(4, s4.getRateWindowSize());
   EXPECT_EQ(ros::Duration(5.0), s4.getMinDelay());
   EXPECT_EQ(ros::Duration(6.0), s4.getMaxDelay());
-  
+
+#ifdef HAS_DESIGNATED_INITIALIZERS
   EXPECT_EQ("a", s5.getName());
   EXPECT_EQ(ros::Rate(ros::DURATION_MAX), s5.getMinRate());
   EXPECT_EQ(ros::Rate(10.0), s5.getMaxRate());
@@ -597,6 +606,7 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(5, s5.getRateWindowSize());
   EXPECT_EQ(ros::Duration(-1.0), s5.getMinDelay());
   EXPECT_EQ(ros::Duration(5.0), s5.getMaxDelay());
+#endif
 }
 
 TEST(TopicStatus, TickAndUpdateOk)  // NOLINT
@@ -874,6 +884,7 @@ TEST(SimpleDurationStatusParam, EmptyBracedInit)  // NOLINT
   EXPECT_EQ(true, p.noEventsIsOk);
 }
 
+#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(SimpleDurationStatusParam, DesignatedBracedInit)  // NOLINT
 {
   SimpleDurationStatusParam p = {.windowSize = 10};
@@ -883,6 +894,7 @@ TEST(SimpleDurationStatusParam, DesignatedBracedInit)  // NOLINT
   EXPECT_EQ(10u, p.windowSize);
   EXPECT_EQ(true, p.noEventsIsOk);
 }
+#endif
 
 TEST(DurationStatusParam, Init)  // NOLINT
 {

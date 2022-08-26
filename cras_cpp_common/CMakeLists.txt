@@ -109,6 +109,9 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 try_compile(HAS_FROM_CHARS_FLOAT
   ${CMAKE_BINARY_DIR}/from_chars ${CMAKE_CURRENT_SOURCE_DIR}/cmake/from_chars_try_compile.cpp
   CXX_STANDARD 17)
+try_compile(HAS_DESIGNATED_INITIALIZERS
+  ${CMAKE_BINARY_DIR}/designated_initializers ${CMAKE_CURRENT_SOURCE_DIR}/cmake/designated_initializers_try_compile.cpp
+  CXX_STANDARD 17)
 
 set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
@@ -426,6 +429,9 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_cras_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
   target_link_libraries(test_cras_diag_utils cras_diag_utils ${catkin_LIBRARIES})
   target_compile_options(test_cras_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+  if (HAS_DESIGNATED_INITIALIZERS)
+    target_compile_definitions(test_cras_diag_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
+  endif()
   
   add_rostest_gtest(test_cras_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_cras_filter_base cras_filter_base ${catkin_LIBRARIES})
@@ -434,6 +440,9 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_cras_param_utils test/test_param_utils.test test/test_param_utils.cpp)
   target_link_libraries(test_cras_param_utils cras_param_utils ${catkin_LIBRARIES})
   target_compile_options(test_cras_param_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
+  if (HAS_DESIGNATED_INITIALIZERS)
+    target_compile_definitions(test_cras_param_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
+  endif()
 
   add_rostest_gtest(test_cras_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
   target_link_libraries(test_cras_nodelet_get_param cras_nodelet_utils cras_param_utils ${catkin_LIBRARIES})
@@ -450,6 +459,9 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(test_cras_node_utils_diagnostics cras_node_utils cras_param_utils ${catkin_LIBRARIES})
   target_compile_options(test_cras_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
   add_dependencies(tests test_cras_node_utils_diagnostics)
+  if (HAS_DESIGNATED_INITIALIZERS)
+    target_compile_definitions(test_cras_node_utils_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
+  endif()
 
   add_rostest(test/test_node_utils.test DEPENDENCIES
     test_cras_node_utils_diagnostics
@@ -477,6 +489,9 @@ if (CATKIN_ENABLE_TESTING)
   target_link_libraries(test_cras_nodelet_diagnostics cras_diag_utils cras_nodelet_utils ${catkin_LIBRARIES})
   add_dependencies(tests test_cras_nodelet_diagnostics)
   target_compile_options(test_cras_nodelet_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
+  if (HAS_DESIGNATED_INITIALIZERS)
+    target_compile_definitions(test_cras_nodelet_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
+  endif()
   
   add_rostest(test/test_nodelet_utils.test DEPENDENCIES
     test_cras_nodelet_aware_tf_buffer

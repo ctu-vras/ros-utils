@@ -1299,98 +1299,98 @@ std::shared_ptr<TestParamAdapter> getParams()
 
 TEST(GetParam, XmlRpcValue)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testXmlRpcValue(true);
 }
 
 TEST(GetParam, Bool)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testBool();
 }
 
 TEST(GetParam, Int)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testInt();
 }
 
 TEST(GetParam, Float)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testFloat();
 }
 
 TEST(GetParam, Double)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testDouble();
 }
 
 TEST(GetParam, Cstring)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testCstring();
 }
 
 TEST(GetParam, String)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testString();
 }
 
 TEST(GetParam, List)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testList();
 }
 
 TEST(GetParam, Dict)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testDict();
 }
 
 TEST(GetParam, Ros)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   ros::Time::init();
   t.testRos();
 }
 
 TEST(GetParam, GeometryMsgs)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testGeometryMsgs();
 }
 
 TEST(GetParam, TF2)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testTF2();
 }
 
 TEST(GetParam, Eigen)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testEigen();
 }
 
 TEST(GetParam, Nested)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testNested();
 }
 
 TEST(GetParam, Misc)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testMisc();
 }
 
 TEST(GetParam, Options)  // NOLINT
 {
-  ParamUtilsGetParamTest t {.params = getParams()};
+  ParamUtilsGetParamTest t; t.params = getParams();
   t.testOptions();
 }
 
@@ -1398,7 +1398,7 @@ TEST(ParamHelper, Bool)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testBool();
 }
 
@@ -1406,7 +1406,7 @@ TEST(ParamHelper, Int)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testInt();
 }
 
@@ -1414,7 +1414,7 @@ TEST(ParamHelper, Float)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testFloat();
 }
 
@@ -1422,7 +1422,7 @@ TEST(ParamHelper, Double)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testDouble();
 }
 
@@ -1430,7 +1430,7 @@ TEST(ParamHelper, Cstring)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testCstring();
 }
 
@@ -1438,7 +1438,7 @@ TEST(ParamHelper, String)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testString();
 }
 
@@ -1446,7 +1446,7 @@ TEST(ParamHelper, List)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testList();
 }
 
@@ -1454,7 +1454,7 @@ TEST(ParamHelper, Dict)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testDict();
 }
 
@@ -1462,7 +1462,7 @@ TEST(ParamHelper, Ros)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   ros::Time::init();
   t.testRos();
 }
@@ -1471,7 +1471,7 @@ TEST(ParamHelper, GeometryMsgs)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testGeometryMsgs();
 }
 
@@ -1479,7 +1479,7 @@ TEST(ParamHelper, TF2)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testTF2();
 }
 
@@ -1487,7 +1487,7 @@ TEST(ParamHelper, Eigen)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testEigen();
 }
 
@@ -1495,7 +1495,7 @@ TEST(ParamHelper, Nested)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testNested();
 }
 
@@ -1503,7 +1503,7 @@ TEST(ParamHelper, Misc)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testMisc();
 }
 
@@ -1511,7 +1511,7 @@ TEST(ParamHelper, Options)  // NOLINT
 {
   TestParamHelper p(std::make_shared<TestLogHelper>());
   EXPECT_NE(nullptr, p.getLogger());
-  ParamHelperGetParamTest t { .p = &p, .params = getParams()};
+  ParamHelperGetParamTest t; t.p = &p; t.params = getParams();
   t.testOptions();
 }
 
@@ -1519,7 +1519,7 @@ TEST(BoundParamHelper, Bool)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testBool();
 }
 
@@ -1527,7 +1527,7 @@ TEST(BoundParamHelper, Int)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testInt();
 }
 
@@ -1535,7 +1535,7 @@ TEST(BoundParamHelper, Float)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testFloat();
 }
 
@@ -1543,7 +1543,7 @@ TEST(BoundParamHelper, Double)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testDouble();
 }
 
@@ -1551,7 +1551,7 @@ TEST(BoundParamHelper, Cstring)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testCstring();
 }
 
@@ -1559,7 +1559,7 @@ TEST(BoundParamHelper, String)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testString();
 }
 
@@ -1567,7 +1567,7 @@ TEST(BoundParamHelper, List)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testList();
 }
 
@@ -1575,7 +1575,7 @@ TEST(BoundParamHelper, Dict)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testDict();
 }
 
@@ -1583,7 +1583,7 @@ TEST(BoundParamHelper, Ros)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   ros::Time::init();
   t.testRos();
 }
@@ -1592,7 +1592,7 @@ TEST(BoundParamHelper, GeometryMsgs)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testGeometryMsgs();
 }
 
@@ -1600,7 +1600,7 @@ TEST(BoundParamHelper, TF2)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testTF2();
 }
 
@@ -1608,7 +1608,7 @@ TEST(BoundParamHelper, Eigen)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testEigen();
 }
 
@@ -1616,7 +1616,7 @@ TEST(BoundParamHelper, Nested)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testNested();
 }
 
@@ -1624,7 +1624,7 @@ TEST(BoundParamHelper, Misc)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testMisc();
 }
 
@@ -1632,7 +1632,7 @@ TEST(BoundParamHelper, Options)  // NOLINT
 {
   TestBoundParamHelper p(std::make_shared<TestLogHelper>(), getParams());
   EXPECT_NE(nullptr, p.getLogger());
-  BoundParamHelperGetParamTest t { .p = &p };
+  BoundParamHelperGetParamTest t; t.p = &p;
   t.testOptions();
 }
 
@@ -1776,6 +1776,7 @@ TEST(GetParamOptions, Constructor)  // NOLINT
     EXPECT_EQ(3.14, d);
   }
   
+#ifdef HAS_DESIGNATED_INITIALIZERS
   {  // test braced-initializer construction
     GetParamOptions<double> options{.throwIfConvertFails = true, .origParamName = "asd"};
     EXPECT_TRUE(options.printMessages);
@@ -1792,6 +1793,7 @@ TEST(GetParamOptions, Constructor)  // NOLINT
     EXPECT_TRUE(options.toParam(x, d, true, nullptr));
     EXPECT_EQ(3.14, d);
   }
+#endif
 
   // the following just tests it is possible to compile the default functions
   {GetParamOptions<double> options; options.toResult({});}
@@ -1824,8 +1826,9 @@ std::string testToStr2(const T&)
 
 TEST(GetParamOptions, Copy)  // NOLINT
 {
-  GetParamOptions<double> oDouble {.printMessages = false, .printDefaultAsWarn = true, .throwIfConvertFails = true,
-    .allowNestedParams = false, .paramToStr = &testToStr<double>, .resultToStr = &testToStr<double>};
+  GetParamOptions<double> oDouble;
+  oDouble.printMessages = false; oDouble.printDefaultAsWarn = true; oDouble.throwIfConvertFails = true;
+  oDouble.allowNestedParams = false; oDouble.paramToStr = &testToStr<double>; oDouble.resultToStr = &testToStr<double>;
   oDouble.toResult = [](const double&) {return 1.0;};
   oDouble.toParam = [](const XmlRpc::XmlRpcValue&, double& v, bool = true, std::list<std::string>* = nullptr) -> bool
     {
@@ -1905,8 +1908,9 @@ TEST(GetParamOptions, CustomType)  // NOLINT
 
 TEST(GetParamOptions, AsType)  // NOLINT
 {
-  GetParamOptions<double> oDouble {.printMessages = false, .printDefaultAsWarn = true, .throwIfConvertFails = true,
-    .allowNestedParams = false, .paramToStr = &testToStr<double>, .resultToStr = &testToStr<double>};
+  GetParamOptions<double> oDouble;
+  oDouble.printMessages = false; oDouble.printDefaultAsWarn = true; oDouble.throwIfConvertFails = true;
+  oDouble.allowNestedParams = false; oDouble.paramToStr = &testToStr<double>; oDouble.resultToStr = &testToStr<double>;
   oDouble.toResult = [](const double&) {return 1.0;};
   oDouble.toParam = [](const XmlRpc::XmlRpcValue&, double& v, bool = true, std::list<std::string>* = nullptr) -> bool
   {
