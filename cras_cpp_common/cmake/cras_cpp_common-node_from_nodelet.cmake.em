@@ -41,10 +41,12 @@ function(cras_node_from_nodelet target include_file class_name)
   message(STATUS "- Generating node ${NODE_NAME} from nodelet ${class_name}")
   
   find_package(roscpp REQUIRED)
+  find_package(cras_cpp_common REQUIRED)
   
   configure_file(${cras_cpp_common_CMAKE_DIR}/node_from_nodelet.cpp.in ${NODE_NAME}.cpp @@ONLY)
   add_executable(${NODE_TARGET_NAME} ${NODE_NAME}.cpp)
-  target_link_libraries(${NODE_TARGET_NAME} ${target} ${roscpp_LIBRARIES})
+  target_include_directories(${NODE_TARGET_NAME} PUBLIC ${roscpp_INCLUDE_DIRS} ${cras_cpp_common_INCLUDE_DIRS})
+  target_link_libraries(${NODE_TARGET_NAME} ${target} ${roscpp_LIBRARIES} ${cras_cpp_common_LIBRARIES})
   set_target_properties(${NODE_TARGET_NAME} PROPERTIES OUTPUT_NAME ${NODE_NAME} PREFIX "")
   
   install(TARGETS ${NODE_TARGET_NAME}

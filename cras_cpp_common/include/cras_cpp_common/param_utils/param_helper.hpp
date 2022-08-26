@@ -251,6 +251,15 @@ public:
   {
     return this->log;
   }
+  
+  /**
+   * \brief Set the log helper used for logging.
+   * \param[in] logger The new log helper.
+   */
+  void setLogger(const ::cras::LogHelperPtr& logger)
+  {
+    this->log = logger;
+  }
 
 protected:
   //! \brief The log helper to use for logging parameter read messages.
