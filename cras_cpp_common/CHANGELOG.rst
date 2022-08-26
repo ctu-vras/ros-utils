@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2022-08-26)
+------------------
 * Added LICENSE file.
 * Improved node_from_nodelet to use node logger instead of nodelet logger.
 * Added Github Actions CI.
