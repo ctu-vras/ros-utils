@@ -287,7 +287,7 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
   }
 }
 
-TEST(Cloud, GenericIteratorCopyData)  // NOLINT
+TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
 {
   sensor_msgs::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
@@ -302,6 +302,48 @@ TEST(Cloud, GenericIteratorCopyData)  // NOLINT
   cras::GenericCloudConstIter it_g_x(msg, "x");
   cras::GenericCloudConstIter it_g_y(msg, "y");
   cras::GenericCloudConstIter it_g_z(msg, "z");
+
+  cras::GenericCloudIter it2_g_x(msg2, "x");
+  cras::GenericCloudIter it2_g_y(msg2, "y");
+  cras::GenericCloudIter it2_g_z(msg2, "z");
+
+  for (size_t i = 0; i < 4; ++i)
+  {
+    it2_g_x.copyData(it_g_x);
+    it2_g_y.copyData(it_g_y);
+    it2_g_z.copyData(it_g_z);
+    ++it_g_x; ++it_g_y; ++it_g_z;
+    ++it2_g_x; ++it2_g_y; ++it2_g_z;
+  }
+
+  sensor_msgs::PointCloud2ConstIterator<float> it_x(msg2, "x");
+  sensor_msgs::PointCloud2ConstIterator<float> it_y(msg2, "y");
+  sensor_msgs::PointCloud2ConstIterator<float> it_z(msg2, "z");
+
+  for (size_t i = 0; i < 4; ++i)
+  {
+    EXPECT_EQ(i, *it_x);
+    EXPECT_EQ(i, *it_y);
+    EXPECT_EQ(i, *it_z);
+    ++it_x; ++it_y; ++it_z;
+  }
+}
+
+TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
+{
+  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::PointCloud2Modifier mod(msg);
+  mod.setPointCloud2FieldsByString(1, "xyz");
+  sensor_msgs::PointCloud2 msg2;
+  sensor_msgs::PointCloud2Modifier mod2(msg2);
+  mod2.setPointCloud2FieldsByString(1, "xyz");
+  
+  fillXYZ(msg, mod, 4);
+  fillXYZ(msg2, mod2, 4, true);
+
+  cras::GenericCloudIter it_g_x(msg, "x");
+  cras::GenericCloudIter it_g_y(msg, "y");
+  cras::GenericCloudIter it_g_z(msg, "z");
 
   cras::GenericCloudIter it2_g_x(msg2, "x");
   cras::GenericCloudIter it2_g_y(msg2, "y");
@@ -489,6 +531,8 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
   EXPECT_EQ(msg.fields[6].offset - msg.fields[5].offset, cras::sizeOfPointField(msg.fields[5]));
   EXPECT_EQ(msg.fields[7].offset - msg.fields[6].offset, cras::sizeOfPointField(msg.fields[6]));
   EXPECT_EQ(msg.point_step - msg.fields[7].offset, cras::sizeOfPointField(msg.fields[7]));
+  
+  EXPECT_THROW(cras::sizeOfPointField(sensor_msgs::PointField::FLOAT64 + 2), std::runtime_error);
 }
 
 int main(int argc, char **argv)

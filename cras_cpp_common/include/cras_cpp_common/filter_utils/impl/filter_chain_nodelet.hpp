@@ -322,6 +322,8 @@ void FilterChainNodelet<F>::dataCallback(const typename F::ConstPtr& data)
   }
   else
   {
+    if (this->publishDurationDiagnostics)
+      this->callbackDurationDiag->stop(::ros::WallTime::now());
     NODELET_ERROR_DELAYED_THROTTLE(3, "Filtering data from time %s failed.", ::cras::to_string(stamp).c_str());
   }
 

@@ -688,13 +688,15 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
 
   sensor_msgs::PointCloud2 out;
   cras::transformOnlyChannels(msg, out, createTestTf(),
-    {{"", cras::CloudChannelType::POINT}, {"normal_", cras::CloudChannelType::DIRECTION}});
+    {{"", cras::CloudChannelType::POINT},
+     {"normal_", cras::CloudChannelType::DIRECTION},
+     {"intensity", cras::CloudChannelType::SCALAR}});
 
   ASSERT_EQ("base_link", out.header.frame_id);
   ASSERT_EQ(msg.header.stamp, out.header.stamp);
   ASSERT_EQ(msg.width, out.width);
   ASSERT_EQ(msg.height, out.height);
-  ASSERT_EQ(6u, out.fields.size());
+  ASSERT_EQ(7u, out.fields.size());
   ASSERT_EQ(msg.is_bigendian, out.is_bigendian);
   ASSERT_EQ(msg.is_dense, out.is_dense);
   ASSERT_GT(msg.point_step, out.point_step);
@@ -708,21 +710,28 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
   sensor_msgs::PointCloud2Iterator<float> it_normal_y(out, "normal_y");
   sensor_msgs::PointCloud2Iterator<float> it_normal_z(out, "normal_z");
 
+  sensor_msgs::PointCloud2Iterator<uint16_t> it_intensity(out, "intensity");
+
   const auto nextPoint = [&]()
   {
-    ++it_x; ++it_y; ++it_z; ++it_normal_x; ++it_normal_y; ++it_normal_z;
+    ++it_x; ++it_y; ++it_z; ++it_normal_x; ++it_normal_y; ++it_normal_z; ++it_intensity;
   };
   
-  for (const auto& point : pointsOut)
+  for (size_t i = 0; i < pointsOut.size(); ++i)
   {
-    EXPECT_NEAR(point.x, *it_x, 1e-6);
-    EXPECT_NEAR(point.y, *it_y, 1e-6);
-    EXPECT_NEAR(point.z, *it_z, 1e-6);
+    const auto& pointIn = pointsIn[i];
+    const auto& pointOut = pointsOut[i];
+
+    EXPECT_NEAR(pointOut.x, *it_x, 1e-6);
+    EXPECT_NEAR(pointOut.y, *it_y, 1e-6);
+    EXPECT_NEAR(pointOut.z, *it_z, 1e-6);
 
     // should be rotated as vector, not as a point
-    EXPECT_NEAR(point.normal_x, *it_normal_x, 1e-6);
-    EXPECT_NEAR(point.normal_y, *it_normal_y, 1e-6);
-    EXPECT_NEAR(point.normal_z, *it_normal_z, 1e-6);
+    EXPECT_NEAR(pointOut.normal_x, *it_normal_x, 1e-6);
+    EXPECT_NEAR(pointOut.normal_y, *it_normal_y, 1e-6);
+    EXPECT_NEAR(pointOut.normal_z, *it_normal_z, 1e-6);
+
+    EXPECT_EQ(pointOut.intensity, *it_intensity);
 
     nextPoint();
   }

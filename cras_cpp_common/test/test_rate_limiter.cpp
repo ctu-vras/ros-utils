@@ -30,6 +30,12 @@ std::vector<ros::Time> createRegularSequence(const ros::Time& start, const ros::
   return result;
 }
 
+TEST(ThrottleLimiter, BadConstruct)  // NOLINT
+{
+  EXPECT_THROW(cras::ThrottleLimiter(ros::Rate(-1)), std::invalid_argument);
+  EXPECT_THROW(cras::ThrottleLimiter(ros::Duration(-1)), std::invalid_argument);
+}
+
 TEST(ThrottleLimiter, RegularSequence)  // NOLINT
 {
   cras::ThrottleLimiter limiter(ros::Rate(7));
@@ -108,6 +114,22 @@ TEST(ThrottleLimiter, JumpBack)  // NOLINT
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(1.3)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.4)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.5)));
+  
+  EXPECT_THROW(limiter.setJumpBackTolerance(ros::Duration(-1)), std::invalid_argument);
+
+  // Set jump tolerance to 5
+  EXPECT_TRUE(limiter.shouldPublish(ros::Time(10)));
+  limiter.setJumpBackTolerance(ros::Duration(5));
+  // And jump by 4 seconds, should not trigger reset
+  EXPECT_FALSE(limiter.shouldPublish(ros::Time(6)));
+  // Now jump by more than 5 seconds, should trigger reset
+  EXPECT_TRUE(limiter.shouldPublish(ros::Time(0, 1)));
+}
+
+TEST(TokenBucketLimiter, BadConstruct)  // NOLINT
+{
+  EXPECT_THROW(cras::TokenBucketLimiter(ros::Rate(-1)), std::invalid_argument);
+  EXPECT_THROW(cras::TokenBucketLimiter(ros::Duration(-1)), std::invalid_argument);
 }
 
 TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
@@ -239,6 +261,16 @@ TEST(TokenBucketLimiter, JumpBack)  // NOLINT
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(1.3)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.4)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.5)));
+
+  EXPECT_THROW(limiter.setJumpBackTolerance(ros::Duration(-1)), std::invalid_argument);
+
+  // Set jump tolerance to 5
+  EXPECT_TRUE(limiter.shouldPublish(ros::Time(10)));
+  limiter.setJumpBackTolerance(ros::Duration(5));
+  // And jump by 4 seconds, should not trigger reset
+  EXPECT_FALSE(limiter.shouldPublish(ros::Time(6)));
+  // Now jump by more than 5 seconds, should trigger reset
+  EXPECT_TRUE(limiter.shouldPublish(ros::Time(0, 1)));
 }
 
 TEST(TokenBucketLimiter, Params)  // NOLINT

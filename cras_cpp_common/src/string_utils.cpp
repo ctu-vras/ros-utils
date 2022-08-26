@@ -280,7 +280,7 @@ inline T parseFloatingNumber(const std::string& string)
   cras::stripLeading(cleanString, '+');
   cras::stripTrailing(cleanString, ' ');
 
-  auto [ptr, ec] = cras::from_chars(cleanString.data(), cleanString.data() + cleanString.size(), result);
+  auto [ptr, ec] = cras::from_chars(cleanString, result);
 
   if (ec == std::errc())
   {

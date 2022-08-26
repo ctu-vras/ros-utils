@@ -995,6 +995,50 @@ TEST(DurationStatus, TickAndUpdateOk)  // NOLINT
   EXPECT_EQ("Sim time", statusWrapper.values[9].value);
 }
 
+TEST(DurationStatus, TickAndUpdateOkEqualMinMax)  // NOLINT
+{
+  ros::Time::setNow({10, 0});
+
+  DurationStatus status("a", {11, 0}, {11, 0});
+
+  auto prevTime = ros::Time::now();
+  for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
+  {
+    ros::Time::setNow(time);
+    status.start(prevTime);
+    status.stop(ros::Time(time.toSec() * 2));
+    prevTime = time;
+  }
+  
+  diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
+  status.run(statusWrapper);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, statusWrapper.level);
+  EXPECT_EQ("Duration within limits.", statusWrapper.message);
+  EXPECT_EQ(11, statusWrapper.values.size());
+  EXPECT_EQ("Events in window", statusWrapper.values[0].key);
+  EXPECT_EQ("10", statusWrapper.values[0].value);
+  EXPECT_EQ("Events since startup", statusWrapper.values[1].key);
+  EXPECT_EQ("10", statusWrapper.values[1].value);
+  EXPECT_EQ("Duration of window (s)", statusWrapper.values[2].key);
+  EXPECT_EQ("1.000000", statusWrapper.values[2].value);
+  EXPECT_EQ("Minimum observed duration (s)", statusWrapper.values[3].key);
+  EXPECT_EQ("10.200000000", statusWrapper.values[3].value);
+  EXPECT_EQ("Maximum observed duration (s)", statusWrapper.values[4].key);
+  EXPECT_EQ("11.100000000", statusWrapper.values[4].value);
+  EXPECT_EQ("Mean observed duration (s)", statusWrapper.values[5].key);
+  EXPECT_EQ("10.650000000", statusWrapper.values[5].value);
+  EXPECT_EQ("Observed duration standard deviation (s)", statusWrapper.values[6].key);
+  EXPECT_EQ("0.302765036", statusWrapper.values[6].value);
+  EXPECT_EQ("Target duration (s)", statusWrapper.values[7].key);
+  EXPECT_EQ("11.000000000", statusWrapper.values[7].value);
+  EXPECT_EQ("Minimum acceptable duration (s)", statusWrapper.values[8].key);
+  EXPECT_EQ("9.900000000", statusWrapper.values[8].value);
+  EXPECT_EQ("Maximum acceptable duration (s)", statusWrapper.values[9].key);
+  EXPECT_EQ("12.100000000", statusWrapper.values[9].value);
+  EXPECT_EQ("Time mode", statusWrapper.values[10].key);
+  EXPECT_EQ("Sim time", statusWrapper.values[10].value);
+}
+
 TEST(DurationStatus, TickAndUpdateTooShort)  // NOLINT
 {
   ros::Time::setNow({10, 0});
@@ -1136,6 +1180,46 @@ TEST(DiagnosedPubSub, ConstructorsNoHeader)  // NOLINT
   EXPECT_NEAR(11.0, frequency(pubSub6.getDiagnosticTask()->getMaxRate()), 1e-6);
   EXPECT_EQ(12.0, pubSub6.getDiagnosticTask()->getRateTolerance());
   EXPECT_EQ(13u, pubSub6.getDiagnosticTask()->getRateWindowSize());
+  
+  nodeParams["rate"].clear();
+  nodeParams["rate"]["desired"] = 9.0;
+  nodeParams["rate"]["tolerance"] = 12.0;
+  nodeParams["rate"]["window_size"] = 13;
+  paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
+  params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
+
+  DiagnosedPubSub<std_msgs::Header> pubSub7(params);
+  ASSERT_NE(nullptr, pubSub7.getDiagnosticTask().get());
+  EXPECT_NEAR(9.0, frequency(pubSub7.getDiagnosticTask()->getMinRate(), true), 1e-6);
+  EXPECT_NEAR(9.0, frequency(pubSub7.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub7.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub7.getDiagnosticTask()->getRateWindowSize());
+
+  DiagnosedPubSub<std_msgs::Header> pubSub8(params, {1.0, 2.0, 3.0, 4});
+  ASSERT_NE(nullptr, pubSub8.getDiagnosticTask().get());
+  EXPECT_NEAR(9.0, frequency(pubSub8.getDiagnosticTask()->getMinRate()), 1e-6);
+  EXPECT_NEAR(9.0, frequency(pubSub8.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub8.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub8.getDiagnosticTask()->getRateWindowSize());
+
+  nodeParams["rate"]["min"] = 10.0;
+  nodeParams["rate"]["max"] = 11.0;
+  paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
+  params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
+
+  DiagnosedPubSub<std_msgs::Header> pubSub9(params);
+  ASSERT_NE(nullptr, pubSub9.getDiagnosticTask().get());
+  EXPECT_EQ(10.0, frequency(pubSub9.getDiagnosticTask()->getMinRate(), true));
+  EXPECT_NEAR(11.0, frequency(pubSub9.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub9.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub9.getDiagnosticTask()->getRateWindowSize());
+
+  DiagnosedPubSub<std_msgs::Header> pubSub10(params, {1.0, 2.0, 3.0, 4});
+  ASSERT_NE(nullptr, pubSub10.getDiagnosticTask().get());
+  EXPECT_EQ(10.0, frequency(pubSub10.getDiagnosticTask()->getMinRate()));
+  EXPECT_NEAR(11.0, frequency(pubSub10.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub10.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub10.getDiagnosticTask()->getRateWindowSize());
 }
 
 TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
@@ -1207,6 +1291,46 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   EXPECT_EQ(13u, pubSub6.getDiagnosticTask()->getRateWindowSize());
   EXPECT_EQ(ros::Duration(14), pubSub6.getDiagnosticTask()->getMinDelay());
   EXPECT_EQ(ros::Duration(15), pubSub6.getDiagnosticTask()->getMaxDelay());
+
+  nodeParams["rate"].clear();
+  nodeParams["rate"]["desired"] = 9.0;
+  nodeParams["rate"]["tolerance"] = 12.0;
+  nodeParams["rate"]["window_size"] = 13;
+  paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
+  params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
+
+  DiagnosedPubSub<std_msgs::Header> pubSub7(params);
+  ASSERT_NE(nullptr, pubSub7.getDiagnosticTask().get());
+  EXPECT_NEAR(9.0, frequency(pubSub7.getDiagnosticTask()->getMinRate(), true), 1e-6);
+  EXPECT_NEAR(9.0, frequency(pubSub7.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub7.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub7.getDiagnosticTask()->getRateWindowSize());
+
+  DiagnosedPubSub<std_msgs::Header> pubSub8(params, {1.0, 2.0, 3.0, 4});
+  ASSERT_NE(nullptr, pubSub8.getDiagnosticTask().get());
+  EXPECT_NEAR(9.0, frequency(pubSub8.getDiagnosticTask()->getMinRate()), 1e-6);
+  EXPECT_NEAR(9.0, frequency(pubSub8.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub8.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub8.getDiagnosticTask()->getRateWindowSize());
+
+  nodeParams["rate"]["min"] = 10.0;
+  nodeParams["rate"]["max"] = 11.0;
+  paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
+  params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
+
+  DiagnosedPubSub<std_msgs::Header> pubSub9(params);
+  ASSERT_NE(nullptr, pubSub9.getDiagnosticTask().get());
+  EXPECT_EQ(10.0, frequency(pubSub9.getDiagnosticTask()->getMinRate(), true));
+  EXPECT_NEAR(11.0, frequency(pubSub9.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub9.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub9.getDiagnosticTask()->getRateWindowSize());
+
+  DiagnosedPubSub<std_msgs::Header> pubSub10(params, {1.0, 2.0, 3.0, 4});
+  ASSERT_NE(nullptr, pubSub10.getDiagnosticTask().get());
+  EXPECT_EQ(10.0, frequency(pubSub10.getDiagnosticTask()->getMinRate()));
+  EXPECT_NEAR(11.0, frequency(pubSub10.getDiagnosticTask()->getMaxRate()), 1e-6);
+  EXPECT_EQ(12.0, pubSub10.getDiagnosticTask()->getRateTolerance());
+  EXPECT_EQ(13u, pubSub10.getDiagnosticTask()->getRateWindowSize());
 }
 
 TEST(DiagnosedPubSub, Attach)  // NOLINT

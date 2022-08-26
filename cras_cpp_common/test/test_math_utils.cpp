@@ -203,6 +203,13 @@ TEST(MathUtils, RunningStatsDouble)  // NOLINT
   EXPECT_NEAR(0.0, zeroStats.getVariance(), 1e-6);
   EXPECT_NEAR(0.0, zeroStats.getSampleVariance(), 1e-6);
   EXPECT_NEAR(0.0, zeroStats.getStandardDeviation(), 1e-6);
+  
+  const auto emptyStats = stats1 - sumStats;
+  EXPECT_EQ(0u, emptyStats.getCount());
+  EXPECT_NEAR(0.0, emptyStats.getMean(), 1e-6);
+  EXPECT_NEAR(0.0, emptyStats.getVariance(), 1e-6);
+  EXPECT_NEAR(0.0, emptyStats.getSampleVariance(), 1e-6);
+  EXPECT_NEAR(0.0, emptyStats.getStandardDeviation(), 1e-6);
 }
 
 TEST(MathUtils, RunningStatsDuration)  // NOLINT
@@ -363,6 +370,13 @@ TEST(MathUtils, RunningStatsDuration)  // NOLINT
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getVariance(), 1e-6);
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getSampleVariance(), 1e-6);
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getStandardDeviation(), 1e-6);
+
+  const auto emptyStats = stats1 - sumStats;
+  EXPECT_EQ(0u, emptyStats.getCount());
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getMean(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getVariance(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getSampleVariance(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getStandardDeviation(), 1e-6);
 }
 
 TEST(MathUtils, RunningStatsWallDuration)  // NOLINT
@@ -523,6 +537,13 @@ TEST(MathUtils, RunningStatsWallDuration)  // NOLINT
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getVariance(), 1e-6);
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getSampleVariance(), 1e-6);
   EXPECT_DURATION_NEAR(ZERO, zeroStats.getStandardDeviation(), 1e-6);
+
+  const auto emptyStats = stats1 - sumStats;
+  EXPECT_EQ(0u, emptyStats.getCount());
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getMean(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getVariance(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getSampleVariance(), 1e-6);
+  EXPECT_DURATION_NEAR(ZERO, emptyStats.getStandardDeviation(), 1e-6);
 }
 
 int main(int argc, char **argv)

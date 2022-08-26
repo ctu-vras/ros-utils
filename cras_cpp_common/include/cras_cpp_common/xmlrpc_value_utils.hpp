@@ -48,18 +48,8 @@ namespace cras
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::XmlRpc::XmlRpcValue& v, bool /*skipNonConvertible*/ = false,
   ::std::list<::std::string>* errors = nullptr)
 {
-  try
-  {
-    v = x;
-    return true;
-  }
-  catch (const ::XmlRpc::XmlRpcException& e)
-  {
-    if (errors)
-      errors->push_back(::cras::format("Error converting value %s to XmlRpcValue of type %s",
-        ::cras::to_string(x).c_str(), ::cras::to_cstring(v.getType())));
-    return false;
-  }
+  v = x;
+  return true;
 }
 
 //! \overload cras::convert(const XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&, bool, ::std::list<::std::string>*)

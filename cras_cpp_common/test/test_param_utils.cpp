@@ -1752,6 +1752,9 @@ TEST(GetParamAdapters, XmlRpcValue)  // NOLINT
   EXPECT_FALSE(a2->hasParam("non"));
   
   EXPECT_EQ("ns/inflation", a2->getNamespace());
+  
+  XmlRpc::XmlRpcValue badTypeParams = 1;
+  EXPECT_THROW(cras::XmlRpcValueGetParamAdapter(badTypeParams, "ns"), std::runtime_error);
 }
 
 TEST(GetParamOptions, Constructor)  // NOLINT

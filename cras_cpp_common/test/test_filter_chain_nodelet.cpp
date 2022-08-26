@@ -38,14 +38,16 @@ public:
   {
     data_out = data_in;
     data_out.data += ++this->data;
-    return true;
+    return this->succeed;
   }
 protected:
   bool configure() override
   {
+    this->succeed = this->getParam("bool_True", true);
     return true;
   }
   decltype(T::data) data {0};
+  bool succeed {true};
 };
 
 template <typename T>
@@ -251,6 +253,51 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
   EXPECT_EQ(9.0, filteredMsg->data);
 }
 
+TEST(FilterChainNodelet, ThreeFiltersFail)
+{
+  TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("three_filters_fail");
+  ros::param::set("/nodelet/lazy_subscription", false);
+  nodelet.init("/nodelet", {}, {});
+  
+  auto nh = nodelet.publicNodeHandle();
+  
+  std_msgs::Float32ConstPtr filteredMsg = nullptr;
+  size_t numReceived = 0;
+  
+  auto pub = nh.advertise<std_msgs::Float32>("in", 10);
+  
+  // Lazy subscription is disabled, so the nodelet should subscribe immediately
+  for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.01).sleep();
+  }
+  EXPECT_EQ(1u, pub.getNumSubscribers());
+
+  auto sub = nh.subscribe<std_msgs::Float32>("out", 10, [&](const std_msgs::Float32ConstPtr& msg)
+  {
+    filteredMsg = msg;
+    numReceived++;
+  });
+  
+  ros::WallDuration(0.1).sleep();
+  
+  std_msgs::Float32 msg;
+  msg.data = 0;
+  
+  pub.publish(msg);
+  
+  for (size_t i = 0; i < 4 && numReceived == 0; ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.1).sleep();
+  }
+  
+  // The filter should fail so no message should be received
+  EXPECT_EQ(0u, numReceived);
+  ASSERT_EQ(nullptr, filteredMsg);
+}
+
 TEST(FilterChainNodelet, PublishDiagnostics)
 {
   TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("one_filter");
@@ -316,6 +363,108 @@ TEST(FilterChainNodelet, PublishDiagnostics)
   EXPECT_EQ(10u, diagMsg->status[2].values.size());  // chain filter duration
   EXPECT_EQ(1u, diagMsg->status[3].values.size());  // chain diagnostics
   EXPECT_EQ(4u, diagMsg->status[4].values.size());  // in topic (lazy subscription, so it is last...)
+}
+
+TEST(FilterChainNodelet, PublishDiagnosticsFail)
+{
+  TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("three_filters_fail");
+  ros::param::set("/nodelet/publish_diagnostics", true);
+  nodelet.init("/nodelet", {}, {});
+
+  auto nh = nodelet.publicNodeHandle();
+
+  size_t numReceived = 0;
+  std_msgs::Float32ConstPtr received;
+  auto sub = nh.subscribe<std_msgs::Float32>("out", 10, [&](const std_msgs::Float32ConstPtr& msg)
+    {
+      received = msg;
+      numReceived++;
+    });
+
+  diagnostic_msgs::DiagnosticArrayConstPtr diagMsg = nullptr;
+  auto subDiag = nh.subscribe<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10,
+    [&](const diagnostic_msgs::DiagnosticArrayConstPtr& msg)
+    {
+      diagMsg = msg;
+    });
+
+  auto pub = nh.advertise<std_msgs::Float32>("in", 10);
+
+  for (size_t i = 0; i < 100 && (pub.getNumSubscribers() == 0 || subDiag.getNumPublishers() == 0); ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.01).sleep();
+  }
+  EXPECT_EQ(1u, pub.getNumSubscribers());
+  EXPECT_EQ(1u, subDiag.getNumPublishers());
+
+  // receive the "starting up" diag message
+  for (size_t i = 0; i < 10 && diagMsg == nullptr; ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.01).sleep();
+  }
+  
+  ASSERT_NE(nullptr, diagMsg);
+  ASSERT_EQ(1u, diagMsg->status.size());
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[0].level);
+  diagMsg = nullptr;
+  
+  pub.publish(std_msgs::Float32());
+  
+  // diagnostics should be published every second, so waiting a little over 1 second should make sure we get it
+  for (size_t i = 0; i < 120 && (numReceived == 0 || diagMsg == nullptr); ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.01).sleep();
+  }
+  
+  EXPECT_EQ(0u, numReceived);
+  ASSERT_NE(nullptr, diagMsg);
+  ASSERT_EQ(7u, diagMsg->status.size());
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, diagMsg->status[0].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[1].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[2].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[3].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[4].level);
+  EXPECT_EQ(4u, diagMsg->status[0].values.size());  // out topic
+  EXPECT_EQ(10u, diagMsg->status[1].values.size());  // all filters duration
+  EXPECT_EQ(10u, diagMsg->status[2].values.size());  // filter1 duration
+  EXPECT_EQ(10u, diagMsg->status[3].values.size());  // filter2 duration
+  EXPECT_EQ(10u, diagMsg->status[4].values.size());  // filter3 duration
+  EXPECT_EQ(3u, diagMsg->status[5].values.size());  // individual filters diagnostics
+  EXPECT_EQ(4u, diagMsg->status[6].values.size());  // in topic (lazy subscription, so it is last...)
+  
+  // Disable the failing filter and check that the chain started working
+
+  nodelet.setDisabledFilters({"filter2"});
+  diagMsg = nullptr;
+  
+  pub.publish(std_msgs::Float32());
+  
+  // diagnostics should be published every second, so waiting a little over 1 second should make sure we get it
+  for (size_t i = 0; i < 220 && (numReceived == 0 || diagMsg == nullptr); ++i)
+  {
+    ros::spinOnce();
+    ros::WallDuration(0.01).sleep();
+  }
+  
+  EXPECT_EQ(1u, numReceived);
+  EXPECT_EQ(3.0, received->data);
+  ASSERT_NE(nullptr, diagMsg);
+  ASSERT_EQ(7u, diagMsg->status.size());
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[0].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[1].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[2].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[3].level);
+  EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[4].level);
+  EXPECT_EQ(4u, diagMsg->status[0].values.size());  // out topic
+  EXPECT_EQ(10u, diagMsg->status[1].values.size());  // all filters duration
+  EXPECT_EQ(10u, diagMsg->status[2].values.size());  // filter1 duration
+  EXPECT_EQ(10u, diagMsg->status[3].values.size());  // filter2 duration
+  EXPECT_EQ(10u, diagMsg->status[4].values.size());  // filter3 duration
+  EXPECT_EQ(3u, diagMsg->status[5].values.size());  // individual filters diagnostics
+  EXPECT_EQ(4u, diagMsg->status[6].values.size());  // in topic (lazy subscription, so it is last...)
 }
 
 void updateConfig(dynamic_reconfigure::Client<cras_cpp_common::FilterChainConfig>& client,
