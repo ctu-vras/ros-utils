@@ -1,0 +1,33 @@
+topics:
+  -
+    name    : joy_teleop/cmd_vel
+    topic   : joy_teleop/cmd_vel
+    timeout : 1.5
+    priority: 101
+  -
+    name    : maker
+    topic   : cmd
+    timeout : 10.0
+    priority: 10
+  -
+    name     : common
+    topic    : cmd_vel
+    timeout  : 0.5
+    priority : 1
+    out_topic: mux_out2
+  -
+    name    : command_line
+    topic   : cmd_vel_terminal
+    timeout : 0.5
+    priority: 90
+locks:
+  -
+    name    : darpa_estop
+    topic   : emergency_stop
+    timeout : 10000.0
+    priority: 100
+  -
+    name    : estop
+    topic   : estop
+    timeout : 1.0
+    priority: 101
