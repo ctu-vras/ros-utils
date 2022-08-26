@@ -1,0 +1,9 @@
+This folder contains 3rd-party libraries that are used by cras_cpp_common.
+
+See the respective LICENSE files in the subfolders for their licenses.
+
+Libraries:
+
+- [fast_float](fast_float): `std::from_chars()` float parsing function shim for older compilers.
+- [invoke.hpp](invoke.hpp): `std::apply()` and `std::invoke()` shim for older compilers.
+- [tl/optional](tl): `std::optional` shim for older compilers.
