@@ -179,7 +179,7 @@ add_library(cras_time_utils
   src/time_utils/interruptible_sleep_interface.cpp)
 target_link_libraries(cras_time_utils
   PUBLIC ${catkin_LIBRARIES}
-  PRIVATE cras_semaphore)
+  PRIVATE cras_semaphore Boost::boost)
 
 add_library(cras_rate_limiter src/rate_limiter.cpp)
 target_link_libraries(cras_rate_limiter

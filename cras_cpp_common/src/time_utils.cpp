@@ -12,8 +12,20 @@
 
 #include <cras_cpp_common/time_utils.hpp>
 
+// Fallback for 128bit ints on armhf or non-gcc compilers
+#ifndef __SIZEOF_INT128__
+#include <boost/multiprecision/cpp_int.hpp>
+#endif
+
 namespace cras
 {
+
+#ifdef __SIZEOF_INT128__
+typedef __int128_t cras_int128_t;
+#else
+// Fallback for 128bit ints on armhf or non-gcc compilers
+typedef boost::multiprecision::int128_t cras_int128_t;
+#endif
 
 ros::Duration remainingTime(const ros::Time& query, const double timeout)
 {
@@ -95,7 +107,7 @@ ros::Duration operator/(const ros::Duration& numerator, const ros::Duration& den
 {
   if (denominator.sec == 0 && denominator.nsec == 0)
     throw std::runtime_error("Division by zero");
-  const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
+  const auto numeratorLarge = static_cast<cras::cras_int128_t>(numerator.toNSec()) * 1000000000LL;
   return ros::Duration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
 }
 
@@ -112,7 +124,7 @@ ros::WallDuration operator/(const ros::WallDuration& numerator, const ros::WallD
 {
   if (denominator.sec == 0 && denominator.nsec == 0)
     throw std::runtime_error("Division by zero");
-  const auto numeratorLarge = static_cast<__int128_t>(numerator.toNSec()) * 1000000000LL;
+  const auto numeratorLarge = static_cast<cras::cras_int128_t>(numerator.toNSec()) * 1000000000LL;
   return ros::WallDuration().fromNSec(static_cast<int64_t>(numeratorLarge / denominator.toNSec()));
 }
 
