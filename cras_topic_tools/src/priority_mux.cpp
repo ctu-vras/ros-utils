@@ -81,8 +81,8 @@ void PriorityMuxNodelet::onInit()
 
     config.name = xmlParams.getParam("name", config.inTopic);
     config.outTopic = xmlParams.getParam("out_topic", DEFAULT_OUT_TOPIC);
-    config.priority = xmlParams.getParam("priority", 100, "", {.printDefaultAsWarn = true});
-    config.timeout = xmlParams.getParam("timeout", ros::Duration{1, 0}, "s", {.printDefaultAsWarn = true});
+    config.priority = xmlParams.getParam("priority", 100, "", {true, true});
+    config.timeout = xmlParams.getParam("timeout", ros::Duration{1, 0}, "s", {true, true});
     config.queueSize = xmlParams.getParam("queue_size", 10_sz, "messages");
     
     this->topicConfigs[config.inTopic] = config;
@@ -138,8 +138,8 @@ void PriorityMuxNodelet::onInit()
     }
 
     config.name = xmlParams.getParam("name", config.topic);
-    config.priority = xmlParams.getParam("priority", 100, "", {.printDefaultAsWarn = true});
-    config.timeout = xmlParams.getParam("timeout", ros::Duration{1, 0}, "s", {.printDefaultAsWarn = true});
+    config.priority = xmlParams.getParam("priority", 100, "", {true, true});
+    config.timeout = xmlParams.getParam("timeout", ros::Duration{1, 0}, "s", {true, true});
     config.queueSize = xmlParams.getParam("queue_size", 10_sz, "messages");
     
     this->lockConfigs[config.topic] = config;
