@@ -8,6 +8,19 @@ This readme shortly introduces the provided libraries. Detailed documentation ca
 
 Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean Challenge](https://robotics.fel.cvut.cz/cras/darpa-subt/).
 
+## Support and Build Status
+
+This package is supported on Melodic and Noetic until their End of Life (and maybe later). It is occasionally tested with non-default GCC versions like Melodic+GCC8 or Noetic+GCC11.
+
+Development versions: [![CI](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml)
+[![Dev melodic](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/badge/icon?subject=melodic)](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/)
+
+Release jobs Melodic
+[![Melodic version](https://img.shields.io/ros/v/melodic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-melodic-cras-cpp-common/):
+[![Bin melodic-amd64](https://build.ros.org/job/Mbin_uB64__cras_cpp_common__ubuntu_bionic_amd64__binary/badge/icon?subject=bionic+amd64)](https://build.ros.org/job/Mbin_uB64__cras_cpp_common__ubuntu_bionic_amd64__binary/)
+[![Bin melodic-arm64](https://build.ros.org/job/Mbin_ubv8_uBv8__cras_cpp_common__ubuntu_bionic_arm64__binary/badge/icon?subject=bionic+arm64)](https://build.ros.org/job/Mbin_ubv8_uBv8__cras_cpp_common__ubuntu_bionic_arm64__binary/)
+[![Bin melodic-armhf](https://build.ros.org/job/Mbin_ubhf_uBhf__cras_cpp_common__ubuntu_bionic_armhf__binary/badge/icon?subject=bionic+armhf)](https://build.ros.org/job/Mbin_ubhf_uBhf__cras_cpp_common__ubuntu_bionic_armhf__binary/)
+
 ## List of provided libraries
 
 - `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
