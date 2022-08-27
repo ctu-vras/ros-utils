@@ -33,6 +33,13 @@
   </description>
 </class>
 </library>
+<library path="lib/libcras_priority_mux_nodelet">
+<class name="cras_topic_tools/priority_mux" type="cras::PriorityMuxNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+    relay
+  </description>
+</class>
+</library>
 <!-- Backwards compatibility. These can be deleted after a few months. Do not use in new code. -->
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_nodelet_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">

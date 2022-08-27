@@ -56,6 +56,11 @@ add_dependencies(cras_change_header_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} 
 target_link_libraries(cras_change_header_nodelet cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_change_header_nodelet ${PROJECT_NAME}/change_header.h cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
 
+add_library(cras_priority_mux_nodelet src/priority_mux.cpp)
+add_dependencies(cras_priority_mux_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_priority_mux_nodelet ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_priority_mux_nodelet ${PROJECT_NAME}/priority_mux.h cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING REGEX ".*\\.hp?p?$"
@@ -75,7 +80,7 @@ install(FILES
 catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-if (CATKIN_ENABLE_TESTING)
+if (CATKIN_ENABLE_TESTING AND CRAS_TOPIC_TOOLS_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(geometry_msgs REQUIRED)
 
