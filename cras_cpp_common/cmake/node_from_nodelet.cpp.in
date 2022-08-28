@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
   // Destroying the nodelet helps stopping the queues.
   nodelet.reset();
-  manager.removeQueue(stQueue);
-  manager.removeQueue(mtQueue);
-  manager.stop();
+
+  // Manager and callback queues are stopped and joined automatically in their destructors.
+  // Explicitly removing the queues could lead to "boost: mutex lock failed" errors when stopping the node.
 }

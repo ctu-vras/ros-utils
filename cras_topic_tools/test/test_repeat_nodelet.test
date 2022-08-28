@@ -159,7 +159,7 @@
         <remap from="reset" to="/repeat_discard_older/reset" />
     </test>
 
-     Publish both when a message arrives and on timer - the output rate should be double 
+    <!-- Publish both when a message arrives and on timer - the output rate should be double --> 
     <node pkg="nodelet" type="nodelet" name="repeat_fast" args="load cras_topic_tools/repeat manager node_in_fast 10 node_out_fast">
         <param name="publish_only_on_timer" value="false" />
         <param name="reset_on_msg" value="false" />
