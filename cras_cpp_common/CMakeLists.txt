@@ -36,6 +36,7 @@ find_package(Eigen3 REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
 # Require https://github.com/ros/filters/pull/60 in the filters package (added in 1.8.3 and 1.9.2)
+#catkin_lint: ignore_once duplicate_find
 find_package(filters QUIET)
 if(filters_VERSION VERSION_LESS 1.9.0)
   if(filters_VERSION VERSION_LESS 1.8.3)
@@ -53,7 +54,6 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS
-    external
     include
   CATKIN_DEPENDS
     bondcpp
@@ -100,7 +100,6 @@ catkin_package(
 )
 
 include_directories(
-  external
   include
   ${catkin_INCLUDE_DIRS}
 )
@@ -117,11 +116,11 @@ set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
 add_library(cras_functional INTERFACE)
 target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/functional.hpp>)
-target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/invoke.hpp/invoke.hpp>)
+target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/invoke.hpp/invoke.hpp>)
 
 add_library(cras_optional INTERFACE)
 target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/optional.hpp>)
-target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/tl/optional.hpp>)
+target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tl/optional.hpp>)
 
 add_library(cras_semaphore src/thread_utils/semaphore.cpp)
 
@@ -135,6 +134,7 @@ add_library(cras_literal_sz INTERFACE)
 target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.h>)
 
 add_library(cras_urdf_utils src/urdf_utils.cpp)
+#catkin_lint: ignore_once external_interface_path
 target_include_directories(cras_urdf_utils PUBLIC ${urdfdom_headers_INCLUDE_DIRS})
 target_link_libraries(cras_urdf_utils
   PUBLIC Eigen3::Eigen)
@@ -257,10 +257,10 @@ target_link_libraries(cras_filter_chain
   INTERFACE cras_filter_base cras_log_utils cras_string_utils cras_type_utils ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_diag_utils
-  src/diag_utils/topic_status_param.cpp
-  src/diag_utils/topic_diagnostic.cpp
+  src/diag_utils/duration_status.cpp
   src/diag_utils/duration_status_param.cpp
-  src/diag_utils/duration_status.cpp)
+  src/diag_utils/topic_diagnostic.cpp
+  src/diag_utils/topic_status_param.cpp)
 add_dependencies(cras_diag_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_diag_utils
   PUBLIC cras_diag_updater cras_log_utils cras_math_utils cras_message_utils cras_optional
@@ -310,11 +310,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
-install(DIRECTORY external/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
-  FILES_MATCHING REGEX ".*\\.hp?p?$"
-)
-
 install(DIRECTORY cmake/Modules
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
@@ -333,10 +328,10 @@ install(TARGETS
   cras_log_utils
   cras_math_utils
   cras_message_utils
+  cras_node_utils
   cras_nodelet_manager
   cras_nodelet_manager_sharing_tf_buffer
   cras_nodelet_utils
-  cras_node_utils
   cras_optional
   cras_param_utils
   cras_pool_allocator

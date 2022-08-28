@@ -26,7 +26,7 @@ using ::std::apply;
 #else
 namespace impl
 {
-#include <invoke.hpp/invoke.hpp>
+#include <cras_cpp_common/external/invoke.hpp/invoke.hpp>
 }
 using ::cras::impl::invoke_hpp::invoke;
 using ::cras::impl::invoke_hpp::invoke_result;

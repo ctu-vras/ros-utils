@@ -17,7 +17,7 @@ namespace cras
   using ::std::nullopt;
 }
 #else
-#include <tl/optional.hpp>
+#include <cras_cpp_common/external/tl/optional.hpp>
 namespace cras
 {
   using ::tl::optional;

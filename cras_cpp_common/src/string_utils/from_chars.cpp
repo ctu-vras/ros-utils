@@ -34,7 +34,7 @@ cras::from_chars_result from_chars(const char* first, const char* last, double& 
 
 #else
 
-#include <fast_float/fast_float.h>
+#include <cras_cpp_common/external/fast_float/fast_float.h>
 
 namespace cras
 {
