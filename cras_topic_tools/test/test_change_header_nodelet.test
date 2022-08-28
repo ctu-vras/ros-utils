@@ -10,228 +10,107 @@
     
     <!-- Automatic input name -->
     <node pkg="nodelet" type="nodelet" name="change_header_input" args="load cras_topic_tools/change_header manager">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
         <remap from="~input" to="node_in" />
     </node>
-    <test test-name="change_header_hztest_input" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="change_header_input/output"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Automatic output name -->
     <node pkg="nodelet" type="nodelet" name="change_header" args="load cras_topic_tools/change_header manager node_in">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
     </node>
-    <test test-name="change_header_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_in_change_header"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Explicit output name -->
     <node pkg="nodelet" type="nodelet" name="change_header_explicit" args="load cras_topic_tools/change_header manager node_in node_out">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
     </node>
-    <test test-name="change_header_hztest_explicit" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Automatic input name -->
     <node pkg="nodelet" type="nodelet" name="change_header_input_lazy" args="load cras_topic_tools/change_header manager">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
         <param name="lazy" value="true" />
         <remap from="~input" to="node_in" />
     </node>
-    <test test-name="change_header_hztest_input_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="change_header_input_lazy/output"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Automatic output name -->
     <node pkg="nodelet" type="nodelet" name="change_header_lazy" args="load cras_topic_tools/change_header manager node_in_lazy">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
         <param name="lazy" value="true" />
         <remap from="node_in_lazy" to="node_in" />
     </node>
-    <test test-name="change_header_hztest_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_in_lazy_change_header"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Explicit output name -->
     <node pkg="nodelet" type="nodelet" name="change_header_explicit_lazy" args="load cras_topic_tools/change_header manager node_in node_out_lazy">
-        <param name="frame_id" value="test" />
+        <param name="frame_id" value="abcd" />
         <param name="lazy" value="true" />
     </node>
-    <test test-name="change_header_hztest_explicit_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_lazy"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Change absolute -->
     <node pkg="nodelet" type="nodelet" name="change_header_absolute" args="load cras_topic_tools/change_header manager node_in node_out_absolute">
         <param name="frame_id" value="abcd" />
         <param name="stamp" value="10.0" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="change_header_absolute_filter"
-          args="&quot;m.header.frame_id == 'abcd' and m.header.stamp.secs == 10&quot;" >
-        <remap from="in" to="node_out_absolute" />
-        <remap from="out" to="node_out_absolute_filtered" />
-    </node>
-    <test test-name="change_header_hztest_absolute" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_absolute_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Change prefix -->
     <node pkg="nodelet" type="nodelet" name="change_header_prefix" args="load cras_topic_tools/change_header manager node_in node_out_prefix">
         <param name="frame_id_prefix" value="abcd" />
         <param name="stamp_relative" value="-10.0" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="change_header_prefix_filter"
-          args="&quot;m.header.frame_id == 'abcdtest' and m.header.stamp.secs == 1&quot;" >
-        <remap from="in" to="node_out_prefix" />
-        <remap from="out" to="node_out_prefix_filtered" />
-    </node>
-    <test test-name="change_header_hztest_prefix" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_prefix_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Change suffix -->
     <node pkg="nodelet" type="nodelet" name="change_header_suffix" args="load cras_topic_tools/change_header manager node_in node_out_suffix">
         <param name="frame_id_suffix" value="abcd" />
         <param name="stamp_relative" value="10.0" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="change_header_suffix_filter"
-          args="&quot;m.header.frame_id == 'testabcd' and m.header.stamp.secs == 21&quot;" >
-        <remap from="in" to="node_out_suffix" />
-        <remap from="out" to="node_out_suffix_filtered" />
-    </node>
-    <test test-name="change_header_hztest_suffix" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_suffix_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Replace start of frame ID -->
     <node pkg="nodelet" type="nodelet" name="replace_header_start" args="load cras_topic_tools/change_header manager node_in node_out_replace_start">
         <param name="frame_id_replace_start" value="t|asd" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="replace_header_start_filter"
-          args="&quot;m.header.frame_id == 'asdest' and m.header.stamp.secs == 11&quot;" >
-        <remap from="in" to="node_out_replace_start" />
-        <remap from="out" to="node_out_replace_start_filtered" />
-    </node>
-    <test test-name="replace_header_start_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_replace_start_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Replace end of frame ID -->
     <node pkg="nodelet" type="nodelet" name="replace_header_end" args="load cras_topic_tools/change_header manager node_in node_out_replace_end">
         <param name="frame_id_replace_end" value="t|asd" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="replace_header_end_filter"
-          args="&quot;m.header.frame_id == 'tesasd' and m.header.stamp.secs == 11&quot;" >
-        <remap from="in" to="node_out_replace_end" />
-        <remap from="out" to="node_out_replace_end_filtered" />
-    </node>
-    <test test-name="replace_header_end_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_replace_end_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Replace anywhere in frame ID -->
     <node pkg="nodelet" type="nodelet" name="replace_header" args="load cras_topic_tools/change_header manager node_in node_out_replace">
         <param name="frame_id_replace" value="t|asd" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="replace_header_filter"
-          args="&quot;m.header.frame_id == 'asdesasd' and m.header.stamp.secs == 11&quot;" >
-        <remap from="in" to="node_out_replace" />
-        <remap from="out" to="node_out_replace_filtered" />
-    </node>
-    <test test-name="replace_header_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_replace_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Do not modify anything -->
     <node pkg="nodelet" type="nodelet" name="nothing" args="load cras_topic_tools/change_header manager node_in node_out_nothing" />
-    <node pkg="cras_topic_tools" type="filter" name="nothing_filter"
-          args="&quot;m.header.frame_id == 'test' and m.header.stamp.secs == 11&quot;" >
-        <remap from="in" to="node_out_nothing" />
-        <remap from="out" to="node_out_nothing_filtered" />
-    </node>
-    <test test-name="nothing_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_nothing_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- No header -->
-    <node pkg="nodelet" type="nodelet" name="change_header_no_header" args="load cras_topic_tools/change_header manager node_in_no_header node_out_no_header">
+    <node pkg="nodelet" type="nodelet" name="change_header_no_header" args="load cras_topic_tools/change_header manager node_in_no_header node_out_no_header" required="true">
         <param name="frame_id" value="test" />
     </node>
-    <test test-name="change_header_hztest_no_header" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_no_header"/>
-        <param name="hz" value="0.0"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="5.0" />
-    </test>
 
     <!-- Change stamp too much to negative - the resulting stamp should be 1 nsec (the lowest valid time). -->
     <node pkg="nodelet" type="nodelet" name="change_header_negative_stamp" args="load cras_topic_tools/change_header manager node_in node_out_negative_stamp">
         <param name="stamp_relative" value="-20.0" />
     </node>
-    <node pkg="cras_topic_tools" type="filter" name="change_header_negative_stamp_filter"
-          args="&quot;m.header.frame_id == 'test' and m.header.stamp.secs == 0 and m.header.stamp.nsecs == 1&quot;" >
-        <remap from="in" to="node_out_negative_stamp" />
-        <remap from="out" to="node_out_negative_stamp_filtered" />
+
+    <!-- Test all parameters at once -->
+    <node pkg="nodelet" type="nodelet" name="change_header_all" args="load cras_topic_tools/change_header manager node_in node_out_all">
+        <param name="stamp" value="10.0" />
+        <param name="stamp_relative" value="-2.0" />
+        <param name="frame_id" value="cras" />
+        <param name="frame_id_prefix" value="cbc" />
+        <param name="frame_id_suffix" value="sts" />
+        <param name="frame_id_replace_start" value="c|d" />
+        <param name="frame_id_replace_end" value="s|z" />
     </node>
-    <test test-name="change_header_hztest_negative_stamp" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_negative_stamp_filtered"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
+
+    <!-- Test all parameters except absolute changes at once -->
+    <node pkg="nodelet" type="nodelet" name="change_header_all_relative" args="load cras_topic_tools/change_header manager node_in node_out_all_relative">
+        <param name="stamp_relative" value="-2.0" />
+        <param name="frame_id_prefix" value="cbc" />
+        <param name="frame_id_suffix" value="sts" />
+        <param name="frame_id_replace_start" value="c|d" />
+        <param name="frame_id_replace_end" value="s|z" />
+    </node>
+
+    <!-- Run the test suite -->
+    <test test-name="change_header_test" pkg="cras_topic_tools" type="test_change_header" />
 
 </launch>
