@@ -66,7 +66,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
-install(TARGETS cras_count_messages_nodelet cras_throttle_messages_nodelet cras_relay_nodelet cras_shape_shifter
+install(TARGETS
+  cras_change_header_nodelet cras_count_messages_nodelet cras_priority_mux_nodelet cras_relay_nodelet
+  cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
@@ -80,7 +82,7 @@ install(FILES
 catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-if (CATKIN_ENABLE_TESTING AND CRAS_TOPIC_TOOLS_ENABLE_TESTING)
+if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(geometry_msgs REQUIRED)
 
