@@ -1,57 +1,67 @@
 <library path="lib/libcras_count_messages_nodelet">
   <class name="cras_topic_tools/count_messages" type="cras::CountMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
-      throttle
+      Count messages on a topic.
     </description>
   </class>
 </library>
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
-      throttle
+      This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
+      parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
+      algorithm.
     </description>
   </class>
 </library>
 <library path="lib/libcras_relay_nodelet">
 <class name="cras_topic_tools/relay" type="cras::RelayNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    relay
+    This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
+    allowing for maximum throughput.
   </description>
 </class>
 </library>
 <library path="lib/libcras_repeat_nodelet">
 <class name="cras_topic_tools/repeat" type="cras::RepeatMessagesNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    relay
+    This is a simple implementation of a repeater nodelet.
   </description>
 </class>
 </library>
 <library path="lib/libcras_change_header_nodelet">
 <class name="cras_topic_tools/change_header" type="cras::ChangeHeaderNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    relay
+    This is a relay nodelet that can modify headers. It can process the messages on a single topic in parallel
+    allowing for maximum throughput.
   </description>
 </class>
 </library>
 <library path="lib/libcras_priority_mux_nodelet">
 <class name="cras_topic_tools/priority_mux" type="cras::PriorityMuxNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    relay
-  </description>
+    Mux with configurable priorities for locking (inspired by twist_mux, but for all message types).
+  </description>relay
 </class>
 </library>
+
 <!-- Backwards compatibility. These can be deleted after a few months. Do not use in new code. -->
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_nodelet_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
-      throttle
+      DEPRECATED: Use cras_topic_tools/throttle_messages instead.
+      This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
+      parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
+      algorithm.
     </description>
   </class>
 </library>
 <library path="lib/libcras_relay_nodelet">
 <class name="cras_nodelet_topic_tools/relay" type="cras::RelayNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    relay
+    DEPRECATED: Use cras_topic_tools/relay instead.
+    This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
+    allowing for maximum throughput.
   </description>
 </class>
 </library>
