@@ -7,70 +7,30 @@
     <node pkg="cras_topic_tools" type="relay" name="relay_input">
         <remap from="~input" to="node_in" />
     </node>
-    <test test-name="relay_hztest_input" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="relay_input/output"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Automatic output name -->
     <node pkg="cras_topic_tools" type="relay" name="relay" args="node_in"/>
-    <test test-name="relay_hztest" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_in_relay"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Explicit output name -->
     <node pkg="cras_topic_tools" type="relay" name="relay_explicit" args="node_in node_out"/>
-    <test test-name="relay_hztest_explicit" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Automatic input name -->
     <node pkg="cras_topic_tools" type="relay" name="relay_input_lazy">
         <remap from="~input" to="node_in" />
         <param name="lazy" value="true" />
     </node>
-    <test test-name="relay_hztest_input_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="relay_input_lazy/output"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Automatic output name -->
     <node pkg="cras_topic_tools" type="relay" name="relay_lazy" args="node_in_lazy">
         <param name="lazy" value="true" />
         <remap from="node_in_lazy" to="node_in" />
     </node>
-    <test test-name="relay_hztest_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_in_lazy_relay"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
     <!-- Lazy + Explicit output name -->
     <node pkg="cras_topic_tools" type="relay" name="relay_explicit_lazy" args="node_in node_out_lazy">
         <param name="lazy" value="true" />
     </node>
-    <test test-name="relay_hztest_explicit_lazy" pkg="rostest" type="hztest" retry="3">
-        <param name="topic" value="node_out_lazy"/>
-        <param name="hz" value="10.0"/>
-        <param name="hzerror" value="0.5"/>
-        <param name="test_duration" value="2.0" />
-        <param name="wait_time" value="10.0" />
-    </test>
 
+    <!-- Run the test suite -->
+    <test test-name="relay_test" pkg="cras_topic_tools" type="test_relay" />
 </launch>

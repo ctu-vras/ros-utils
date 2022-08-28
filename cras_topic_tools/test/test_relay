@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Test helper for testing relay
+
+import rospy
+import rostest
+import unittest
+import sys
+
+from std_msgs.msg import String
+
+NAME = "test_relay"
+
+
+orig_msg = String()
+orig_msg.data = "chatter"
+
+
+class Relay(unittest.TestCase):
+    def __init__(self, *args):
+        super(Relay, self).__init__(*args)
+        rospy.init_node(NAME)
+
+        self.timeout = float(rospy.get_param("~timeout", 5))
+
+    def test_input(self):
+        msg = rospy.wait_for_message("relay_input/output", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+    def test_relay(self):
+        msg = rospy.wait_for_message("node_in_relay", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+    def test_explicit(self):
+        msg = rospy.wait_for_message("node_out", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+    def test_input_lazy(self):
+        msg = rospy.wait_for_message("relay_input_lazy/output", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+    def test_relay_lazy(self):
+        msg = rospy.wait_for_message("node_in_lazy_relay", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+    def test_explicit_lazy(self):
+        msg = rospy.wait_for_message("node_out_lazy", String, self.timeout)
+        self.assertEqual(msg, orig_msg)
+
+
+if __name__ == "__main__":
+    try:
+        rostest.run('rostest', NAME, Relay, sys.argv)
+    except KeyboardInterrupt:
+        pass
+    print("exiting")
