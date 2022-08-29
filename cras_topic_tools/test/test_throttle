@@ -23,7 +23,7 @@ class Throttle(unittest.TestCase):
         rospy.init_node(NAME)
 
         self.start_timeout = float(rospy.get_param("~start_timeout", 10))
-        self.test_duration = float(rospy.get_param("~test_duration", 2))
+        self.test_duration = float(rospy.get_param("~test_duration", 10))
 
         topics = (
             "throttle_input/output", "node_in_throttle", "node_out", "throttle_input_lazy/output",
@@ -58,17 +58,17 @@ class Throttle(unittest.TestCase):
         return self.msg_counts[topic] / self.test_duration
 
     def test_throttle(self):
-        self.assertAlmostEqual(self.get_freq("throttle_input/output"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("node_in_throttle"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("node_out"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("throttle_input_lazy/output"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("node_in_lazy_throttle"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("node_out_lazy"), 13, delta=3)
-        self.assertAlmostEqual(self.get_freq("node_out_param"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("throttle_input/output"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("node_in_throttle"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("node_out"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("throttle_input_lazy/output"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("node_in_lazy_throttle"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("node_out_lazy"), 13, delta=2)
+        self.assertAlmostEqual(self.get_freq("node_out_param"), 13, delta=2)
         # Yep, THROTTLE cannot make 20 Hz to 13 Hz correctly.
-        self.assertAlmostEqual(self.get_freq("throttle_method/output"), 10, delta=3)
+        self.assertAlmostEqual(self.get_freq("throttle_method/output"), 10, delta=2)
         # Default is 1 Hz
-        self.assertAlmostEqual(self.get_freq("node_out_invalid_rate"), 1, delta=0.5)
+        self.assertAlmostEqual(self.get_freq("node_out_invalid_rate"), 1, delta=0.25)
 
 
 if __name__ == "__main__":

@@ -11,14 +11,9 @@ if (CATKIN_ENABLE_TESTING)
   find_package(roslint REQUIRED)
 
   # catkin_lint - checks validity of package.xml and CMakeLists.txt
-  if (roslaunch_VERSION VERSION_GREATER_EQUAL 1.15.0)
-    set(distro noetic)
-  else()
-    set(distro melodic)
-  endif()
-
   # ROS buildfarm calls this without any environment, so we have problems reading the list of packages from env
-  # roslint_custom(catkin_lint "-W2" --rosdistro "${distro}" .)
-
-  # add_dependencies(run_tests roslint_${PROJECT_NAME})
+  # see https://github.com/ros-infrastructure/ros_buildfarm/issues/923
+  if(DEFINED ENV{ROS_ROOT})
+    roslint_custom(catkin_lint "-W2" .)
+  endif()
 endif()
