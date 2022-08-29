@@ -8,6 +8,9 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+#include <vector>
+
 #include <ros/serialization.h>
 
 #include <cras_topic_tools/shape_shifter.h>
@@ -30,7 +33,7 @@ void createShifter(const T& msg, topic_tools::ShapeShifter& shifter, std::vector
   shifter.read(istream);
   shifter.morph(ros::message_traits::MD5Sum<T>::value(), ros::message_traits::DataType<T>::value(),
     ros::message_traits::Definition<T>::value(), "0");
-  
+
   // Just verify that we have loaded the buffer into the shape shifter correctly by round-tripping the message
   EXPECT_EQ(msg, *shifter.instantiate<T>());
 }
@@ -52,7 +55,7 @@ TEST(ShapeShifter, GetBuffer)  // NOLINT
   size_t length;
   createShifter(msg, shifter, buf, length);
 
-  // Compare getBuffer() contents with the contents of the byte buffer 
+  // Compare getBuffer() contents with the contents of the byte buffer
   EXPECT_EQ(length, cras::getBufferLength(shifter));
   for (size_t i = 0; i < length; ++i)
     EXPECT_EQ(buf[i], cras::getBuffer(shifter)[i]);
@@ -174,11 +177,11 @@ TEST(ShapeShifter, SetHeaderSameLength)  // NOLINT
   auto newHeader = msg.header;
   newHeader.frame_id = "abcd";
   EXPECT_TRUE(cras::setHeader(shifter, newHeader));
-  
+
   const auto decodedHeader = cras::getHeader(shifter);
   ASSERT_TRUE(decodedHeader.has_value());
   EXPECT_EQ(newHeader, decodedHeader.value());
-  
+
   const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
   EXPECT_EQ(newHeader, newMsg->header);
   EXPECT_EQ(origMsg.point, newMsg->point);
@@ -205,11 +208,11 @@ TEST(ShapeShifter, SetHeaderShorter)  // NOLINT
   auto newHeader = msg.header;
   newHeader.frame_id = "ab";
   EXPECT_TRUE(cras::setHeader(shifter, newHeader));
-  
+
   const auto decodedHeader = cras::getHeader(shifter);
   ASSERT_TRUE(decodedHeader.has_value());
   EXPECT_EQ(newHeader, decodedHeader.value());
-  
+
   const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
   EXPECT_EQ(newHeader, newMsg->header);
   EXPECT_EQ(origMsg.point, newMsg->point);
@@ -236,11 +239,11 @@ TEST(ShapeShifter, SetHeaderLonger)  // NOLINT
   auto newHeader = msg.header;
   newHeader.frame_id = "abcdefgh";
   EXPECT_TRUE(cras::setHeader(shifter, newHeader));
-  
+
   const auto decodedHeader = cras::getHeader(shifter);
   ASSERT_TRUE(decodedHeader.has_value());
   EXPECT_EQ(newHeader, decodedHeader.value());
-  
+
   const auto newMsg = shifter.instantiate<geometry_msgs::PointStamped>();
   EXPECT_EQ(newHeader, newMsg->header);
   EXPECT_EQ(origMsg.point, newMsg->point);
@@ -267,7 +270,7 @@ TEST(ShapeShifter, CopyShapeShifter)  // NOLINT
   topic_tools::ShapeShifter shifter2;
   // If we used shifter2 = shifter, we'd get a segfault in Melodic when this function ends
   cras::copyShapeShifter(shifter, shifter2);
-  
+
   EXPECT_EQ(*shifter.instantiate<geometry_msgs::PointStamped>(), *shifter2.instantiate<geometry_msgs::PointStamped>());
   EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter2));
 }

@@ -83,35 +83,73 @@ catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
   find_package(geometry_msgs REQUIRED)
+  find_package(roslaunch REQUIRED)
+  find_package(roslint REQUIRED)
+  find_package(rostest REQUIRED)
+
+  # catkin_lint - checks validity of package.xml and CMakeLists.txt
+
+  roslint_custom(catkin_lint "-W2" .)
+
+  # Roslint C++ - checks formatting and some other rules for C++ files
+
+  file(GLOB_RECURSE ROSLINT_INCLUDE include/*.h include/*.hpp)
+  file(GLOB_RECURSE ROSLINT_SRC src/*.cpp src/*.hpp src/*.h)
+  file(GLOB_RECURSE ROSLINT_TEST test/*.cpp)
+
+  set(ROSLINT_CPP_OPTS "--extensions=h,hpp,hh,c,cpp,cc;--linelength=120;--filter=\
+    -build/header_guard,-readability/namespace,-whitespace/braces,-runtime/references,\
+    -build/c++11,-readability/nolint,-readability/todo,-legal/copyright")
+  roslint_cpp(${ROSLINT_INCLUDE} ${ROSLINT_SRC})
+
+  set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
+  roslint_cpp(${ROSLINT_TEST})
+
+  add_dependencies(run_tests roslint_${PROJECT_NAME})
+
+  # GTest tests
 
   catkin_add_gtest(test_shape_shifter test/test_shape_shifter.cpp)
   target_link_libraries(test_shape_shifter cras_shape_shifter ${catkin_LIBRARIES} ${geometry_msgs_LIBRARIES})
 
   add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
   target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})
+  roslaunch_add_file_check(test/test_lazy_subscriber.test USE_TEST_DEPENDENCIES)
 
   add_rostest(test/test_count_messages.test DEPENDENCIES cras_count_messages_nodelet cras_count_messages_nodelet_node)
-  
+  roslaunch_add_file_check(test/test_count_messages.test USE_TEST_DEPENDENCIES)
+
   add_rostest_gtest(test_cras_generic_lazy_pubsub test/test_generic_lazy_pubsub.test test/test_generic_lazy_pubsub.cpp)
   target_link_libraries(test_cras_generic_lazy_pubsub cras_generic_lazy_pubsub ${catkin_LIBRARIES})
   add_dependencies(test_cras_generic_lazy_pubsub cras_count_messages_nodelet_node)
-  
+  roslaunch_add_file_check(test/test_generic_lazy_pubsub.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_relay.test DEPENDENCIES cras_relay_nodelet_node)
+  roslaunch_add_file_check(test/test_relay.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_relay_nodelet.test DEPENDENCIES cras_relay_nodelet)
-  
+  roslaunch_add_file_check(test/test_relay_nodelet.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_throttle.test DEPENDENCIES cras_throttle_messages_nodelet_node)
+  roslaunch_add_file_check(test/test_throttle.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_throttle_nodelet.test DEPENDENCIES cras_throttle_messages_nodelet)
-  
+  roslaunch_add_file_check(test/test_throttle_nodelet.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_repeat.test DEPENDENCIES cras_repeat_nodelet_node)
+  roslaunch_add_file_check(test/test_repeat.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_repeat_nodelet.test DEPENDENCIES cras_repeat_nodelet)
-  
+  roslaunch_add_file_check(test/test_repeat_nodelet.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_change_header.test DEPENDENCIES cras_change_header_nodelet_node)
+  roslaunch_add_file_check(test/test_change_header.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_change_header_nodelet.test DEPENDENCIES cras_change_header_nodelet)
-  
+  roslaunch_add_file_check(test/test_change_header_nodelet.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_mux_replay.test)
+  roslaunch_add_file_check(test/test_mux_replay.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_mux_replay_loop.test)
-  
+  roslaunch_add_file_check(test/test_mux_replay_loop.test USE_TEST_DEPENDENCIES)
+
   add_rostest(test/test_filter.test)
+  roslaunch_add_file_check(test/test_filter.test USE_TEST_DEPENDENCIES)
 endif()

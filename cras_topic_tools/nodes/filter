@@ -61,7 +61,7 @@ def cb(anymsg):
     global pub
     global out_queue_size
     global type_check_ok
-    
+
     if type_check_ok is not None and not type_check_ok:
         return
 

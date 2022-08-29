@@ -7,7 +7,7 @@
           args="pub -r 10 node_in_fast geometry_msgs/PointStamped &quot;{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}, point: {x: 0.0, y: 0.0, z: 0.0}}&quot;" />
 
     <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
-    
+
     <!-- Automatic input name -->
     <node pkg="nodelet" type="nodelet" name="repeat_input" args="load cras_topic_tools/repeat manager">
         <param name="rate" value="13" />
@@ -80,7 +80,7 @@
         <param name="discard_older_messages" value="true" />
     </node>
 
-    <!-- Publish both when a message arrives and on timer - the output rate should be double --> 
+    <!-- Publish both when a message arrives and on timer - the output rate should be double -->
     <node pkg="nodelet" type="nodelet" name="repeat_fast" args="load cras_topic_tools/repeat manager node_in_fast 10 node_out_fast">
         <param name="publish_only_on_timer" value="false" />
         <param name="reset_on_msg" value="false" />

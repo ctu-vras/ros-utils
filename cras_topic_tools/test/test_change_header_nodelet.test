@@ -7,7 +7,7 @@
     <node pkg="rostopic" type="rostopic" name="rostopic_pub_no_header" args="pub -r 10 node_in_no_header std_msgs/String chatter" />
 
     <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
-    
+
     <!-- Automatic input name -->
     <node pkg="nodelet" type="nodelet" name="change_header_input" args="load cras_topic_tools/change_header manager">
         <param name="frame_id" value="abcd" />

@@ -11,12 +11,12 @@
         <remap from="~input" to="in" />
         <remap from="~output" to="node_out" />
     </node>
-    
+
     <!-- Input topic config in CLI args -->
     <node pkg="cras_topic_tools" type="filter" name="filter_all_in" args="in 'True'">
         <remap from="~output" to="all_in_out" />
     </node>
-    
+
     <!-- Input and output topic config in CLI args -->
     <node pkg="cras_topic_tools" type="filter" name="filter_all_inout" args="in all_inout_out 'True'" />
 

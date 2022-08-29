@@ -39,16 +39,16 @@ struct ChangeHeaderParams
 {
   //! \brief Replace the whole frame_id with this value.
   ::cras::optional<::std::string> newFrameId;
-  
+
   //! \brief Prefix frame_id with this value.
   ::cras::optional<::std::string> newFrameIdPrefix;
-  
+
   //! \brief Suffix frame_id with this value.
   ::cras::optional<::std::string> newFrameIdSuffix;
-  
+
   //! \brief Replace all occurences of first string with the second one in frame_id.
   ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplace;
-  
+
   //! \brief If frame_id starts with the first string, replace it with the second one.
   ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplaceStart;
 
@@ -57,21 +57,21 @@ struct ChangeHeaderParams
 
   //! \brief Replace stamp with the given value.
   ::cras::optional<::ros::Time> newStampAbs;
-  
+
   //! \brief Add this value to stamp. In case of under/overflow, TIME_MIN or TIME_MAX are set.
   ::cras::optional<::ros::Duration> newStampRel;
 };
 
 /**
  * \brief (Possibly lazy) publisher and subscriber pair that changes header of the received messages.
- * \tparam SubscriberType Type of the lazy-created subscriber. 
+ * \tparam SubscriberType Type of the lazy-created subscriber.
  */
 template <typename SubscriberType = ::ros::Subscriber>
 class ChangeHeaderPubSub : public ::cras::GenericLazyPubSub<SubscriberType>
 {
 public:
   /**
-   * \brief Create the lazy pub-sub object. 
+   * \brief Create the lazy pub-sub object.
    * \param[in] params Parameters of the header changer.
    * \param[in] topicIn Input topic.
    * \param[in] topicOut Output topic
@@ -88,7 +88,7 @@ public:
         params(::std::move(params))
   {
   }
-  
+
   ~ChangeHeaderPubSub() = default;
 
 protected:
@@ -128,7 +128,7 @@ protected:
       const auto fromTo = this->params.newFrameIdReplace.value();
       ::cras::replace(header->frame_id, fromTo.first, fromTo.second);
     }
-    
+
     if (this->params.newFrameIdPrefix.has_value())
       header->frame_id = this->params.newFrameIdPrefix.value() + header->frame_id;
 
@@ -153,7 +153,7 @@ protected:
 
     if (this->params.newStampAbs.has_value())
       header->stamp = this->params.newStampAbs.value();
-    
+
     if (header.value() == origHeader)
     {
       this->pub.template publish(msg);
@@ -169,7 +169,7 @@ protected:
         "Ignoring the message.", this->advertiseOptions->datatype.c_str());
       return;
     }
-    
+
     this->pub.template publish(newMsg);
   }
 
@@ -179,10 +179,10 @@ protected:
 
 /**
  * \brief Nodelet for relaying messages and changing their header.
- * 
+ *
  * ROS parameters:
- * - `~in_queue_size` (uint, default 10): Queue size for the subscriber. 
- * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher. 
+ * - `~in_queue_size` (uint, default 10): Queue size for the subscriber.
+ * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher.
  * - `~lazy` (bool, default False): Whether to shut down the subscriber when the publisher has no subscribers.
  *                                  The `~input` topic will be subscribed in the beginning, and will unsubscribe
  *                                  automatically after the first message is received (this is needed to determine the
@@ -199,16 +199,16 @@ protected:
  * - `~stamp_relative` (double, no default): If set, the given duration will be added to the message's stamp. If the
  *                                           stamp would under/overflow, ros::TIME_MIN or ros::TIME_MAX will be set.
  * - `~stamp` (double, no default): If set, the message's stamp will be set to this time.
- * 
+ *
  * Subscribed topics:
  * - `~input` (any type with header): The input messages. If `lazy` is true, it will only be subscribed when `~output`
  *                                    has some subscribers.
  *                                    If you subscribe to a message type without header, the node should not crash, but
  *                                    it will discard all received messages and print an error message.
- * 
+ *
  * Published topics:
  * - `~output` (same type as `~input`): The relayed output messages with changed header.
- * 
+ *
  * Command-line arguments:
  * This nodelet (or node) can also be called in a way backwards compatible with topic_tools/relay. This means you can
  * pass CLI arguments specifying the topics to subscribe/publish.
@@ -218,7 +218,7 @@ protected:
  *   - `TOPIC_OUT`: The topic to publish. It is resolved against parent namespace of the node(let) (as opposed to the
  *                  `~output` topic which is resolved against the private node(let) namespace). If not specified, output
  *                  topic will be `${TOPIC_IN}_relay`.
- * 
+ *
  * \note A copy of the received message will be made in any case to allow modification of the header. If you set
  *       frame_id to a longer string, another copy of the message will be made to make space for the prolonged ID.
  */
@@ -227,7 +227,7 @@ class ChangeHeaderNodelet : public ::cras::Nodelet
 protected:
   //! \brief The lazy pair of subscriber and publisher.
   ::std::unique_ptr<::cras::ChangeHeaderPubSub<>> pubSub;
-  
+
   void onInit() override;
 };
 

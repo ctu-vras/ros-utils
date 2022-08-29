@@ -33,7 +33,7 @@ template<typename SubscriberType>
     connectFn(connectFn), disconnectFn(disconnectFn), logHelper(::std::move(logHelper))
 {
 }
-  
+
 template<typename SubscriberType>
 ::cras::LazySubscriberBase<SubscriberType>::~LazySubscriberBase()
 {
@@ -55,14 +55,14 @@ void ::cras::LazySubscriberBase<SubscriberType>::setLazy(const bool lazy)
 
   if (lazy == this->lazy)
     return;
-  
+
   this->lazy = lazy;
-  
+
   if (lazy)
     this->logHelper->logDebug("Switching to lazy subscription mode");
   else
     this->logHelper->logDebug("Switching to non-lazy subscription mode");
-  
+
   this->updateSubscriptionNoLock();
 }
 

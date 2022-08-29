@@ -38,14 +38,14 @@ void CountMessagesNodelet::onInit()
 
   this->getMTPrivateNodeHandle().setParam("bytes", 0);
   this->getMTPrivateNodeHandle().setParam("count", 0);
-  
+
   // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from
   // https://github.com/ros/ros_comm/pull/1722
   ros::SubscribeOptions ops;
   ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
     "input", inQueueSize, boost::bind(&CountMessagesNodelet::cb, this, boost::placeholders::_1));
   this->sub = pnh.subscribe(ops);
-  
+
   ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
     "reset", inQueueSize, boost::bind(&CountMessagesNodelet::resetCb, this, boost::placeholders::_1));
   this->resetSub = pnh.subscribe(ops);

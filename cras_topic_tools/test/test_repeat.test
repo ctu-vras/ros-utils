@@ -79,7 +79,7 @@
         <remap from="reset" to="~reset" />
     </node>
 
-    <!-- Publish both when a message arrives and on timer - the output rate should be double --> 
+    <!-- Publish both when a message arrives and on timer - the output rate should be double -->
     <node pkg="cras_topic_tools" type="repeat" name="repeat_fast" args="node_in_fast 10 node_out_fast">
         <param name="publish_only_on_timer" value="false" />
         <param name="reset_on_msg" value="false" />
@@ -113,5 +113,5 @@
 
     <!-- Run the test suite -->
     <test test-name="repeat_test" pkg="cras_topic_tools" type="test_repeat" retry="3" />
-    
+
 </launch>

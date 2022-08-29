@@ -11,9 +11,9 @@
         <remap from="~bytes" to="/count/bytes" />
         <remap from="reset" to="/count/reset" />
     </test>
-    
+
     <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
-    
+
     <node pkg="nodelet" type="nodelet" name="count_nodelet" args="load cras_topic_tools/count_messages manager">
         <remap from="~input" to="nodelet_in" />
     </node>

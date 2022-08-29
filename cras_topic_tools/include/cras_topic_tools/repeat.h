@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include <memory>
 #include <mutex>
 #include <string>
@@ -41,19 +41,19 @@ struct RepeatMessagesParams
 {
   //! \brief The desired output rate.
   ::ros::Rate rate;
-  
+
   //! \brief Maximum number of repetitions of a single message (only limited when set).
   ::cras::optional<size_t> maxRepeats {::cras::nullopt};
-  
+
   //! \brief Maximum age of a message to allow publishing it (the message has to have a Header).
   ::cras::optional<::ros::Duration> maxAge {::cras::nullopt};
-  
+
   //! \brief Whether to discard an incoming message if its stamp is older than the previously accepted message.
   bool discardOlderMessages {false};
-  
+
   //! \brief Whether to reset the publication timer when a new message arrives.
   bool resetOnMsg {true};
-  
+
   //! \brief Whether to publish only on timer events, or also when an incoming message is received.
   bool publishOnlyOnTimer {false};
 };
@@ -62,14 +62,14 @@ struct RepeatMessagesParams
  * \brief (Possibly lazy) publisher and subscriber pair that repeats received messages at the given rate. The last
  *        received message is repeated until a newer message arrives. If the input rate is higher than the desired,
  *        the messages are published on the input rate (depending on configuration).
- * \tparam SubscriberType Type of the lazy-created subscriber. 
+ * \tparam SubscriberType Type of the lazy-created subscriber.
  */
 template <typename SubscriberType = ::ros::Subscriber>
 class RepeatMessagesPubSub : public ::cras::GenericLazyPubSub<SubscriberType>
 {
 public:
   /**
-   * \brief Create the lazy pub-sub object. 
+   * \brief Create the lazy pub-sub object.
    * \param[in] params Parameters of the repeater.
    * \param[in] topicIn Input topic.
    * \param[in] topicOut Output topic
@@ -89,14 +89,14 @@ public:
   }
 
   ~RepeatMessagesPubSub() override = default;
-  
+
   /**
    * \brief Reset the repeater, e.g. after a time jump.
    */
   void reset()
   {
     this->timer.setPeriod(this->params.rate.expectedCycleTime(), true);
-   
+
     ::std::lock_guard<::std::mutex> lock(this->msgMutex);
     this->msg.reset();
     this->numRepeats = 0;
@@ -132,11 +132,11 @@ protected:
           this->logHelper->logInfoThrottle(
             5.0, "Received message is %.3g s older than current message, it will be discarded.",
             (this->lastMsgStamp.value() - stamp.value()).toSec());
-          return; 
+          return;
         }
       }
     }
-    
+
     // Record the incoming message.
     {
       ::std::lock_guard<::std::mutex> lock(this->msgMutex);
@@ -144,7 +144,7 @@ protected:
       this->numRepeats = 0;
       this->lastMsgStamp = stamp;
     }
-    
+
     // Republish the message right away if the configuration says so.
     if (!this->params.publishOnlyOnTimer)
       this->maybePublish();
@@ -153,7 +153,7 @@ protected:
     if (this->params.resetOnMsg)
       this->timer.setPeriod(this->params.rate.expectedCycleTime(), true);
   }
-  
+
   /**
    * \brief Publish the last stored message (if it is eligible).
    */
@@ -181,7 +181,7 @@ protected:
     this->numRepeats += 1;
     this->pub.template publish(this->msg);
   }
-  
+
   /**
    * \brief Whether Header should be extracted from the message and its time stamp should undergo inspection.
    * \return Whether to extract the stamp.
@@ -203,29 +203,29 @@ protected:
 
   //! \brief Parameters of the repeater.
   ::cras::RepeatMessagesParams params;
-  
+
   //! \brief Mutex protecting msg, lastMsgStamp and numRepeats.
   ::std::mutex msgMutex;
-  
+
   //! \brief The last stored message (null if no message has been received yet).
   ::topic_tools::ShapeShifter::ConstPtr msg;
-  
+
   //! \brief Time stamp of the last stored message (only filled if `inspectStamps()` returns true.
   ::cras::optional<::ros::Time> lastMsgStamp;
-  
+
   //! \brief Number of times the last stored message has been repeated.
   size_t numRepeats {0};
-  
+
   //! \brief The timer periodically republishing the last stored message.
   ::ros::Timer timer;
 };
 
 /**
  * \brief Nodelet for repeating messages coming at a slower rate (or even just a single message).
- * 
+ *
  * ROS parameters:
- * - `~in_queue_size` (uint, default 10): Queue size for the subscriber. 
- * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher. 
+ * - `~in_queue_size` (uint, default 10): Queue size for the subscriber.
+ * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher.
  * - `~rate` (Hz, positive double, default 1.0): The desired rate of the published messages.
  * - `~lazy` (bool, default False): Whether to shut down the subscriber when the publisher has no subscribers.
  *                                  The `~input` topic will be subscribed in the beginning, and will unsubscribe
@@ -250,17 +250,17 @@ protected:
  *                                         incoming message is stored.
  * - `~publish_only_on_timer` (bool, default false): If true, messages are only published on timer events. If false,
  *                                                   they are also published right away as the come on the input topic.
- * 
+ *
  * Subscribed topics:
  * - `~input` (any type): The input messages. If `lazy` is true, it will only be subscribed when `~output` has some
  *                        subscribers.
  * - `~reset` (any type): When a message is received on this topic, the repeater is reset into its initial state
  *                        (i.e. the last received message is discarded). This should happen every time the ROS time
  *                        jumps, e.g. when simulation is reset or a bag file starts playing again.
- * 
+ *
  * Published topics:
  * - `~output` (same type as `~input`): The output messages.
- * 
+ *
  * Command-line arguments:
  * This nodelet (or node) can also be called with some arguments passed on command line. This means you can
  * pass CLI arguments specifying the topics to subscribe/publish and the rate.
@@ -271,7 +271,7 @@ protected:
  *   - `TOPIC_OUT`: The topic to publish. It is resolved against parent namespace of the node(let) (as opposed to the
  *                  `~output` topic which is resolved against the private node(let) namespace). If not specified, output
  *                  topic will be `${TOPIC_IN}_repeat`.
- * 
+ *
  * \note If `reset_on_msg` and `publish_only_on_timer` are both true and the rate of the incoming messages is higher
  *       than `rate` parameter, no message will ever be published by this repeated (the timer will get reset earlier
  *       than it can ever fire).
@@ -281,18 +281,17 @@ class RepeatMessagesNodelet : public ::cras::Nodelet
 protected:
   //! \brief The lazy pair of subscriber and publisher.
   ::std::unique_ptr<::cras::RepeatMessagesPubSub<>> pubSub;
-  
+
   //! \brief Subscriber to the reset topic.
   ::ros::Subscriber resetSub;
 
   void onInit() override;
-  
+
   /**
    * \brief Called when the repeater should be reset. The incoming message can be of any type and should not be
    *        examined.
    */
   virtual void onReset(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&);
-
 };
 
 }

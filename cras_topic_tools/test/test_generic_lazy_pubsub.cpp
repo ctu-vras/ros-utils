@@ -13,6 +13,8 @@
 #include <ros/topic_manager.h>
 #undef private
 
+#include <string>
+
 #include <ros/ros.h>
 #include <ros/subscription.h>
 #include <std_msgs/Header.h>
@@ -57,12 +59,12 @@ public:
       cras::GenericLazyPubSub<>(topicIn, topicOut, nh, inQueueSize, outQueueSize)
   {
   }
-  
+
   ros::Publisher& getPub()
   {
     return this->pub;
   }
-  
+
   ros::Subscriber& getSub()
   {
     return this->sub;
@@ -91,14 +93,14 @@ TEST(GenericLazyPubSub, OverallTest)  // NOLINT
   spin(0.1);
   EXPECT_EQ(0, inPub.getNumSubscribers());
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
-  
+
   boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
     {
       ++numOutReceived;
     };
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
-  
+
   spin(0.1);
   EXPECT_EQ(0, lazySub->numProcessed);
   EXPECT_FALSE(lazySub->getPub());
@@ -117,7 +119,7 @@ TEST(GenericLazyPubSub, OverallTest)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions(ns + "/in"));
     EXPECT_EQ(1, getNumSubscriptions(ns + "/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.2);
@@ -166,7 +168,7 @@ TEST(GenericLazyPubSub, OverallTest)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions(ns + "/in"));
     EXPECT_EQ(2, getNumSubscriptions(ns + "/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     // Simulate connection from a second node; this can't be done from within a single executable.
     // This should not have any effect as we're only interested in the first or last subscriber.
     lazySub->updateSubscription();
@@ -248,14 +250,14 @@ TEST(GenericLazyPubSub, StartSequenceNothing)  // NOLINT
   size_t numOutReceived = 0;
 
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
-  
+
   boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
     {
       ++numOutReceived;
     };
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
-  
+
   spin(0.1);
   EXPECT_EQ(0, lazySub->numProcessed);
   EXPECT_FALSE(lazySub->getPub());
@@ -274,7 +276,7 @@ TEST(GenericLazyPubSub, StartSequenceNothing)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions(ns + "/in"));
     EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
 
     spin(0.1);
@@ -285,7 +287,7 @@ TEST(GenericLazyPubSub, StartSequenceNothing)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions(ns + "/in"));
     EXPECT_EQ(1, getNumSubscriptions(ns + "/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     for (size_t i = 0; i < 10; ++i)
       inPub.publish(std_msgs::Header());
 
@@ -318,7 +320,7 @@ TEST(GenericLazyPubSub, StartSequenceIn)  // NOLINT
 
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
-  
+
   boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
     {
       ++numOutReceived;
@@ -329,9 +331,9 @@ TEST(GenericLazyPubSub, StartSequenceIn)  // NOLINT
   spin(0.1);
   EXPECT_EQ(0, inPub.getNumSubscribers());
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
-  
+
   spin(0.1);
   EXPECT_EQ(0, lazySub->numProcessed);
   EXPECT_FALSE(lazySub->getPub());
@@ -385,7 +387,7 @@ TEST(GenericLazyPubSub, StartSequenceOut)  // NOLINT
 
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
-  
+
   boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
     {
       ++numOutReceived;
@@ -397,9 +399,9 @@ TEST(GenericLazyPubSub, StartSequenceOut)  // NOLINT
   EXPECT_EQ(0, outSub.getNumPublishers());
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(1, getNumSubscriptions(ns + "/out"));
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
-  
+
   spin(0.1);
   EXPECT_EQ(0, lazySub->numProcessed);
   EXPECT_FALSE(lazySub->getPub());
@@ -455,7 +457,7 @@ TEST(GenericLazyPubSub, StartSequenceInOut)  // NOLINT
 
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
-  
+
   boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
     {
       ++numOutReceived;
@@ -468,7 +470,7 @@ TEST(GenericLazyPubSub, StartSequenceInOut)  // NOLINT
   EXPECT_EQ(0, outSub.getNumPublishers());
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(1, getNumSubscriptions(ns + "/out"));
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
 
   spin(0.1);
@@ -503,13 +505,13 @@ TEST(GenericLazyPubSub, StartSequenceNoOut)  // NOLINT
 
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
-  
+
   auto inPub = pnh.advertise<std_msgs::Header>("in", 10);
 
   spin(0.1);
   EXPECT_EQ(0, getNumSubscriptions(ns + "/in"));
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
-  
+
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh);
 
   spin(0.1);
@@ -547,7 +549,7 @@ TEST(GenericLazyPubSub, QueueSize)  // NOLINT
   auto lazySub = std::make_unique<TestLazyPubSub>("in", "out", pnh, 5, 3);
 
   spin(0.1);
-  
+
   for (size_t i = 0; i < 10; ++i)
     inPub.publish(std_msgs::Header());
 
@@ -574,7 +576,7 @@ TEST(GenericLazyPubSub, MultiLatchedInputs)  // NOLINT
   auto lazySub = std::make_unique<TestLazyPubSub>("/latched", "out", pnh);
 
   spin(0.5);
-  
+
   EXPECT_EQ(5, lazySub->numProcessed);
   EXPECT_EQ(5, numOutReceived);
 }
@@ -785,7 +787,7 @@ TEST(GenericLazyPubSub, SetLazy)  // NOLINT
   EXPECT_EQ(0, getNumSubscriptions(ns + "/out"));
   EXPECT_EQ(false, lazySub->isSubscribed());
   EXPECT_EQ(true, lazySub->isLazy());
-  
+
   lazySub->setLazy(false);
 
   spin(0.1);

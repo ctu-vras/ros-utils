@@ -135,12 +135,12 @@ bool setHeader(topic_tools::ShapeShifter& msg, std_msgs::Header& header)
   const auto oldHeader = cras::getHeader(msg);
   if (!oldHeader.has_value())
     return false;
-  
+
   const auto oldHeaderLength = ros::serialization::serializationLength(oldHeader.value());
   const auto newHeaderLength = ros::serialization::serializationLength(header);
   const auto oldLength = msg.size();
   const auto newLength = oldLength + newHeaderLength - oldHeaderLength;
-  
+
   if (oldHeaderLength == newHeaderLength)
   {
     // New message is same length as the old one - we just overwrite the header

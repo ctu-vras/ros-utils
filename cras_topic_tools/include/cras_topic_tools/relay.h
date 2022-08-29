@@ -20,22 +20,22 @@ namespace cras
 
 /**
  * \brief Nodelet for relaying messages on a different topic.
- * 
+ *
  * ROS parameters:
- * - `~in_queue_size` (uint, default 10): Queue size for the subscriber. 
- * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher. 
+ * - `~in_queue_size` (uint, default 10): Queue size for the subscriber.
+ * - `~out_queue_size` (uint, default $in_queue_size): Queue size for the publisher.
  * - `~lazy` (bool, default False): Whether to shut down the subscriber when the publisher has no subscribers.
  *                                  The `~input` topic will be subscribed in the beginning, and will unsubscribe
  *                                  automatically after the first message is received (this is needed to determine the
  *                                  full type of the topic to publish).
- * 
+ *
  * Subscribed topics:
  * - `~input` (any type): The input messages. If `lazy` is true, it will only be subscribed when `~output` has some
  *                        subscribers.
- * 
+ *
  * Published topics:
  * - `~output` (same type as `~input`): The throttled output messages.
- * 
+ *
  * Command-line arguments:
  * This nodelet (or node) can also be called in a way backwards compatible with topic_tools/relay. This means you can
  * pass CLI arguments specifying the topics to subscribe/publish.
@@ -51,7 +51,7 @@ class RelayNodelet : public ::cras::Nodelet
 protected:
   //! \brief The lazy pair of subscriber and publisher.
   ::std::unique_ptr<::cras::GenericLazyPubSub<>> pubSub;
-  
+
   void onInit() override;
 };
 

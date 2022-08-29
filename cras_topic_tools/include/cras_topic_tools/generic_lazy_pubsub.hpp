@@ -56,31 +56,31 @@ public:
   GenericLazyPubSub(const ::std::string& topicIn, const ::std::string& topicOut, const ::ros::NodeHandle& nh = {},
     size_t inQueueSize = 10, size_t outQueueSize = 10,
     ::cras::LogHelperPtr logHelper = ::std::make_shared<::cras::NodeLogHelper>());
-  
+
 protected:
   /**
    * \brief Perform the subscription to the input topic.
    * \param[out] sub The subscriber reference to fill with the created subscriber.
    */
   void subscribe(SubscriberType& sub);
-  
+
   /**
    * \brief Returns true when the subscriber should be connected - i.e. either at the start, or when pub has clients.
    * \return Whether the subscriber should be connected.
    */
   bool shouldBeSubscribed() const override;
-  
+
   /**
    * \brief Callback that is called whenever someone (un)subscribes from the publisher.
    */
   void connectCb(const ::ros::SingleSubscriberPublisher&);
-  
+
   /**
    * \brief Callback for the received messages from subscriber. It also handles publisher creation if none exists.
    * \param[in] event The message event.
    */
   void cb(const ::ros::MessageEvent<::topic_tools::ShapeShifter const>& event);
-  
+
   /**
    * \brief Create ros::AdvertiseOptions from a message event.
    * \param[in] event The event to examine.
@@ -94,31 +94,31 @@ protected:
    * \param[in] event The message event.
    */
   virtual void processMessage(const ::ros::MessageEvent<::topic_tools::ShapeShifter const>& event);
-  
+
   //! \brief Input topic (relative to `nh`).
   ::std::string topicIn;
-  
+
   //! \brief Output topic (relative to `nh`).
   ::std::string topicOut;
-  
+
   //! \brief Queue size of the input subscriber.
   size_t inQueueSize;
-  
+
   //! \brief Queue size of the output publisher.
   size_t outQueueSize;
-  
+
   //! \brief The output publisher. It will be invalid until first message is received.
   ::ros::Publisher pub;
-  
+
   //! \brief The input subscriber.
   SubscriberType sub;
-  
+
   //! \brief Node handle for topic suscription.
   ::ros::NodeHandle nh;
-  
-  //! \brief Mutex protecting `pub`. 
+
+  //! \brief Mutex protecting `pub`.
   ::std::mutex pubCreateMutex;
-  
+
   //! \brief The options used when the publisher was created. `nullopt` before the publisher is created.
   ::cras::optional<::ros::AdvertiseOptions> advertiseOptions;
 };

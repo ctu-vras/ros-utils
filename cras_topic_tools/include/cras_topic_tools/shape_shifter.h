@@ -67,7 +67,7 @@ bool setHeader(::topic_tools::ShapeShifter& msg, ::std_msgs::Header& header);
 
 /**
  * \brief Copy `in` ShapeShifter to `out`.
- * \param[in] in Input message. 
+ * \param[in] in Input message.
  * \param[in] out Output message.
  * \note This is a workaround for https://github.com/ros/ros_comm/pull/1722 which has not been merged into Melodic.
  */

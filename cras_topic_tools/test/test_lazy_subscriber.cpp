@@ -13,6 +13,8 @@
 #include <ros/topic_manager.h>
 #undef private
 
+#include <string>
+
 #include <ros/ros.h>
 #include <ros/subscription.h>
 #include <std_msgs/Header.h>
@@ -81,13 +83,13 @@ TEST(LazySubscriber, Test)  // NOLINT
     {
       ++numOutReceived;
     };
-  
+
   auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(outPub, [&](ros::Subscriber& sub)
     {
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("in", 10, relayCb);
     });
-  
+
   spin(0.1);
   EXPECT_EQ(0, numOutSubscribes);
   EXPECT_EQ(0, numInReceived);
@@ -108,7 +110,7 @@ TEST(LazySubscriber, Test)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions("/in"));
     EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.1);
@@ -157,7 +159,7 @@ TEST(LazySubscriber, Test)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions("/in"));
     EXPECT_EQ(2, getNumSubscriptions("/tmp/my/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
-    
+
     // Simulate connection from a second node; this can't be done from within a single executable.
     // This should not have any effect as we're only interested in the first or last subscriber.
     lazySub->connectCb({{}});
@@ -256,13 +258,13 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
     {
       ++numOutReceived;
     };
-  
+
   auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(outPub, [&](ros::Subscriber& sub)
     {
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("in", 10, relayCb);
     });
-  
+
   spin(0.1);
   EXPECT_EQ(0, numOutSubscribes);
   EXPECT_EQ(0, numInReceived);
@@ -273,7 +275,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
   EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
   EXPECT_EQ(false, lazySub->isSubscribed());
   EXPECT_EQ(true, lazySub->isLazy());
-  
+
   lazySub->setLazy(false);
 
   spin(0.1);
@@ -299,7 +301,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
   EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
   EXPECT_EQ(true, lazySub->isSubscribed());
   EXPECT_EQ(false, lazySub->isLazy());
-  
+
   {
     auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
 
@@ -313,7 +315,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
     EXPECT_EQ(false, lazySub->isLazy());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.1);
@@ -338,7 +340,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
   EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
   EXPECT_EQ(true, lazySub->isSubscribed());
   EXPECT_EQ(false, lazySub->isLazy());
-  
+
   lazySub->setLazy(true);
 
   spin(0.1);
@@ -351,7 +353,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
   EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
   EXPECT_EQ(false, lazySub->isSubscribed());
   EXPECT_EQ(true, lazySub->isLazy());
-  
+
   {
     auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
 
@@ -365,7 +367,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
     EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
     EXPECT_EQ(true, lazySub->isSubscribed());
     EXPECT_EQ(true, lazySub->isLazy());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.1);
@@ -442,7 +444,7 @@ TEST(LazySubscriber, Chain)  // NOLINT
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("inter2", 10, relayToOutCb);
     });
-  
+
   spin(0.1);
   EXPECT_EQ(0, numInter1Subscribes);
   EXPECT_EQ(0, numInter2Subscribes);
@@ -477,7 +479,7 @@ TEST(LazySubscriber, Chain)  // NOLINT
     EXPECT_EQ(true, lazySub1.isSubscribed());
     EXPECT_EQ(true, lazySub2.isSubscribed());
     EXPECT_EQ(true, lazySub3.isSubscribed());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.1);
@@ -495,7 +497,7 @@ TEST(LazySubscriber, Chain)  // NOLINT
     EXPECT_EQ(true, lazySub1.isSubscribed());
     EXPECT_EQ(true, lazySub2.isSubscribed());
     EXPECT_EQ(true, lazySub3.isSubscribed());
-    
+
     inPub.publish(std_msgs::Header());
 
     spin(0.1);

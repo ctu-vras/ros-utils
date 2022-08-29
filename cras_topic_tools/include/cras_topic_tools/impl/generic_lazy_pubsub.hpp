@@ -95,7 +95,7 @@ void ::cras::GenericLazyPubSub<SubscriberType>::cb(const ::ros::MessageEvent<::t
         this->pub = this->nh.advertise(this->advertiseOptions.value());
       }
     }
-    
+
     for (size_t i = 0; i < 100 && ::ros::ok() && this->pub.getNumSubscribers() == 0; ++i)
       ::ros::WallDuration(0.001).sleep();
     this->updateSubscription();

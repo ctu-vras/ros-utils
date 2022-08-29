@@ -50,7 +50,7 @@ void RepeatMessagesNodelet::onInit()
       this->log->logWarn("Could not parse the given repeat rate: %s", e.what());
     }
   }
-  
+
   auto params = this->privateParams();
   const auto inQueueSize = params->getParam("in_queue_size", 10_sz, "messages");
   const auto outQueueSize = params->getParam("out_queue_size", inQueueSize, "messages");
@@ -71,7 +71,7 @@ void RepeatMessagesNodelet::onInit()
 
   if (!lazy)
     this->pubSub->setLazy(false);
-  
+
   ros::SubscribeOptions opts;
   auto cb = boost::bind(&RepeatMessagesNodelet::onReset, this, boost::placeholders::_1);
   opts.initByFullCallbackType<const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&>("reset", 1, cb);
@@ -89,4 +89,4 @@ void RepeatMessagesNodelet::onReset(const ::ros::MessageEvent<const ::topic_tool
 
 }
 
-PLUGINLIB_EXPORT_CLASS(cras::RepeatMessagesNodelet, nodelet::Nodelet) // NOLINT(cert-err58-cpp)
+PLUGINLIB_EXPORT_CLASS(cras::RepeatMessagesNodelet, nodelet::Nodelet)  // NOLINT(cert-err58-cpp)

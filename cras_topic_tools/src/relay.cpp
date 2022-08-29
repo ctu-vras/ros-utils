@@ -29,7 +29,7 @@ void RelayNodelet::onInit()
   auto nh = this->getMTPrivateNodeHandle();
   std::string inTopic = "input";
   std::string outTopic = "output";
-  
+
   // Mimic the behavior of topic_tools/relay when called with CLI args
   if (!this->getMyArgv().empty())
   {
@@ -37,17 +37,17 @@ void RelayNodelet::onInit()
     inTopic = this->getMyArgv()[0];
     outTopic = (this->getMyArgv().size() >= 2 ? this->getMyArgv()[1] : (inTopic + "_relay"));
   }
-  
+
   this->pubSub = std::make_unique<cras::GenericLazyPubSub<>>(
     inTopic, outTopic, nh, inQueueSize, outQueueSize, this->log);
 
   if (!lazy)
     this->pubSub->setLazy(false);
-  
+
   this->log->logInfo("Created%s relay from %s to %s.",
     (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str());
 }
 
 }
 
-PLUGINLIB_EXPORT_CLASS(cras::RelayNodelet, nodelet::Nodelet) // NOLINT(cert-err58-cpp)
+PLUGINLIB_EXPORT_CLASS(cras::RelayNodelet, nodelet::Nodelet)  // NOLINT(cert-err58-cpp)
