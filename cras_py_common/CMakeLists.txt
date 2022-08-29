@@ -20,5 +20,5 @@ if (CATKIN_ENABLE_TESTING)
   # ROS buildfarm calls this without any environment, so we have problems reading the list of packages from env
   roslint_custom(catkin_lint "-W2" --rosdistro "${distro}" .)
 
-  add_dependencies(run_tests roslint_${PROJECT_NAME})
+  # add_dependencies(run_tests roslint_${PROJECT_NAME})
 endif()

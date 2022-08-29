@@ -58,15 +58,15 @@ class Throttle(unittest.TestCase):
         return self.msg_counts[topic] / self.test_duration
 
     def test_throttle(self):
-        self.assertAlmostEqual(self.get_freq("throttle_input/output"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_in_throttle"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_out"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("throttle_input_lazy/output"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_in_lazy_throttle"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_out_lazy"), 13, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_out_param"), 13, delta=0.5)
+        self.assertAlmostEqual(self.get_freq("throttle_input/output"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("node_in_throttle"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("node_out"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("throttle_input_lazy/output"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("node_in_lazy_throttle"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("node_out_lazy"), 13, delta=3)
+        self.assertAlmostEqual(self.get_freq("node_out_param"), 13, delta=3)
         # Yep, THROTTLE cannot make 20 Hz to 13 Hz correctly.
-        self.assertAlmostEqual(self.get_freq("throttle_method/output"), 10, delta=0.5)
+        self.assertAlmostEqual(self.get_freq("throttle_method/output"), 10, delta=3)
         # Default is 1 Hz
         self.assertAlmostEqual(self.get_freq("node_out_invalid_rate"), 1, delta=0.5)
 
