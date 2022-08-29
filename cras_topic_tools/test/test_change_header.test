@@ -48,6 +48,28 @@
         <param name="stamp" value="10.0" />
     </node>
 
+    <!-- Change stamp to ros time -->
+    <node pkg="cras_topic_tools" type="change_header" name="change_header_ros_time" args="node_in node_out_ros_time">
+        <param name="stamp_ros_time" value="true" />
+    </node>
+
+    <!-- Change stamp to ros time and add some relative value -->
+    <node pkg="cras_topic_tools" type="change_header" name="change_header_ros_time_rel" args="node_in node_out_ros_time_rel">
+        <param name="stamp_ros_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
+    <!-- Change stamp to wall time -->
+    <node pkg="cras_topic_tools" type="change_header" name="change_header_wall_time" args="node_in node_out_wall_time">
+        <param name="stamp_wall_time" value="true" />
+    </node>
+
+    <!-- Change stamp to wall time and add some relative value -->
+    <node pkg="cras_topic_tools" type="change_header" name="change_header_wall_time_rel" args="node_in node_out_wall_time_rel">
+        <param name="stamp_wall_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
     <!-- Change prefix -->
     <node pkg="cras_topic_tools" type="change_header" name="change_header_prefix" args="node_in node_out_prefix">
         <param name="frame_id_prefix" value="abcd" />

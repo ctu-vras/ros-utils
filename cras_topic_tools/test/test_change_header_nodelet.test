@@ -49,6 +49,28 @@
         <param name="frame_id" value="abcd" />
         <param name="stamp" value="10.0" />
     </node>
+    
+    <!-- Change stamp to ros time -->
+    <node pkg="nodelet" type="nodelet" name="change_header_ros_time" args="load cras_topic_tools/change_header manager node_in node_out_ros_time">
+        <param name="stamp_ros_time" value="true" />
+    </node>
+
+    <!-- Change stamp to ros time and add some relative value -->
+    <node pkg="nodelet" type="nodelet" name="change_header_ros_time_rel" args="load cras_topic_tools/change_header manager node_in node_out_ros_time_rel">
+        <param name="stamp_ros_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
+    <!-- Change stamp to wall time -->
+    <node pkg="nodelet" type="nodelet" name="change_header_wall_time" args="load cras_topic_tools/change_header manager node_in node_out_wall_time">
+        <param name="stamp_wall_time" value="true" />
+    </node>
+
+    <!-- Change stamp to wall time and add some relative value -->
+    <node pkg="nodelet" type="nodelet" name="change_header_wall_time_rel" args="load cras_topic_tools/change_header manager node_in node_out_wall_time_rel">
+        <param name="stamp_wall_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
 
     <!-- Change prefix -->
     <node pkg="nodelet" type="nodelet" name="change_header_prefix" args="load cras_topic_tools/change_header manager node_in node_out_prefix">

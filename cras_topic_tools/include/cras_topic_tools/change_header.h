@@ -60,6 +60,12 @@ struct ChangeHeaderParams
 
   //! \brief Add this value to stamp. In case of under/overflow, TIME_MIN or TIME_MAX are set.
   ::cras::optional<::ros::Duration> newStampRel;
+  
+  //! \brief Change stamp to current ROS time.
+  bool newStampRosTime {false};
+  
+  //! \brief Change stamp to current wall time.
+  bool newStampWallTime {false};
 };
 
 /**
@@ -138,6 +144,16 @@ protected:
     if (this->params.newFrameId.has_value())
       header->frame_id = this->params.newFrameId.value();
 
+    if (this->params.newStampRosTime)
+    {
+      header->stamp = ros::Time::now();
+    }
+    else if (this->params.newStampWallTime)
+    {
+      const auto now = ros::WallTime::now();
+      header->stamp = {now.sec, now.nsec};
+    }
+    
     if (this->params.newStampRel.has_value())
     {
       // Correctly handle overflow cases
@@ -198,7 +214,12 @@ protected:
  *                                                       with `to`.
  * - `~stamp_relative` (double, no default): If set, the given duration will be added to the message's stamp. If the
  *                                           stamp would under/overflow, ros::TIME_MIN or ros::TIME_MAX will be set.
- * - `~stamp` (double, no default): If set, the message's stamp will be set to this time.
+ * - `~stamp` (double, no default): If set, the message's stamp will be set to this time (`stamp_relative` will not
+ *                                  apply if set).
+ * - `~stamp_ros_time (bool, default false): If true, message stamp will be changed to current ROS time.
+ *                                           `stamp_relative` can be used in combination with this option.
+ * - `~stamp_wall_time (bool, default false): If true, message stamp will be changed to current wall time.
+ *                                            `stamp_relative` can be used in combination with this option.
  *
  * Subscribed topics:
  * - `~input` (any type with header): The input messages. If `lazy` is true, it will only be subscribed when `~output`
