@@ -50,5 +50,5 @@
           args="messages node_in rate node_out_invalid_rate" />
 
     <!-- Run the test suite -->
-    <test test-name="throttle_test" pkg="cras_topic_tools" type="test_throttle" retry="3" />
+    <test test-name="throttle_test" pkg="cras_topic_tools" type="test_throttle" retry="10" />
 </launch>
