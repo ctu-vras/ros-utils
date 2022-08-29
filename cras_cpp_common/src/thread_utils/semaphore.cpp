@@ -10,7 +10,8 @@
 
 #include <cras_cpp_common/thread_utils/semaphore.hpp>
 
-using namespace cras;
+namespace cras
+{
 
 ReverseSemaphore::ReverseSemaphore(bool waitZeroAtDestroy) : waitZeroAtDestroy(waitZeroAtDestroy)
 {
@@ -86,4 +87,6 @@ size_t ReverseSemaphore::getCount() const
 {
   std::lock_guard<decltype(this->mutex)> lock(this->mutex);
   return this->count;
+}
+
 }

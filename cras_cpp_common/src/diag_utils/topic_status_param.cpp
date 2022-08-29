@@ -6,11 +6,14 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <limits>
+
 #include <cras_cpp_common/diag_utils/topic_status_param.hpp>
 
 #include <diagnostic_updater/update_functions.h>
 
-using namespace cras;
+namespace cras
+{
 
 FrequencyStatusParam::FrequencyStatusParam(
   double* min_freq, double* max_freq, const double tolerance, const int window_size) :
@@ -115,4 +118,6 @@ TopicStatusParamWithHeader::TopicStatusParamWithHeader(const SimpleTopicStatusPa
   TopicStatusParamWithHeader(params.minRate, params.maxRate, params.rateTolerance, params.rateWindowSize,
     params.minDelay, params.maxDelay)
 {
+}
+
 }

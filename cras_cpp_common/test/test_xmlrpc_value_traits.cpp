@@ -6,7 +6,14 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <list>
+#include <map>
 #include <mutex>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include <cras_cpp_common/xmlrpc_value_traits.hpp>
@@ -184,8 +191,8 @@ TEST(XmlRpcValueTraits, IsCanonical)
   EXPECT_FALSE(XmlRpcValueTraits<unsigned char>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<char*>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<const char*>::isCanonical);
-  EXPECT_FALSE(XmlRpcValueTraits<short>::isCanonical);
-  EXPECT_FALSE(XmlRpcValueTraits<long>::isCanonical);
+  EXPECT_FALSE(XmlRpcValueTraits<short>::isCanonical);  // NOLINT
+  EXPECT_FALSE(XmlRpcValueTraits<long>::isCanonical);  // NOLINT
   EXPECT_FALSE(XmlRpcValueTraits<float>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<std::vector<float>>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<std::vector<signed char>>::isCanonical);

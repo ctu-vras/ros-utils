@@ -8,6 +8,8 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/thread_utils.h>
 #include <cras_cpp_common/nodelet_utils/thread_name_updating_nodelet.hpp>

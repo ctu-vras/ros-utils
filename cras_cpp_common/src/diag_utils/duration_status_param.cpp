@@ -10,7 +10,8 @@
 
 #include <cras_cpp_common/diag_utils/duration_status_param.h>
 
-using namespace cras;
+namespace cras
+{
 
 DurationStatusParam::DurationStatusParam(const ros::Duration& minDuration, const ros::Duration& maxDuration,
   const double tolerance, const size_t windowSize, const bool noEventsIsOk) :
@@ -19,12 +20,12 @@ DurationStatusParam::DurationStatusParam(const ros::Duration& minDuration, const
 {
 }
 
-DurationStatusParam::DurationStatusParam(const cras::DurationStatusParam& other) :
+DurationStatusParam::DurationStatusParam(const DurationStatusParam& other) :
   cras::DurationStatusParam(other.minDuration, other.maxDuration, other.tolerance, other.windowSize, other.noEventsIsOk)
 {
 }
 
-cras::DurationStatusParam& DurationStatusParam::operator=(const cras::DurationStatusParam& other)
+DurationStatusParam& DurationStatusParam::operator=(const DurationStatusParam& other)
 {
   this->minDuration = other.minDuration;
   this->maxDuration = other.maxDuration;
@@ -40,3 +41,4 @@ DurationStatusParam::DurationStatusParam(const SimpleDurationStatusParam& params
 {
 }
 
+}

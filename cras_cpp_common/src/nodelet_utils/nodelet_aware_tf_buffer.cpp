@@ -16,7 +16,8 @@
 #include <cras_cpp_common/nodelet_utils/stateful_nodelet.hpp>
 #include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
 
-using namespace cras;
+namespace cras
+{
 
 NodeletAwareTFBuffer::NodeletAwareTFBuffer(const nodelet::Nodelet& nodelet, const ros::Duration& cacheTime) :
   nodelet(nodelet), cras::InterruptibleTFBuffer(cacheTime)
@@ -40,4 +41,6 @@ bool NodeletAwareTFBuffer::ok() const
     return stateful->ok();
   else
     return !cras::isNodeletUnloading(this->nodelet);
+}
+
 }

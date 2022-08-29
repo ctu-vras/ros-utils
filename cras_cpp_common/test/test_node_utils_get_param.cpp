@@ -8,6 +8,11 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+#include <list>
+#include <map>
+#include <string>
+
 #include <ros/param.h>
 
 #include <cras_cpp_common/node_utils/param_helper.h>
@@ -235,7 +240,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 
     // test reading a parameter whose conversion from XmlRpc type fails
     log.reset();
-    auto r2 = this->nh.getParamVerbose("int_max", static_cast<short>(1), "", {});
+    auto r2 = this->nh.getParamVerbose("int_max", static_cast<short>(1), "", {});  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);

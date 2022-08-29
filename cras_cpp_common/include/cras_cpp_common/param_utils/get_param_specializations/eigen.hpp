@@ -8,6 +8,9 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <string>
+#include <vector>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 

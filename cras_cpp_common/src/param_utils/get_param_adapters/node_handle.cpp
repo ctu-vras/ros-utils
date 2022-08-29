@@ -8,7 +8,8 @@
 
 #include <cras_cpp_common/param_utils/get_param_adapters/node_handle.hpp>
 
-using namespace cras;
+namespace cras
+{
 
 NodeHandleGetParamAdapter::NodeHandleGetParamAdapter(const ::ros::NodeHandle& nh) noexcept : nh(nh)
 {
@@ -53,4 +54,6 @@ bool NodeHandleGetParamAdapter::hasParam(const ::std::string& name) const noexce
 NodeHandleGetParamAdapter::getNamespaced(const ::std::string& ns) const noexcept(false)
 {
   return ::std::make_shared<NodeHandleGetParamAdapter>(::ros::NodeHandle(this->nh, ns));
+}
+
 }

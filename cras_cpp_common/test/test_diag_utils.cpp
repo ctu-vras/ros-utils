@@ -8,6 +8,9 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+#include <string>
+
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 

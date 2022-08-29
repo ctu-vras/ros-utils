@@ -17,7 +17,8 @@
 #include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 #include <cras_cpp_common/param_utils/get_param_adapters/xmlrpc_value.hpp>
 
-using namespace cras;
+namespace cras
+{
 
 NodeHandleWithDiagnostics::NodeHandleWithDiagnostics(const std::string& ns, const ros::M_string& remappings) :
   ros::NodeHandle(ns, remappings), NodeParamHelper(ns, remappings), parentNh(ros::NodeHandle())
@@ -93,4 +94,6 @@ BoundParamHelperPtr NodeHandleWithDiagnostics::getDiagParams(const std::string& 
   }
   
   return std::make_shared<BoundParamHelper>(this->log, topicAdapter);
+}
+
 }

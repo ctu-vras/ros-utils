@@ -7,6 +7,9 @@
  */
 
 #include "gtest/gtest.h"
+
+#include <string>
+
 #include <cras_cpp_common/node_utils.hpp>
 
 #include "subscription_callbacks.inc"

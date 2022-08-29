@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 #include <string>
+#include <vector>
 
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/node.h>

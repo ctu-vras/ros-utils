@@ -13,6 +13,7 @@
 #undef private
 
 #include <algorithm>
+#include <string>
 
 #include <cras_cpp_common/cloud.hpp>
 

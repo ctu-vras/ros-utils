@@ -101,7 +101,7 @@ template<> struct XmlRpcValueTraits<signed char>
   constexpr static const bool isCanonical { false };
 };
 
-template<> struct XmlRpcValueTraits<short>
+template<> struct XmlRpcValueTraits<short>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
@@ -115,14 +115,14 @@ template<> struct XmlRpcValueTraits<int>
   constexpr static const bool isCanonical { true };
 };
 
-template<> struct XmlRpcValueTraits<long>
+template<> struct XmlRpcValueTraits<long>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
   constexpr static const bool isCanonical { false };
 };
 
-template<> struct XmlRpcValueTraits<long long>
+template<> struct XmlRpcValueTraits<long long>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
@@ -136,7 +136,7 @@ template<> struct XmlRpcValueTraits<unsigned char>
   constexpr static const bool isCanonical { false };
 };
 
-template<> struct XmlRpcValueTraits<unsigned short>
+template<> struct XmlRpcValueTraits<unsigned short>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
@@ -150,14 +150,14 @@ template<> struct XmlRpcValueTraits<unsigned int>
   constexpr static const bool isCanonical { false };
 };
 
-template<> struct XmlRpcValueTraits<unsigned long>
+template<> struct XmlRpcValueTraits<unsigned long>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
   constexpr static const bool isCanonical { false };
 };
 
-template<> struct XmlRpcValueTraits<unsigned long long>
+template<> struct XmlRpcValueTraits<unsigned long long>  // NOLINT
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInt };
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };

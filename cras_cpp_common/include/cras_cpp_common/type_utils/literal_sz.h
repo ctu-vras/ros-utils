@@ -13,7 +13,7 @@
 /**
  * This operator allows you to write size_t literals like 5_sz.
  */
-inline size_t operator "" _sz(unsigned long long int x)
+inline size_t operator "" _sz(unsigned long long int x)  // NOLINT
 {
   return x;
 }

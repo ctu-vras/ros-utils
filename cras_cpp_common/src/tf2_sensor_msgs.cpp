@@ -25,7 +25,7 @@ namespace cras
 {
 
 //! \brief Channels that are considered a part of the XYZ point description.
-const static std::unordered_map<std::string, CloudChannelType> XYZ_CHANNELS({
+static const std::unordered_map<std::string, CloudChannelType> XYZ_CHANNELS({
   {"", CloudChannelType::POINT},
 });
 

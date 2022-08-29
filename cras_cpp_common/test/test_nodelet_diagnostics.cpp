@@ -7,6 +7,10 @@
  */
 
 #include "gtest/gtest.h"
+
+#include <string>
+#include <vector>
+
 #include <cras_cpp_common/nodelet_utils/nodelet_with_diagnostics.hpp>
 
 #include "subscription_callbacks.inc"

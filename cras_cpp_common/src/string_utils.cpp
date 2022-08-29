@@ -16,6 +16,7 @@
 #endif
 
 
+#include <limits>
 #include <string>
 #include <sstream>
 #include <vector>

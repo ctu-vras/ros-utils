@@ -6,9 +6,12 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <string>
+
 #include <cras_cpp_common/diag_utils/deprecated/topic_diagnostic.h>
 
-using namespace cras;
+namespace cras
+{
 
 TopicDiagnostic::TopicDiagnostic(
   const std::string&, diagnostic_updater::Updater& updater, const BoundParamHelperPtr& params) :
@@ -41,4 +44,6 @@ void TopicDiagnostic::tick(const ros::Time& stamp)
 std::string TopicDiagnostic::getName() const
 {
   return this->diag->getName();
+}
+
 }

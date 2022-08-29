@@ -12,6 +12,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <unordered_map>
 #include <utility>
@@ -470,13 +471,13 @@ inline ::std::string getParam(
 template<>\
 struct ParamToStringFn<resultType>\
 {\
-  static ::std::string to_string(const resultType& v){ return ::cras::to_string(v); };\
+  static ::std::string to_string(const resultType& v){ return ::cras::to_string(v); }\
 };\
 \
 template<>\
 struct DefaultToResultFn<resultType, paramServerType>\
 {\
-  static resultType toResult(const paramServerType& v){ return convertToResultFn(v); };\
+  static resultType toResult(const paramServerType& v){ return convertToResultFn(v); }\
 };\
 \
 template<>\

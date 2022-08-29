@@ -17,7 +17,8 @@
 
 #include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
 
-using namespace cras;
+namespace cras
+{
 
 /**
  * \brief Append timeout info to the given error string if it is not null.
@@ -85,27 +86,27 @@ void InterruptibleTFBuffer::requestStop()
     return false;
 
 bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const std::string& source_frame,
-  const ros::Time& time, const ros::Duration timeout) const  // NOLINT
+                                         const ros::Time& time, const ros::Duration timeout) const  // NOLINT
 {
   CALLBACK_SEMAPHORE_GUARD
   return this->canTransform(target_frame, source_frame, time, timeout, nullptr);
 }
 
 bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const std::string& source_frame,
-  const ros::Time& time, const ros::Duration timeout, std::string* errstr) const
+                                         const ros::Time& time, const ros::Duration timeout, std::string* errstr) const
 {
   // Fast-track exit if we're shutting down.
-  if (!this->isOk || ! this->ok())
+  if (!this->isOk || !this->ok())
     return false;
 
   CALLBACK_SEMAPHORE_GUARD
-  
+
   // Clear the errstr before populating it if it's valid.
   if (errstr)
     errstr->clear();
 
   const auto* buffer = (this->parentBuffer ? this->parentBuffer.get() : this);
-  
+
   // Poll for transform if timeout is set.
   const auto startTime = ros::Time::now();
   const auto endTime = startTime + timeout;
@@ -114,15 +115,15 @@ bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const 
   // negative time values.
   while (
     ros::Time::now() < endTime &&
-    !buffer->canTransform(target_frame, source_frame, time) &&
-    (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
-    (ros::ok() || !ros::isInitialized()) && // Make sure we haven't been stopped
-    this->ok()  // Make sure the buffer is not requested to stop
-  )
+      !buffer->canTransform(target_frame, source_frame, time) &&
+      (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
+      (ros::ok() || !ros::isInitialized()) && // Make sure we haven't been stopped
+      this->ok()  // Make sure the buffer is not requested to stop
+    )
   {
     this->sleep(sleepDuration);
   }
-  
+
   if (!this->ok() || (ros::isInitialized() && !ros::ok()))
   {
     if (errstr != nullptr)
@@ -158,7 +159,7 @@ bool InterruptibleTFBuffer::canTransform(
   const std::string& fixed_frame, const ros::Duration timeout, std::string* errstr) const
 {
   // Fast-track exit if we're shutting down.
-  if (!this->isOk || ! this->ok())
+  if (!this->isOk || !this->ok())
     return false;
 
   CALLBACK_SEMAPHORE_GUARD
@@ -168,7 +169,7 @@ bool InterruptibleTFBuffer::canTransform(
     errstr->clear();
 
   const auto* buffer = (this->parentBuffer ? this->parentBuffer.get() : this);
-  
+
   // Poll for transform if timeout is set.
   const auto startTime = ros::Time::now();
   const auto endTime = startTime + timeout;
@@ -177,11 +178,11 @@ bool InterruptibleTFBuffer::canTransform(
   // negative time values.
   while (
     ros::Time::now() < endTime &&
-    !buffer->canTransform(target_frame, target_time, source_frame, source_time, fixed_frame) &&
-    (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
-    (ros::ok() || !ros::isInitialized()) &&  // Make sure we haven't been stopped
-    this->ok()  // Make sure the buffer is not requested to stop
-  )
+      !buffer->canTransform(target_frame, target_time, source_frame, source_time, fixed_frame) &&
+      (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
+      (ros::ok() || !ros::isInitialized()) &&  // Make sure we haven't been stopped
+      this->ok()  // Make sure the buffer is not requested to stop
+    )
   {
     this->sleep(sleepDuration);
   }
@@ -269,33 +270,39 @@ void InterruptibleTFBuffer::clear()
 }
 
 bool InterruptibleTFBuffer::setTransform(const geometry_msgs::TransformStamped& transform, const std::string& authority,
-  const bool is_static)
+                                         const bool is_static)
 {
   return this->getRawBuffer().setTransform(transform, authority, is_static);
 }
 
 geometry_msgs::TransformStamped InterruptibleTFBuffer::lookupTransform(const std::string& target_frame,
-  const std::string& source_frame, const ros::Time& time) const
+                                                                       const std::string& source_frame,
+                                                                       const ros::Time& time) const
 {
   return this->getRawBuffer().lookupTransform(target_frame, source_frame, time);
 }
 
 geometry_msgs::TransformStamped InterruptibleTFBuffer::lookupTransform(const std::string& target_frame,
-  const ros::Time& target_time, const std::string& source_frame, const ros::Time& source_time,
-  const std::string& fixed_frame) const
+                                                                       const ros::Time& target_time,
+                                                                       const std::string& source_frame,
+                                                                       const ros::Time& source_time,
+                                                                       const std::string& fixed_frame) const
 {
   return this->getRawBuffer().lookupTransform(target_frame, target_time, source_frame, source_time, fixed_frame);
 }
 
 bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const std::string& source_frame,
-  const ros::Time& time, std::string* error_msg) const
+                                         const ros::Time& time, std::string* error_msg) const
 {
   return this->getRawBuffer().canTransform(target_frame, source_frame, time, error_msg);
 }
 
-bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const ros::Time& target_time,
-  const std::string& source_frame, const ros::Time& source_time, const std::string& fixed_frame,
-  std::string* error_msg) const
+bool InterruptibleTFBuffer::canTransform(const std::string& target_frame,
+                                         const ros::Time& target_time,
+                                         const std::string& source_frame,
+                                         const ros::Time& source_time,
+                                         const std::string& fixed_frame,
+                                         std::string* error_msg) const
 {
   return this->getRawBuffer().canTransform(
     target_frame, target_time, source_frame, source_time, fixed_frame, error_msg);
@@ -314,4 +321,6 @@ std::string InterruptibleTFBuffer::allFramesAsYAML() const
 std::string InterruptibleTFBuffer::allFramesAsString() const
 {
   return this->getRawBuffer().allFramesAsString();
+}
+
 }

@@ -45,5 +45,6 @@
   <build_export_depend>pluginlib</build_export_depend>
   
   <test_depend>rostest</test_depend>
+  <test_depend>roslint</test_depend>
 
 </package>

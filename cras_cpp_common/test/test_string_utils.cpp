@@ -8,7 +8,15 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+#include <list>
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/Header.h>

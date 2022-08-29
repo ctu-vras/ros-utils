@@ -48,7 +48,7 @@ public:
     ::cras::NodeletLogHelper(::std::bind(&::filters::FilterBase<F>::getName, &filter)), filter(filter)
   {
   }
-  FilterLogHelper(::filters::FilterBase<F>&& filter) = delete;  // don't allow temporaries
+  FilterLogHelper(::filters::FilterBase<F>&& filter) = delete;  // NOLINT, don't allow temporaries
   ~FilterLogHelper() = default;
 
 protected:
@@ -70,7 +70,7 @@ struct FilterGetParamAdapter : public ::cras::GetParamAdapter
    *               Make sure the object is not destroyed for the whole lifetime of this adapter.
    */
   explicit FilterGetParamAdapter(const ::cras::FilterBase<F>& filter) noexcept : filter(filter) {}
-  FilterGetParamAdapter(::cras::FilterBase<F>&& filter) = delete;  // don't allow temporaries
+  FilterGetParamAdapter(::cras::FilterBase<F>&& filter) = delete;  // NOLINT, don't allow temporaries
   virtual ~FilterGetParamAdapter() = default;
 
   bool getParam(const ::std::string& name, ::XmlRpc::XmlRpcValue& v) const noexcept override

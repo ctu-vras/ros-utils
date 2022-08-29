@@ -17,7 +17,8 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/xmlrpc_value_traits.hpp>
 
-using namespace cras;
+namespace cras
+{
 
 XmlRpcValueGetParamAdapter::XmlRpcValueGetParamAdapter(
   const ::XmlRpc::XmlRpcValue& baseParam, const ::std::string& baseNamespace)
@@ -59,4 +60,6 @@ XmlRpcValueGetParamAdapter::getNamespaced(const ::std::string &ns) const noexcep
   if (!this->getParam(ns, values))
     throw ::std::runtime_error("Parameter namespace " + newNs + " is invalid");
   return ::std::make_shared<::cras::XmlRpcValueGetParamAdapter>(values, newNs);
+}
+
 }

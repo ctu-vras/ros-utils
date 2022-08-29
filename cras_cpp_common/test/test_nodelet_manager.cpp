@@ -13,6 +13,7 @@
 #include <pluginlib/class_loader.hpp>
 #undef private
 
+#include <string>
 #include <thread>
 
 #include <nodelet/loader.h>

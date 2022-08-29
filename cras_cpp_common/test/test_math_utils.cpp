@@ -8,6 +8,8 @@
  
 #include "gtest/gtest.h"
 
+#include <limits>
+
 #include <cras_cpp_common/math_utils.hpp>
 #include <cras_cpp_common/math_utils/running_stats.hpp>
 #include <cras_cpp_common/math_utils/running_stats_duration.hpp>

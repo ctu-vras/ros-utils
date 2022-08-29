@@ -21,7 +21,7 @@
 #include <cras_cpp_common/diag_utils/duration_status_param.h>
 #include <cras_cpp_common/param_utils/bound_param_helper.hpp>
 
-using namespace cras;
+using namespace cras;  // NOLINT
 
 DurationStatus::DurationStatus(const std::string& name, const DurationStatusParam& params) :
   diagnostic_updater::DiagnosticTask(name), params(params), minDurations(params.windowSize, ros::DURATION_MAX),

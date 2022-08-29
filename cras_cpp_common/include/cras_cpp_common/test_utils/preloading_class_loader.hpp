@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <class_loader/class_loader.hpp>
 #include <pluginlib/class_loader.hpp>
 

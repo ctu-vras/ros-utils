@@ -7,6 +7,13 @@
  */
 
 #include "gtest/gtest.h"
+
+#include <limits>
+#include <list>
+#include <map>
+#include <string>
+#include <tuple>
+
 #include <cras_cpp_common/filter_utils/filter_base.hpp>
 
 #include "get_param_test.inc" 
@@ -243,7 +250,7 @@ struct TestFilter : public cras::FilterBase<std::string>, public GetParamTest<Te
 
     // test reading a parameter whose conversion from XmlRpc type fails
     log.reset();
-    auto r2 = this->getParamVerbose("int_max", static_cast<short>(1), "", {});
+    auto r2 = this->getParamVerbose("int_max", static_cast<short>(1), "", {});  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);

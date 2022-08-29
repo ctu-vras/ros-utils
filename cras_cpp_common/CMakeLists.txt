@@ -358,6 +358,25 @@ install(TARGETS
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  find_package(roslint REQUIRED)
+  
+  # Roslint C++
+  
+  file(GLOB_RECURSE ROSLINT_SRC1 include/*.h include/*.hpp)
+  list(FILTER ROSLINT_SRC1 EXCLUDE REGEX ".*/external/.*" )
+  list(FILTER ROSLINT_SRC1 EXCLUDE REGEX ".*/cloud.hpp" )  # The big macro is full of false positives
+  
+  file(GLOB_RECURSE ROSLINT_SRC2 src/*.cpp src/*.hpp src/*.h)
+  
+  file(GLOB_RECURSE ROSLINT_SRC3 test/*.cpp)
+  
+  set(ROSLINT_CPP_OPTS "--extensions=h,hpp,hh,c,cpp,cc;--linelength=120;--filter=\
+    -build/header_guard,-readability/namespace,-whitespace,-runtime/references,\
+    -build/c++11,-readability/nolint,-readability/todo,-legal/copyright")
+  roslint_cpp(${ROSLINT_SRC1} ${ROSLINT_SRC2})
+  
+  set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")
+  roslint_cpp(${ROSLINT_SRC3})
 
   # GTEST tests (no rosmaster required)
   

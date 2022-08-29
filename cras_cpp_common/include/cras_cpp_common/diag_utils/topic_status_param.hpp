@@ -146,21 +146,21 @@ public:
    * object uses explicit pointer, this object will use pointers to the same memory.
    * \param[in] other The object to copy from.
    */
-  FrequencyStatusParam(const ::cras::FrequencyStatusParam& other);
+  FrequencyStatusParam(const ::cras::FrequencyStatusParam& other);  // NOLINT
   
   /**
    * \brief Copy values from the original `diagnostic_updater::FrequencyStatusParam`. This object will use pointers to
    * the same memory for min/max rate as the other one.
    * \param[in] other The object to copy from.
    */
-  FrequencyStatusParam(const ::diagnostic_updater::FrequencyStatusParam& other);  // NOLINT(google-explicit-constructor)
+  FrequencyStatusParam(const ::diagnostic_updater::FrequencyStatusParam& other);  // NOLINT
   
   /**
    * \brief Initialize this object from `SimpleTopicStatusParam`. Internal pointers for min/max rate will be used, so
    * the `params` object may cease to exist.
    * \param[in] params The parameters to initialize with.
    */
-  FrequencyStatusParam(const ::cras::SimpleTopicStatusParamNoHeader& params);  // NOLINT(google-explicit-constructor)
+  FrequencyStatusParam(const ::cras::SimpleTopicStatusParamNoHeader& params);  // NOLINT
 
   /**
    * \brief Copy values from another object of this type. If it uses the internal pointers, their values are copied and

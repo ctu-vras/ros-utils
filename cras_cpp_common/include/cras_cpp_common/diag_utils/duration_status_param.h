@@ -36,13 +36,13 @@ struct DurationStatusParam
    * \brief Copy constructor.
    * \param[in] other The object to copy from.
    */
-  DurationStatusParam(const ::cras::DurationStatusParam& other);
+  DurationStatusParam(const ::cras::DurationStatusParam& other);  // NOLINT
   
   /**
    * \brief Initialize this object from `SimpleDuraitonStatusParam`.
    * \param[in] params The parameters to initialize with.
    */
-  DurationStatusParam(const ::cras::SimpleDurationStatusParam& params);  // NOLINT(google-explicit-constructor)
+  DurationStatusParam(const ::cras::SimpleDurationStatusParam& params);  // NOLINT
 
   /**
    * \brief Copy assignment operator.

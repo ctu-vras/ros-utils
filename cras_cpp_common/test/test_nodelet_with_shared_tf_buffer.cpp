@@ -8,6 +8,7 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
 #include <thread>
 
 #include <geometry_msgs/TransformStamped.h>

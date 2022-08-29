@@ -6,6 +6,8 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <string>
+
 #include <nodelet/nodelet.h>
 
 #include <cras_cpp_common/log_utils/nodelet.h>

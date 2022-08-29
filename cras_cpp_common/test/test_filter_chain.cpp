@@ -19,6 +19,9 @@
 #undef private
 
 #include "gtest/gtest.h"
+
+#include <string>
+
 #include <cras_cpp_common/filter_utils/filter_chain.hpp>
 
 #define TRACE SCOPED_TRACE("Failure happened here");

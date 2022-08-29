@@ -272,7 +272,7 @@ public:
   B& transform(const A& in, B& out, const ::std::string& target_frame, const ::ros::Time& target_time,
     const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
   {
-    return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
+    return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);  // NOLINT
   }
   
   // Methods copied from BufferCore, they do not rely on time.

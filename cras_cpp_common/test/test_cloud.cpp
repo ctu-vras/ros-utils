@@ -79,7 +79,7 @@ TEST(Cloud, CreateFilteredCloudOrganized)  // NOLINT
   msg.is_dense = false;
 
   sensor_msgs::PointCloud2 out;
-  CREATE_FILTERED_CLOUD(msg, out, true, int(*x_it) % 2 == 0)
+  CREATE_FILTERED_CLOUD(msg, out, true, static_cast<int>(*x_it) % 2 == 0)
 
   ASSERT_EQ(4, cras::numPoints(out));
   EXPECT_EQ(2, out.width);
@@ -127,7 +127,7 @@ TEST(Cloud, CreateFilteredCloudOrganizedDoNotKeep)  // NOLINT
   msg.is_dense = false;
 
   sensor_msgs::PointCloud2 out;
-  CREATE_FILTERED_CLOUD(msg, out, false, int(*x_it) % 2 == 0)
+  CREATE_FILTERED_CLOUD(msg, out, false, static_cast<int>(*x_it) % 2 == 0)
 
   ASSERT_EQ(2, cras::numPoints(out));
   EXPECT_EQ(2, out.width);
@@ -194,8 +194,8 @@ TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
 
   cras::GenericCloudConstIter it_g2(msg, "x");
   EXPECT_THROW(it_g2.dataAs<char>(), std::runtime_error);
-  EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);
-  EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);
+  EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);  // NOLINT
+  EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<double>(), std::runtime_error);
   try
   {
@@ -274,8 +274,8 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
 
   cras::GenericCloudIter it_g2(msg, "x");
   EXPECT_THROW(it_g2.dataAs<char>(), std::runtime_error);
-  EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);
-  EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);
+  EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);  // NOLINT
+  EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<double>(), std::runtime_error);
   try
   {

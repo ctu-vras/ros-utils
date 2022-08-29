@@ -7,6 +7,12 @@
  */
 
 #include "gtest/gtest.h"
+
+#include <limits>
+#include <list>
+#include <map>
+#include <string>
+
 #include <cras_cpp_common/nodelet_utils.hpp>
 
 #include "get_param_test.inc" 
@@ -235,7 +241,7 @@ struct NodeletUtilsGetParamTest : public ::cras::Nodelet, public GetParamTest<No
 
     // test reading a parameter whose conversion from XmlRpc type fails
     log.reset();
-    auto r2 = this->getParamVerbose(this->getNodeHandle(), "int_max", static_cast<short>(1), "", {});
+    auto r2 = this->getParamVerbose(this->getNodeHandle(), "int_max", static_cast<short>(1), "", {});  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);

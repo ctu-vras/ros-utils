@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
 #include <thread>
 
 #include <cras_cpp_common/filter_utils/filter_chain_nodelet.hpp>
@@ -73,7 +74,7 @@ template <typename T, template<typename> typename F>
 class TestChainNodelet : public cras::FilterChainNodelet<T>
 {
 public:
-  TestChainNodelet(const std::string& chainName) : cras::FilterChainNodelet<T>(chainName)
+  explicit TestChainNodelet(const std::string& chainName) : cras::FilterChainNodelet<T>(chainName)
   {
     PreloadingClassLoader<F<T>, filters::FilterBase<T>>::preload(
       "cras_cpp_common/TestFilter", this->filterChain.loader_);
@@ -472,7 +473,7 @@ void updateConfig(dynamic_reconfigure::Client<cras_cpp_common::FilterChainConfig
 {
   bool stop = false;
   std::thread t([stop]() {
-    for (size_t i = 0; i < 100 && not stop; ++i)
+    for (size_t i = 0; i < 100 && !stop; ++i)
     {
       ros::spinOnce();
       ros::WallDuration(0.01).sleep();
@@ -488,7 +489,7 @@ void getDefaultConfig(dynamic_reconfigure::Client<cras_cpp_common::FilterChainCo
 {
   bool stop = false;
   std::thread t([stop]() {
-    for (size_t i = 0; i < 100 && not stop; ++i)
+    for (size_t i = 0; i < 100 && !stop; ++i)
     {
       ros::spinOnce();
       ros::WallDuration(0.01).sleep();

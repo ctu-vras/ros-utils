@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <limits>
 #include <list>
 #include <map>
 #include <set>
@@ -114,15 +115,15 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, int& v, bool /*skipNonConver
 
 DEFINE_INTEGRAL_CONVERT(char, int, CHAR_MIN, CHAR_MAX)
 DEFINE_INTEGRAL_CONVERT(signed char, int, CHAR_MIN, CHAR_MAX)
-DEFINE_INTEGRAL_CONVERT(short, int, SHRT_MIN, SHRT_MAX)
-DEFINE_INTEGRAL_CONVERT(long, int, LONG_MIN, LONG_MAX)
-DEFINE_INTEGRAL_CONVERT(long long, int, LONG_LONG_MIN, LONG_LONG_MAX)
+DEFINE_INTEGRAL_CONVERT(short, int, SHRT_MIN, SHRT_MAX)  // NOLINT
+DEFINE_INTEGRAL_CONVERT(long, int, LONG_MIN, LONG_MAX)  // NOLINT
+DEFINE_INTEGRAL_CONVERT(long long, int, LONG_LONG_MIN, LONG_LONG_MAX)  // NOLINT
 
 DEFINE_INTEGRAL_CONVERT(unsigned char, int, 0, UCHAR_MAX)
-DEFINE_INTEGRAL_CONVERT(unsigned short, int, 0, USHRT_MAX)
+DEFINE_INTEGRAL_CONVERT(unsigned short, int, 0, USHRT_MAX)  // NOLINT
 DEFINE_INTEGRAL_CONVERT(unsigned int, int, 0, UINT_MAX)
-DEFINE_INTEGRAL_CONVERT(unsigned long, int, 0, ULONG_MAX)
-DEFINE_INTEGRAL_CONVERT(unsigned long long, int, 0, ULONG_LONG_MAX)
+DEFINE_INTEGRAL_CONVERT(unsigned long, int, 0, ULONG_MAX)  // NOLINT
+DEFINE_INTEGRAL_CONVERT(unsigned long long, int, 0, ULONG_LONG_MAX)  // NOLINT
 
 //! \overload cras::convert(const XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&, bool, ::std::list<::std::string>*)
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, double& v, bool /*skipNonConvertible*/ = false,

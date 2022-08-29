@@ -8,10 +8,11 @@
  
 #include "gtest/gtest.h"
 
+#include <limits>
+#include <thread>
+
 #include <cras_cpp_common/time_utils.hpp>
 #include <cras_cpp_common/time_utils/interruptible_sleep_interface.h>
-
-#include <thread>
 
 #include <ros/duration.h>
 #include <ros/time.h>

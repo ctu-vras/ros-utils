@@ -8,6 +8,12 @@
 
 #include "gtest/gtest.h"
 
+#include <limits>
+#include <list>
+#include <map>
+#include <string>
+#include <vector>
+
 #include <ros/ros.h>
 
 #include <cras_cpp_common/log_utils.h>
@@ -574,7 +580,7 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
 
     // test reading a parameter whose conversion from XmlRpc type fails
     log.reset();
-    auto r2 = cras::getParamVerbose(*this->params, "int_max", static_cast<short>(1), "", {}, &this->logger);
+    auto r2 = cras::getParamVerbose(*this->params, "int_max", static_cast<short>(1), "", {}, &this->logger);  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);
@@ -862,7 +868,7 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
 
     // test reading a parameter whose conversion from XmlRpc type fails
     this->p->getLog()->reset();
-    auto r2 = this->p->getParamVerbose(*this->params, "int_max", static_cast<short>(1));
+    auto r2 = this->p->getParamVerbose(*this->params, "int_max", static_cast<short>(1));  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);
@@ -1120,7 +1126,7 @@ struct BoundParamHelperGetParamTest : public GetParamTest<BoundParamHelperGetPar
 
     // test reading a parameter whose conversion from XmlRpc type fails
     this->p->getLog()->reset();
-    auto r2 = this->p->getParamVerbose("int_max", static_cast<short>(1));
+    auto r2 = this->p->getParamVerbose("int_max", static_cast<short>(1));  // NOLINT
     EXPECT_TRUE(r2.info.defaultUsed);
     EXPECT_FALSE(r2.info.requiredMissing);
     EXPECT_TRUE(r2.info.convertFailed);

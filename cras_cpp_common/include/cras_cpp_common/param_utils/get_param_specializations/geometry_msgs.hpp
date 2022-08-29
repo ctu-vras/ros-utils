@@ -12,6 +12,8 @@
  *          7 values (3 translation + 4 rotation) or 16 values (column-wise transformation matrix).
  */
 
+#include <vector>
+
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Quaternion.h>

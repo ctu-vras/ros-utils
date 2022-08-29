@@ -14,7 +14,8 @@
 
 #include <cras_cpp_common/diag_utils/updater.h>
 
-using namespace cras;
+namespace cras
+{
 
 DiagnosticUpdater::DiagnosticUpdater(
   const ros::NodeHandle& h, const ros::NodeHandle& ph, const std::string& node_name) :
@@ -28,4 +29,6 @@ DiagnosticUpdater::DiagnosticUpdater(
     id = hostname;
   }
   this->setHardwareID(id);
+}
+
 }

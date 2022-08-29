@@ -8,6 +8,9 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+#include <vector>
+
 #include <ros/ros.h>
 
 #include <cras_cpp_common/nodelet_utils/log_macros.h>
