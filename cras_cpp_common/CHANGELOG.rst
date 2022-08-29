@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2022-08-29)
+------------------
 * De-flake throttle test and enable catkin_lint when it has chance to run correctly.
 * Add linters and licenses.
 * Set up roslaunch-check for test files.

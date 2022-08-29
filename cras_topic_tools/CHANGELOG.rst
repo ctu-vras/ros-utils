@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2022-08-29)
+------------------
 * Added option to change_header to apply current ROS time to stamp.
 * De-flake throttle test and enable catkin_lint when it has chance to run correctly.
 * Satisfy more pedantic Noetic linter.

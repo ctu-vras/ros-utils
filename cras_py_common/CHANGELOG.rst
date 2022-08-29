@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2022-08-29)
+------------------
 * De-flake throttle test and enable catkin_lint when it has chance to run correctly.
 * Added website links.
 * Add linters and licenses.

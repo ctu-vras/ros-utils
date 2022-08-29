@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>tf_static_publisher</name>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
   <description>
     The tf_static_publisher package provides simple static transform publisher
     node which allows to send multiple (latched) static transforms from
