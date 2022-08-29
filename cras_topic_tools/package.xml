@@ -9,6 +9,10 @@
 
   <license>BSD</license>
 
+  <url type="website">https://github.com/ctu-vras/ros-utils/blob/master/cras_topic_tools</url>
+  <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
+  <url type="repository">https://github.com/ctu-vras/ros-utils</url>
+
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>cras_cpp_common</depend>
