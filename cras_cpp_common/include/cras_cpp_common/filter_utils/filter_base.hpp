@@ -39,7 +39,6 @@ template <typename F> struct FilterGetParamAdapter;
 template<typename F>
 class FilterBase : public ::filters::FilterBase<F>, public ::cras::BoundParamHelper
 {
-
 public:
   /**
    * \brief Construct the filter and pass the corresponding Log and GetParam helpers.
@@ -65,7 +64,6 @@ public:
   friend struct ::cras::FilterGetParamAdapter<F>;
 
 protected:
-  
   // Use getParam() implementation provided by BoundParamHelper.
   using ::cras::BoundParamHelper::getParam;
 

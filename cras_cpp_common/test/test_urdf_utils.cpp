@@ -99,7 +99,7 @@ TEST(EigenUrdf, TransformPose)  // NOLINT
   EXPECT_DOUBLE_EQ(1.0, uPose.position.x);
   EXPECT_DOUBLE_EQ(2.0, uPose.position.y);
   EXPECT_DOUBLE_EQ(3.0, uPose.position.z);
-  
+
   EXPECT_DOUBLE_EQ(0.0, uPose.rotation.x);
   EXPECT_DOUBLE_EQ(0.0, uPose.rotation.y);
   EXPECT_DOUBLE_EQ(M_SQRT1_2, uPose.rotation.z);

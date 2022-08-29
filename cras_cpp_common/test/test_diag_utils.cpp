@@ -38,7 +38,7 @@ TEST(SimpleTopicStatusParam, BracedInit)  // NOLINT
   EXPECT_EQ(2.0, h.maxRate);
   EXPECT_EQ(3.0, h.rateTolerance);
   EXPECT_EQ(4, h.rateWindowSize);
-  
+
   SimpleTopicStatusParam<diagnostic_msgs::DiagnosticArray> d = {1, 2, 3, 4, 5, 6};
   EXPECT_EQ(1.0, d.minRate);
   EXPECT_EQ(2.0, d.maxRate);
@@ -55,7 +55,7 @@ TEST(SimpleTopicStatusParam, EmptyBracedInit)  // NOLINT
   EXPECT_EQ(std::numeric_limits<double>::infinity(), h.maxRate);
   EXPECT_EQ(0.1, h.rateTolerance);
   EXPECT_EQ(5, h.rateWindowSize);
-  
+
   SimpleTopicStatusParam<diagnostic_msgs::DiagnosticArray> d = {};
   EXPECT_EQ(0.0, d.minRate);
   EXPECT_EQ(std::numeric_limits<double>::infinity(), d.maxRate);
@@ -73,7 +73,7 @@ TEST(SimpleTopicStatusParam, DesignatedBracedInit)  // NOLINT
   EXPECT_EQ(std::numeric_limits<double>::infinity(), h.maxRate);
   EXPECT_EQ(0.1, h.rateTolerance);
   EXPECT_EQ(10, h.rateWindowSize);
-  
+
   SimpleTopicStatusParam<diagnostic_msgs::DiagnosticArray> d = {.rateWindowSize = 10, .maxDelay = 10};
   EXPECT_EQ(0.0, d.minRate);
   EXPECT_EQ(std::numeric_limits<double>::infinity(), d.maxRate);
@@ -90,58 +90,58 @@ TEST(TopicStatusParams, Values)  // NOLINT
   EXPECT_EQ(1.0, TopicStatusParams::_1Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::_1Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::_1Hz.rateWindowSize);
-  
+
   EXPECT_EQ(10.0, TopicStatusParams::_10Hz.minRate);
   EXPECT_EQ(10.0, TopicStatusParams::_10Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::_10Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::_10Hz.rateWindowSize);
-  
+
   EXPECT_EQ(100.0, TopicStatusParams::_100Hz.minRate);
   EXPECT_EQ(100.0, TopicStatusParams::_100Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::_100Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::_100Hz.rateWindowSize);
-  
+
   EXPECT_EQ(1.0, TopicStatusParams::delayed1Hz.minRate);
   EXPECT_EQ(1.0, TopicStatusParams::delayed1Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::delayed1Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::delayed1Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::delayed1Hz.minDelay);
   EXPECT_EQ(5, TopicStatusParams::delayed1Hz.maxDelay);
-  
+
   EXPECT_EQ(10.0, TopicStatusParams::delayed10Hz.minRate);
   EXPECT_EQ(10.0, TopicStatusParams::delayed10Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::delayed10Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::delayed10Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::delayed10Hz.minDelay);
   EXPECT_EQ(5, TopicStatusParams::delayed10Hz.maxDelay);
-  
+
   EXPECT_EQ(100.0, TopicStatusParams::delayed100Hz.minRate);
   EXPECT_EQ(100.0, TopicStatusParams::delayed100Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::delayed100Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::delayed100Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::delayed100Hz.minDelay);
   EXPECT_EQ(5, TopicStatusParams::delayed100Hz.maxDelay);
-  
+
   EXPECT_EQ(1.0, TopicStatusParams::fast1Hz.minRate);
   EXPECT_EQ(1.0, TopicStatusParams::fast1Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::fast1Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::fast1Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::fast1Hz.minDelay);
   EXPECT_EQ(0.1, TopicStatusParams::fast1Hz.maxDelay);
-  
+
   EXPECT_EQ(10.0, TopicStatusParams::fast10Hz.minRate);
   EXPECT_EQ(10.0, TopicStatusParams::fast10Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::fast10Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::fast10Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::fast10Hz.minDelay);
   EXPECT_EQ(0.1, TopicStatusParams::fast10Hz.maxDelay);
-  
+
   EXPECT_EQ(100.0, TopicStatusParams::fast100Hz.minRate);
   EXPECT_EQ(100.0, TopicStatusParams::fast100Hz.maxRate);
   EXPECT_EQ(0.1, TopicStatusParams::fast100Hz.rateTolerance);
   EXPECT_EQ(5, TopicStatusParams::fast100Hz.rateWindowSize);
   EXPECT_EQ(-1, TopicStatusParams::fast100Hz.minDelay);
-  EXPECT_EQ(0.1, TopicStatusParams::fast100Hz.maxDelay);  
+  EXPECT_EQ(0.1, TopicStatusParams::fast100Hz.maxDelay);
 }
 
 TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
@@ -154,7 +154,7 @@ TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
   TopicStatusParam<std_msgs::Header> p3(&minFreq, &maxFreq, 3.0, 4);
   TopicStatusParam<std_msgs::Header> p4(p3);
   TopicStatusParam<std_msgs::Header> p5 = p3;
-  
+
   EXPECT_EQ(1.0, *p1.min_freq_);
   EXPECT_EQ(2.0, *p1.max_freq_);
   EXPECT_EQ(0.1, p1.tolerance_);
@@ -180,7 +180,7 @@ TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
   EXPECT_EQ(3.0, p5.tolerance_);
   EXPECT_EQ(4, p5.window_size_);
   EXPECT_EQ(1.5, p5.getExpectedRate());
-  
+
   minFreq = 5.0; maxFreq = 6.0;
   EXPECT_EQ(5.0, *p1.min_freq_);
   EXPECT_EQ(6.0, *p1.max_freq_);
@@ -248,7 +248,7 @@ TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
   EXPECT_EQ(1.0, *q5.min_freq_);
   EXPECT_EQ(2.0, *q5.max_freq_);
   EXPECT_EQ(1.5, q5.getExpectedRate());
-  
+
   *q1.min_freq_ = 5.0;
   *q1.max_freq_ = 6.0;
   EXPECT_EQ(5.5, q1.getExpectedRate());
@@ -264,10 +264,10 @@ TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
   EXPECT_EQ(1.0, *q5.min_freq_);
   EXPECT_EQ(2.0, *q5.max_freq_);
   EXPECT_EQ(1.5, q5.getExpectedRate());
-  
+
   EXPECT_EQ(0.0, *TopicStatusParam<std_msgs::Header>().min_freq_);
   EXPECT_FALSE(std::isfinite(*TopicStatusParam<std_msgs::Header>().max_freq_));
-  
+
   EXPECT_FALSE(std::isfinite(TopicStatusParam<std_msgs::Header>().getExpectedRate()));
   EXPECT_EQ(5.0, TopicStatusParam<std_msgs::Header>(5.0).getExpectedRate());
   EXPECT_EQ(5.0, TopicStatusParam<std_msgs::Header>(0.0, 5.0).getExpectedRate());
@@ -276,7 +276,7 @@ TEST(TopicStatusParam, NoHeaderConstructors)  // NOLINT
 TEST(TopicStatusParam, WithHeaderConstructors)  // NOLINT
 {
   EXPECT_EQ(typeid(cras::TopicStatusParamWithHeader), typeid(TopicStatusParam<diagnostic_msgs::DiagnosticArray>));
-  
+
   double minFreq = 1.0, maxFreq = 2.0;
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> p1(&minFreq, &maxFreq);
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> p2(&minFreq, &maxFreq, 3.0);
@@ -285,7 +285,7 @@ TEST(TopicStatusParam, WithHeaderConstructors)  // NOLINT
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> p5(&minFreq, &maxFreq, 3.0, 4, 5.0, 6.0);
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> p6(p5);
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> p7 = p5;
-  
+
   EXPECT_EQ(1.0, *p1.min_freq_);
   EXPECT_EQ(2.0, *p1.max_freq_);
   EXPECT_EQ(0.1, p1.tolerance_);
@@ -335,7 +335,7 @@ TEST(TopicStatusParam, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(1.5, p7.getExpectedRate());
   EXPECT_EQ(5.0, p7.min_acceptable_);
   EXPECT_EQ(6.0, p7.max_acceptable_);
-  
+
   minFreq = 5.0; maxFreq = 6.0;
   EXPECT_EQ(5.0, *p1.min_freq_);
   EXPECT_EQ(6.0, *p1.max_freq_);
@@ -441,7 +441,7 @@ TEST(TopicStatusParam, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(1.0, *q7.min_freq_);
   EXPECT_EQ(2.0, *q7.max_freq_);
   EXPECT_EQ(1.5, q7.getExpectedRate());
-  
+
   *q1.min_freq_ = 5.0;
   *q1.max_freq_ = 6.0;
   EXPECT_EQ(5.5, q1.getExpectedRate());
@@ -463,10 +463,10 @@ TEST(TopicStatusParam, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(1.0, *q7.min_freq_);
   EXPECT_EQ(2.0, *q7.max_freq_);
   EXPECT_EQ(1.5, q7.getExpectedRate());
-  
+
   EXPECT_EQ(0.0, *TopicStatusParam<diagnostic_msgs::DiagnosticArray>().min_freq_);
   EXPECT_FALSE(std::isfinite(*TopicStatusParam<diagnostic_msgs::DiagnosticArray>().max_freq_));
-  
+
   EXPECT_FALSE(std::isfinite(TopicStatusParam<diagnostic_msgs::DiagnosticArray>().getExpectedRate()));
   EXPECT_EQ(5.0, TopicStatusParam<diagnostic_msgs::DiagnosticArray>(5.0).getExpectedRate());
   EXPECT_EQ(5.0, TopicStatusParam<diagnostic_msgs::DiagnosticArray>(0.0, 5.0).getExpectedRate());
@@ -480,7 +480,7 @@ TEST(TopicStatusParam, NoHeaderFromSimple)  // NOLINT
   EXPECT_EQ(2.0, *p1.max_freq_);
   EXPECT_EQ(3.0, p1.tolerance_);
   EXPECT_EQ(4, p1.window_size_);
-  
+
   param.minRate = 5.0;
   param.maxRate = 6.0;
   EXPECT_EQ(1.0, *p1.min_freq_);
@@ -497,7 +497,7 @@ TEST(TopicStatusParam, WithHeaderFromSimple)  // NOLINT
   EXPECT_EQ(4, p1.window_size_);
   EXPECT_EQ(5.0, p1.min_acceptable_);
   EXPECT_EQ(6.0, p1.max_acceptable_);
-  
+
   param.minRate = 5.0;
   param.maxRate = 6.0;
   EXPECT_EQ(1.0, *p1.min_freq_);
@@ -513,28 +513,28 @@ TEST(TopicStatus, NoHeaderConstructors)  // NOLINT
 #ifdef HAS_DESIGNATED_INITIALIZERS
   TopicStatus<std_msgs::Header> s5("a", {.maxRate = 10.0, .rateTolerance = 1.0});
 #endif
-  
+
   EXPECT_EQ("a", s1.getName());
   EXPECT_EQ(ros::Rate(1.0), s1.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s1.getMaxRate());
   EXPECT_EQ(ros::Rate(1.5), s1.getExpectedRate());
   EXPECT_EQ(3.0, s1.getRateTolerance());
   EXPECT_EQ(4, s1.getRateWindowSize());
-  
+
   EXPECT_EQ("a", s2.getName());
   EXPECT_EQ(ros::Rate(1.0), s2.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s2.getMaxRate());
   EXPECT_EQ(ros::Rate(1.5), s2.getExpectedRate());
   EXPECT_EQ(3.0, s2.getRateTolerance());
   EXPECT_EQ(4, s2.getRateWindowSize());
-  
+
   EXPECT_EQ("a", s3.getName());
   EXPECT_EQ(ros::Rate(1.0), s3.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s3.getMaxRate());
   EXPECT_EQ(ros::Rate(1.5), s3.getExpectedRate());
   EXPECT_EQ(3.0, s3.getRateTolerance());
   EXPECT_EQ(4, s3.getRateWindowSize());
-  
+
   EXPECT_EQ("a", s4.getName());
   EXPECT_EQ(ros::Rate(1.0), s4.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s4.getMaxRate());
@@ -563,7 +563,7 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
 #ifdef HAS_DESIGNATED_INITIALIZERS
   TopicStatus<diagnostic_msgs::DiagnosticArray> s5("a", {.maxRate = 10.0, .rateTolerance = 1.0});
 #endif
-  
+
   EXPECT_EQ("a", s1.getName());
   EXPECT_EQ(ros::Rate(1.0), s1.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s1.getMaxRate());
@@ -572,7 +572,7 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(4, s1.getRateWindowSize());
   EXPECT_EQ(ros::Duration(5.0), s1.getMinDelay());
   EXPECT_EQ(ros::Duration(6.0), s1.getMaxDelay());
-  
+
   EXPECT_EQ("a", s2.getName());
   EXPECT_EQ(ros::Rate(1.0), s2.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s2.getMaxRate());
@@ -581,7 +581,7 @@ TEST(TopicStatus, WithHeaderConstructors)  // NOLINT
   EXPECT_EQ(4, s2.getRateWindowSize());
   EXPECT_EQ(ros::Duration(5.0), s2.getMinDelay());
   EXPECT_EQ(ros::Duration(6.0), s2.getMaxDelay());
-  
+
   EXPECT_EQ("a", s3.getName());
   EXPECT_EQ(ros::Rate(1.0), s3.getMinRate());
   EXPECT_EQ(ros::Rate(2.0), s3.getMaxRate());
@@ -627,7 +627,7 @@ TEST(TopicStatus, TickAndUpdateOk)  // NOLINT
     withHeader.tick(prevTime);
     prevTime = time;
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper noHeaderWrapper;
   diagnostic_updater::DiagnosticStatusWrapper withHeaderWrapper;
   noHeader.run(noHeaderWrapper);
@@ -653,7 +653,7 @@ TEST(TopicStatus, TickAndUpdateDelayed)  // NOLINT
     withHeader.tick(prevTime);
     prevTime += ros::Duration(0.1);
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper noHeaderWrapper;
   diagnostic_updater::DiagnosticStatusWrapper withHeaderWrapper;
   noHeader.run(noHeaderWrapper);
@@ -679,7 +679,7 @@ TEST(TopicStatus, TickAndUpdateLowRate)  // NOLINT
     withHeader.tick(prevTime);
     prevTime += ros::Duration(0.1);
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper noHeaderWrapper;
   diagnostic_updater::DiagnosticStatusWrapper withHeaderWrapper;
   noHeader.run(noHeaderWrapper);
@@ -705,7 +705,7 @@ TEST(TopicStatus, TickAndUpdateHighRate)  // NOLINT
     withHeader.tick(prevTime);
     prevTime += ros::Duration(0.1);
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper noHeaderWrapper;
   diagnostic_updater::DiagnosticStatusWrapper withHeaderWrapper;
   noHeader.run(noHeaderWrapper);
@@ -731,7 +731,7 @@ TEST(TopicStatus, TickAndUpdateLowRateDelayed)  // NOLINT
     withHeader.tick(prevTime);
     prevTime += ros::Duration(0.1);
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper noHeaderWrapper;
   diagnostic_updater::DiagnosticStatusWrapper withHeaderWrapper;
   noHeader.run(noHeaderWrapper);
@@ -748,7 +748,7 @@ TEST(TopicStatus, TickAndUpdateWithMessage)  // NOLINT
 
   TopicStatus<std_msgs::Header> noHeader("a", 10.0, 10.0);
   TopicStatus<diagnostic_msgs::DiagnosticArray> withHeader("a", 10.0, 10.0, 0.1, 5, 0.0, 0.2);
-  
+
   std_msgs::Header header;
   diagnostic_msgs::DiagnosticArray diagMsg;
 
@@ -779,10 +779,10 @@ TEST(TopicStatus, TickAndUpdateWithMessagePtr)  // NOLINT
 
   TopicStatus<std_msgs::Header> noHeader("a", 10.0, 10.0);
   TopicStatus<diagnostic_msgs::DiagnosticArray> withHeader("a", 10.0, 10.0, 0.1, 5, 0.0, 0.2);
-  
+
   auto header = boost::make_shared<std_msgs::Header>();
   auto diagMsg = boost::make_shared<diagnostic_msgs::DiagnosticArray>();
-  
+
   auto prevTime = ros::Time::now();
   for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
   {
@@ -810,10 +810,10 @@ TEST(TopicStatus, TickAndUpdateWithMessageEvent)  // NOLINT
 
   TopicStatus<std_msgs::Header> noHeader("a", 10.0, 10.0);
   TopicStatus<diagnostic_msgs::DiagnosticArray> withHeader("a", 10.0, 10.0, 0.1, 5, 0.0, 0.2);
-  
+
   auto header = boost::make_shared<std_msgs::Header>();
   auto diagMsg = boost::make_shared<diagnostic_msgs::DiagnosticArray>();
-  
+
   auto prevTime = ros::Time::now();
   for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
   {
@@ -847,7 +847,7 @@ TEST(TopicStatus, TickAndUpdateParamsUsePointer)  // NOLINT
   TopicStatus<diagnostic_msgs::DiagnosticArray> withHeader("a", withHeaderParam);
 
   minFreq = maxFreq = 10.0;
-  
+
   auto prevTime = ros::Time::now();
   for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
   {
@@ -930,37 +930,37 @@ TEST(DurationStatus, Constructors)  // NOLINT
   xmlParams["no_events_is_ok"] = true;
   auto paramsAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(xmlParams, "");
   auto params = std::make_shared<cras::BoundParamHelper>(std::make_shared<cras::NodeLogHelper>(), paramsAdapter);
-  
+
   DurationStatus s1("a", ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true);
   DurationStatus s2("a", DurationStatusParam(ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true));
   DurationStatus s3("a", SimpleDurationStatusParam({ros::Duration(1, 0), ros::Duration(2, 0), 3.0, 4, true}));
   DurationStatus s4("a", params, DurationStatusParam());
   DurationStatus s5("a", params, SimpleDurationStatusParam());
-  
+
   EXPECT_EQ("a", s1.getName());
   EXPECT_EQ(ros::Duration(1, 0), s1.getMinDuration());
   EXPECT_EQ(ros::Duration(2, 0), s1.getMaxDuration());
   EXPECT_EQ(3.0, s1.getTolerance());
   EXPECT_EQ(4, s1.getWindowSize());
-  
+
   EXPECT_EQ("a", s2.getName());
   EXPECT_EQ(ros::Duration(1, 0), s2.getMinDuration());
   EXPECT_EQ(ros::Duration(2, 0), s2.getMaxDuration());
   EXPECT_EQ(3.0, s2.getTolerance());
   EXPECT_EQ(4, s2.getWindowSize());
-  
+
   EXPECT_EQ("a", s3.getName());
   EXPECT_EQ(ros::Duration(1, 0), s3.getMinDuration());
   EXPECT_EQ(ros::Duration(2, 0), s3.getMaxDuration());
   EXPECT_EQ(3.0, s3.getTolerance());
   EXPECT_EQ(4, s3.getWindowSize());
-  
+
   EXPECT_EQ("a", s4.getName());
   EXPECT_EQ(ros::Duration(1, 0), s4.getMinDuration());
   EXPECT_EQ(ros::Duration(2, 0), s4.getMaxDuration());
   EXPECT_EQ(3.0, s4.getTolerance());
   EXPECT_EQ(4, s4.getWindowSize());
-  
+
   EXPECT_EQ("a", s5.getName());
   EXPECT_EQ(ros::Duration(1, 0), s5.getMinDuration());
   EXPECT_EQ(ros::Duration(2, 0), s5.getMaxDuration());
@@ -982,7 +982,7 @@ TEST(DurationStatus, TickAndUpdateOk)  // NOLINT
     status.stop(ros::Time(time.toSec() * 2));
     prevTime = time;
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
   status.run(statusWrapper);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, statusWrapper.level);
@@ -1024,7 +1024,7 @@ TEST(DurationStatus, TickAndUpdateOkEqualMinMax)  // NOLINT
     status.stop(ros::Time(time.toSec() * 2));
     prevTime = time;
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
   status.run(statusWrapper);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, statusWrapper.level);
@@ -1068,7 +1068,7 @@ TEST(DurationStatus, TickAndUpdateTooShort)  // NOLINT
     status.stop(ros::Time(time.toSec() * 2));
     prevTime = time;
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
   status.run(statusWrapper);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, statusWrapper.level);
@@ -1110,7 +1110,7 @@ TEST(DurationStatus, TickAndUpdateTooLong)  // NOLINT
     status.stop(ros::Time(time.toSec() * 2));
     prevTime = time;
   }
-  
+
   diagnostic_updater::DiagnosticStatusWrapper statusWrapper;
   status.run(statusWrapper);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, statusWrapper.level);
@@ -1144,7 +1144,7 @@ TEST(DiagnosedPubSub, ConstructorsNoHeader)  // NOLINT
   DiagnosedPubSub<std_msgs::Header> pubSub1(diag1);
   ASSERT_NE(nullptr, pubSub1.getDiagnosticTask().get());
   EXPECT_EQ(diag1.get(), pubSub1.getDiagnosticTask().get());
-  
+
   TopicStatusParam<std_msgs::Header> param1;
   DiagnosedPubSub<std_msgs::Header> pubSub2("a", param1);
   ASSERT_NE(nullptr, pubSub2.getDiagnosticTask().get());
@@ -1159,21 +1159,21 @@ TEST(DiagnosedPubSub, ConstructorsNoHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   DiagnosedPubSub<std_msgs::Header> pubSub3(params);
   ASSERT_NE(nullptr, pubSub3.getDiagnosticTask().get());
   EXPECT_EQ(0.0, frequency(pubSub3.getDiagnosticTask()->getMinRate(), true));
   EXPECT_EQ(std::numeric_limits<double>::infinity(), frequency(pubSub3.getDiagnosticTask()->getMaxRate()));
   EXPECT_EQ(0.1, pubSub3.getDiagnosticTask()->getRateTolerance());
   EXPECT_EQ(5u, pubSub3.getDiagnosticTask()->getRateWindowSize());
-  
+
   DiagnosedPubSub<std_msgs::Header> pubSub4(params, {1.0, 2.0, 3.0, 4});
   ASSERT_NE(nullptr, pubSub4.getDiagnosticTask().get());
   EXPECT_EQ(1.0, frequency(pubSub4.getDiagnosticTask()->getMinRate()));
   EXPECT_EQ(2.0, frequency(pubSub4.getDiagnosticTask()->getMaxRate()));
   EXPECT_EQ(3.0, pubSub4.getDiagnosticTask()->getRateTolerance());
   EXPECT_EQ(4u, pubSub4.getDiagnosticTask()->getRateWindowSize());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1181,21 +1181,21 @@ TEST(DiagnosedPubSub, ConstructorsNoHeader)  // NOLINT
 
   paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   DiagnosedPubSub<std_msgs::Header> pubSub5(params);
   ASSERT_NE(nullptr, pubSub5.getDiagnosticTask().get());
   EXPECT_EQ(10.0, frequency(pubSub5.getDiagnosticTask()->getMinRate(), true));
   EXPECT_NEAR(11.0, frequency(pubSub5.getDiagnosticTask()->getMaxRate()), 1e-6);
   EXPECT_EQ(12.0, pubSub5.getDiagnosticTask()->getRateTolerance());
   EXPECT_EQ(13u, pubSub5.getDiagnosticTask()->getRateWindowSize());
-  
+
   DiagnosedPubSub<std_msgs::Header> pubSub6(params, {1.0, 2.0, 3.0, 4});
   ASSERT_NE(nullptr, pubSub6.getDiagnosticTask().get());
   EXPECT_EQ(10.0, frequency(pubSub6.getDiagnosticTask()->getMinRate()));
   EXPECT_NEAR(11.0, frequency(pubSub6.getDiagnosticTask()->getMaxRate()), 1e-6);
   EXPECT_EQ(12.0, pubSub6.getDiagnosticTask()->getRateTolerance());
   EXPECT_EQ(13u, pubSub6.getDiagnosticTask()->getRateWindowSize());
-  
+
   nodeParams["rate"].clear();
   nodeParams["rate"]["desired"] = 9.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1243,7 +1243,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub1(diag1);
   ASSERT_NE(nullptr, pubSub1.getDiagnosticTask().get());
   EXPECT_EQ(diag1.get(), pubSub1.getDiagnosticTask().get());
-  
+
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> param1;
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub2("a", param1);
   ASSERT_NE(nullptr, pubSub2.getDiagnosticTask().get());
@@ -1260,7 +1260,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub3(params);
   ASSERT_NE(nullptr, pubSub3.getDiagnosticTask().get());
   EXPECT_EQ(0.0, frequency(pubSub3.getDiagnosticTask()->getMinRate(), true));
@@ -1269,7 +1269,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   EXPECT_EQ(5u, pubSub3.getDiagnosticTask()->getRateWindowSize());
   EXPECT_EQ(ros::Duration(-1), pubSub3.getDiagnosticTask()->getMinDelay());
   EXPECT_EQ(ros::Duration(5), pubSub3.getDiagnosticTask()->getMaxDelay());
-  
+
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub4(params, {1.0, 2.0, 3.0, 4, 5.0, 6.0});
   ASSERT_NE(nullptr, pubSub4.getDiagnosticTask().get());
   EXPECT_EQ(1.0, frequency(pubSub4.getDiagnosticTask()->getMinRate()));
@@ -1278,7 +1278,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   EXPECT_EQ(4u, pubSub4.getDiagnosticTask()->getRateWindowSize());
   EXPECT_EQ(ros::Duration(5), pubSub4.getDiagnosticTask()->getMinDelay());
   EXPECT_EQ(ros::Duration(6), pubSub4.getDiagnosticTask()->getMaxDelay());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1288,7 +1288,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
 
   paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub5(params);
   ASSERT_NE(nullptr, pubSub5.getDiagnosticTask().get());
   EXPECT_EQ(10.0, frequency(pubSub5.getDiagnosticTask()->getMinRate(), true));
@@ -1297,7 +1297,7 @@ TEST(DiagnosedPubSub, ConstructorsWithHeader)  // NOLINT
   EXPECT_EQ(13u, pubSub5.getDiagnosticTask()->getRateWindowSize());
   EXPECT_EQ(ros::Duration(14), pubSub5.getDiagnosticTask()->getMinDelay());
   EXPECT_EQ(ros::Duration(15), pubSub5.getDiagnosticTask()->getMaxDelay());
-  
+
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub6(params, {1.0, 2.0, 3.0, 4, 5.0, 6.0});
   ASSERT_NE(nullptr, pubSub6.getDiagnosticTask().get());
   EXPECT_EQ(10.0, frequency(pubSub6.getDiagnosticTask()->getMinRate()));
@@ -1356,20 +1356,20 @@ TEST(DiagnosedPubSub, Attach)  // NOLINT
   size_t numCalled = 0;
   auto sub = nh.subscribe<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10,
     [&msg, &numCalled](const diagnostic_msgs::DiagnosticArrayConstPtr& m) {msg = m; numCalled++;});
-  
+
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> diag1(10.0, 10.0);
   DiagnosedPubSub<diagnostic_msgs::DiagnosticArray> pubSub1("a", diag1);
   diagnostic_updater::Updater updater(nh);
   pubSub1.attach(updater);
-  
+
   pubSub1.getDiagnosticTask()->tick(ros::Time(9, 0));
-  
+
   ros::Time::setNow({11, 0});
   pubSub1.getDiagnosticTask()->tick(ros::Time(10, 0));
-  
+
   ros::WallDuration(0.1).sleep();
   updater.force_update();
-  
+
   for (size_t i = 0; i < 10 && numCalled < 2; ++i)
   {
     ros::spinOnce();
@@ -1387,17 +1387,17 @@ TEST(DiagnosedPublisher, ConstructorsNoHeader)  // NOLINT
 {
   ros::NodeHandle nh;
   ros::Time::setNow({10, 0});
-  
+
   auto diag1 = std::make_shared<TopicStatus<std_msgs::Header>>("a");
   auto pub1 = nh.advertise<std_msgs::Header>("a", 10);
   DiagnosedPublisher diagPub1(pub1, diag1);
   EXPECT_EQ(pub1, diagPub1.getPublisher());
-  
+
   TopicStatusParam<std_msgs::Header> param1;
   auto pub2 = nh.advertise<std_msgs::Header>("a", 10);
   DiagnosedPublisher<std_msgs::Header> diagPub2(pub2, "a", param1);
   EXPECT_EQ(pub2, diagPub2.getPublisher());
-  
+
   XmlRpc::XmlRpcValue nodeParams;
   nodeParams.begin();  // make nodeParams a struct
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
@@ -1411,7 +1411,7 @@ TEST(DiagnosedPublisher, ConstructorsNoHeader)  // NOLINT
   auto pub4 = nh.advertise<std_msgs::Header>("a", 10);
   DiagnosedPublisher<std_msgs::Header> diagPub4(pub4, params, {1.0, 2.0, 3.0, 4});
   EXPECT_EQ(pub4, diagPub4.getPublisher());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1427,12 +1427,12 @@ TEST(DiagnosedPublisher, ConstructorsNoHeader)  // NOLINT
   auto pub6 = nh.advertise<std_msgs::Header>("a", 10);
   DiagnosedPublisher<std_msgs::Header> diagPub6(pub6, params, {1.0, 2.0, 3.0, 4});
   EXPECT_EQ(pub6, diagPub6.getPublisher());
-  
+
   size_t numMsgs {0};
   auto sub = nh.subscribe<std_msgs::Header>("a", 100, [&numMsgs](const std_msgs::HeaderConstPtr&) {numMsgs++;});
-  
+
   ros::WallDuration(0.25).sleep();
-  
+
   std_msgs::Header msg;
   auto prevTime = ros::Time::now();
   for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
@@ -1448,15 +1448,15 @@ TEST(DiagnosedPublisher, ConstructorsNoHeader)  // NOLINT
     prevTime = time;
     ros::spinOnce();
   }
-  
+
   for (size_t i = 0; i < 10 && numMsgs < 60; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.1).sleep();
   }
-  
+
   EXPECT_EQ(60u, numMsgs);
- 
+
   diagnostic_updater::DiagnosticStatusWrapper wrapper1, wrapper2, wrapper3, wrapper4, wrapper5, wrapper6;
   diagPub1.getDiagnosticTask()->run(wrapper1);
   diagPub2.getDiagnosticTask()->run(wrapper2);
@@ -1482,12 +1482,12 @@ TEST(DiagnosedPublisher, ConstructorsWithHeader)  // NOLINT
 {
   ros::NodeHandle nh;
   ros::Time::setNow({10, 0});
-  
+
   auto diag1 = std::make_shared<TopicStatus<diagnostic_msgs::DiagnosticArray>>("a");
   auto pub1 = nh.advertise<diagnostic_msgs::DiagnosticArray>("a", 10);
   DiagnosedPublisher diagPub1(pub1, diag1);
   EXPECT_EQ(pub1, diagPub1.getPublisher());
-  
+
   TopicStatusParam<diagnostic_msgs::DiagnosticArray> param1;
   auto pub2 = nh.advertise<diagnostic_msgs::DiagnosticArray>("a", 10);
   DiagnosedPublisher<diagnostic_msgs::DiagnosticArray> diagPub2(pub2, "a", param1);
@@ -1506,7 +1506,7 @@ TEST(DiagnosedPublisher, ConstructorsWithHeader)  // NOLINT
   auto pub4 = nh.advertise<diagnostic_msgs::DiagnosticArray>("a", 10);
   DiagnosedPublisher<diagnostic_msgs::DiagnosticArray> diagPub4(pub4, params, {1.0, 2.0, 3.0, 4, 5.0, 6.0});
   EXPECT_EQ(pub4, diagPub4.getPublisher());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1524,10 +1524,11 @@ TEST(DiagnosedPublisher, ConstructorsWithHeader)  // NOLINT
   auto pub6 = nh.advertise<diagnostic_msgs::DiagnosticArray>("a", 10);
   DiagnosedPublisher<diagnostic_msgs::DiagnosticArray> diagPub6(pub6, params, {1.0, 2.0, 3.0, 4, 5.0, 6.0});
   EXPECT_EQ(pub6, diagPub6.getPublisher());
-  
+
   size_t numMsgs {0};
-  auto sub = nh.subscribe<diagnostic_msgs::DiagnosticArray>("a", 100, [&numMsgs](const diagnostic_msgs::DiagnosticArrayConstPtr&) {numMsgs++;});
-  
+  auto sub = nh.subscribe<diagnostic_msgs::DiagnosticArray>(
+    "a", 100, [&numMsgs](const diagnostic_msgs::DiagnosticArrayConstPtr&) {numMsgs++;});
+
   ros::WallDuration(0.25).sleep();
 
   diagnostic_msgs::DiagnosticArray msg;
@@ -1545,15 +1546,15 @@ TEST(DiagnosedPublisher, ConstructorsWithHeader)  // NOLINT
     prevTime = time;
     ros::spinOnce();
   }
-  
+
   for (size_t i = 0; i < 10 && numMsgs < 60; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.1).sleep();
   }
-  
+
   EXPECT_EQ(60u, numMsgs);
- 
+
   diagnostic_updater::DiagnosticStatusWrapper wrapper1, wrapper2, wrapper3, wrapper4, wrapper5, wrapper6;
   diagPub1.getDiagnosticTask()->run(wrapper1);
   diagPub2.getDiagnosticTask()->run(wrapper2);
@@ -1585,17 +1586,17 @@ TEST(DiagnosedSubscriber, DiagnosticsNoHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   size_t numMsgs1 {0}, numMsgs2 {0}, numMsgs3 {0}, numMsgs4 {0};
-  
+
   DiagnosedSubscriber<std_msgs::Header> sub1(nh, params, {}, "a", 10,
     [&numMsgs1](const std_msgs::HeaderConstPtr&){++numMsgs1;});
   EXPECT_TRUE(sub1.getSubscriber());
-  
+
   DiagnosedSubscriber<std_msgs::Header> sub2(nh, params, {1.0, 2.0, 3.0, 4}, "a", 10,
     [&numMsgs2](const std_msgs::HeaderConstPtr&){++numMsgs2;});
   EXPECT_TRUE(sub2.getSubscriber());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1611,11 +1612,11 @@ TEST(DiagnosedSubscriber, DiagnosticsNoHeader)  // NOLINT
   DiagnosedSubscriber<std_msgs::Header> sub4(nh, params, {1.0, 2.0, 3.0, 4}, "a", 10,
     [&numMsgs4](const std_msgs::HeaderConstPtr&){++numMsgs4;});
   EXPECT_TRUE(sub4.getSubscriber());
-  
+
   auto pub = nh.advertise<std_msgs::Header>("a", 10);
-  
+
   ros::WallDuration(0.25).sleep();
-  
+
   std_msgs::Header msg;
   auto prevTime = ros::Time::now();
   for (auto time = ros::Time(10.1); time <= ros::Time(11); time += ros::Duration(0.1))
@@ -1626,18 +1627,18 @@ TEST(DiagnosedSubscriber, DiagnosticsNoHeader)  // NOLINT
     prevTime = time;
     ros::spinOnce();
   }
-  
+
   for (size_t i = 0; i < 10 && numMsgs1 + numMsgs2 + numMsgs3 + numMsgs4 < 40; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.1).sleep();
   }
-  
+
   EXPECT_EQ(10u, numMsgs1);
   EXPECT_EQ(10u, numMsgs2);
   EXPECT_EQ(10u, numMsgs3);
   EXPECT_EQ(10u, numMsgs4);
- 
+
   diagnostic_updater::DiagnosticStatusWrapper wrapper1, wrapper2, wrapper3, wrapper4;
   sub1.getDiagnosticTask()->run(wrapper1);
   sub2.getDiagnosticTask()->run(wrapper2);
@@ -1663,17 +1664,17 @@ TEST(DiagnosedSubscriber, DiagnosticsWithHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   size_t numMsgs1 {0}, numMsgs2 {0}, numMsgs3 {0}, numMsgs4 {0};
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> sub1(nh, params, {}, "a", 10,
     [&numMsgs1](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numMsgs1;});
   EXPECT_TRUE(sub1.getSubscriber());
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> sub2(nh, params, {1.0, 2.0, 3.0, 4, 5.0, 6.0}, "a", 10,
     [&numMsgs2](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numMsgs2;});
   EXPECT_TRUE(sub2.getSubscriber());
-  
+
   nodeParams["rate"]["min"] = 10.0;
   nodeParams["rate"]["max"] = 11.0;
   nodeParams["rate"]["tolerance"] = 12.0;
@@ -1691,9 +1692,9 @@ TEST(DiagnosedSubscriber, DiagnosticsWithHeader)  // NOLINT
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> sub4(nh, params, {1.0, 2.0, 3.0, 4, 5.0, 6.0}, "a", 10,
     [&numMsgs4](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numMsgs4;});
   EXPECT_TRUE(sub4.getSubscriber());
-  
+
   auto pub = nh.advertise<diagnostic_msgs::DiagnosticArray>("a", 10);
-  
+
   ros::WallDuration(0.25).sleep();
 
   diagnostic_msgs::DiagnosticArray msg;
@@ -1706,18 +1707,18 @@ TEST(DiagnosedSubscriber, DiagnosticsWithHeader)  // NOLINT
     prevTime = time;
     ros::spinOnce();
   }
-  
+
   for (size_t i = 0; i < 10 && numMsgs1 + numMsgs2 + numMsgs3 + numMsgs4 < 40; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.1).sleep();
   }
-  
+
   EXPECT_EQ(10u, numMsgs1);
   EXPECT_EQ(10u, numMsgs2);
   EXPECT_EQ(10u, numMsgs3);
   EXPECT_EQ(10u, numMsgs4);
- 
+
   diagnostic_updater::DiagnosticStatusWrapper wrapper1, wrapper2, wrapper3, wrapper4;
   sub1.getDiagnosticTask()->run(wrapper1);
   sub2.getDiagnosticTask()->run(wrapper2);
@@ -1964,17 +1965,17 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   CbTest obj1, obj2, obj3;
   auto sharedObj = boost::make_shared<CbTest>();
-  
+
   std::string refCaptureLambdaConstPtrFrame {};
   std::string refCaptureLambdaPtrFrame {};
   std::string refCaptureLambdaConstRefFrame {};
   std::string refCaptureLambdaValueFrame {};
   std::string refCaptureLambdaConstEventFrame {};
   std::string refCaptureLambdaEventFrame {};
-  
+
   cbConstPtrFrame = cbPtrFrame = cbConstRefFrame = cbValueFrame = cbConstEventFrame = cbEventFrame = "";
   cbConstPtrFrame = cbPtrFrame = cbConstRefFrame = cbValueFrame = cbConstEventFrame = cbEventFrame = "";
   lambdaHintsConstPtrFrame = lambdaHintsPtrFrame = lambdaHintsConstRefFrame = lambdaHintsValueFrame =
@@ -1991,35 +1992,35 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber subConstEvent(nh, params, {}, "a", 0, &cbConstEvent);
   DiagnosedSubscriber subEvent(nh, params, {}, "a", 0, &cbEvent);
   EXPECT_TRUE((::std::is_same_v<decltype(subConstPtr), DiagnosedSubscriber<std_msgs::Header>>));
-  
+
   DiagnosedSubscriber subClassConstPtr(nh, params, {}, "a", 0, &CbTest::cbConstPtr, &obj1);
   DiagnosedSubscriber subClassPtr(nh, params, {}, "a", 0, &CbTest::cbPtr, &obj1);
   DiagnosedSubscriber subClassConstRef(nh, params, {}, "a", 0, &CbTest::cbConstRef, &obj1);
   DiagnosedSubscriber subClassValue(nh, params, {}, "a", 0, &CbTest::cbValue, &obj1);
   DiagnosedSubscriber subClassConstEvent(nh, params, {}, "a", 0, &CbTest::cbConstEvent, &obj1);
   DiagnosedSubscriber subClassEvent(nh, params, {}, "a", 0, &CbTest::cbEvent, &obj1);
-  
+
   DiagnosedSubscriber subConstClassConstPtr(nh, params, {}, "a", 0, &CbTest::constCbConstPtr, &obj1);
   DiagnosedSubscriber subConstClassPtr(nh, params, {}, "a", 0, &CbTest::constCbPtr, &obj1);
   DiagnosedSubscriber subConstClassConstRef(nh, params, {}, "a", 0, &CbTest::constCbConstRef, &obj1);
   DiagnosedSubscriber subConstClassValue(nh, params, {}, "a", 0, &CbTest::constCbValue, &obj1);
   DiagnosedSubscriber subConstClassConstEvent(nh, params, {}, "a", 0, &CbTest::constCbConstEvent, &obj1);
   DiagnosedSubscriber subConstClassEvent(nh, params, {}, "a", 0, &CbTest::constCbEvent, &obj1);
-  
+
   DiagnosedSubscriber subSharedClassConstPtr(nh, params, {}, "a", 0, &CbTest::cbConstPtr, sharedObj);
   DiagnosedSubscriber subSharedClassPtr(nh, params, {}, "a", 0, &CbTest::cbPtr, sharedObj);
   DiagnosedSubscriber subSharedClassConstRef(nh, params, {}, "a", 0, &CbTest::cbConstRef, sharedObj);
   DiagnosedSubscriber subSharedClassValue(nh, params, {}, "a", 0, &CbTest::cbValue, sharedObj);
   DiagnosedSubscriber subSharedClassConstEvent(nh, params, {}, "a", 0, &CbTest::cbConstEvent, sharedObj);
   DiagnosedSubscriber subSharedClassEvent(nh, params, {}, "a", 0, &CbTest::cbEvent, sharedObj);
-  
+
   DiagnosedSubscriber subConstSharedClassConstPtr(nh, params, {}, "a", 0, &CbTest::constCbConstPtr, sharedObj);
   DiagnosedSubscriber subConstSharedClassPtr(nh, params, {}, "a", 0, &CbTest::constCbPtr, sharedObj);
   DiagnosedSubscriber subConstSharedClassConstRef(nh, params, {}, "a", 0, &CbTest::constCbConstRef, sharedObj);
   DiagnosedSubscriber subConstSharedClassValue(nh, params, {}, "a", 0, &CbTest::constCbValue, sharedObj);
   DiagnosedSubscriber subConstSharedClassConstEvent(nh, params, {}, "a", 0, &CbTest::constCbConstEvent, sharedObj);
   DiagnosedSubscriber subConstSharedClassEvent(nh, params, {}, "a", 0, &CbTest::constCbEvent, sharedObj);
-  
+
   DiagnosedSubscriber<std_msgs::Header> subNoCaptureLambdaConstPtr(nh, params, {}, "a", 0,
     [](const std_msgs::HeaderConstPtr& m){noCaptureLambdaValueFrame = m->frame_id;});
   DiagnosedSubscriber<std_msgs::Header> subNoCaptureLambdaPtr(nh, params, {}, "a", 0,
@@ -2072,7 +2073,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
     (boost::function<void(const ros::MessageEvent<std_msgs::Header>&)>)
       [=](const ros::MessageEvent<std_msgs::Header>& m){
         valueCaptureLambdaConstEventFrame = m.getConstMessage()->frame_id;});
-  
+
   DiagnosedSubscriber<std_msgs::Header> subLambdaConstPtr(nh, params, {}, "a", 0, lambdaCbConstPtr);
   DiagnosedSubscriber<std_msgs::Header> subLambdaPtr(nh, params, {}, "a", 0, lambdaCbPtr);
   DiagnosedSubscriber subLambdaConstRef(nh, params, {}, "a", 0, (void(*)(const std_msgs::Header&))lambdaCbConstRef);
@@ -2081,7 +2082,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
     (void(*)(const ros::MessageEvent<std_msgs::Header const>&))lambdaCbConstEvent);
   DiagnosedSubscriber subLambdaEvent(nh, params, {}, "a", 0,
     (void(*)(const ros::MessageEvent<std_msgs::Header>&))lambdaCbEvent);
-  
+
   DiagnosedSubscriber<std_msgs::Header> subLambdaHintsConstPtr(nh, params, {}, "a", 0,
     lambdaHintsConstPtr, ros::TransportHints());
   DiagnosedSubscriber<std_msgs::Header> subLambdaHintsPtr(nh, params, {}, "a", 0,
@@ -2094,7 +2095,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
     (void(*)(const ros::MessageEvent<std_msgs::Header const>&))lambdaHintsConstEvent, ros::TransportHints());
   DiagnosedSubscriber subLambdaHintsEvent(nh, params, {}, "a", 0,
     (void(*)(const ros::MessageEvent<std_msgs::Header>&))lambdaHintsEvent, ros::TransportHints());
-  
+
   DiagnosedSubscriber<std_msgs::Header> subClassBindConstPtr(nh, params, {}, "a", 0,
     boost::bind(&CbTest::cbConstPtr, &obj2, boost::placeholders::_1));
   DiagnosedSubscriber<std_msgs::Header> subClassBindPtr(nh, params, {}, "a", 0,
@@ -2109,7 +2110,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber subClassBindEvent(nh, params, {}, "a", 0,
     (boost::function<void(const ros::MessageEvent<std_msgs::Header>&)>)
       boost::bind(&CbTest::cbEvent, &obj2, boost::placeholders::_1));
-  
+
   DiagnosedSubscriber<std_msgs::Header> subConstClassBindConstPtr(nh, params, {}, "a", 0,
     boost::bind(&CbTest::constCbConstPtr, &obj2, boost::placeholders::_1));
   DiagnosedSubscriber<std_msgs::Header> subConstClassBindPtr(nh, params, {}, "a", 0,
@@ -2126,7 +2127,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber subConstClassBindEvent(nh, params, {}, "a", 0,
     (boost::function<void(const ros::MessageEvent<std_msgs::Header>&)>)
       boost::bind(&CbTest::constCbEvent, &obj2, boost::placeholders::_1));
-  
+
   DiagnosedSubscriber<std_msgs::Header> subSharedClassBindConstPtr(nh, params, {}, "a", 0,
     std::bind(&CbTest::cbConstPtr, &obj3, std::placeholders::_1));
   DiagnosedSubscriber<std_msgs::Header> subSharedClassBindPtr(nh, params, {}, "a", 0,
@@ -2141,7 +2142,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber subSharedClassBindEvent(nh, params, {}, "a", 0,
     (boost::function<void(const ros::MessageEvent<std_msgs::Header>&)>)
       std::bind(&CbTest::cbEvent, &obj3, std::placeholders::_1));
-  
+
   DiagnosedSubscriber<std_msgs::Header> subSharedConstClassBindConstPtr(nh, params, {}, "a", 0,
     std::bind(&CbTest::constCbConstPtr, &obj3, std::placeholders::_1));
   DiagnosedSubscriber<std_msgs::Header> subSharedConstClassBindPtr(nh, params, {}, "a", 0,
@@ -2156,14 +2157,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber subSharedConstClassBindEvent(nh, params, {}, "a", 0,
     (boost::function<void(const ros::MessageEvent<std_msgs::Header>&)>)
       std::bind(&CbTest::constCbEvent, &obj3, std::placeholders::_1));
-  
+
   DiagnosedSubscriber subBoostLambdaConstPtr(nh, params, {}, "a", 0, boostLambdaConstPtr);
   DiagnosedSubscriber subBoostLambdaPtr(nh, params, {}, "a", 0, boostLambdaPtr);
   DiagnosedSubscriber subBoostLambdaConstRef(nh, params, {}, "a", 0, boostLambdaConstRef);
   DiagnosedSubscriber subBoostLambdaValue(nh, params, {}, "a", 0, boostLambdaValue);
   DiagnosedSubscriber subBoostLambdaConstEvent(nh, params, {}, "a", 0, boostLambdaConstEvent);
   DiagnosedSubscriber subBoostLambdaEvent(nh, params, {}, "a", 0, boostLambdaEvent);
-  
+
   ros::SubscribeOptions ops;
   ops.initByFullCallbackType<const std_msgs::HeaderConstPtr &>("a", 10, &optionsCbConstPtr);
   DiagnosedSubscriber<std_msgs::Header> subOptionsConstPtr(nh, params, {}, ops);
@@ -2177,51 +2178,51 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   DiagnosedSubscriber<std_msgs::Header> subOptionsConstEvent(nh, params, {}, ops);
   ops.initByFullCallbackType<const ros::MessageEvent<std_msgs::Header>&>("a", 10, &optionsCbEvent);
   DiagnosedSubscriber<std_msgs::Header> subOptionsEvent(nh, params, {}, ops);
-  
+
   auto pub = nh.advertise<std_msgs::Header>("a", 100);
   auto message = std_msgs::Header();
   message.frame_id = "test";
   pub.publish(message);
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(2);
   while (ros::WallTime::now() < end)
     ros::spinOnce();
-  
+
   EXPECT_EQ(message.frame_id, cbConstPtrFrame);
   EXPECT_EQ(message.frame_id, cbPtrFrame);
   EXPECT_EQ(message.frame_id, cbConstRefFrame);
   EXPECT_EQ(message.frame_id, cbValueFrame);
   EXPECT_EQ(message.frame_id, cbConstEventFrame);
   EXPECT_EQ(message.frame_id, cbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, optionsCbConstPtrFrame);
   EXPECT_EQ(message.frame_id, optionsCbPtrFrame);
   EXPECT_EQ(message.frame_id, optionsCbConstRefFrame);
   EXPECT_EQ(message.frame_id, optionsCbValueFrame);
   EXPECT_EQ(message.frame_id, optionsCbConstEventFrame);
   EXPECT_EQ(message.frame_id, optionsCbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, obj1.cbConstPtrFrame);
   EXPECT_EQ(message.frame_id, obj1.cbPtrFrame);
   EXPECT_EQ(message.frame_id, obj1.cbConstRefFrame);
   EXPECT_EQ(message.frame_id, obj1.cbValueFrame);
   EXPECT_EQ(message.frame_id, obj1.cbConstEventFrame);
   EXPECT_EQ(message.frame_id, obj1.cbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, obj1.constCbConstPtrFrame);
   EXPECT_EQ(message.frame_id, obj1.constCbPtrFrame);
   EXPECT_EQ(message.frame_id, obj1.constCbConstRefFrame);
   EXPECT_EQ(message.frame_id, obj1.constCbValueFrame);
   EXPECT_EQ(message.frame_id, obj1.constCbConstEventFrame);
   EXPECT_EQ(message.frame_id, obj1.constCbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, sharedObj->cbConstPtrFrame);
   EXPECT_EQ(message.frame_id, sharedObj->cbPtrFrame);
   EXPECT_EQ(message.frame_id, sharedObj->cbConstRefFrame);
   EXPECT_EQ(message.frame_id, sharedObj->cbValueFrame);
   EXPECT_EQ(message.frame_id, sharedObj->cbConstEventFrame);
   EXPECT_EQ(message.frame_id, sharedObj->cbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, sharedObj->constCbConstPtrFrame);
   EXPECT_EQ(message.frame_id, sharedObj->constCbPtrFrame);
   EXPECT_EQ(message.frame_id, sharedObj->constCbConstRefFrame);
@@ -2242,14 +2243,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   EXPECT_EQ(message.frame_id, obj2.constCbValueFrame);
   EXPECT_EQ(message.frame_id, obj2.constCbConstEventFrame);
   EXPECT_EQ(message.frame_id, obj2.constCbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, obj3.cbConstPtrFrame);
   EXPECT_EQ(message.frame_id, obj3.cbPtrFrame);
   EXPECT_EQ(message.frame_id, obj3.cbConstRefFrame);
   EXPECT_EQ(message.frame_id, obj3.cbValueFrame);
   EXPECT_EQ(message.frame_id, obj3.cbConstEventFrame);
   EXPECT_EQ(message.frame_id, obj3.cbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, obj3.constCbConstPtrFrame);
   EXPECT_EQ(message.frame_id, obj3.constCbPtrFrame);
   EXPECT_EQ(message.frame_id, obj3.constCbConstRefFrame);
@@ -2263,14 +2264,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   EXPECT_EQ(message.frame_id, noCaptureLambdaValueFrame);
   EXPECT_EQ(message.frame_id, noCaptureLambdaConstEventFrame);
   EXPECT_EQ(message.frame_id, noCaptureLambdaEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, refCaptureLambdaConstPtrFrame);
   EXPECT_EQ(message.frame_id, refCaptureLambdaPtrFrame);
   EXPECT_EQ(message.frame_id, refCaptureLambdaConstRefFrame);
   EXPECT_EQ(message.frame_id, refCaptureLambdaValueFrame);
   EXPECT_EQ(message.frame_id, refCaptureLambdaConstEventFrame);
   EXPECT_EQ(message.frame_id, refCaptureLambdaEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, valueCaptureLambdaConstPtrFrame);
   EXPECT_EQ(message.frame_id, valueCaptureLambdaPtrFrame);
   EXPECT_EQ(message.frame_id, valueCaptureLambdaConstRefFrame);
@@ -2284,14 +2285,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
   EXPECT_EQ(message.frame_id, lambdaCbValueFrame);
   EXPECT_EQ(message.frame_id, lambdaCbConstEventFrame);
   EXPECT_EQ(message.frame_id, lambdaCbEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, lambdaHintsConstPtrFrame);
   EXPECT_EQ(message.frame_id, lambdaHintsPtrFrame);
   EXPECT_EQ(message.frame_id, lambdaHintsConstRefFrame);
   EXPECT_EQ(message.frame_id, lambdaHintsValueFrame);
   EXPECT_EQ(message.frame_id, lambdaHintsConstEventFrame);
   EXPECT_EQ(message.frame_id, lambdaHintsEventFrame);
-  
+
   EXPECT_EQ(message.frame_id, boostLambdaConstPtrFrame);
   EXPECT_EQ(message.frame_id, boostLambdaPtrFrame);
   EXPECT_EQ(message.frame_id, boostLambdaConstRefFrame);
@@ -2308,17 +2309,17 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   auto paramAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(nodeParams, "test_diag_utils");
   auto log = std::make_shared<cras::NodeLogHelper>();
   auto params = std::make_shared<cras::BoundParamHelper>(log, paramAdapter);
-  
+
   CbTestHeader obj1, obj2, obj3;
   auto sharedObj = boost::make_shared<CbTestHeader>();
-  
+
   std::string refCaptureLambdaConstPtrFrame {};
   std::string refCaptureLambdaPtrFrame {};
   std::string refCaptureLambdaConstRefFrame {};
   std::string refCaptureLambdaValueFrame {};
   std::string refCaptureLambdaConstEventFrame {};
   std::string refCaptureLambdaEventFrame {};
-  
+
   cbConstPtrFrame = cbPtrFrame = cbConstRefFrame = cbValueFrame = cbConstEventFrame = cbEventFrame = "";
   cbConstPtrFrame = cbPtrFrame = cbConstRefFrame = cbValueFrame = cbConstEventFrame = cbEventFrame = "";
   lambdaHintsConstPtrFrame = lambdaHintsPtrFrame = lambdaHintsConstRefFrame = lambdaHintsValueFrame =
@@ -2335,28 +2336,28 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subConstEvent(nh, params, {}, "b", 0, &cbHeaderConstEvent);
   DiagnosedSubscriber subEvent(nh, params, {}, "b", 0, &cbHeaderEvent);
   EXPECT_TRUE((::std::is_same_v<decltype(subConstPtr), DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray>>));
-  
+
   DiagnosedSubscriber subClassConstPtr(nh, params, {}, "b", 0, &CbTestHeader::cbConstPtr, &obj1);
   DiagnosedSubscriber subClassPtr(nh, params, {}, "b", 0, &CbTestHeader::cbPtr, &obj1);
   DiagnosedSubscriber subClassConstRef(nh, params, {}, "b", 0, &CbTestHeader::cbConstRef, &obj1);
   DiagnosedSubscriber subClassValue(nh, params, {}, "b", 0, &CbTestHeader::cbValue, &obj1);
   DiagnosedSubscriber subClassConstEvent(nh, params, {}, "b", 0, &CbTestHeader::cbConstEvent, &obj1);
   DiagnosedSubscriber subClassEvent(nh, params, {}, "b", 0, &CbTestHeader::cbEvent, &obj1);
-  
+
   DiagnosedSubscriber subConstClassConstPtr(nh, params, {}, "b", 0, &CbTestHeader::constCbConstPtr, &obj1);
   DiagnosedSubscriber subConstClassPtr(nh, params, {}, "b", 0, &CbTestHeader::constCbPtr, &obj1);
   DiagnosedSubscriber subConstClassConstRef(nh, params, {}, "b", 0, &CbTestHeader::constCbConstRef, &obj1);
   DiagnosedSubscriber subConstClassValue(nh, params, {}, "b", 0, &CbTestHeader::constCbValue, &obj1);
   DiagnosedSubscriber subConstClassConstEvent(nh, params, {}, "b", 0, &CbTestHeader::constCbConstEvent, &obj1);
   DiagnosedSubscriber subConstClassEvent(nh, params, {}, "b", 0, &CbTestHeader::constCbEvent, &obj1);
-  
+
   DiagnosedSubscriber subSharedClassConstPtr(nh, params, {}, "b", 0, &CbTestHeader::cbConstPtr, sharedObj);
   DiagnosedSubscriber subSharedClassPtr(nh, params, {}, "b", 0, &CbTestHeader::cbPtr, sharedObj);
   DiagnosedSubscriber subSharedClassConstRef(nh, params, {}, "b", 0, &CbTestHeader::cbConstRef, sharedObj);
   DiagnosedSubscriber subSharedClassValue(nh, params, {}, "b", 0, &CbTestHeader::cbValue, sharedObj);
   DiagnosedSubscriber subSharedClassConstEvent(nh, params, {}, "b", 0, &CbTestHeader::cbConstEvent, sharedObj);
   DiagnosedSubscriber subSharedClassEvent(nh, params, {}, "b", 0, &CbTestHeader::cbEvent, sharedObj);
-  
+
   DiagnosedSubscriber subConstSharedClassConstPtr(nh, params, {}, "b", 0, &CbTestHeader::constCbConstPtr, sharedObj);
   DiagnosedSubscriber subConstSharedClassPtr(nh, params, {}, "b", 0, &CbTestHeader::constCbPtr, sharedObj);
   DiagnosedSubscriber subConstSharedClassConstRef(nh, params, {}, "b", 0, &CbTestHeader::constCbConstRef, sharedObj);
@@ -2364,7 +2365,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subConstSharedClassConstEvent(nh, params, {}, "b", 0,
     &CbTestHeader::constCbConstEvent, sharedObj);
   DiagnosedSubscriber subConstSharedClassEvent(nh, params, {}, "b", 0, &CbTestHeader::constCbEvent, sharedObj);
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subNoCaptureLambdaConstPtr(nh, params, {}, "b", 0,
     [](const diagnostic_msgs::DiagnosticArrayConstPtr& m){noCaptureLambdaValueFrame = m->header.frame_id;});
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subNoCaptureLambdaPtr(nh, params, {}, "b", 0,
@@ -2421,7 +2422,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
     (boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)>)
       [=](const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m){
         valueCaptureLambdaConstEventFrame = m.getConstMessage()->header.frame_id;});
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subLambdaConstPtr(nh, params, {}, "b", 0,
     lambdaHeaderCbConstPtr);
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subLambdaPtr(nh, params, {}, "b", 0, lambdaHeaderCbPtr);
@@ -2433,7 +2434,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
     (void(*)(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray const>&))lambdaHeaderCbConstEvent);
   DiagnosedSubscriber subLambdaEvent(nh, params, {}, "b", 0,
     (void(*)(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&))lambdaHeaderCbEvent);
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subLambdaHintsConstPtr(nh, params, {}, "b", 0,
     lambdaHeaderHintsConstPtr, ros::TransportHints());
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subLambdaHintsPtr(nh, params, {}, "b", 0,
@@ -2447,7 +2448,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
     ros::TransportHints());
   DiagnosedSubscriber subLambdaHintsEvent(nh, params, {}, "b", 0,
     (void(*)(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&))lambdaHeaderHintsEvent, ros::TransportHints());
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subClassBindConstPtr(nh, params, {}, "b", 0,
     boost::bind(&CbTestHeader::cbConstPtr, &obj2, boost::placeholders::_1));
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subClassBindPtr(nh, params, {}, "b", 0,
@@ -2464,7 +2465,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subClassBindEvent(nh, params, {}, "b", 0,
     (boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)>)
       boost::bind(&CbTestHeader::cbEvent, &obj2, boost::placeholders::_1));
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subConstClassBindConstPtr(nh, params, {}, "b", 0,
     boost::bind(&CbTestHeader::constCbConstPtr, &obj2, boost::placeholders::_1));
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subConstClassBindPtr(nh, params, {}, "b", 0,
@@ -2481,7 +2482,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subConstClassBindEvent(nh, params, {}, "b", 0,
     (boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)>)
       boost::bind(&CbTestHeader::constCbEvent, &obj2, boost::placeholders::_1));
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subSharedClassBindConstPtr(nh, params, {}, "b", 0,
     std::bind(&CbTestHeader::cbConstPtr, &obj3, std::placeholders::_1));
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subSharedClassBindPtr(nh, params, {}, "b", 0,
@@ -2498,7 +2499,7 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subSharedClassBindEvent(nh, params, {}, "b", 0,
     (boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)>)
       std::bind(&CbTestHeader::cbEvent, &obj3, std::placeholders::_1));
-  
+
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subSharedConstClassBindConstPtr(nh, params, {}, "b", 0,
     std::bind(&CbTestHeader::constCbConstPtr, &obj3, std::placeholders::_1));
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subSharedConstClassBindPtr(nh, params, {}, "b", 0,
@@ -2515,14 +2516,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   DiagnosedSubscriber subSharedConstClassBindEvent(nh, params, {}, "b", 0,
     (boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)>)
       std::bind(&CbTestHeader::constCbEvent, &obj3, std::placeholders::_1));
-  
+
   DiagnosedSubscriber subBoostLambdaConstPtr(nh, params, {}, "b", 0, boostHeaderLambdaConstPtr);
   DiagnosedSubscriber subBoostLambdaPtr(nh, params, {}, "b", 0, boostHeaderLambdaPtr);
   DiagnosedSubscriber subBoostLambdaConstRef(nh, params, {}, "b", 0, boostHeaderLambdaConstRef);
   DiagnosedSubscriber subBoostLambdaValue(nh, params, {}, "b", 0, boostHeaderLambdaValue);
   DiagnosedSubscriber subBoostLambdaConstEvent(nh, params, {}, "b", 0, boostHeaderLambdaConstEvent);
   DiagnosedSubscriber subBoostLambdaEvent(nh, params, {}, "b", 0, boostHeaderLambdaEvent);
-  
+
   ros::SubscribeOptions ops;
   ops.initByFullCallbackType<const diagnostic_msgs::DiagnosticArrayConstPtr &>("b", 10, &optionsHeaderCbConstPtr);
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subOptionsConstPtr(nh, params, {}, ops);
@@ -2538,51 +2539,51 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   ops.initByFullCallbackType<const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&>(
     "b", 10, &optionsHeaderCbEvent);
   DiagnosedSubscriber<diagnostic_msgs::DiagnosticArray> subOptionsEvent(nh, params, {}, ops);
-  
+
   auto pub = nh.advertise<diagnostic_msgs::DiagnosticArray>("b", 100);
   auto message = diagnostic_msgs::DiagnosticArray();
   message.header.frame_id = "testHeader";
   pub.publish(message);
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(2);
   while (ros::WallTime::now() < end)
     ros::spinOnce();
-  
+
   EXPECT_EQ(message.header.frame_id, cbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, cbPtrFrame);
   EXPECT_EQ(message.header.frame_id, cbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, cbValueFrame);
   EXPECT_EQ(message.header.frame_id, cbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, cbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, optionsCbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, optionsCbPtrFrame);
   EXPECT_EQ(message.header.frame_id, optionsCbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, optionsCbValueFrame);
   EXPECT_EQ(message.header.frame_id, optionsCbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, optionsCbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, obj1.cbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj1.cbPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj1.cbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, obj1.cbValueFrame);
   EXPECT_EQ(message.header.frame_id, obj1.cbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, obj1.cbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, obj1.constCbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj1.constCbPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj1.constCbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, obj1.constCbValueFrame);
   EXPECT_EQ(message.header.frame_id, obj1.constCbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, obj1.constCbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, sharedObj->cbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->cbPtrFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->cbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->cbValueFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->cbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->cbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, sharedObj->constCbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->constCbPtrFrame);
   EXPECT_EQ(message.header.frame_id, sharedObj->constCbConstRefFrame);
@@ -2603,14 +2604,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   EXPECT_EQ(message.header.frame_id, obj2.constCbValueFrame);
   EXPECT_EQ(message.header.frame_id, obj2.constCbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, obj2.constCbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, obj3.cbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj3.cbPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj3.cbConstRefFrame);
   EXPECT_EQ(message.header.frame_id, obj3.cbValueFrame);
   EXPECT_EQ(message.header.frame_id, obj3.cbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, obj3.cbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, obj3.constCbConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj3.constCbPtrFrame);
   EXPECT_EQ(message.header.frame_id, obj3.constCbConstRefFrame);
@@ -2624,14 +2625,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   EXPECT_EQ(message.header.frame_id, noCaptureLambdaValueFrame);
   EXPECT_EQ(message.header.frame_id, noCaptureLambdaConstEventFrame);
   EXPECT_EQ(message.header.frame_id, noCaptureLambdaEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaPtrFrame);
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaConstRefFrame);
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaValueFrame);
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaConstEventFrame);
   EXPECT_EQ(message.header.frame_id, refCaptureLambdaEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, valueCaptureLambdaConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, valueCaptureLambdaPtrFrame);
   EXPECT_EQ(message.header.frame_id, valueCaptureLambdaConstRefFrame);
@@ -2645,14 +2646,14 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   EXPECT_EQ(message.header.frame_id, lambdaCbValueFrame);
   EXPECT_EQ(message.header.frame_id, lambdaCbConstEventFrame);
   EXPECT_EQ(message.header.frame_id, lambdaCbEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, lambdaHintsConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, lambdaHintsPtrFrame);
   EXPECT_EQ(message.header.frame_id, lambdaHintsConstRefFrame);
   EXPECT_EQ(message.header.frame_id, lambdaHintsValueFrame);
   EXPECT_EQ(message.header.frame_id, lambdaHintsConstEventFrame);
   EXPECT_EQ(message.header.frame_id, lambdaHintsEventFrame);
-  
+
   EXPECT_EQ(message.header.frame_id, boostLambdaConstPtrFrame);
   EXPECT_EQ(message.header.frame_id, boostLambdaPtrFrame);
   EXPECT_EQ(message.header.frame_id, boostLambdaConstRefFrame);

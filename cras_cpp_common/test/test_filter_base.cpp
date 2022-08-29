@@ -16,7 +16,7 @@
 
 #include <cras_cpp_common/filter_utils/filter_base.hpp>
 
-#include "get_param_test.inc" 
+#include "get_param_test.inc"
 
 using namespace cras;
 
@@ -30,7 +30,7 @@ struct TestFilter : public cras::FilterBase<std::string>, public GetParamTest<Te
   {
     return false;
   }
-  
+
   bool configure() override
   {
     return true;
@@ -74,7 +74,7 @@ struct TestFilter : public cras::FilterBase<std::string>, public GetParamTest<Te
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()
   {
     // test that getParam result type is the same as the default value
@@ -296,7 +296,7 @@ std::shared_ptr<TestFilter> getFilter(bool paramsFromChain)
   static std::map<bool, std::shared_ptr<TestFilter>> cache;
   if (cache.find(paramsFromChain) != cache.end())
     return cache[paramsFromChain];
-  
+
   static ros::NodeHandle nh;  // without the static modifier, rosconsole logging turns off and logging tests fail
   auto filter = std::make_shared<TestFilter>(paramsFromChain);
   auto filterBase = std::dynamic_pointer_cast<filters::FilterBase<std::string>>(filter);

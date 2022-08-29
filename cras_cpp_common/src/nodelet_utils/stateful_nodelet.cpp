@@ -47,8 +47,7 @@ bool isNodeletUnloading(const nodelet::Nodelet& nodelet)
 {
   return nodelet.inited_ && (
     !isCallbackQueueValid(nodelet.getNodeHandle().getCallbackQueue()) ||
-    !isCallbackQueueValid(nodelet.getMTNodeHandle().getCallbackQueue())
-  );
+    !isCallbackQueueValid(nodelet.getMTNodeHandle().getCallbackQueue()));
 }
 
 }

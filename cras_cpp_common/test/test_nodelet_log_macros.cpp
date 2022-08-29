@@ -19,7 +19,7 @@
 
 /**
  * \brief Fake being inside a nodelet by providing `getName()` free function which is used by the NODELET_* macros.
- * \return 
+ * \return
  */
 std::string getName()
 {
@@ -28,7 +28,7 @@ std::string getName()
 
 /**
  * \brief Advance ros::Time by the given amount.
- * \param[in] duration Seconds to advance. 
+ * \param[in] duration Seconds to advance.
  */
 void advanceTime(const double duration)
 {
@@ -47,7 +47,7 @@ TEST(NodeletLogMacros, Debug)  // NOLINT
   std::vector<size_t> expNums;
   ros::console::Level lf = ros::console::Level::Count;
   ros::console::Level lt = ros::console::Level::Debug;
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -62,7 +62,7 @@ TEST(NodeletLogMacros, Debug)  // NOLINT
   EXPECT_EQ(expStrs, logger.strs);
   EXPECT_EQ(expLevels, logger.levels);
   EXPECT_EQ(expNums, logger.nums);
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -91,7 +91,7 @@ TEST(NodeletLogMacros, Info)  // NOLINT
   std::vector<size_t> expNums;
   ros::console::Level lf = ros::console::Level::Count;
   ros::console::Level lt = ros::console::Level::Info;
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -106,7 +106,7 @@ TEST(NodeletLogMacros, Info)  // NOLINT
   EXPECT_EQ(expStrs, logger.strs);
   EXPECT_EQ(expLevels, logger.levels);
   EXPECT_EQ(expNums, logger.nums);
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -135,7 +135,7 @@ TEST(NodeletLogMacros, Warn)  // NOLINT
   std::vector<size_t> expNums;
   ros::console::Level lf = ros::console::Level::Count;
   ros::console::Level lt = ros::console::Level::Warn;
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -150,7 +150,7 @@ TEST(NodeletLogMacros, Warn)  // NOLINT
   EXPECT_EQ(expStrs, logger.strs);
   EXPECT_EQ(expLevels, logger.levels);
   EXPECT_EQ(expNums, logger.nums);
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -179,7 +179,7 @@ TEST(NodeletLogMacros, Error)  // NOLINT
   std::vector<size_t> expNums;
   ros::console::Level lf = ros::console::Level::Count;
   ros::console::Level lt = ros::console::Level::Error;
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -194,7 +194,7 @@ TEST(NodeletLogMacros, Error)  // NOLINT
   EXPECT_EQ(expStrs, logger.strs);
   EXPECT_EQ(expLevels, logger.levels);
   EXPECT_EQ(expNums, logger.nums);
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -223,7 +223,7 @@ TEST(NodeletLogMacros, Fatal)  // NOLINT
   std::vector<size_t> expNums;
   ros::console::Level lf = ros::console::Level::Count;
   ros::console::Level lt = ros::console::Level::Fatal;
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -238,7 +238,7 @@ TEST(NodeletLogMacros, Fatal)  // NOLINT
   EXPECT_EQ(expStrs, logger.strs);
   EXPECT_EQ(expLevels, logger.levels);
   EXPECT_EQ(expNums, logger.nums);
-  
+
   logger.reset();
   for (size_t i = 0; i < 22; ++i)
   {
@@ -262,11 +262,11 @@ int main(int argc, char **argv)
   // ROS init.
   ros::init(argc, argv, "test_nodelet_log_macros");
   ros::Time::init();
-  
+
   // Allow logging Debug messages.
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
     ros::console::notifyLoggerLevelsChanged();
-  
+
   // Set the custom log appender that records messages.
   ros::console::register_appender(&logger);
 

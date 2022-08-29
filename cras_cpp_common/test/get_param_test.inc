@@ -148,13 +148,13 @@ struct GetParamTest
   {
     XmlRpc::XmlRpcValue dummyXml0(false);
     XmlRpc::XmlRpcValue dummyXml1(true);
-  
+
     // test(param, def, expected, defUsed)
     {TRACE ((T*)this)->test("bool_True", dummyXml0, XmlRpc::XmlRpcValue(true), false);}
     {TRACE ((T*)this)->test("bool_False", dummyXml1, XmlRpc::XmlRpcValue(false), false);}
     {TRACE ((T*)this)->test("bool_true", dummyXml0, XmlRpc::XmlRpcValue(true), false);}
     {TRACE ((T*)this)->test("bool_false", dummyXml1, XmlRpc::XmlRpcValue(false), false);}
-    // the XmlRpc type of the default value is not checked; 
+    // the XmlRpc type of the default value is not checked;
     {TRACE ((T*)this)->test("int_0", dummyXml1, XmlRpc::XmlRpcValue(0), false);}
     {TRACE ((T*)this)->test("int_1", dummyXml0, XmlRpc::XmlRpcValue(1), false);}
     {TRACE ((T*)this)->test("int_2", dummyXml0, XmlRpc::XmlRpcValue(2), false);}
@@ -208,7 +208,7 @@ struct GetParamTest
     {TRACE ((T*)this)->test_defaults("nonexistent", dummyXml0);}
     {TRACE ((T*)this)->test_defaults("nonexistent", dummyXml1);}
   }
-  
+
   inline void testBool()
   {
     // test(param, def, expected, defUsed)
@@ -800,7 +800,7 @@ struct GetParamTest
     typedef Eigen::Matrix<Scalar, 4, 4> Matrix4;
     typedef Eigen::Quaternion<Scalar> Quaternion;
     typedef Eigen::Transform<Scalar, 3, Eigen::Isometry> Isometry3;
-    
+
     Vector3 v(0, 1, 2);
     {TRACE ((T*)this)->test_defaults("nonexistent", v);}
     {TRACE ((T*)this)->test_defaults("quat4", v);}
@@ -866,7 +866,7 @@ struct GetParamTest
       std::vector<std::string>({"antenna", "base_link::big_collision_box"}), false);}
     {TRACE ((T*)this)->test_s("ignored_links/bounding_sphere", std::set<std::string>(),
       std::set<std::string>({"antenna", "base_link::big_collision_box"}), false);}
-    {TRACE ((T*)this)->test_s("body_model/per_link/scale", (std::map<std::string, double>()), 
+    {TRACE ((T*)this)->test_s("body_model/per_link/scale", (std::map<std::string, double>()),
       (std::map<std::string, double>({
         {"antenna::contains", 1.2},
         {"antenna::bounding_sphere", 1.2},

@@ -76,7 +76,7 @@ BoundParamHelperPtr NodeHandleWithDiagnostics::getDiagParams(const std::string& 
     xml = this->getParam(resolvedParentNs, xml, "", {false});
     adapter = std::make_shared<XmlRpcValueGetParamAdapter>(xml, resolvedParentNs);
   }
-  
+
   // Construct the final param adapter for the topic namespace, falling back to an empty adapter if the namespace does
   // not exist.
   const auto cleanTopic = cras::stripLeadingSlash(topic);
@@ -92,7 +92,7 @@ BoundParamHelperPtr NodeHandleWithDiagnostics::getDiagParams(const std::string& 
     auto topicNs = ros::names::append(adapter->getNamespace(), cleanTopic);
     topicAdapter = std::make_shared<XmlRpcValueGetParamAdapter>(xml, topicNs);
   }
-  
+
   return std::make_shared<BoundParamHelper>(this->log, topicAdapter);
 }
 

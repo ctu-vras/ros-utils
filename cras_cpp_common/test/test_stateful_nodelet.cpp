@@ -40,8 +40,8 @@ struct TestNodelet : public cras::StatefulNodelet<::nodelet::Nodelet>
   void onInit() override
   {
   }
-  
-  //! \brief The value of isNodeletUnloading(*this) during destruction. 
+
+  //! \brief The value of isNodeletUnloading(*this) during destruction.
   volatile bool* wasUnloading {nullptr};
 
   //! \brief The value of this->ok() during destruction.
@@ -88,16 +88,16 @@ TEST(StatefulNodelet, sleepInterruptSystime)  // NOLINT
       EXPECT_FALSE(nodelet.sleep(ros::Duration(1)));
       finished = true;
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
-  
+
   nodelet.requestStop();
   ros::WallDuration(0.1).sleep();
 
   EXPECT_TRUE(finished);
-  
+
   t.join();
 }
 
@@ -121,18 +121,18 @@ TEST(StatefulNodelet, sleepInterruptSimtime)  // NOLINT
       EXPECT_FALSE(nodelet.sleep({1, 0}));
       finished = true;
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
-  
+
   ros::Time::setNow(ros::Time(10.1));
-  
+
   nodelet.requestStop();
   ros::WallDuration(0.1).sleep();
 
   EXPECT_TRUE(finished);
-  
+
   t.detach();  // detach the thread so that it doesn't block if the sleep did not end
 }
 
@@ -156,15 +156,15 @@ TEST(StatefulNodelet, sleepFinishSystime)  // NOLINT
       EXPECT_TRUE(nodelet.sleep(ros::Duration(1)));
       finished = true;
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
-  
+
   ros::WallDuration(1).sleep();
 
   EXPECT_TRUE(finished);
-  
+
   t.detach();  // detach the thread so that it doesn't block if the sleep did not end
 }
 
@@ -188,16 +188,16 @@ TEST(StatefulNodelet, sleepFinishSimtime)  // NOLINT
       EXPECT_TRUE(nodelet.sleep({1, 0}));
       finished = true;
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
-  
+
   ros::Time::setNow(ros::Time(11.1));
   ros::WallDuration(0.1).sleep();
 
   EXPECT_TRUE(finished);
-  
+
   t.detach();  // detach the thread so that it doesn't block if the sleep did not end
 }
 
@@ -231,7 +231,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSystime)  // NOLINT
 {
   ros::Time::init();
   ASSERT_TRUE(ros::Time::isSystemTime());
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -260,7 +260,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSystime)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
@@ -272,7 +272,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSystime)  // NOLINT
   EXPECT_TRUE(nodelet->ok());
 
   // First, try if the sleep will finish if waiting enough time
-  
+
   bool started = false;
   bool finished = false;
   std::thread t([&]()
@@ -283,16 +283,16 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSystime)  // NOLINT
       finished = true;
       EXPECT_FALSE(cras::isNodeletUnloading(*nodelet));
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
-  
+
   ros::WallDuration(1).sleep();
   EXPECT_TRUE(finished);
 
   EXPECT_FALSE(cras::isNodeletUnloading(*nodelet));
-  
+
   // Now, test that the sleep can be interrupted.
 
   started = false;
@@ -323,7 +323,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSystime)  // NOLINT
 
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(finished);
-  
+
   t.detach();  // detach the threads so that they don't block if the sleep did not end
   t2.detach();
   stop = true;  // stop the loaderThread
@@ -338,7 +338,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
   ros::Time::setNow({10, 0});
   ASSERT_TRUE(ros::Time::isSimTime());
   ASSERT_EQ(10, ros::Time::now().sec);
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -367,7 +367,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
@@ -379,7 +379,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
   EXPECT_TRUE(nodelet->ok());
 
   // First, try if the sleep will finish if waiting enough time
-  
+
   bool started = false;
   bool finished = false;
   std::thread t([&]()
@@ -392,25 +392,25 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
       EXPECT_FALSE(cras::isNodeletUnloading(*nodelet));
       EXPECT_TRUE(nodelet->ok());
     });
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
 
   EXPECT_FALSE(cras::isNodeletUnloading(*nodelet));
   EXPECT_TRUE(nodelet->ok());
-  
+
   ros::Time::setNow(ros::Time(11.1));
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(finished);
 
   EXPECT_FALSE(cras::isNodeletUnloading(*nodelet));
   EXPECT_TRUE(nodelet->ok());
-  
+
   // Now, test that the sleep can be interrupted.
 
   ros::Time::setNow(ros::Time(10));
-  
+
   started = false;
   finished = false;
   std::thread t2([&]()
@@ -427,7 +427,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
       EXPECT_FALSE(wasOk);
     });
 
-  ros::Time::setNow(ros::Time(10.1));  // not enough for the sleep to finish 
+  ros::Time::setNow(ros::Time(10.1));  // not enough for the sleep to finish
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(started);
   EXPECT_FALSE(finished);
@@ -442,7 +442,7 @@ TEST(StatefulNodelet, sleepInterruptByUnloadSimtime)  // NOLINT
 
   ros::WallDuration(0.1).sleep();
   EXPECT_TRUE(finished);
-  
+
   t.detach();  // detach the threads so that they don't block if the sleep did not end
   t2.detach();
   stop = true;  // stop the loaderThread

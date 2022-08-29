@@ -33,20 +33,20 @@ struct GetParamAdapter
 
   /**
    * \brief Return whether this adapter is able to get a value of the given parameter.
-   * \param[in] name Name of the parameter. 
+   * \param[in] name Name of the parameter.
    * \return Whether this adapter is able to get a value of the given parameter.
    */
   virtual bool hasParam(const std::string& name) const noexcept = 0;
-  
+
   /**
    * \brief Get the namespace of this adapter. It should somehow represent the source of the parameters.
    * \return The namespace.
    */
   virtual std::string getNamespace() const noexcept = 0;
-  
+
   /**
    * \brief Construct another adapter whose source are parameters that are in a sub-namespace of this adapter.
-   * \param[in] ns The namespace to search parameters in. 
+   * \param[in] ns The namespace to search parameters in.
    * \return The constructed adapter. The function should never return null (throw an exception on failure).
    * \throws std::runtime_error If something fails.
    * \throws ros::InvalidNameException If the namespace specification does not follow ROS parameter name rules.

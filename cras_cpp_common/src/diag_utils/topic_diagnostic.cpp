@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief This file is for backwards compatibility only. 
+ * \brief This file is for backwards compatibility only.
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague

@@ -29,7 +29,7 @@ using namespace cras;
 TEST(StringUtils, StripLeadingInplace)  // NOLINT
 {
   std::string s;
-  
+
   s = "test"; stripLeading(s, 'a'); EXPECT_EQ("test", s);
   s = "atest"; stripLeading(s, 'a'); EXPECT_EQ("test", s);
   s = ""; stripLeading(s, 'a'); EXPECT_EQ("", s);
@@ -51,7 +51,7 @@ TEST(StringUtils, StripLeading)  // NOLINT
 TEST(StringUtils, StripTrailingInplace)  // NOLINT
 {
   std::string s;
-  
+
   s = "test"; stripTrailing(s, 'a'); EXPECT_EQ("test", s);
   s = "testa"; stripTrailing(s, 'a'); EXPECT_EQ("test", s);
   s = ""; stripTrailing(s, 'a'); EXPECT_EQ("", s);
@@ -73,7 +73,7 @@ TEST(StringUtils, StripTrailing)  // NOLINT
 TEST(StringUtils, StripLeadingSlashInplace)  // NOLINT
 {
   std::string s;
-  
+
   s = "test"; stripLeadingSlash(s); EXPECT_EQ("test", s);
   s = "/test"; stripLeadingSlash(s); EXPECT_EQ("test", s);
   s = ""; stripLeadingSlash(s); EXPECT_EQ("", s);
@@ -127,9 +127,9 @@ TEST(StringUtils, ToStringBasic)  // NOLINT
   EXPECT_EQ("[True, False]", to_string(std::vector<bool>({true, false})));
   EXPECT_EQ("[]", to_string(std::vector<bool>()));
   EXPECT_EQ("[\"a\", \"b\"]", to_string(std::vector<std::string>({"a", "b"})));
-  EXPECT_EQ("{1, 2, 3}", to_string(std::set<int>({1, 2, 3}))); // set is ordered
-  EXPECT_EQ("{False, True}", to_string(std::set<bool>({true, false}))); // set is ordered
-  EXPECT_EQ("{}", to_string(std::set<bool>())); // set is ordered
+  EXPECT_EQ("{1, 2, 3}", to_string(std::set<int>({1, 2, 3})));  // set is ordered
+  EXPECT_EQ("{False, True}", to_string(std::set<bool>({true, false})));  // set is ordered
+  EXPECT_EQ("{}", to_string(std::set<bool>()));  // set is ordered
   EXPECT_EQ("[1, 2, 3]", to_string(std::list<int>({1, 2, 3})));
   EXPECT_EQ("[True, False]", to_string(std::list<bool>({true, false})));
   EXPECT_EQ("[]", to_string(std::list<bool>()));
@@ -137,9 +137,9 @@ TEST(StringUtils, ToStringBasic)  // NOLINT
   EXPECT_EQ("{1}", to_string(std::unordered_set<int>({1})));
   EXPECT_EQ("{False}", to_string(std::unordered_set<bool>({false})));
   EXPECT_EQ("{}", to_string(std::unordered_set<bool>()));
-  EXPECT_EQ("{\"a\": 1, \"b\": 2}", to_string(std::map<std::string, int>({{"a", 1}, {"b", 2}}))); // map is ordered
+  EXPECT_EQ("{\"a\": 1, \"b\": 2}", to_string(std::map<std::string, int>({{"a", 1}, {"b", 2}})));  // map is ordered
   EXPECT_EQ("{\"a\": \"1\", \"b\": \"2\"}",
-    to_string(std::map<std::string, std::string>({{"a", "1"}, {"b", "2"}}))); // map is ordered
+    to_string(std::map<std::string, std::string>({{"a", "1"}, {"b", "2"}})));  // map is ordered
   EXPECT_EQ("{True: False}", to_string(std::map<bool, bool>({{true, false}})));
   EXPECT_EQ("{}", to_string(std::map<std::string, int>()));
   EXPECT_EQ("{\"a\": 1}", to_string(std::unordered_map<std::string, int>({{"a", 1}})));
@@ -220,7 +220,7 @@ TEST(StringUtils, ToStringTF2)  // NOLINT
 
   EXPECT_EQ("[[1.000000, 2.000000, 3.000000]; [4.000000, 5.000000, 6.000000]; [7.000000, 8.000000, 9.000000]]",
     to_string(tf2::Matrix3x3(1, 2, 3, 4, 5, 6, 7, 8, 9)));
-  
+
   EXPECT_EQ("Transform(t=[0.000000, 0.000000, 0.000000], "
             "r=[x=0.000000, y=0.000000, z=0.000000, w=1.000000 (r=0.000, p=0.000, y=0.000)])",
             replace(to_string(tf2::Transform(tf2::Quaternion(0, 0, 0, 1))), "-0", "0"));
@@ -233,7 +233,7 @@ TEST(StringUtils, ToStringXmlRpcValue)  // NOLINT
   EXPECT_EQ("<value><boolean>0</boolean></value>", to_string(XmlRpc::XmlRpcValue(false)));
   EXPECT_EQ("<value><boolean>1</boolean></value>", to_string(XmlRpc::XmlRpcValue(true)));
   EXPECT_EQ("<value>aa</value>", to_string(XmlRpc::XmlRpcValue("aa")));
-  
+
   {
     tm time;
     time.tm_hour = 1;
@@ -438,7 +438,7 @@ TEST(StringUtils, Replace)  // NOLINT
   EXPECT_EQ("", replace("aa", "a", ""));
   EXPECT_EQ("testtest", replace("atestatesta", "a", ""));
   EXPECT_EQ("štečřstštestš", replace("čřžtečřstčřžtestčřž", "čřž", "š"));
-  
+
   EXPECT_EQ("", replace("test", "test", ""));
   EXPECT_EQ("a", replace("atest", "test", ""));
   EXPECT_EQ("", replace("", "test", ""));
@@ -506,7 +506,7 @@ TEST(StringUtils, ReplaceInplace)  // NOLINT
 TEST(StringUtils, Split)  // NOLINT
 {
   using v = std::vector<std::string>;
-  
+
   EXPECT_EQ(v({""}), split("", "t"));
   EXPECT_EQ(v({"test"}), split("test", "a"));
   EXPECT_EQ(v({"", "es", ""}), split("test", "t"));
@@ -516,7 +516,7 @@ TEST(StringUtils, Split)  // NOLINT
   EXPECT_EQ(v({"a", "es", "a"}), split("atesta", "t", 100));
   EXPECT_EQ(v({"a", "esta"}), split("atesta", "t", 1));
   EXPECT_EQ(v({"atesta"}), split("atesta", "t", 0));
-  
+
   EXPECT_EQ(v({""}), split("", "te"));
   EXPECT_EQ(v({"test"}), split("test", "ae"));
   EXPECT_EQ(v({"", "st"}), split("test", "te"));
@@ -526,7 +526,7 @@ TEST(StringUtils, Split)  // NOLINT
   EXPECT_EQ(v({"a", "sta"}), split("atesta", "te", 100));
   EXPECT_EQ(v({"a", "sta"}), split("atesta", "te", 1));
   EXPECT_EQ(v({"atesta"}), split("atesta", "te", 0));
-  
+
   EXPECT_EQ(v({"", "home", "cras", "file", "path"}), split("/home/cras/file/path", "/"));
 }
 
@@ -569,7 +569,7 @@ TEST(StringUtils, FormatCharPtr)  // NOLINT
 TEST(StringUtils, FormatString)  // NOLINT
 {
   using s = std::string;
-  
+
   EXPECT_EQ("cras", cras::format(s("%s"), "cras"));
   EXPECT_EQ("-42", cras::format(s("%i"), -42));
   EXPECT_EQ("42", cras::format(s("%u"), 42));
@@ -611,7 +611,7 @@ TEST(StringUtils, Join)  // NOLINT
 TEST(StringUtils, ParseInt8)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseInt8("0"));
-  
+
   EXPECT_EQ(1, cras::parseInt8("1"));
   EXPECT_EQ(1, cras::parseInt8("+1"));
   EXPECT_EQ(1, cras::parseInt8(" 1"));
@@ -635,7 +635,7 @@ TEST(StringUtils, ParseInt8)  // NOLINT
   EXPECT_EQ(0x7f, cras::parseInt8("0x7F"));
   EXPECT_EQ(0x7f, cras::parseInt8("0X7f"));
   EXPECT_EQ(0x7f, cras::parseInt8("0X7F"));
-  
+
   EXPECT_EQ(-1, cras::parseInt8("-1"));
   EXPECT_EQ(-1, cras::parseInt8("-1"));
   EXPECT_EQ(-1, cras::parseInt8(" -1"));
@@ -673,7 +673,7 @@ TEST(StringUtils, ParseInt8)  // NOLINT
 TEST(StringUtils, ParseUInt8)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseUInt8("0"));
-  
+
   EXPECT_EQ(1, cras::parseUInt8("1"));
   EXPECT_EQ(1, cras::parseUInt8("+1"));
   EXPECT_EQ(1, cras::parseUInt8(" 1"));
@@ -703,7 +703,7 @@ TEST(StringUtils, ParseUInt8)  // NOLINT
   EXPECT_EQ(0xff, cras::parseUInt8("0XFF"));
   EXPECT_EQ(0xff, cras::parseUInt8("0XFf"));
   EXPECT_EQ(0xff, cras::parseUInt8("0XfF"));
-  
+
   EXPECT_THROW(cras::parseUInt8("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8(" -1"), std::invalid_argument);
@@ -712,7 +712,7 @@ TEST(StringUtils, ParseUInt8)  // NOLINT
   EXPECT_THROW(cras::parseUInt8("-10"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8("-42"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8("-128"), std::invalid_argument);
-  
+
   EXPECT_THROW(cras::parseUInt8(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt8("3.14"), std::invalid_argument);
@@ -730,7 +730,7 @@ TEST(StringUtils, ParseUInt8)  // NOLINT
 TEST(StringUtils, ParseInt16)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseInt16("0"));
-  
+
   EXPECT_EQ(1, cras::parseInt16("1"));
   EXPECT_EQ(1, cras::parseInt16("+1"));
   EXPECT_EQ(1, cras::parseInt16(" 1"));
@@ -754,7 +754,7 @@ TEST(StringUtils, ParseInt16)  // NOLINT
   EXPECT_EQ(0x7fff, cras::parseInt16("0x7Fff"));
   EXPECT_EQ(0x7fff, cras::parseInt16("0X7fff"));
   EXPECT_EQ(0x7fff, cras::parseInt16("0X7Fff"));
-  
+
   EXPECT_EQ(-1, cras::parseInt16("-1"));
   EXPECT_EQ(-1, cras::parseInt16("-1"));
   EXPECT_EQ(-1, cras::parseInt16(" -1"));
@@ -774,7 +774,7 @@ TEST(StringUtils, ParseInt16)  // NOLINT
   EXPECT_EQ(-0x0001, cras::parseInt16("-0X0001"));
   EXPECT_EQ(-0x8000, cras::parseInt16("-0x8000"));
   EXPECT_EQ(-0x8000, cras::parseInt16("-0X8000"));
-  
+
   EXPECT_THROW(cras::parseInt16(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseInt16("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseInt16("3.14"), std::invalid_argument);
@@ -791,7 +791,7 @@ TEST(StringUtils, ParseInt16)  // NOLINT
 TEST(StringUtils, ParseUInt16)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseUInt16("0"));
-  
+
   EXPECT_EQ(1, cras::parseUInt16("1"));
   EXPECT_EQ(1, cras::parseUInt16("+1"));
   EXPECT_EQ(1, cras::parseUInt16(" 1"));
@@ -821,7 +821,7 @@ TEST(StringUtils, ParseUInt16)  // NOLINT
   EXPECT_EQ(0xffff, cras::parseUInt16("0XFFff"));
   EXPECT_EQ(0xffff, cras::parseUInt16("0XFfff"));
   EXPECT_EQ(0xffff, cras::parseUInt16("0XfFff"));
-  
+
   EXPECT_THROW(cras::parseUInt16("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16(" -1"), std::invalid_argument);
@@ -830,7 +830,7 @@ TEST(StringUtils, ParseUInt16)  // NOLINT
   EXPECT_THROW(cras::parseUInt16("-10"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16("-42"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16("-32768"), std::invalid_argument);
-  
+
   EXPECT_THROW(cras::parseUInt16(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt16("3.14"), std::invalid_argument);
@@ -847,7 +847,7 @@ TEST(StringUtils, ParseUInt16)  // NOLINT
 TEST(StringUtils, ParseInt32)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseInt32("0"));
-  
+
   EXPECT_EQ(1, cras::parseInt32("1"));
   EXPECT_EQ(1, cras::parseInt32("+1"));
   EXPECT_EQ(1, cras::parseInt32(" 1"));
@@ -871,7 +871,7 @@ TEST(StringUtils, ParseInt32)  // NOLINT
   EXPECT_EQ(0x7fffffff, cras::parseInt32("0x7Fffffff"));
   EXPECT_EQ(0x7fffffff, cras::parseInt32("0X7fffffff"));
   EXPECT_EQ(0x7fffffff, cras::parseInt32("0X7Fffffff"));
-  
+
   EXPECT_EQ(-1, cras::parseInt32("-1"));
   EXPECT_EQ(-1, cras::parseInt32("-1"));
   EXPECT_EQ(-1, cras::parseInt32(" -1"));
@@ -891,7 +891,7 @@ TEST(StringUtils, ParseInt32)  // NOLINT
   EXPECT_EQ(-0x00000001, cras::parseInt32("-0X00000001"));
   EXPECT_EQ(-0x80000000, cras::parseInt32("-0x80000000"));
   EXPECT_EQ(-0x80000000, cras::parseInt32("-0X80000000"));
-  
+
   EXPECT_THROW(cras::parseInt32(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseInt32("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseInt32("3.14"), std::invalid_argument);
@@ -908,7 +908,7 @@ TEST(StringUtils, ParseInt32)  // NOLINT
 TEST(StringUtils, ParseUInt32)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseUInt32("0"));
-  
+
   EXPECT_EQ(1, cras::parseUInt32("1"));
   EXPECT_EQ(1, cras::parseUInt32("+1"));
   EXPECT_EQ(1, cras::parseUInt32(" 1"));
@@ -938,7 +938,7 @@ TEST(StringUtils, ParseUInt32)  // NOLINT
   EXPECT_EQ(0xffffffff, cras::parseUInt32("0XFFffffff"));
   EXPECT_EQ(0xffffffff, cras::parseUInt32("0XFfffffff"));
   EXPECT_EQ(0xffffffff, cras::parseUInt32("0XfFffffff"));
-  
+
   EXPECT_THROW(cras::parseUInt32("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32(" -1"), std::invalid_argument);
@@ -947,7 +947,7 @@ TEST(StringUtils, ParseUInt32)  // NOLINT
   EXPECT_THROW(cras::parseUInt32("-10"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32("-42"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32("-2147483648"), std::invalid_argument);
-  
+
   EXPECT_THROW(cras::parseUInt32(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt32("3.14"), std::invalid_argument);
@@ -964,7 +964,7 @@ TEST(StringUtils, ParseUInt32)  // NOLINT
 TEST(StringUtils, ParseInt64)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseInt64("0"));
-  
+
   EXPECT_EQ(1, cras::parseInt64("1"));
   EXPECT_EQ(1, cras::parseInt64("+1"));
   EXPECT_EQ(1, cras::parseInt64(" 1"));
@@ -992,7 +992,7 @@ TEST(StringUtils, ParseInt64)  // NOLINT
   EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0x7Fffffffffffffff"));
   EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0X7fffffffffffffff"));
   EXPECT_EQ(0x7fffffffffffffff, cras::parseInt64("0X7Fffffffffffffff"));
-  
+
   EXPECT_EQ(-1, cras::parseInt64("-1"));
   EXPECT_EQ(-1, cras::parseInt64("-1"));
   EXPECT_EQ(-1, cras::parseInt64(" -1"));
@@ -1016,13 +1016,13 @@ TEST(StringUtils, ParseInt64)  // NOLINT
   EXPECT_EQ(-0x0000000000000001, cras::parseInt64("-0X0000000000000001"));
   EXPECT_EQ(-0x8000000000000000, cras::parseInt64("-0x8000000000000000"));
   EXPECT_EQ(-0x8000000000000000, cras::parseInt64("-0X8000000000000000"));
-  
+
   EXPECT_THROW(cras::parseInt64(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseInt64("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseInt64("3.14"), std::invalid_argument);
   EXPECT_THROW(cras::parseInt64("9223372036854775808"), std::invalid_argument);
   EXPECT_THROW(cras::parseInt64("-9223372036854775809"), std::invalid_argument);
-  EXPECT_THROW(cras::parseInt64( "0b10000000000000000000000000000000000000000000000000000000000000000"),
+  EXPECT_THROW(cras::parseInt64( "0b10000000000000000000000000000000000000000000000000000000000000000"),  // NOLINT
     std::invalid_argument);
   EXPECT_THROW(cras::parseInt64("-0b10000000000000000000000000000000000000000000000000000000000000001"),
     std::invalid_argument);
@@ -1035,7 +1035,7 @@ TEST(StringUtils, ParseInt64)  // NOLINT
 TEST(StringUtils, ParseUInt64)  // NOLINT
 {
   EXPECT_EQ(0, cras::parseUInt64("0"));
-  
+
   EXPECT_EQ(1, cras::parseUInt64("1"));
   EXPECT_EQ(1, cras::parseUInt64("+1"));
   EXPECT_EQ(1, cras::parseUInt64(" 1"));
@@ -1069,7 +1069,7 @@ TEST(StringUtils, ParseUInt64)  // NOLINT
   EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XFFffFFffFFffffff"));
   EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XFfffFfffFfffffff"));
   EXPECT_EQ(0xffffffffffffffff, cras::parseUInt64("0XfFfffFfffFffffff"));
-  
+
   EXPECT_THROW(cras::parseUInt64("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64("-1"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64(" -1"), std::invalid_argument);
@@ -1078,7 +1078,7 @@ TEST(StringUtils, ParseUInt64)  // NOLINT
   EXPECT_THROW(cras::parseUInt64("-10"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64("-42"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64("-9223372036854775808"), std::invalid_argument);
-  
+
   EXPECT_THROW(cras::parseUInt64(" 1  "), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64("1.0"), std::invalid_argument);
   EXPECT_THROW(cras::parseUInt64("3.14"), std::invalid_argument);

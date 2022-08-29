@@ -22,7 +22,7 @@ using namespace cras;
 struct MockNodelet
 {
   virtual ~MockNodelet() = default;
-  
+
   /**
    * \brief Get name of the mock.
    * \return Name.
@@ -58,7 +58,7 @@ TEST(ThreadNameUpdatingNodelet, updateThreadName)  // NOLINT
   nodelet.updateThreadNamePublic();
   EXPECT_NE(origName, cras::getThreadName());
   EXPECT_EQ("nodelet", cras::getThreadName());
-  
+
   nodelet.name = "/very/long_nodelet_name_exceeding_15/chars";
   nodelet.updateThreadNamePublic();
   EXPECT_TRUE(cras::startsWith(cras::getThreadName(), "very/"));

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include <cras_cpp_common/string_utils/from_chars.h>
 
 // Passed from CMake as a result of try_compile

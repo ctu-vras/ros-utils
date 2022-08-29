@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include "gtest/gtest.h"
 
 #include <limits>
@@ -32,7 +32,7 @@ TEST(TimeUtils, RemainingTimeDuration)  // NOLINT
 
   EXPECT_EQ(9.0, remainingTime({99, 0}, {10, 0}).toSec());
   EXPECT_EQ(1.0, remainingTime({99, 0}, {2, 0}).toSec());
-  EXPECT_EQ(0.0, remainingTime({90, 0}, {2, 0}).toSec()); // time's up
+  EXPECT_EQ(0.0, remainingTime({90, 0}, {2, 0}).toSec());  // time's up
   Time::shutdown();
 }
 
@@ -43,7 +43,7 @@ TEST(TimeUtils, RemainingTimeDouble)  // NOLINT
 
   EXPECT_EQ(9.0, remainingTime({99, 0}, 10.0).toSec());
   EXPECT_EQ(1.0, remainingTime({99, 0}, 2.0).toSec());
-  EXPECT_EQ(0.0, remainingTime({90, 0}, 2.0).toSec()); // time's up
+  EXPECT_EQ(0.0, remainingTime({90, 0}, 2.0).toSec());  // time's up
   Time::shutdown();
 }
 
@@ -55,16 +55,16 @@ TEST(TimeUtils, Frequency)  // NOLINT
   EXPECT_NEAR(-10.0, frequency(ros::Rate(-10.0)), 1e-3);
   EXPECT_NEAR(3.14, frequency(ros::Rate(3.14)), 1e-3);
   EXPECT_NEAR(-3.14, frequency(ros::Rate(-3.14)), 1e-3);
-  
+
   EXPECT_NEAR(1.0, frequency(ros::Rate(1.0), true), 1e-3);
   EXPECT_NEAR(-1.0, frequency(ros::Rate(-1.0), true), 1e-3);
   EXPECT_NEAR(10.0, frequency(ros::Rate(10.0), true), 1e-3);
   EXPECT_NEAR(-10.0, frequency(ros::Rate(-10.0), true), 1e-3);
   EXPECT_NEAR(3.14, frequency(ros::Rate(3.14), true), 1e-3);
   EXPECT_NEAR(-3.14, frequency(ros::Rate(-3.14), true), 1e-3);
-  
+
   EXPECT_EQ(std::numeric_limits<double>::infinity(), frequency(ros::Rate(ros::Duration(0))));
-  
+
   EXPECT_NEAR(0, frequency(ros::Rate(ros::DURATION_MAX)), 1e-3);
   EXPECT_NE(0, frequency(ros::Rate(ros::DURATION_MAX)));  // it is very small, but not zero
   EXPECT_EQ(0, frequency(ros::Rate(ros::DURATION_MAX), true));
@@ -81,16 +81,16 @@ TEST(TimeUtils, WallFrequency)  // NOLINT
   EXPECT_NEAR(-10.0, frequency(ros::WallRate(-10.0)), 1e-3);
   EXPECT_NEAR(3.14, frequency(ros::WallRate(3.14)), 1e-3);
   EXPECT_NEAR(-3.14, frequency(ros::WallRate(-3.14)), 1e-3);
-  
+
   EXPECT_NEAR(1.0, frequency(ros::WallRate(1.0), true), 1e-3);
   EXPECT_NEAR(-1.0, frequency(ros::WallRate(-1.0), true), 1e-3);
   EXPECT_NEAR(10.0, frequency(ros::WallRate(10.0), true), 1e-3);
   EXPECT_NEAR(-10.0, frequency(ros::WallRate(-10.0), true), 1e-3);
   EXPECT_NEAR(3.14, frequency(ros::WallRate(3.14), true), 1e-3);
   EXPECT_NEAR(-3.14, frequency(ros::WallRate(-3.14), true), 1e-3);
-  
+
   EXPECT_EQ(std::numeric_limits<double>::infinity(), frequency(ros::WallRate(ros::Duration(0))));
-  
+
   EXPECT_NEAR(0, frequency(ros::WallRate(ros::DURATION_MAX)), 1e-3);
   EXPECT_NE(0, frequency(ros::WallRate(ros::DURATION_MAX)));  // it is very small, but not zero
   EXPECT_EQ(0, frequency(ros::WallRate(ros::DURATION_MAX), true));
@@ -237,31 +237,31 @@ TEST(TimeUtils, SleepInterfaceSimTime)  // NOLINT
 {
   Time::init();
   Time::setNow({10, 0});
-  
+
   TestSleepInterface i;
-  
+
   // Test normal sleep behavior without interruption.
-  
+
   bool started = false;
   bool executed = false;
   std::thread([&](){started = true;
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow(ros::Time(10.99));
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow(ros::Time(11, 0));
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
@@ -281,11 +281,11 @@ TEST(TimeUtils, SleepInterfaceWallTime)  // NOLINT
 {
   Time::init();
   ASSERT_TRUE(Time::isSystemTime());
-  
+
   TestSleepInterface i;
-  
+
   // Test normal sleep behavior without interruption.
-  
+
   bool started = false;
   bool executed = false;
   std::thread([&](){started = true;
@@ -295,11 +295,11 @@ TEST(TimeUtils, SleepInterfaceWallTime)  // NOLINT
     EXPECT_GT(1.1, duration.toSec());
     EXPECT_LT(1.0, duration.toSec());
   executed = true;}).detach();
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(1.5);
   while ((!started || !executed) && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_TRUE(executed);
 }
@@ -311,27 +311,27 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
 {
   Time::init();
   Time::setNow({10, 0});
-  
+
   TestSleepInterface i;
-  
+
   // Test normal sleep behavior without interruption.
-  
+
   bool started = false;
   bool executed = false;
   std::thread([&](){started = true;
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
   ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow({11, 1000});
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
@@ -339,27 +339,27 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test interrupting a running sleep by setting ok() to false.
-  
+
   ros::Time::setNow({10, 0});
-  
+
   started = false;
   executed = false;
   std::thread([&](){started = true;
     EXPECT_FALSE(i.sleep({1, 0}));
   executed = true;}).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
   ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
-  
+
   i.isOk = false;
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
@@ -367,31 +367,31 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test two simultaneous sleeps where the second one should end earlier than the first one.
-  
+
   ros::Time::setNow({10, 0});
   i.isOk = true;
-  
+
   started = false;
   executed = false;
   std::thread([&](){started = true;
     EXPECT_TRUE(i.sleep({1, 0}));
   executed = true;}).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   auto started2 = false;
   auto executed2 = false;
   std::thread([&](){started2 = true;
     EXPECT_TRUE(i.sleep(ros::Duration(0.1)));
   executed2 = true;}).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
@@ -404,16 +404,16 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   ros::WallDuration(0.2).sleep();
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
-  
+
   ros::Time::setNow(ros::Time(10.11));
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_FALSE(executed);
   EXPECT_TRUE(executed2);
-  
+
   ros::Time::setNow({11, 1000});
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
@@ -421,31 +421,31 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test simultaneous sleeps and setting ok() to false during them.
-  
+
   ros::Time::setNow({10, 0});
   i.isOk = true;
-  
+
   started = false;
   executed = false;
   std::thread([&](){started = true;
     EXPECT_FALSE(i.sleep({1, 0}));
   executed = true;}).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   started2 = false;
   executed2 = false;
   std::thread([&](){started2 = true;
     EXPECT_FALSE(i.sleep({1, 0}));
   executed2 = true;}).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!started2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
@@ -458,16 +458,16 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
-  
+
   ros::Time::setNow(ros::Time(10.1));
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
   while (!executed2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
-  
+
   i.isOk = false;
 
   end = ros::WallTime::now() + ros::WallDuration(0.2);
@@ -476,12 +476,12 @@ TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
 
   EXPECT_TRUE(executed);
   EXPECT_TRUE(executed2);
-  
+
   Time::shutdown();
 }
 
 /**
- * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep also when using WallTime. 
+ * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep also when using WallTime.
  */
 TEST(TimeUtils, SleepInterfaceInterruptWallTime)  // NOLINT
 {
@@ -491,7 +491,7 @@ TEST(TimeUtils, SleepInterfaceInterruptWallTime)  // NOLINT
   auto i = std::make_shared<TestSleepInterface>();
 
   auto startTime = ros::WallTime::now();
-  
+
   bool started = false;
   bool executed = false;
   std::thread([&](){started = true;
@@ -521,7 +521,7 @@ TEST(TimeUtils, SleepInterfaceInterruptWallTime)  // NOLINT
 }
 
 /**
- * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep if it is being destroyed. 
+ * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep if it is being destroyed.
  */
 TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
 {
@@ -548,9 +548,9 @@ TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
 
   bool started2 = false;
   bool executed2 = false;
-  
+
   // Destroy the sleep interface object and make sure both the destruction and the ongoing sleep have finished on time.
-  
+
   std::thread([&](){started2 = true;
     i.reset();
   executed2 = true;}).detach();

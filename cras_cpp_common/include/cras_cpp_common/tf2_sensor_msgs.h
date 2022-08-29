@@ -36,14 +36,14 @@ enum class CloudChannelType
 
 /**
  * \brief Register the given pointcloud channel prefix with the given type. This registration will be used by
- * transformWithChannels() when called without an explicit channel list. 
+ * transformWithChannels() when called without an explicit channel list.
  * \param[in] channelPrefix Prefix of the channel. E.g. `normal_` for registering type of normal_x,normal_y,normal_z.
  * \param[in] type Type of the channel.
  */
 void registerCloudChannelType(const ::std::string& channelPrefix, ::cras::CloudChannelType type);
 
 /**
- * \brief Unregister a cloud channel type registered earlier with registerCloudChannelType(). 
+ * \brief Unregister a cloud channel type registered earlier with registerCloudChannelType().
  * \param[in] channelPrefix Prefix of the channel.
  */
 void unregisterCloudChannelType(const ::std::string& channelPrefix);
@@ -71,7 +71,7 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
   const ::geometry_msgs::TransformStamped& tf);
 
 /**
- * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in 
+ * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in
  *        `channels` will be transformed, according to their type.
  * \param[in] in The input cloud.
  * \param[out] out The output cloud (can be the same as input).
@@ -98,7 +98,7 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
   const ::tf2_ros::Buffer& tfBuffer, const ::std::string& targetFrame);
 
 /**
- * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in 
+ * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in
  *        `channels` will be transformed, according to their type.
  * \param[in] in The input cloud.
  * \param[out] out The output cloud (can be the same as input).

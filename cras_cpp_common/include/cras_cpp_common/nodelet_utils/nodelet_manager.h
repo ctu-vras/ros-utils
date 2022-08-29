@@ -25,7 +25,7 @@ namespace cras
 
 /**
  * \brief Nodelet manager with customizable instance creation mechanism.
- * 
+ *
  * The standard usage of this class is creating its instance, calling init() and then ros::spin().
  */
 class NodeletManager
@@ -36,7 +36,7 @@ public:
    * \param[in] nh The nodehandle used for nodelet load/unload ROS services.
    */
   explicit NodeletManager(::ros::NodeHandle nh = {"~"});
-  
+
   /**
    * \brief Initialize all class members.
    */
@@ -55,15 +55,15 @@ protected:
 
   //! \brief Class loader used for loading nodelets.
   ::std::unique_ptr<ClassLoader> classLoader;
-  
+
   // loader has to be declared after classLoader, otherwise we get class_loader SEVERE_WARNING
   // about leaving managed instances in memory
   //! \brief Nodelet loader that loads and runs the nodelets.
   ::std::unique_ptr<::nodelet::Loader> loader;
-  
+
   //! \brief ROS API for the nodelet manager.
   ::std::unique_ptr<::cras::LoaderROS> loaderRos;
-  
+
   //! \brief Node handle for the ROS API services.
   ::ros::NodeHandle nh;
 };

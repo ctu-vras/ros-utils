@@ -68,16 +68,16 @@ TEST(TypeUtils, GetTypeName)  // NOLINT
   // there is a litle inevitable difference in the templated and non-templated version
   EXPECT_EQ("unsigned long", cras::getTypeName(typeid(1_sz)));
   EXPECT_EQ("long unsigned int", cras::getTypeName<size_t>());
-  
+
   EXPECT_EQ("std::string", cras::getTypeName(typeid(std::string("test"))));
   EXPECT_EQ("std::string", cras::getTypeName<std::string>());
-  
+
   EXPECT_EQ("std::vector<int>", cras::getTypeName(typeid(std::vector<int>)));
   EXPECT_EQ("std::vector<int>", cras::getTypeName<std::vector<int>>());
 
   EXPECT_EQ("std::vector<std::string>", cras::getTypeName(typeid(std::vector<std::string>)));
   EXPECT_EQ("std::vector<std::string>", cras::getTypeName<std::vector<std::string>>());
-  
+
   EXPECT_EQ("std::list<int>", cras::getTypeName(typeid(std::list<int>)));
   EXPECT_EQ("std::list<int>", cras::getTypeName<std::list<int>>());
 
@@ -128,7 +128,7 @@ TEST(TypeUtils, IsString)  // NOLINT
   EXPECT_EQ(std::true_type::value, cras::is_string<std::string>::value);
   EXPECT_EQ(std::false_type::value, cras::is_c_string<const std::string>::value);
   EXPECT_EQ(std::true_type::value, cras::is_string<const std::string>::value);
-  
+
   EXPECT_EQ(std::false_type::value, cras::is_string<int>::value);
   EXPECT_EQ(std::false_type::value, cras::is_string<double>::value);
   EXPECT_EQ(std::false_type::value, cras::is_string<std::vector<std::string>>::value);

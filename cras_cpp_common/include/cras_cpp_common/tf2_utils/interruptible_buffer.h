@@ -46,8 +46,8 @@ public:
    * \brief Create the buffer.
    * \param[in] cacheTime How long to keep a history of transforms
    */
-  explicit InterruptibleTFBuffer(const ::ros::Duration& cacheTime={::tf2::BufferCore::DEFAULT_CACHE_TIME, 0});
-  
+  explicit InterruptibleTFBuffer(const ::ros::Duration& cacheTime = {::tf2::BufferCore::DEFAULT_CACHE_TIME, 0});
+
   /**
    * \brief Create the buffer that relays lookups to the given parentBuffer and adds the interruptible behavior to it.
    *        Cache duration is the same as in parentBuffer. Only getCacheLength(), canTransform() and lookupTransform()
@@ -61,13 +61,13 @@ public:
    * \brief Destroys the class. Waits until a running `canTransform()` call is finished.
    */
   ~InterruptibleTFBuffer() override;
-  
+
   /**
    * \brief Whether it is OK to continue. If false, all pending lookups should stop as soon as possible.
    * \return Whether it is OK to continue.
    */
   bool ok() const override;
-  
+
   /**
    * \brief Request all pending lookups to stop. After calling this, `ok()` should return false.
    */
@@ -82,7 +82,7 @@ public:
    * \param[in] source_frame The frame from which to transform.
    * \param[in] target_time The time at which to transform.
    * \param[in] timeout How long to block before failing.
-   * \return True if the transform is possible, false otherwise. 
+   * \return True if the transform is possible, false otherwise.
    */
   bool canTransform(const ::std::string& target_frame, const ::std::string& source_frame,
     const ::ros::Time& time, ::ros::Duration timeout) const;
@@ -100,7 +100,7 @@ public:
    * \param[in] source_time The time from which to transform.
    * \param[in] fixed_frame The frame in which to treat the transform as constant in time.
    * \param[in] timeout How long to block before failing.
-   * \return True if the transform is possible, false otherwise. 
+   * \return True if the transform is possible, false otherwise.
    */
   bool canTransform(const ::std::string& target_frame, const ::ros::Time& target_time,
     const ::std::string& source_frame, const ::ros::Time& source_time,
@@ -121,20 +121,20 @@ public:
    * \return Whether the given scale was set. Returns false if an invalid scale was provided.
    */
   bool setCanTransformPollingScale(double scale);
-  
+
   /**
-   * \brief Set minimum duration of a pause between two transform polls. 
+   * \brief Set minimum duration of a pause between two transform polls.
    * \param[in] duration The minimum duration. It has to be positive.
    * \return Whether the given duration is valid and was set.
    */
   bool setMinPollingDuration(const ::ros::Duration& duration);
-  
+
   /**
    * \brief Get the raw tf2::BufferCore that actually stores the transforms.
    * \return The raw buffer.
    */
   ::tf2::BufferCore& getRawBuffer();
-  
+
   /**
    * \brief Get the raw tf2::BufferCore that actually stores the transforms.
    * \return The raw buffer.
@@ -143,7 +143,7 @@ public:
 
   // The transform() functions internally use the overridden lookupTransform(), so it is okay to just call the parent
   // implementation.
-  
+
   /** \brief Transform an input into the target frame.
    * This function is templated and can take as input any valid mathematical object that tf knows
    * how to apply a transform to, by way of the templated math conversions interface.
@@ -156,7 +156,7 @@ public:
    * \param[in] timeout How long to wait for the target frame. Default value is zero (no blocking).
    */
   template <class T>
-  T& transform(const T& in, T& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  T& transform(const T& in, T& out, const ::std::string& target_frame, ::ros::Duration timeout = {0, 0}) const
   {
     return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
   }
@@ -173,7 +173,7 @@ public:
    * \return The transformed output.
    */
   template <class T>
-  T transform(const T& in, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  T transform(const T& in, const ::std::string& target_frame, ::ros::Duration timeout = {0, 0}) const
   {
     T out;
     return ::tf2_ros::Buffer::transform(in, target_frame, timeout);
@@ -197,7 +197,7 @@ public:
    * \return The transformed output, converted to the specified type.
    */
   template <class A, class B>
-  B& transform(const A& in, B& out, const ::std::string& target_frame, ::ros::Duration timeout={0, 0}) const
+  B& transform(const A& in, B& out, const ::std::string& target_frame, ::ros::Duration timeout = {0, 0}) const
   {
     return ::tf2_ros::Buffer::transform(in, out, target_frame, timeout);
   }
@@ -219,7 +219,7 @@ public:
    */
   template <class T>
   T& transform(const T& in, T& out, const ::std::string& target_frame, const ::ros::Time& target_time,
-    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+    const ::std::string& fixed_frame, ::ros::Duration timeout = {0, 0}) const
   {
     return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);
   }
@@ -242,7 +242,7 @@ public:
    */
   template <class T>
   T transform(const T& in, const ::std::string& target_frame, const ::ros::Time& target_time,
-    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+    const ::std::string& fixed_frame, ::ros::Duration timeout = {0, 0}) const
   {
     return ::tf2_ros::Buffer::transform(in, target_frame, target_time, fixed_frame, timeout);
   }
@@ -270,18 +270,18 @@ public:
    */
   template <class A, class B>
   B& transform(const A& in, B& out, const ::std::string& target_frame, const ::ros::Time& target_time,
-    const ::std::string& fixed_frame, ::ros::Duration timeout={0, 0}) const
+    const ::std::string& fixed_frame, ::ros::Duration timeout = {0, 0}) const
   {
     return ::tf2_ros::Buffer::transform(in, out, target_frame, target_time, fixed_frame, timeout);  // NOLINT
   }
-  
+
   // Methods copied from BufferCore, they do not rely on time.
 
   /**
    * \brief Get the duration over which this transformer will cache.
    */
   ::ros::Duration getCacheLength();
-  
+
   /**
    * \brief Clear all data.
    */
@@ -316,7 +316,7 @@ public:
    * \param[in] target_time The time to which the data should be transformed. (0 will get the latest)
    * \param[in] source_frame The frame where the data originated
    * \param[in] source_time The time at which the source_frame should be evaluated. (0 will get the latest)
-   * \param[in] fixed_frame The frame in which to assume the transform is constant in time. 
+   * \param[in] fixed_frame The frame in which to assume the transform is constant in time.
    * \return The transform between the frames.
    * \throws tf2::LookupException, tf2::ConnectivityException, tf2::ExtrapolationException,
    *         tf2::InvalidArgumentException
@@ -367,22 +367,22 @@ public:
 protected:
   //! \brief If not null, this class relays all lookups to parentBuffer.
   const ::std::shared_ptr<::tf2::BufferCore> parentBuffer {nullptr};
-  
+
   //! \brief `canTransform()` timeout is multiplied by this scale and polling for the transform is done in these time
-  //!         steps.  
+  //!         steps.
   double canTransformPollingScale {0.01};
-  
+
   //! \brief Minimum duration of a pause between two transform polls. If timeout * canTransformPollingScale would be
   //!        smaller than this value, this value will be used instead to prevent too frequent queries.
   ::ros::Duration minPollingDuration {0, 1000000};
-  
+
 private:
   //! \brief True until `requestStop()` is called.
   bool isOk {true};
 
   //! \brief If parentBuffer is set and it is an InterruptibleTFBuffer, its dynamic cast to this type is stored here.
   const ::std::shared_ptr<::cras::InterruptibleTFBuffer> interruptibleParentBuffer {nullptr};
- 
+
   //! \brief Reverse semaphore guarding that the object is not destroyed before all pending callbacks finish. At the
   //! start of each callback, the semaphore is increased, and at the end of the callback, it is decreased. The
   //! destructor of this class will block until the semaphore reaches zero.

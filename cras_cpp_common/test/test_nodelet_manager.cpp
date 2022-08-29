@@ -35,7 +35,7 @@ public:
   {
     nodeletInstance = this;
   }
-  
+
   ~TestNodelet() override
   {
     nodeletInstance = nullptr;
@@ -45,7 +45,7 @@ public:
   {
     this->initialized = true;
   }
-  
+
   bool initialized {false};
 };
 
@@ -81,7 +81,7 @@ public:
     this->lastLoadedName = lookup_name;
     return "TestNodelet";
   }
-  
+
   std::string lastLoadedName {};
 };
 
@@ -102,13 +102,13 @@ public:
   explicit TestManager(ros::NodeHandle nh) : cras::NodeletManager(nh)
   {
   }
-  
+
   void init() override
   {
     NodeletManager::init();
     this->classLoader = std::make_unique<TestClassLoader>();
   }
-  
+
   std::string getLastLoadedName() const
   {
     return dynamic_cast<TestClassLoader*>(this->classLoader.get())->lastLoadedName;
@@ -121,18 +121,18 @@ public:
   explicit TestTfManager(ros::NodeHandle nh) : cras::NodeletManagerSharingTfBuffer(nh)
   {
   }
-  
+
   void init() override
   {
     cras::NodeletManagerSharingTfBuffer::init();
     this->classLoader = std::make_unique<TestClassLoader>();
   }
-  
+
   std::string getLastLoadedName() const
   {
     return dynamic_cast<TestClassLoader*>(this->classLoader.get())->lastLoadedName;
   }
-  
+
   using cras::NodeletManagerSharingTfBuffer::buffer;
   using cras::NodeletManagerSharingTfBuffer::listener;
 };
@@ -146,10 +146,10 @@ TEST(LoaderROS, ServicesDirect)  // NOLINT
   nodelet::NodeletList::Response listResponse;
   EXPECT_TRUE(loaderRos.serviceList(listRequest, listResponse));
   EXPECT_EQ(0u, listResponse.nodelets.size());
-  
+
   nodelet::NodeletLoad::Request loadRequest;
   nodelet::NodeletLoad::Response loadResponse;
-  
+
   loadRequest.name = "test";
   loadRequest.type = "test/type";
   loader.lastLoadedName = "";
@@ -163,10 +163,10 @@ TEST(LoaderROS, ServicesDirect)  // NOLINT
   EXPECT_TRUE(loaderRos.serviceList(listRequest, listResponse));
   EXPECT_EQ(1u, listResponse.nodelets.size());
   EXPECT_EQ("test", listResponse.nodelets[0]);
-  
+
   nodelet::NodeletUnload::Request unloadRequest;
   nodelet::NodeletUnload::Response unloadResponse;
-  
+
   unloadRequest.name = "test";
   EXPECT_NE(nullptr, nodeletInstance);
   EXPECT_TRUE(loaderRos.serviceUnload(unloadRequest, unloadResponse));
@@ -198,14 +198,14 @@ TEST(LoaderROS, ServicesROS)  // NOLINT
   auto listService = std::make_unique<ros::ServiceClient>();
   nodelet::NodeletList::Request listRequest;
   nodelet::NodeletList::Response listResponse;
-  
+
   std::thread t([&]()
   {
     auto service = nh.serviceClient<nodelet::NodeletList>("list");
     ASSERT_TRUE(service.waitForExistence());
     serviceFound = true;
     *listService = service;
-    
+
     EXPECT_TRUE(service.call(listRequest, listResponse));
     EXPECT_EQ(0u, listResponse.nodelets.size());
     finished = true;
@@ -304,14 +304,14 @@ TEST(NodeletManager, Services)  // NOLINT
   auto listService = std::make_unique<ros::ServiceClient>();
   nodelet::NodeletList::Request listRequest;
   nodelet::NodeletList::Response listResponse;
-  
+
   std::thread t([&]()
   {
     auto service = nh.serviceClient<nodelet::NodeletList>("list");
     ASSERT_TRUE(service.waitForExistence());
     serviceFound = true;
     *listService = service;
-    
+
     EXPECT_TRUE(service.call(listRequest, listResponse));
     EXPECT_EQ(0u, listResponse.nodelets.size());
     finished = true;
@@ -393,7 +393,7 @@ TEST(NodeletManagerSharingTfBuffer, ShareBuffer)  // NOLINT
   ros::NodeHandle nh("~");
   TestTfManager manager(nh);
   manager.init();
-  
+
   EXPECT_NE(nullptr, manager.buffer);
   EXPECT_NE(nullptr, manager.listener);
 
@@ -409,7 +409,7 @@ TEST(NodeletManagerSharingTfBuffer, ShareBuffer)  // NOLINT
   ASSERT_TRUE(manager.buffer->canTransform("test", "test2", time));
   const auto tf2 = manager.buffer->lookupTransform("test", "test2", time);
   EXPECT_EQ(tf, tf2);
-  
+
   bool finished {false};
 
   auto spinUntilFinished = [&]()
@@ -444,7 +444,7 @@ TEST(NodeletManagerSharingTfBuffer, ShareBuffer)  // NOLINT
   ASSERT_NE(nullptr, nodeletInstance);
   EXPECT_TRUE(nodeletInstance->initialized);
   EXPECT_TRUE(nodeletInstance->usesSharedBuffer());
-  
+
   auto& buffer = nodeletInstance->getBuffer();
   auto& rawBuffer = nodeletInstance->getBuffer().getRawBuffer();
   EXPECT_TRUE(buffer.canTransform("test", "test2", time, ros::Duration(0)));

@@ -23,7 +23,8 @@ using namespace cras;
 #define TRACE SCOPED_TRACE("Failure happened here");
 
 template <typename T>
-void test_converts(const XmlRpc::XmlRpcValue& xmlVal, const T& expVal, const bool skip = true, const bool withErrors = false)
+void test_converts(
+  const XmlRpc::XmlRpcValue& xmlVal, const T& expVal, const bool skip = true, const bool withErrors = false)
 {
   T v = {};
   std::list<std::string> e;
@@ -146,8 +147,8 @@ TEST(XmlRpcValueUtils, ConvertArrays)
 
   x.clear(); x.setSize(2); x[0] = true; x[1] = false;
   {TRACE; test_converts<std::vector<bool>>(x, {true, false}, true, false);}
-  
-  x.clear(); x.setSize(3); x[0] = 0; x[1] = 1; x[2] = -1; 
+
+  x.clear(); x.setSize(3); x[0] = 0; x[1] = 1; x[2] = -1;
   {TRACE; test_converts<std::vector<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::vector<int>>(x, {0, 1, -1}, true, false);}
   {TRACE; test_converts<std::vector<char>>(x, {0, 1, -1}, true, false);}
@@ -163,7 +164,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::vector<float>>(x, {0.0f, 1.0f, -1.0f}, true, false);}
   {TRACE; test_converts<std::vector<double>>(x, {0.0, 1.0, -1.0}, true, false);}
   {TRACE; test_converts<std::vector<long double>>(x, {0.0, 1.0, -1.0}, true, false);}
-  
+
   {TRACE; test_converts<std::set<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::set<int>>(x, {0, 1, -1}, true, false);}
   {TRACE; test_converts<std::set<char>>(x, {0, 1, -1}, true, false);}
@@ -179,7 +180,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::set<float>>(x, {0.0f, 1.0f, -1.0f}, true, false);}
   {TRACE; test_converts<std::set<double>>(x, {0.0, 1.0, -1.0}, true, false);}
   {TRACE; test_converts<std::set<long double>>(x, {0.0, 1.0, -1.0}, true, false);}
-  
+
   {TRACE; test_converts<std::list<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::list<int>>(x, {0, 1, -1}, true, false);}
   {TRACE; test_converts<std::list<char>>(x, {0, 1, -1}, true, false);}
@@ -195,7 +196,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::list<float>>(x, {0.0f, 1.0f, -1.0f}, true, false);}
   {TRACE; test_converts<std::list<double>>(x, {0.0, 1.0, -1.0}, true, false);}
   {TRACE; test_converts<std::list<long double>>(x, {0.0, 1.0, -1.0}, true, false);}
-  
+
   {TRACE; test_converts<std::unordered_set<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::unordered_set<int>>(x, {0, 1, -1}, true, false);}
   {TRACE; test_converts<std::unordered_set<char>>(x, {0, 1, -1}, true, false);}
@@ -217,7 +218,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_not_converts<std::list<unsigned int>>(x, false);}
   {TRACE; test_not_converts<std::set<unsigned int>>(x, false);}
   {TRACE; test_not_converts<std::unordered_set<unsigned int>>(x, false);}
-  
+
   x.clear();
   x.setSize(2);
   x[0].setSize(2); x[1].setSize(1);
@@ -228,7 +229,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::set<std::set<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
   {TRACE; test_converts<std::vector<std::set<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
   {TRACE; test_converts<std::vector<std::list<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
-  
+
   x[0][0].clear(); x[0][0].setSize(1); x[0][0][0] = 0;
   x[0][1].clear(); x[0][1].setSize(1); x[0][1][0] = 1;
   x[1][0].clear(); x[1][0].setSize(1); x[1][0][0] = -1;
@@ -244,7 +245,7 @@ TEST(XmlRpcValueUtils, ConvertMaps)
   {TRACE; test_not_converts<std::vector<int>>(x);}
   {TRACE; test_not_converts<std::vector<unsigned int>>(x);}
   {TRACE; test_not_converts<std::vector<std::string>>(x);}
-  
+
   x.clear(); x["a"] = 0; x["b"] = 1; x["c"] = -1;
   {TRACE; test_converts<std::map<std::string, bool>>(x, {{"a", false}, {"b", true}}, true, true);}
   {TRACE; test_converts<std::map<std::string, int>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}
@@ -261,7 +262,7 @@ TEST(XmlRpcValueUtils, ConvertMaps)
   {TRACE; test_converts<std::map<std::string, float>>(x, {{"a", 0.0f}, {"b", 1.0f}, {"c", -1.0f}}, true, false);}
   {TRACE; test_converts<std::map<std::string, double>>(x, {{"a", 0.0}, {"b", 1.0}, {"c", -1.0}}, true, false);}
   {TRACE; test_converts<std::map<std::string, long double>>(x, {{"a", 0.0}, {"b", 1.0}, {"c", -1.0}}, true, false);}
-  
+
   {TRACE; test_converts<std::unordered_map<std::string, bool>>(x, {{"a", false}, {"b", true}}, true, true);}
   {TRACE; test_converts<std::unordered_map<std::string, int>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}
   {TRACE; test_converts<std::unordered_map<std::string, char>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}
@@ -308,10 +309,10 @@ TEST(XmlRpcValueUtils, ConvertMapArrays)
   {TRACE; test_converts<std::map<std::string, std::list<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
   {TRACE; test_converts<std::map<std::string, std::set<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
   {TRACE; test_converts<std::map<std::string, std::unordered_set<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
-  {TRACE; test_converts<std::unordered_map<std::string, std::vector<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
+  {TRACE; test_converts<std::unordered_map<std::string, std::vector<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}  // NOLINT
   {TRACE; test_converts<std::unordered_map<std::string, std::list<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
   {TRACE; test_converts<std::unordered_map<std::string, std::set<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
-  {TRACE; test_converts<std::unordered_map<std::string, std::unordered_set<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}
+  {TRACE; test_converts<std::unordered_map<std::string, std::unordered_set<int>>>(x, {{"a", {0, 1}}, {"b", {-1}}}, true, false);}  // NOLINT
 
   {TRACE; test_converts<std::map<std::string, std::vector<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
   {TRACE; test_converts<std::map<std::string, std::list<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
@@ -320,7 +321,7 @@ TEST(XmlRpcValueUtils, ConvertMapArrays)
   {TRACE; test_converts<std::unordered_map<std::string, std::vector<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
   {TRACE; test_converts<std::unordered_map<std::string, std::list<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
   {TRACE; test_converts<std::unordered_map<std::string, std::set<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
-  {TRACE; test_converts<std::unordered_map<std::string, std::unordered_set<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}
+  {TRACE; test_converts<std::unordered_map<std::string, std::unordered_set<unsigned int>>>(x, {{"a", {0, 1}}}, true, true);}  // NOLINT
 
   {TRACE; test_not_converts<std::map<std::string, std::vector<unsigned int>>>(x, false);}
   {TRACE; test_not_converts<std::map<std::string, std::list<unsigned int>>>(x, false);}

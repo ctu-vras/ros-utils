@@ -41,15 +41,15 @@ struct NodeletWithDiagnosticsPrivate;
 /**
  * \brief Nodelet mixin that provides helper functions for running a diagnostics updater.
  * \tparam NodeletType Type of the base nodelet.
- * 
+ *
  * Methods `advertiseDiagnosed()` and `subscribeDiagnosed()` offer a versatile API based on the API of NodeHandle.
  * Additional required arguments like node handles or diagnostic task configuration are prepended to the list of
  * usual arguments of `advertise()`/`subscribe()`. All of these additional arguments are optional (which is achieved
  * by providing a lot of overrides of the functions).
- * 
+ *
  * This class offers an option to configure the diagnostic task from a set of ROS parameters. The following parameters
  * are read:
- * 
+ *
  * - `rate/desired` (double, Hz, no default): If set, this value will be used as the default of min/max rates.
  * - `rate/min` (double, Hz, default 0.0 or desired): Minimum acceptable rate.
  * - `rate/max` (double, Hz, default +inf or desired): Maximum acceptable rate.
@@ -58,18 +58,18 @@ struct NodeletWithDiagnosticsPrivate;
  * - `rate/window_size` (uint, default 5): Over how many diagnostics updates should the rate be computed.
  * - `delay/min` (double, s, default -1.0): Minimum acceptable delay (only computed for messages with a header).
  * - `delay/max` (double, s, default 5.0): Maximum acceptable delay (only computed for messages with a header).
- * 
+ *
  * The parameter namespace from which the parameters are read is determined as follows:
  * - If `diagNh` is missing and `diagNamespace` is empty or missing, the namespace is `~topic`.
  * - If `diagNh` is missing and `diagNamespace` is nonempty and starts with ~, the namespace is `~diagNamespace`.
- * - If `diagNh` is missing and `diagNamespace` is nonempty and does not start with ~, the namespace is 
+ * - If `diagNh` is missing and `diagNamespace` is nonempty and does not start with ~, the namespace is
  *   `pubNh/diagNamespace`.
  * - If `diagNh` is specified and `diagNamespace` is empty or missing, the namespace is `diagNh/topic`.
  * - If `diagNh` is specified and `diagNamespace` nonempty, the namespace is `diagNh/diagNamespace`.
- * 
+ *
  * Whenever the topic name is used in the topic diagnostic configuration namespace, the name of the topic is not
  * affected by topic remappings passed to the nodelet (but its parent namespaces are affected).
- * 
+ *
  * Here are a few examples:
  *   <pre>
  *     // nodelet name is "nodelet"
@@ -77,7 +77,7 @@ struct NodeletWithDiagnosticsPrivate;
  *     ros::NodeHandle pnh = this->getPrivateNodeHandle();
  *     ros::NodeHandle tnh(nh, "test");
  *     ros::NodeHandle rnh(nh, "", {{"/topic", "/topic2"}});  // remap /topic->/topic2
- *     
+ *
  *     this->advertiseDiagnosed(nh, "topic", 10);  // param namespace is /nodelet/topic
  *     this->advertiseDiagnosed(nh, "/topic", 10);  // param namespace is /topic
  *     this->advertiseDiagnosed(nh, "test", "topic", 10);  // param namespace is /test
@@ -106,7 +106,7 @@ struct NodeletWithDiagnostics : public virtual NodeletType
 public:
   NodeletWithDiagnostics();
   virtual ~NodeletWithDiagnostics();  // we need to be polymorphic
-  
+
 protected:
   /**
    * \brief Get a diagnostic updater to be used with this nodelet.
@@ -114,18 +114,18 @@ protected:
    * \return The updater.
    */
   ::cras::DiagnosticUpdater& getDiagUpdater(bool forceNew = false) const;
-  
+
   /**
    * \brief Start periodic updates of the diagnostics updater.
    */
   void startDiagTimer() const;
-  
+
   /**
    * \brief Start periodic updates of the diagnostics updater.
    * \param[in] nh The node handle on which the timer should be started.
    */
   void startDiagTimer(const ::ros::NodeHandle& nh) const;
-  
+
   /**
    * \brief Stop the automatic updates of the diagnostic updater.
    */
@@ -134,7 +134,7 @@ protected:
   ///////////////////////
   // ADVERTISE METHODS //
   ///////////////////////
-  
+
   /**
    * \brief Advertise a topic and setup up an automatic topic diagnostic task for it.
    * \tparam Message The published message type.
@@ -409,11 +409,11 @@ protected:
    */
   template<typename Message, typename Enable = ::std::enable_if_t<::ros::message_traits::IsMessage<Message>::value>>
   ::std::unique_ptr<::cras::DiagnosedPublisher<Message>> advertiseDiagnosed(ros::AdvertiseOptions& options);
-  
+
   ////////////////
   // DEPRECATED //
   ////////////////
-  
+
   /**
    * \brief Create a diagnosed publisher for a message type without header.
    * \tparam T Type of the published data.
@@ -470,7 +470,7 @@ protected:
   ///////////////////////
   // SUBSCRIBE METHODS //
   ///////////////////////
-  
+
   /**
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
    * \tparam M Signature of the callback.
@@ -489,7 +489,7 @@ protected:
   subscribeDiagnosed(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultDiagParams, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size, void(*cb)(M), ::ros::TransportHints hints = {});
-  
+
   /**
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
    * \tparam Message Type of the message to subscribe to.
@@ -508,7 +508,7 @@ protected:
   subscribeDiagnosed(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh,
     const ::cras::SimpleTopicStatusParam<Message>& defaultDiagParams, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const ::boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {});
+    const ::boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {});
 
   /**
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
@@ -529,7 +529,7 @@ protected:
   subscribeDiagnosed(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>& defaultDiagParams, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const ::boost::function<void (C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {});
+    const ::boost::function<void(C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {});
 
   /**
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
@@ -635,7 +635,7 @@ protected:
 
   // The following macros create a cartesian product of overloads for all the optional options. The defined functions
   // are the same as above, but with a part of parameters before `topic` missing.
-  
+
 #define CRAS_NODELET_DIAG_GENERATE_OVERLOAD_M(NH, NH2, PARAM, PARAM2, CB, CB2) \
   template <typename M, typename = ::std::enable_if_t<::cras::IsMessageParam<M>::value>> \
   ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<M>>> \
@@ -676,10 +676,10 @@ protected:
     CRAS_SINGLE_ARG(PARAM), CRAS_SINGLE_ARG(PARAM2), CRAS_SINGLE_ARG(void(*cb)(M)), CRAS_SINGLE_ARG(cb)) \
   CRAS_NODELET_DIAG_GENERATE_OVERLOAD_MESSAGE(CRAS_SINGLE_ARG(NH), CRAS_SINGLE_ARG(NH2), \
     CRAS_SINGLE_ARG(PARAM), CRAS_SINGLE_ARG(PARAM2), \
-    CRAS_SINGLE_ARG(const ::boost::function<void (const ::boost::shared_ptr<M>&)>& cb)) \
+    CRAS_SINGLE_ARG(const ::boost::function<void(const ::boost::shared_ptr<M>&)>& cb)) \
   CRAS_NODELET_DIAG_GENERATE_OVERLOAD_M(CRAS_SINGLE_ARG(NH), CRAS_SINGLE_ARG(NH2), \
     CRAS_SINGLE_ARG(PARAM), CRAS_SINGLE_ARG(PARAM2), \
-    CRAS_SINGLE_ARG(const ::boost::function<void (M)>& cb, ::ros::VoidConstPtr obj = {}), \
+    CRAS_SINGLE_ARG(const ::boost::function<void(M)>& cb, ::ros::VoidConstPtr obj = {}), \
     CRAS_SINGLE_ARG(cb, obj)) \
   CRAS_NODELET_DIAG_GENERATE_OVERLOAD_MT(CRAS_SINGLE_ARG(NH), CRAS_SINGLE_ARG(NH2), \
     CRAS_SINGLE_ARG(PARAM), CRAS_SINGLE_ARG(PARAM2), CRAS_SINGLE_ARG(void(T::*cb)(M), T* obj)) \
@@ -745,7 +745,7 @@ protected:
     CRAS_SINGLE_ARG("", ))
 
   using NodeletType::getName;
-  
+
 protected:
   /**
    * \brief Get the parameters configuring a diagnosed publisher or subscriber.
@@ -764,7 +764,7 @@ protected:
    * \return The node handle.
    */
   ::ros::NodeHandle getDefaultDiagNh(const ::ros::NodeHandle& pubSubNh, const ::std::string& diagNamespace);
-  
+
 private:
   //! \brief PIMPL
   ::std::unique_ptr<::cras::impl::NodeletWithDiagnosticsPrivate> data;

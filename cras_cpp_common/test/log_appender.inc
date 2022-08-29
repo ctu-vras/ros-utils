@@ -25,7 +25,7 @@ struct Appender : public ros::console::LogAppender
     this->num++;
     this->nums.push_back(this->num);
   }
-  
+
   /**
    * \brief If it's possible that the log macro did not print anything, make sure to call this function to record the
    *        empty values to the array variables. Also be sure to call resetMsg() before the logging macro.
@@ -63,16 +63,16 @@ struct Appender : public ros::console::LogAppender
 
   //! \brief Last logged string.
   std::string str {};
-  
+
   //! \brief All messages logged from the last reset() call (latest message last).
   std::vector<std::string> strs;
-  
+
   //! \brief Last logged level.
   ros::console::Level level {::ros::console::Level::Count};
 
   //! \brief All levels of logged messages from the last reset() call (latest message last).
   std::vector<ros::console::Level> levels;
-  
+
   //! \brief Number of logged messages since last reset().
   size_t num {0};
 

@@ -27,7 +27,7 @@ struct InterruptibleSleepInterface
 {
 public:
   InterruptibleSleepInterface();
-  
+
   /**
    * \brief Destroy the object waiting for a pending `sleep()` call to finish.
    */

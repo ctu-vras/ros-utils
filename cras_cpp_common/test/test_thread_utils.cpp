@@ -22,14 +22,14 @@
 TEST(SetThreadName, SetPerformance)  // NOLINT
 {
   const auto start = std::clock();
-  
+
   size_t i = 0;
   while (std::clock() - start < CLOCKS_PER_SEC)
   {
     cras::setThreadName("test");
     ++i;
   }
-  
+
   EXPECT_LT(250000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
 }
 
@@ -39,14 +39,14 @@ TEST(SetThreadName, SetPerformance)  // NOLINT
 TEST(SetThreadName, SetPerformanceLong)  // NOLINT
 {
   const auto start = std::clock();
-  
+
   size_t i = 0;
   while (std::clock() - start < CLOCKS_PER_SEC)
   {
     cras::setThreadName("test_very_long_name_exceeding_15_chars");
     ++i;
   }
-  
+
   EXPECT_LT(250000, i);  // about 1.8M in debug mode, 3.2M in release mode, but keep some slack
 }
 
@@ -57,9 +57,9 @@ TEST(SetThreadName, SetPerformanceLong)  // NOLINT
 TEST(SetThreadName, SetGetPerformance)  // NOLINT
 {
   const auto start = std::clock();
-  
+
   const std::string names[2] = {"test-a", "test-b"};
-  
+
   size_t i = 0;
   while (std::clock() - start < CLOCKS_PER_SEC)
   {
@@ -124,7 +124,7 @@ TEST(SetThreadName, SetOther)  // NOLINT
  * \param[in] timeout Timeout.
  * \param[in] join Whether to join/detach the thread at the end. If false, nothing is done with the thread.
  */
-void waitForResult(std::thread& thread, const bool* finished, const ros::WallDuration& timeout, const bool join=true)
+void waitForResult(std::thread& thread, const bool* finished, const ros::WallDuration& timeout, const bool join = true)
 {
   const auto endTime = ros::WallTime::now() + timeout;
   while (ros::WallTime::now() < endTime && !*finished)
@@ -344,7 +344,7 @@ TEST(ReverseSemaphore, ReleaseAcquireReleaseAcquire)  // NOLINT
 TEST(ReverseSemaphore, Async)  // NOLINT
 {
   cras::ReverseSemaphore sem(false);
-  
+
   // 1. acquire() is called, which increases the semaphore.
   bool started {false};
   bool finished {false};
@@ -355,7 +355,7 @@ TEST(ReverseSemaphore, Async)  // NOLINT
   });
   waitForResult(t, &finished, ros::WallDuration(0.1));
   ASSERT_TRUE(finished);
-  
+
   // 2. waitZero() is called, but the semaphore is not yet 0, so it blocks
   started = false; finished = false;
   bool mainFinished {false};
@@ -379,7 +379,7 @@ TEST(ReverseSemaphore, Async)  // NOLINT
   EXPECT_TRUE(finished);
 
   EXPECT_TRUE(mainFinished);
-  
+
   if (mainFinished)
     main.join();
   else
@@ -392,7 +392,7 @@ TEST(ReverseSemaphore, Async)  // NOLINT
 TEST(ReverseSemaphore, AsyncMulti)  // NOLINT
 {
   cras::ReverseSemaphore sem(false);
-  
+
   // 1. acquire() nr. 1, sem count is 1
   bool started {false};
   bool finished {false};
@@ -413,7 +413,7 @@ TEST(ReverseSemaphore, AsyncMulti)  // NOLINT
   });
   waitForResult(t, &finished, ros::WallDuration(0.1));
   ASSERT_TRUE(finished);
-  
+
   // 3. waitZero() hangs, sem count is 2
   started = false; finished = false;
   bool mainFinished {false};
@@ -449,7 +449,7 @@ TEST(ReverseSemaphore, AsyncMulti)  // NOLINT
   EXPECT_TRUE(finished);
 
   EXPECT_TRUE(mainFinished);
-  
+
   if (mainFinished)
     main.join();
   else
@@ -463,7 +463,7 @@ TEST(ReverseSemaphore, AsyncMega)  // NOLINT
 {
   cras::ReverseSemaphore sem(false);
   const auto iters = 1000;
-  
+
   // This is bidirectional producer-consumer queues. The condition variables make sure that there is always at least
   // as many acquire() calls as there is release(). This is needed because release() called on a zero semaphore is a
   // no-op and we would thus be left with a few non-released acquire()s.
@@ -512,9 +512,9 @@ TEST(ReverseSemaphore, AsyncMega)  // NOLINT
   waitForResult(t2, &started2, ros::WallDuration(0.1), false);
   EXPECT_TRUE(started1);
   EXPECT_TRUE(started2);
-  
+
   // Both feeding threads are started, it's time to call waitZero()
-  
+
   bool mainFinished {false};
   std::thread main([&](){
     EXPECT_TRUE(sem.waitZero());
@@ -526,11 +526,11 @@ TEST(ReverseSemaphore, AsyncMega)  // NOLINT
   waitForResult(t2, &finished2, ros::WallDuration(1.1));
   EXPECT_TRUE(finished1);
   EXPECT_TRUE(finished2);
-  
+
   // After a little while, the semaphore should also be unblocked.
   waitForResult(main, &mainFinished, ros::WallDuration(0.1), false);
   EXPECT_TRUE(mainFinished);
-  
+
   if (mainFinished)
     main.join();
   else
@@ -546,7 +546,7 @@ TEST(ReverseSemaphore, AsyncDestructor)  // NOLINT
   // at the end of this test and we would have two destructor calls acting on the same object (one is triggered manually
   // from a thread). So we rather use a raw pointer and risk leaking the object (well, it'd just a test, so no problem).
   auto sem = new cras::ReverseSemaphore(true);
-  
+
   // 1. acquire(), sem count is 1
   bool started1 {false};
   bool finished1 {false};
@@ -587,7 +587,7 @@ TEST(ReverseSemaphore, AsyncDestructor)  // NOLINT
   EXPECT_TRUE(finished3);
 
   EXPECT_TRUE(mainFinished);
-  
+
   if (mainFinished)
     main.join();
   else

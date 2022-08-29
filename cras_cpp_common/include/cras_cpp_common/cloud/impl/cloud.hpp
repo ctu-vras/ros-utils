@@ -32,7 +32,7 @@ template<typename T, typename TT, typename U, typename C, template<typename> cla
 class GenericCloudIteratorBase : public ::sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V>
 {
 public:
-  
+
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
@@ -123,7 +123,7 @@ public:
         " to a type of size " + ::std::to_string(sizeof(D)));
     return reinterpret_cast<D*>(this->rawData());
   }
-  
+
   /**
    * \brief Copy all values of this field from another iterator.
    * \param otherIter The other iterator.

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include <geometry_msgs/Quaternion.h>
 #include <tf2/convert.h>
 #include <tf2/LinearMath/Quaternion.h>

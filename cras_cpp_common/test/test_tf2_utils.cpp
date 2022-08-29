@@ -26,67 +26,67 @@ TEST(TF2Utils, TF2GetRPY)  // NOLINT
   tf2::Matrix3x3 m;
   tf2::Quaternion q;
   double roll, pitch, yaw;
-  
+
   m.setRPY(0, 0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_EQ(0, roll); EXPECT_EQ(0, pitch); EXPECT_EQ(0, yaw);
-  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q)); 
-  
+  EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
+
   m.setRPY(M_PI_2, 0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(M_PI_2, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0, M_PI_2, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(M_PI_2, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0, 0, M_PI_2); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(M_PI_2, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.1, 0.1, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.5, 0.5, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(1.0, 1.0, 0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0, 0.1, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0, 0.5, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0, 1.0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.1, 0, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.5, 0, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(1.0, 0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.1, 0.1, 0.1); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(0.5, 0.5, 0.5); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
-  
+
   m.setRPY(1.0, 1.0, 1.0); m.getRotation(q); cras::getRPY(q, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(q)); EXPECT_EQ(pitch, cras::getPitch(q)); EXPECT_EQ(yaw, cras::getYaw(q));
@@ -101,67 +101,67 @@ TEST(TF2Utils, GeometryGetRPY)  // NOLINT
   tf2::Quaternion q;
   geometry_msgs::Quaternion gq;
   double roll, pitch, yaw;
-  
+
   m.setRPY(0, 0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_EQ(0, roll); EXPECT_EQ(0, pitch); EXPECT_EQ(0, yaw);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(M_PI_2, 0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(M_PI_2, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0, M_PI_2, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(M_PI_2, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0, 0, M_PI_2); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(M_PI_2, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.1, 0.1, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.5, 0.5, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(1.0, 1.0, 0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0, 0.1, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0, 0.5, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0, 1.0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.1, 0, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.5, 0, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(1.0, 0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.1, 0.1, 0.1); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.1, roll, 1e-4); EXPECT_NEAR(0.1, pitch, 1e-4); EXPECT_NEAR(0.1, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(0.5, 0.5, 0.5); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(0.5, roll, 1e-4); EXPECT_NEAR(0.5, pitch, 1e-4); EXPECT_NEAR(0.5, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
-  
+
   m.setRPY(1.0, 1.0, 1.0); m.getRotation(q); gq = tf2::toMsg(q); cras::getRPY(gq, roll, pitch, yaw);
   EXPECT_NEAR(1.0, roll, 1e-4); EXPECT_NEAR(1.0, pitch, 1e-4); EXPECT_NEAR(1.0, yaw, 1e-4);
   EXPECT_EQ(roll, cras::getRoll(gq)); EXPECT_EQ(pitch, cras::getPitch(gq)); EXPECT_EQ(yaw, cras::getYaw(gq));
@@ -193,19 +193,19 @@ void testInterruptibleBuffer(
   std::shared_ptr<cras::InterruptibleTFBuffer>& buf7)
 {
   ros::Time::setNow({10, 0});
-  
+
   std::mutex taskMutex;
   std::vector<bool> hasRun;
   auto addTask = [&]() {std::lock_guard<std::mutex> l(taskMutex); hasRun.push_back(false);};
   auto endTask = [&](const size_t i) {std::lock_guard<std::mutex> l(taskMutex); hasRun[i] = true;};
-  
+
   // Test with 0 timeout, should not block
 
   addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("b", "a", {10, 0}, {0, 0})); endTask(0);}).detach();
   addTask(); std::thread([&](){EXPECT_FALSE(buf.canTransform("b", "a", {11, 0}, {0, 0})); endTask(1);}).detach();
   addTask(); std::thread([&](){EXPECT_FALSE(buf.canTransform("d", "a", {10, 0}, {0, 0})); endTask(2);}).detach();
   addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {0, 0})); endTask(3);}).detach();
-  
+
   addTask(); std::thread([&](){
     try
     {
@@ -220,7 +220,7 @@ void testInterruptibleBuffer(
       GTEST_NONFATAL_FAILURE_(e.what());
     }
   endTask(4);}).detach();
-  
+
   addTask(); std::thread([&](){
     try
     {
@@ -249,7 +249,7 @@ void testInterruptibleBuffer(
   addTask(); std::thread([&](){EXPECT_TRUE(buf.canTransform("c", "b", {10, 0}, {1, 0})); endTask(9);}).detach();
 
   // Test that lookupTransform() for known transforms with a timeout works.
-  
+
   addTask(); std::thread([&](){
     try
     {
@@ -295,17 +295,17 @@ void testInterruptibleBuffer(
     EXPECT_EQ("Lookup has been interrupted.", errstr);
     executed = true;
   }).detach();
-  
+
   auto end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
-  
+
   buf2.requestStop();
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -313,9 +313,9 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test that canTransform() for an unknown transform blocks and can be interrupted.
-  
+
   started = false;
   executed = false;
   std::thread([&]()
@@ -327,17 +327,17 @@ void testInterruptibleBuffer(
     EXPECT_EQ("Lookup has been interrupted.", errstr);
     executed = true;
   }).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
-  
+
   buf3.requestStop();
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -345,9 +345,9 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test that lookupTransform() for an existing transform with a timeout works.
-  
+
   started = false;
   executed = false;
   std::thread([&]()
@@ -368,11 +368,11 @@ void testInterruptibleBuffer(
     }
     executed = true;
   }).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -380,9 +380,9 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test multiple simultaneous requests. First two should block and the third should succeed right away.
-  
+
   started = false;
   executed = false;
   std::thread([&]()
@@ -394,7 +394,7 @@ void testInterruptibleBuffer(
     EXPECT_EQ("Lookup has been interrupted.", errstr);
     executed = true;
   }).detach();
-  
+
   auto started2 = false;
   auto executed2 = false;
   std::thread([&]()
@@ -406,7 +406,7 @@ void testInterruptibleBuffer(
     EXPECT_EQ("Lookup has been interrupted.", errstr);
     executed2 = true;
   }).detach();
-  
+
   auto started3 = false;
   auto executed3 = false;
   std::thread([&]()
@@ -418,11 +418,11 @@ void testInterruptibleBuffer(
     EXPECT_EQ("", errstr);
     executed3 = true;
   }).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while ((!started || !started2 || !started3) && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_TRUE(started2);
   EXPECT_TRUE(started3);
@@ -432,13 +432,13 @@ void testInterruptibleBuffer(
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!executed3 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(executed3);
-  
+
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
   EXPECT_FALSE(executed2);
-  
+
   buf5.requestStop();
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -447,9 +447,9 @@ void testInterruptibleBuffer(
 
   EXPECT_TRUE(executed);
   EXPECT_TRUE(executed2);
-  
+
   // Test that normal timeout works when time moves on.
-  
+
   started = false;
   executed = false;
   std::thread([&]()
@@ -463,14 +463,14 @@ void testInterruptibleBuffer(
               errstr);
     executed = true;
   }).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow({11, 1000});
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -478,9 +478,9 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Test that destroying the buffer would cancel an ongoing request.
-  
+
   started = false;
   executed = false;
   std::thread([&]()
@@ -492,18 +492,18 @@ void testInterruptibleBuffer(
     EXPECT_EQ("Lookup has been interrupted.", errstr);
     executed = true;
   }).detach();
-  
+
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   ros::WallDuration(0.1).sleep();
 
   EXPECT_FALSE(executed);
-  
+
   started2 = false;
   executed2 = false;
   std::thread([&]()
@@ -516,7 +516,7 @@ void testInterruptibleBuffer(
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!started2 && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started2);
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -524,7 +524,7 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed2);
-  
+
   EXPECT_EQ(nullptr, buf7);
 
   end = ros::WallTime::now() + ros::WallDuration(0.1);
@@ -532,7 +532,7 @@ void testInterruptibleBuffer(
     ros::WallDuration(0.01).sleep();
 
   EXPECT_TRUE(executed);
-  
+
   // Wait for finish of all the simpler tasks from the beginning (at most 1 second).
 
   std::vector<bool> shouldRun(hasRun.size(), true);
@@ -553,7 +553,7 @@ TEST(TF2Utils, InterruptibleBufferDirect)  // NOLINT
   auto buf7 = std::make_shared<cras::InterruptibleTFBuffer>();
   fillBuffer(buf); fillBuffer(buf2); fillBuffer(buf3); fillBuffer(buf4); fillBuffer(buf5); fillBuffer(buf6);
   fillBuffer(*buf7);
-  
+
   SCOPED_TRACE("Error was in direct buffer test");
   testInterruptibleBuffer(buf, buf2, buf3, buf4, buf5, buf6, buf7);
 }
@@ -564,7 +564,7 @@ TEST(TF2Utils, InterruptibleBufferDirect)  // NOLINT
 TEST(TF2Utils, InterruptibleBufferWrapped)  // NOLINT
 {
   ros::Time::setNow({10, 0});
-  
+
   using B = tf2_ros::Buffer;
   std::shared_ptr<tf2_ros::Buffer> b(new B), b2(new B), b3(new B), b4(new B), b5(new B), b6(new B), b7(new B);
   cras::InterruptibleTFBuffer buf(b), buf2(b2), buf3(b3), buf4(b4), buf5(b5), buf6(b6);
@@ -582,14 +582,14 @@ TEST(TF2Utils, InterruptibleBufferWrapped)  // NOLINT
 TEST(TF2Utils, SetPollingParams)  // NOLINT
 {
   ros::Time::setNow({10, 0});
-  
+
   cras::InterruptibleTFBuffer buf;
 
   fillBuffer(buf);
 
   EXPECT_FALSE(buf.setMinPollingDuration({-1, 0}));
   EXPECT_TRUE(buf.setMinPollingDuration({1, 0}));
-  
+
   bool started = false;
   bool executed = false;
   std::thread([&](){
@@ -604,13 +604,13 @@ TEST(TF2Utils, SetPollingParams)  // NOLINT
   auto end = ros::WallTime::now() + ros::WallDuration(1.0);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow(ros::Time(10.2));
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!executed && ros::WallTime::now() < end)
@@ -630,7 +630,7 @@ TEST(TF2Utils, SetPollingParams)  // NOLINT
   EXPECT_TRUE(executed);
 
   // Test setting min polling scale.
-  
+
   EXPECT_TRUE(buf.setMinPollingDuration({0, 1000000}));
   EXPECT_FALSE(buf.setCanTransformPollingScale(-1.0));
   EXPECT_FALSE(buf.setCanTransformPollingScale(-0.1));
@@ -638,9 +638,9 @@ TEST(TF2Utils, SetPollingParams)  // NOLINT
   EXPECT_TRUE(buf.setCanTransformPollingScale(2.0 / 3.0));
 
   ros::Time::setNow({10, 0});
-  
+
   // Timeout is 1.0, polling scale is 2/3, so canTransform() will first wait until time > 10.67
-  
+
   started = false;
   executed = false;
   std::thread([&](){
@@ -655,13 +655,13 @@ TEST(TF2Utils, SetPollingParams)  // NOLINT
   end = ros::WallTime::now() + ros::WallDuration(1.0);
   while (!started && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
-  
+
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
 
   ros::WallDuration(0.1).sleep();
   EXPECT_FALSE(executed);
-  
+
   ros::Time::setNow(ros::Time(10.2));
   end = ros::WallTime::now() + ros::WallDuration(0.1);
   while (!executed && ros::WallTime::now() < end)

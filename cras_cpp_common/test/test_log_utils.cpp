@@ -80,7 +80,8 @@ protected:
     this->debugMsg = text;
     this->filter = filter;
   }
-  void printDebugFilterNamed(::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  void printDebugFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
   {
     this->debugMsg = text;
     this->filter = filter;
@@ -147,13 +148,14 @@ protected:
     this->infoMsg = text;
     this->filter = filter;
   }
-  void printInfoFilterNamed(::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  void printInfoFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
   {
     this->infoMsg = text;
     this->filter = filter;
     this->name = name;
   }
-  
+
   void printWarn(const std::string& text) const override
   {
     this->warnMsg = text;
@@ -214,13 +216,14 @@ protected:
     this->warnMsg = text;
     this->filter = filter;
   }
-  void printWarnFilterNamed(::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  void printWarnFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
   {
     this->warnMsg = text;
     this->filter = filter;
     this->name = name;
   }
-  
+
   void printError(const std::string& text) const override
   {
     this->errorMsg = text;
@@ -282,13 +285,14 @@ protected:
     this->errorMsg = text;
     this->filter = filter;
   }
-  void printErrorFilterNamed(::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  void printErrorFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
   {
     this->errorMsg = text;
     this->filter = filter;
     this->name = name;
   }
-  
+
   void printFatal(const std::string& text) const override
   {
     this->fatalMsg = text;
@@ -349,7 +353,8 @@ protected:
     this->fatalMsg = text;
     this->filter = filter;
   }
-  void printFatalFilterNamed(::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
+  void printFatalFilterNamed(
+    ::ros::console::FilterBase* filter, const std::string& name, const std::string& text) const override
   {
     this->fatalMsg = text;
     this->filter = filter;
@@ -365,20 +370,20 @@ public:
     this->condition = this->once = this->delayed = false;
     this->errors.clear();
   }
-  
+
   mutable std::string debugMsg {};
   mutable std::string infoMsg {};
   mutable std::string warnMsg {};
   mutable std::string errorMsg {};
   mutable std::string fatalMsg {};
-  
+
   mutable std::string name {};
   mutable double period {};
   mutable ::ros::console::FilterBase* filter {};
   mutable bool condition {};
   mutable bool once {};
   mutable bool delayed {};
-  
+
   mutable std::vector<std::string> errors;
 };
 
@@ -388,51 +393,51 @@ public:
 TEST(LogUtils, CorrectLogLevel)  // NOLINT
 {
   TestLogger log;
-  
+
   log.reset(); log.logDebug("a"); EXPECT_EQ("a", log.debugMsg);
   EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.logInfo("a"); EXPECT_EQ("a", log.infoMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.logWarn("a"); EXPECT_EQ("a", log.warnMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.logError("a"); EXPECT_EQ("a", log.errorMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.logFatal("a"); EXPECT_EQ("a", log.fatalMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg);
-  
-  
+
+
   log.reset(); log.log(ros::console::Level::Debug, "a"); EXPECT_EQ("a", log.debugMsg);
   EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.log(ros::console::Level::Info, "a"); EXPECT_EQ("a", log.infoMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.log(ros::console::Level::Warn, "a"); EXPECT_EQ("a", log.warnMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.log(ros::console::Level::Error, "a"); EXPECT_EQ("a", log.errorMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.log(ros::console::Level::Fatal, "a"); EXPECT_EQ("a", log.fatalMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg);
-  
-  
+
+
   log.reset(); log.print(ros::console::Level::Debug, "a"); EXPECT_EQ("a", log.debugMsg);
   EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.print(ros::console::Level::Info, "a"); EXPECT_EQ("a", log.infoMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.print(ros::console::Level::Warn, "a"); EXPECT_EQ("a", log.warnMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.errorMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.print(ros::console::Level::Error, "a"); EXPECT_EQ("a", log.errorMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.print(ros::console::Level::Fatal, "a"); EXPECT_EQ("a", log.fatalMsg);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.errorMsg);
 }
@@ -444,47 +449,47 @@ TEST(LogUtils, ExtendedDebug)  // NOLINT
 {
   TestLogger log;
   ros::console::FilterBase f;
-  
+
   log.reset(); log.logDebugNamed("test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugCond(true, "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugCondNamed(true, "test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugOnce("a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugOnceNamed("test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugThrottle(1.0, "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugDelayedThrottle(1.0, "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logDebugDelayedThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logDebugFilter(&f, "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logDebugFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", log.debugMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
@@ -497,47 +502,47 @@ TEST(LogUtils, ExtendedInfo)  // NOLINT
 {
   TestLogger log;
   ros::console::FilterBase f;
-  
+
   log.reset(); log.logInfoNamed("test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoCond(true, "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoCondNamed(true, "test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoOnce("a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoOnceNamed("test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoThrottle(1.0, "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoDelayedThrottle(1.0, "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logInfoDelayedThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logInfoFilter(&f, "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logInfoFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", log.infoMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
@@ -550,47 +555,47 @@ TEST(LogUtils, ExtendedWarn)  // NOLINT
 {
   TestLogger log;
   ros::console::FilterBase f;
-  
+
   log.reset(); log.logWarnNamed("test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnCond(true, "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnCondNamed(true, "test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnOnce("a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnOnceNamed("test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnThrottle(1.0, "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnDelayedThrottle(1.0, "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logWarnDelayedThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logWarnFilter(&f, "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logWarnFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", log.warnMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
@@ -603,47 +608,47 @@ TEST(LogUtils, ExtendedError)  // NOLINT
 {
   TestLogger log;
   ros::console::FilterBase f;
-  
+
   log.reset(); log.logErrorNamed("test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorCond(true, "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorCondNamed(true, "test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorOnce("a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorOnceNamed("test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorThrottle(1.0, "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorDelayedThrottle(1.0, "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logErrorDelayedThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logErrorFilter(&f, "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logErrorFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", log.errorMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
@@ -656,47 +661,47 @@ TEST(LogUtils, ExtendedFatal)  // NOLINT
 {
   TestLogger log;
   ros::console::FilterBase f;
-  
+
   log.reset(); log.logFatalNamed("test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalCond(true, "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalCondNamed(true, "test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(true, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalOnce("a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalOnceNamed("test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(true, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalThrottle(1.0, "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalDelayedThrottle(1.0, "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logFatalDelayedThrottleNamed(1.0, "test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(nullptr, log.filter); EXPECT_EQ(1.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(true, log.delayed);
-  
+
   log.reset(); log.logFatalFilter(&f, "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
-  
+
   log.reset(); log.logFatalFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", log.fatalMsg); EXPECT_EQ("test", log.name); EXPECT_EQ(&f, log.filter); EXPECT_EQ(0.0, log.period);
   EXPECT_EQ(false, log.condition); EXPECT_EQ(false, log.once); EXPECT_EQ(false, log.delayed);
@@ -708,7 +713,7 @@ TEST(LogUtils, ExtendedFatal)  // NOLINT
 TEST(LogUtils, PrintfArgs)  // NOLINT
 {
   TestLogger log;
-  
+
   log.reset(); log.logInfo("%s", std::string("cras").c_str()); EXPECT_EQ("cras", log.infoMsg);
   log.reset(); log.logInfo("%i", -42); EXPECT_EQ("-42", log.infoMsg);
   log.reset(); log.logInfo("%u", 42); EXPECT_EQ("42", log.infoMsg);
@@ -724,7 +729,7 @@ TEST(LogUtils, PrintfStringArgs)  // NOLINT
 {
   TestLogger log;
   using s = std::string;
-  
+
   log.reset(); log.logInfo(s("%s"), std::string("cras").c_str()); EXPECT_EQ("cras", log.infoMsg);
   log.reset(); log.logInfo(s("%i"), -42); EXPECT_EQ("-42", log.infoMsg);
   log.reset(); log.logInfo(s("%u"), 42); EXPECT_EQ("42", log.infoMsg);
@@ -739,7 +744,7 @@ TEST(LogUtils, PrintfStringArgs)  // NOLINT
 TEST(LogUtils, LongStrings)  // NOLINT
 {
   TestLogger log;
-  
+
   std::string longString(300000, '*');  // generates a string of length 300.000 asterisks
   log.reset(); log.logInfo("%s", longString.c_str()); EXPECT_EQ(longString, log.infoMsg);
   log.reset(); log.logInfo(longString.c_str()); EXPECT_EQ(longString, log.infoMsg);
@@ -751,13 +756,13 @@ TEST(LogUtils, LongStrings)  // NOLINT
 TEST(LogUtils, WrongLevel)  // NOLINT
 {
   TestLogger log;
-  
+
   log.reset(); log.log(static_cast<ros::console::Level>(1000), "cras");
   ASSERT_EQ(2u, log.errors.size());
   EXPECT_TRUE(cras::startsWith(log.errors[0], "Invalid log level "));
   EXPECT_EQ("cras", log.errors[1]);
   EXPECT_EQ("", log.debugMsg); EXPECT_EQ("", log.infoMsg); EXPECT_EQ("", log.warnMsg); EXPECT_EQ("", log.fatalMsg);
-  
+
   log.reset(); log.print(static_cast<ros::console::Level>(1000), "cras");
   ASSERT_EQ(2u, log.errors.size());
   EXPECT_TRUE(cras::startsWith(log.errors[0], "Invalid log level "));
@@ -782,7 +787,7 @@ TEST(NodeLogUtils, Log)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logFatal("cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.log(ros::console::Level::Debug, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Info, "cras");
@@ -793,7 +798,7 @@ TEST(NodeLogUtils, Log)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Fatal, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.print(ros::console::Level::Debug, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.print(ros::console::Level::Info, "cras");
@@ -828,28 +833,28 @@ TEST(NodeLogUtils, LogExtendedDebug)  // NOLINT
   cras::NodeLogHelper log;
   ros::console::FilterBase f;
   DisableLogFilter fd;
-  
+
   logger.reset(); log.logDebugNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logDebugOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logDebugOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logDebugThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -862,13 +867,13 @@ TEST(NodeLogUtils, LogExtendedDebug)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logDebugDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logDebugFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -884,28 +889,28 @@ TEST(NodeLogUtils, LogExtendedInfo)  // NOLINT
   cras::NodeLogHelper log;
   ros::console::FilterBase f;
   DisableLogFilter fd;
-  
+
   logger.reset(); log.logInfoNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logInfoOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logInfoOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logInfoThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -918,13 +923,13 @@ TEST(NodeLogUtils, LogExtendedInfo)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logInfoDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logInfoFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -940,28 +945,28 @@ TEST(NodeLogUtils, LogExtendedWarn)  // NOLINT
   cras::NodeLogHelper log;
   ros::console::FilterBase f;
   DisableLogFilter fd;
-  
+
   logger.reset(); log.logWarnNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logWarnOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logWarnOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logWarnThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -974,13 +979,13 @@ TEST(NodeLogUtils, LogExtendedWarn)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logWarnDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logWarnFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -996,28 +1001,28 @@ TEST(NodeLogUtils, LogExtendedError)  // NOLINT
   cras::NodeLogHelper log;
   ros::console::FilterBase f;
   DisableLogFilter fd;
-  
+
   logger.reset(); log.logErrorNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logErrorOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logErrorOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logErrorThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1030,13 +1035,13 @@ TEST(NodeLogUtils, LogExtendedError)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logErrorDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logErrorFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1052,28 +1057,28 @@ TEST(NodeLogUtils, LogExtendedFatal)  // NOLINT
   cras::NodeLogHelper log;
   ros::console::FilterBase f;
   DisableLogFilter fd;
-  
+
   logger.reset(); log.logFatalNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logFatalOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logFatalOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logFatalThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1086,13 +1091,13 @@ TEST(NodeLogUtils, LogExtendedFatal)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logFatalDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logFatalFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1108,7 +1113,7 @@ TEST(NodeLogUtils, LogString)  // NOLINT
   cras::NodeLogHelper log;
 
   using s = std::string;
-  
+
   logger.reset(); log.logDebug(s("cras")); logger.afterLog();
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logInfo(s("cras"));
@@ -1119,7 +1124,7 @@ TEST(NodeLogUtils, LogString)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logFatal(s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.log(ros::console::Level::Debug, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Info, s("cras"));
@@ -1130,7 +1135,7 @@ TEST(NodeLogUtils, LogString)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Fatal, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.print(ros::console::Level::Debug, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.print(ros::console::Level::Info, s("cras"));
@@ -1170,7 +1175,7 @@ TEST(NodeletLogUtils, Log)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logFatal("cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.log(ros::console::Level::Debug, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Info, "cras");
@@ -1181,7 +1186,7 @@ TEST(NodeletLogUtils, Log)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Fatal, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.print(ros::console::Level::Debug, "cras");
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.print(ros::console::Level::Info, "cras");
@@ -1230,7 +1235,7 @@ TEST(NodeletLogUtils, LogString)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.logFatal(s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.log(ros::console::Level::Debug, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Info, s("cras"));
@@ -1241,7 +1246,7 @@ TEST(NodeletLogUtils, LogString)  // NOLINT
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.log(ros::console::Level::Fatal, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.print(ros::console::Level::Debug, s("cras"));
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
   logger.reset(); log.print(ros::console::Level::Info, s("cras"));
@@ -1280,28 +1285,28 @@ TEST(NodeletLogUtils, LogExtendedDebug)  // NOLINT
 
   if (ros::console::set_logger_level(std::string(ROSCONSOLE_DEFAULT_NAME) + ".test", ros::console::levels::Debug))
     ros::console::notifyLoggerLevelsChanged();
-  
+
   logger.reset(); log.logDebugNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logDebugOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logDebugOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logDebugThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1314,13 +1319,13 @@ TEST(NodeletLogUtils, LogExtendedDebug)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logDebugDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logDebugFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logDebugFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logDebugFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Debug, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1342,25 +1347,25 @@ TEST(NodeletLogUtils, LogExtendedInfo)  // NOLINT
 
   logger.reset(); log.logInfoNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logInfoOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logInfoOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logInfoThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1373,13 +1378,13 @@ TEST(NodeletLogUtils, LogExtendedInfo)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logInfoDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logInfoFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logInfoFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logInfoFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Info, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1401,25 +1406,25 @@ TEST(NodeletLogUtils, LogExtendedWarn)  // NOLINT
 
   logger.reset(); log.logWarnNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logWarnOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logWarnOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logWarnThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1432,13 +1437,13 @@ TEST(NodeletLogUtils, LogExtendedWarn)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logWarnDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logWarnFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logWarnFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logWarnFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Warn, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1460,25 +1465,25 @@ TEST(NodeletLogUtils, LogExtendedError)  // NOLINT
 
   logger.reset(); log.logErrorNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logErrorOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logErrorOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logErrorThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1491,13 +1496,13 @@ TEST(NodeletLogUtils, LogExtendedError)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logErrorDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logErrorFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logErrorFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logErrorFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Error, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1519,25 +1524,25 @@ TEST(NodeletLogUtils, LogExtendedFatal)  // NOLINT
 
   logger.reset(); log.logFatalNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalCond(false, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalCondNamed(false, "test", "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalCond(true, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalCondNamed(true, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logFatalOnce("a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 3; ++i) log.logFatalOnceNamed("test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); for (size_t i = 0; i < 4; ++i) { t((i + 1) / 2.0); log.logFatalThrottle(1.0, "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(2u, logger.num);
 
@@ -1550,13 +1555,13 @@ TEST(NodeletLogUtils, LogExtendedFatal)  // NOLINT
   logger.reset();
   for (size_t i = 0; i < 6; ++i) { t((i + 1) / 2.0); log.logFatalDelayedThrottleNamed(1.0, "test", "a"); }
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(2u, logger.num);
-  
+
   logger.reset(); log.logFatalFilter(&f, "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
-  
+
   logger.reset(); log.logFatalFilter(&fd, "a");
   EXPECT_EQ("", logger.str); EXPECT_EQ(ros::console::Level::Count, logger.level); EXPECT_EQ(0u, logger.num);
-  
+
   logger.reset(); log.logFatalFilterNamed(&f, "test", "a");
   EXPECT_EQ("a", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
 
@@ -1572,8 +1577,8 @@ int main(int argc, char **argv)
   // Allow logging Debug messages.
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
     ros::console::notifyLoggerLevelsChanged();
-  
+
   ros::Time::init();
-  
+
   return RUN_ALL_TESTS();
 }

@@ -71,9 +71,9 @@ DiagnosedPubSub<Message, Enable>::DiagnosedPubSub(const ::cras::BoundParamHelper
 
   topicStatusParam.rateTolerance = params->getParam("rate/tolerance", topicStatusParam.rateTolerance);
   topicStatusParam.rateWindowSize = params->getParam("rate/window_size", topicStatusParam.rateWindowSize, "updates");
-  
+
   this->template addDelayParams(topicStatusParam, params);
-  
+
   this->diag = ::std::make_shared<::cras::TopicStatus<Message>>(params->getNamespace(), topicStatusParam);
 }
 
@@ -263,13 +263,13 @@ public:
 private:
   //! \brief The original subscription callback helper. Most methods are just relayed on it.
   ::ros::SubscriptionCallbackHelperPtr orig;
-  
+
   //! \brief Log helper.
   ::cras::LogHelperPtr log;
-  
+
   //! \brief The topic diagnostic task which should receive the added tick() call.
   ::cras::TopicStatusPtr<Message> diag;
-  
+
   //! \brief Topic on which the subscription happens.
   ::std::string topic;
 };
@@ -293,7 +293,7 @@ DiagnosedSubscriber<Message, Enable>::DiagnosedSubscriber(
   ::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
   const ::cras::SimpleTopicStatusParam<Message>& defaultParams,
   const ::std::string& topic, const uint32_t queue_size,
-  const ::boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints) :
+  const ::boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints) :
     ::cras::DiagnosedPubSub<Message>(params, defaultParams),
     subscriber(nh.template subscribe<Message>(topic, queue_size, this->addTick(cb), ::ros::VoidConstPtr(), hints))
 {

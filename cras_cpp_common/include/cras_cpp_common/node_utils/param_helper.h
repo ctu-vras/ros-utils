@@ -25,9 +25,9 @@ class NodeParamHelper : public virtual ::ros::NodeHandle, public ::cras::BoundPa
 {
 public:
   explicit NodeParamHelper(const ::std::string& ns = "", const ::ros::M_string& remappings = {});
-  
+
   NodeParamHelper(const ::ros::NodeHandle& parent, const ::std::string& ns);
-  
+
   NodeParamHelper(const ::ros::NodeHandle& parent, const ::std::string& ns, const ::ros::M_string& remappings);
 
   using ::cras::BoundParamHelper::getParam;

@@ -32,7 +32,7 @@ namespace cras
 
 /**
  * Log helper redirecting the logging calls to ROS_*_NAMED macros.
- * 
+ *
  * \tparam F Type of the filtered data.
  */
 template <typename F>
@@ -52,7 +52,6 @@ public:
   ~FilterLogHelper() = default;
 
 protected:
-  
   //! The filter whose name is used in the log prints.
   const ::filters::FilterBase<F>& filter;
 };

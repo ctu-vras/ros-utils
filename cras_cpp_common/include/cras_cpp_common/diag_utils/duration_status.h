@@ -61,15 +61,15 @@ public:
    * \param[in] params Parameters of the task.
    */
   DurationStatus(const ::std::string& name, const ::cras::SimpleDurationStatusParam& params);
-  
+
   DurationStatus(const ::std::string& name, const ::cras::BoundParamHelperPtr& params,
                  const ::cras::DurationStatusParam& defaultParams);
-  
+
   DurationStatus(const ::std::string& name, const ::cras::BoundParamHelperPtr& params,
                  const ::cras::SimpleDurationStatusParam& defaultParams);
 
   ~DurationStatus() override;
-  
+
   /**
    * \brief Start a single duration measurement.
    * \param[in] time Time of start.
@@ -113,13 +113,13 @@ public:
    * \return The tolerance (0.0 means exact match of the duration limits).
    */
   double getTolerance() const;
-  
+
   /**
    * \brief Number of updates during which the duration is computed.
    * \return The window size.
    */
   size_t getWindowSize() const;
-  
+
 protected:
   //! \brief The parameters via which this task has been configured.
   ::cras::DurationStatusParam params;
@@ -127,7 +127,7 @@ protected:
   bool wallTimeMode {false};
   size_t count {0u};
   ::cras::RunningStats<::ros::Duration> stats;
-  ::cras::optional<::ros::Time> lastStartTime; 
+  ::cras::optional<::ros::Time> lastStartTime;
   ::std::vector<::ros::Duration> minDurations;
   ::std::vector<::ros::Duration> maxDurations;
   ::std::vector<::ros::Time> historyTimes;

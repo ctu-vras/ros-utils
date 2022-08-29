@@ -88,7 +88,7 @@ void FilterChainNodelet<F>::disableFilterPublishers()
     ::std::lock_guard<::std::mutex> l(this->filterPublishersMutex);
 
     this->publishFilters = false;
-    for (auto& pub: this->filterPublishers)
+    for (auto& pub : this->filterPublishers)
     {
       pub.second.shutdown();
     }
@@ -140,7 +140,7 @@ void FilterChainNodelet<F>::updateDynamicParams() const
   config.max_age = this->maxAge.toSec();
   auto disabledFilters = this->filterChain.getDisabledFilters();
   config.disabled_filters = "";
-  
+
   size_t i = 0;
   for (const auto& filter : disabledFilters)
   {
@@ -181,7 +181,7 @@ void FilterChainNodelet<F>::onInit()
   opts.template init<F>(this->topicFiltered, this->publisherQueueSize,
     ::cras::bind_front(&FilterChainNodelet::connectCb, this),
     ::cras::bind_front(&FilterChainNodelet::disconnectCb, this));
-  
+
   if (this->publishTopicDiagnostics)
   {
     this->publisherDiag = this->template advertiseDiagnosed<F>(opts);
@@ -189,7 +189,7 @@ void FilterChainNodelet<F>::onInit()
   }
   else
   {
-    this->filteredPublisher = this->nodeHandle.advertise(opts); 
+    this->filteredPublisher = this->nodeHandle.advertise(opts);
   }
 
   if (this->publishDurationDiagnostics)
@@ -197,7 +197,7 @@ void FilterChainNodelet<F>::onInit()
     this->callbackDurationDiag = ::std::make_unique<::cras::DurationStatus>("All filters callback duration",
       privateParams->paramsInNamespace("update_duration"), ::cras::SimpleDurationStatusParam());
     this->getDiagUpdater().add(*this->callbackDurationDiag);
-    
+
     const auto& constFilterChain = this->filterChain;
     for (const auto& filter : constFilterChain.getFilters())
     {
@@ -207,7 +207,7 @@ void FilterChainNodelet<F>::onInit()
       this->getDiagUpdater().add(*this->filterCallbackDurationDiags[name]);
     }
   }
-  
+
   if (this->publishChainDiagnostics)
   {
     this->chainDiag = ::std::make_unique<::cras::FilterChainDiagnostics<F>>(
@@ -229,7 +229,7 @@ void FilterChainNodelet<F>::subscribe()
   ::ros::SubscribeOptions opts;
   opts.template init<F>(this->topicIn, this->subscriberQueueSize,
     ::cras::bind_front(&FilterChainNodelet::dataCallback, this));
-  
+
   if (this->publishTopicDiagnostics)
   {
     this->subscriberDiag = this->template subscribeDiagnosed<F>(opts);
@@ -298,13 +298,13 @@ void FilterChainNodelet<F>::dataCallback(const typename F::ConstPtr& data)
                  ::cras::to_string(this->maxAge).c_str());
     return;
   }
-  
+
   const auto stopwatchOverall = ::ros::WallTime::now();
 
   this->updateThreadName();
 
   typename F::Ptr dataFiltered(new F);
-  
+
   if (this->publishDurationDiagnostics)
     this->callbackDurationDiag->start(::ros::WallTime::now());
 
@@ -313,7 +313,7 @@ void FilterChainNodelet<F>::dataCallback(const typename F::ConstPtr& data)
   {
     if (this->publishDurationDiagnostics)
       this->callbackDurationDiag->stop(::ros::WallTime::now());
-    
+
     // publish the filtered result
     if (this->publisherDiag != nullptr)
       this->publisherDiag->publish(dataFiltered);
@@ -341,13 +341,13 @@ void FilterChainNodelet<F>::filterFinishedCallback(const F& data, const size_t f
       this->filterCallbackDurationDiags[name]->stop(::ros::WallTime::now());
     }
   }
-  
+
   if (this->publishChainDiagnostics)
     this->chainDiag->addReport(name, success);
 
   if (!this->publishFilters)
     return;
-  
+
   ::std::lock_guard<::std::mutex> l(this->filterPublishersMutex);
   if (this->filterPublishers.find(name) == this->filterPublishers.end())
   {

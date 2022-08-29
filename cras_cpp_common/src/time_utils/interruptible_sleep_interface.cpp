@@ -48,7 +48,7 @@ bool InterruptibleSleepInterface::sleep(const ros::Duration& duration) const
     return false;
 
   cras::SemaphoreGuard<cras::ReverseSemaphore> guard(this->data->semaphore);
-  
+
   // code heavily inspired by BSD-licensed https://github.com/ros/roscpp_core/blob/noetic-devel/rostime/src/time.cpp
   // what is added is the this->ok() check in the while loop and making the system time sleep also interruptible
 

@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include <string>
 #include <type_traits>
 
@@ -23,16 +23,16 @@ struct GetParamResultInfo
 {
   //! \brief Whether the default value has been used.
   bool defaultUsed {false};
-  
+
   //! \brief Whether a value conversion failed.
   bool convertFailed {false};
-  
+
   //! \brief Whether a required parameter was found missing or could not be read.
   bool requiredMissing {false};
-  
+
   //! \brief The log message (returned even if option printMessages is false).
   ::std::string message{};
-  
+
   //! \brief Severity of the log message.
   ::ros::console::Level messageLevel {::ros::console::Level::Count};
 };
@@ -59,7 +59,7 @@ struct GetParamResult
   {
     return this->value;
   }
-  
+
   /**
    * \brief Autoconvert C-string results to std::string.
    * \return The value as std::string.
@@ -83,7 +83,7 @@ struct GetParamResult
 
   //! \brief The returned value.
   T value;
-  
+
   //! \brief Details about getParam() execution.
   ::cras::GetParamResultInfo info {};
 };

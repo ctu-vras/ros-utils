@@ -111,7 +111,7 @@ struct DefaultParamServerType
  * \tparam ResultType Type of getParam() result.
  * \tparam ParamServerType Type of the intermediate value to which the XmlRpcValue should be converted.
  */
-template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type> 
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type>
 struct GetParamOptions
 {
   /**
@@ -138,28 +138,27 @@ struct GetParamOptions
       const ::XmlRpc::XmlRpcValue& xmlValue,
       ParamServerType& value,
       const bool skipNonConvertible,
-      ::std::list<::std::string>* errors
-    )> ToParamFn;
-  
+      ::std::list<::std::string>* errors)> ToParamFn;
+
   //! \brief Whether to print error messages to log.
   bool printMessages {true};
-  
+
   //! \brief Whether defaulted parameters are reported as warning or info level messages.
   bool printDefaultAsWarn {false};
-  
+
   //! \brief Throw GetParamException if any conversion fails. If false, the default value is used instead of a value
   //! that failed to convert. In such case, the log message is of error level.
   bool throwIfConvertFails {false};
-  
+
   //! \brief Allow parameters of form a/b/c (leads to recursive parsing of the sub-namespaces).
   bool allowNestedParams {true};
-  
+
   //! \brief The human-friendly namespace to be reported in log messages.
   ::std::string origNamespace {};
-  
+
   //! \brief The human-friendly parameter name to be reported in log messages.
   ::std::string origParamName {};
-  
+
   //! \brief A function that converts ParamServerType values to string for use in log messages.
   ::cras::ToStringFn<ParamServerType> paramToStr = &::cras::ParamToStringFn<ParamServerType>::to_string;
 
@@ -168,10 +167,10 @@ struct GetParamOptions
 
   //! \brief A function converting ParamServerType values to ResultType.
   ToResultFn toResult = &::cras::DefaultToResultFn<ResultType, ParamServerType>::toResult;
-  
+
   //! \brief A function converting XmlRpcValue to an intermediate value of type ParamServerType.
   ToParamFn toParam = &::cras::DefaultToParamFn<ParamServerType>::toParam;
-  
+
   /**
    * \brief Assign from options of a different type. Only the non-function members are copied!
    * \tparam R1 Other ResultType.
@@ -210,7 +209,7 @@ struct GetParamOptions
     this->toParam = other.toParam;
     return *this;
   }
-  
+
   /**
    * \brief Convert this options object to a similar object with a different ParamServerType.
    * \tparam NewParamServerType The new ParamServerType.
@@ -229,8 +228,7 @@ struct GetParamOptions
       [](const ::XmlRpc::XmlRpcValue& x, NewParamServerType& v, bool skipNonConvertible = false,
           ::std::list<::std::string>* errors = nullptr) -> bool {
         return ::cras::convert(x, v, skipNonConvertible, errors);
-      }
-    ) const
+      }) const
   {
     // We can't initialize the object with the default values of toParam and toResult because they are ill-formed
     ::cras::GetParamOptions<ResultType, NewParamServerType> options =

@@ -21,7 +21,7 @@ namespace cras
 
 /**
  * Provides overrides of canTransform() that correctly end when the nodelet is asked to unload.
- * 
+ *
  * See issue https://github.com/ros/geometry2/issues/381 for more details.
  */
 class NodeletAwareTFBuffer : public ::cras::InterruptibleTFBuffer
@@ -33,8 +33,8 @@ public:
    * \param[in] cacheTime How long to keep a history of transforms
    */
   explicit NodeletAwareTFBuffer(const ::nodelet::Nodelet& nodelet,
-    const ::ros::Duration& cacheTime=::ros::Duration(::tf2::BufferCore::DEFAULT_CACHE_TIME));
-  
+    const ::ros::Duration& cacheTime = ::ros::Duration(::tf2::BufferCore::DEFAULT_CACHE_TIME));
+
   /**
    * \brief Create the buffer that relays lookups to the given parentBuffer.
    * \param[in] nodelet The stateful nodelet to be aware of.

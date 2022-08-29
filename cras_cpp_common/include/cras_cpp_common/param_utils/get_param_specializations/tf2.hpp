@@ -6,7 +6,7 @@
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
- * 
+ *
  * \details Quaternion can be loaded either from 4 values (direct coeffs) or 3 values (roll, pitch, yaw in rad).
  * \details Transform can be loaded either from 6 values (3 translation + 3 rotation),
  *          7 values (3 translation + 4 rotation) or 16 values (column-wise transformation matrix).

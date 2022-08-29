@@ -47,7 +47,7 @@ typedef ::sensor_msgs::PointCloud2Modifier CloudModifier;
  * It adds function rawData() which returns a pointer to the current position in the uchar data stream. You can use
  * reinterpret_cast to transform the data into some desired type and get or set the value. Any kind of data safety is on
  * you.
- * 
+ *
  * Another provided function is dataAs<Type>() which returns the current iterator position as a pointer to data of the
  * requested type. This function does a basic check that the requested data type has the same size as the type of the
  * iterated field.

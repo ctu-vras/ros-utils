@@ -35,7 +35,7 @@ public:
    * \param[in] nh The nodehandle used for nodelet load/unload ROS services.
    */
   explicit NodeletManagerSharingTfBuffer(::ros::NodeHandle nh = {"~"});
-  
+
   void init() override;
 
 protected:
@@ -43,7 +43,7 @@ protected:
 
   //! \brief The shared TF buffer.
   ::std::shared_ptr<::tf2_ros::Buffer> buffer;
-  
+
   //! \brief TF listener filling the shared buffer.
   ::std::unique_ptr<::tf2_ros::TransformListener> listener;
 };

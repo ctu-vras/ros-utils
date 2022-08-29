@@ -96,7 +96,7 @@ bool FilterChain<F>::update(const F &data_in, F &data_out)
     this->callStartCallback(data_in, 0);
     result = this->activeFilters[0]->update(data_in, this->buffer0);
     this->callFinishedCallback(this->buffer0, 0, result);
-    if (result == false) return false;  //don't keep processing on failure
+    if (result == false) return false;  // don't keep processing on failure
 
     this->callStartCallback(this->buffer0, 1);
     result = result && this->activeFilters[1]->update(this->buffer0, data_out);
@@ -105,9 +105,9 @@ bool FilterChain<F>::update(const F &data_in, F &data_out)
   else
   {
     this->callStartCallback(data_in, 0);
-    result = this->activeFilters[0]->update(data_in, this->buffer0);  //first copy in
+    result = this->activeFilters[0]->update(data_in, this->buffer0);  // first copy in
     this->callFinishedCallback(this->buffer0, 0, result);
-    if (result == false) return false;  //don't keep processing on failure
+    if (result == false) return false;  // don't keep processing on failure
 
     // all but first and last (never called if size=2)
     for (size_t i = 1; i <  this->activeFilters.size() - 1; i++)
@@ -125,9 +125,9 @@ bool FilterChain<F>::update(const F &data_in, F &data_out)
         this->callFinishedCallback(this->buffer0, i, result);
       }
 
-      if (result == false) return false;  //don't keep processing on failure
+      if (result == false) return false;  // don't keep processing on failure
     }
-    if (listSize % 2 == 1) // odd number last deposit was in this->buffer1
+    if (listSize % 2 == 1)  // odd number last deposit was in this->buffer1
     {
       this->callStartCallback(this->buffer1, this->activeFilters.size() - 1);
       result = result && this->activeFilters.back()->update(this->buffer1, data_out);

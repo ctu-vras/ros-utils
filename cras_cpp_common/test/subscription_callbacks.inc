@@ -32,7 +32,7 @@ public:
     this->constCbConstEventFrame = m.getConstMessage()->frame_id;}
   void constCbEvent(const ros::MessageEvent<std_msgs::Header>& m) const {
     this->constCbEventFrame = m.getConstMessage()->frame_id;}
-    
+
   void addStringsTo(std::vector<std::string*>& strs)
   {
     strs.push_back(&this->cbConstPtrFrame);
@@ -83,7 +83,7 @@ public:
     this->constCbConstEventFrame = m.getConstMessage()->header.frame_id;}
   void constCbEvent(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) const {
     this->constCbEventFrame = m.getConstMessage()->header.frame_id;}
-    
+
   void addStringsTo(std::vector<std::string*>& strs)
   {
     strs.push_back(&this->cbConstPtrFrame);
@@ -267,7 +267,7 @@ std::string valueCaptureLambdaConstEventFrame {};
 std::string valueCaptureLambdaEventFrame {};
 
 #define CRAS_TEST_SINGLE_ARG(...) __VA_ARGS__
-    
+
 #define CRAS_TEST_SUBSCRIBE_CALLBACKS(SUB, ARGS_PRE, ARGS_SUB, HEADER, FRAME_REF, FRAME_PTR, FRAME_EVENT_PTR) \
   TestClass obj1, obj2, obj3;\
   auto sharedObj = boost::make_shared<TestClass>();\

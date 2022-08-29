@@ -42,7 +42,7 @@ public:
    * \param info Details about getParam() execution until the failure.
    */
   explicit GetParamException(const ::cras::GetParamResultInfo& info) : ::std::runtime_error(info.message), info(info) {}
-  
+
   //! \brief Details about getParam() execution.
   ::cras::GetParamResultInfo info;
 };
@@ -103,7 +103,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
   bool useDefault {false};
   const bool isRequired = !defaultValue.has_value();
   ::std::list<::std::string> errors;
-  
+
   info.convertFailed = false;
   info.requiredMissing = false;
   const auto origNs = options.origNamespace.empty() ? param.getNamespace() : options.origNamespace;
@@ -136,12 +136,12 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
           ::cras::to_string(errors).c_str());
       }
       info.messageLevel = ::ros::console::Level::Error;
-  
+
       if (isRequired || options.throwIfConvertFails)
         shouldThrow = true;
       else
         useDefault = true;
-  
+
       info.convertFailed = true;
       if (isRequired)
         info.requiredMissing = true;
@@ -204,7 +204,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
       logger->print(info.messageLevel, info.message);
     throw GetParamException(info);
   }
-  
+
   // using a pointer allows using ResultType without a no-arg constructor (copy/move constructor is enough)
   ::std::unique_ptr<ResultType> resultValue;
   if (useDefault)
@@ -363,7 +363,7 @@ inline ResultType getParam(
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
  *        and print out a ROS log message with the loaded values (if specified).
- * \details This is a variant allowing use of C-string instead of std::string. 
+ * \details This is a variant allowing use of C-string instead of std::string.
  * \param[in] param The parameter adapter from which parameters are read.
  * \param[in] name Name of the parameter.
  * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
@@ -389,7 +389,7 @@ inline ::cras::GetParamResult<::std::string> getParamVerbose(
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value,
  *        and print out a ROS log message with the loaded values (if specified).
- * \details This is a variant allowing use of C-string instead of std::string. 
+ * \details This is a variant allowing use of C-string instead of std::string.
  * \param[in] param The parameter adapter from which parameters are read.
  * \param[in] name Name of the parameter.
  * \param[in] defaultValue The default value to use.
@@ -412,7 +412,7 @@ inline ::cras::GetParamResult<::std::string> getParamVerbose(
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
  *        and print out a ROS log message with the loaded values (if specified).
- * \details This is a variant allowing use of C-string instead of std::string. 
+ * \details This is a variant allowing use of C-string instead of std::string.
  * \param[in] param The parameter adapter from which parameters are read.
  * \param[in] name Name of the parameter.
  * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
@@ -435,7 +435,7 @@ inline ::std::string getParam(
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value,
  *        and print out a ROS log message with the loaded values (if specified).
- * \details This is a variant allowing use of C-string instead of std::string. 
+ * \details This is a variant allowing use of C-string instead of std::string.
  * \param[in] param The parameter adapter from which parameters are read.
  * \param[in] name Name of the parameter.
  * \param[in] defaultValue The default value to use.
@@ -489,7 +489,7 @@ struct DefaultParamServerType<resultType>\
 /**
  * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
  *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
- *        of type ResultType. paramServerType is converted to resultType via resultType one-arg constructor. 
+ *        of type ResultType. paramServerType is converted to resultType via resultType one-arg constructor.
  * \param resultType Type of the result values.
  * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
  * \param defaultUnit The unit to use if the users doesn't pass any.

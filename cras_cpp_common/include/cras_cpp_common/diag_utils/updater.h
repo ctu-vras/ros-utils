@@ -17,7 +17,7 @@
 namespace cras
 {
 
-/** 
+/**
  * \brief Diagnostic updater that automatically sets its Hardware ID to hostname of the machine.
  */
 class DiagnosticUpdater : public ::diagnostic_updater::Updater

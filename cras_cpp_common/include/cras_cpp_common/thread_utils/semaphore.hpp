@@ -24,21 +24,21 @@ class ReverseSemaphore
 public:
   /**
    * \brief Create the semaphore (internal count is zero).
-   * \param[in] waitZeroAtDestroy Whether the semaphore should `waitForZero()` when it is destroyed. 
+   * \param[in] waitZeroAtDestroy Whether the semaphore should `waitForZero()` when it is destroyed.
    */
-  explicit ReverseSemaphore(bool waitZeroAtDestroy=true);
-  
+  explicit ReverseSemaphore(bool waitZeroAtDestroy = true);
+
   /**
    * \brief Destroys this semaphore. Internally blocks it and waits for zero count.
    */
   ~ReverseSemaphore();
-  
+
   /**
    * \brief Acquire the semaphore (increase its count). This method never blocks for long.
    * \return Whether acquisition succeeded. It can fail if the semaphore is disabled.
    */
   bool acquire();
-  
+
   /**
    * \brief Release the semaphore (decrease its count).
    * \note If the internal count decreases to zero, all outstanding `waitZero()` calls are notified.
@@ -47,29 +47,29 @@ public:
    * \note `release()` calls are processed even if the semaphore is disabled.
    */
   void release();
-  
+
   /**
    * \brief Wait until the internal count reaches zero.
    * \return Whether the wait succeeded. False can be returned if this semaphore is being destroyed.
    * \note It is suggested to call `disable()` before this method if you call it because some object needs to exit.
    */
   bool waitZero();
-  
+
   /**
    * \brief Disable the semaphore. All following `acquire()` calls will return immediately with false.
    */
   void disable();
-  
+
   /**
    * \brief Enable the semaphore. Calling `acquire()` works normally after this call.
    */
   void enable();
-  
+
   /**
    * \brief Whether the semaphore is enabled or not.
    */
   bool isEnabled() const;
-  
+
   /**
    * \brief Get the current number of unreleased `acquire()`s.
    * \note Do not use this to tell when all `acquire()`s are released. Use `waitZero()` for that.
@@ -80,19 +80,19 @@ public:
 private:
   //! \brief Whether to wait for zero when the object is being destroyed.
   bool waitZeroAtDestroy;
-  
+
   //! \brief True if the destructor has begun.
   bool isDestroying {false};
 
   //! \brief The internal count of the semaphore.
   volatile size_t count {0};
-  
+
   //! \brief Whether the semaphore is disabled.
   volatile bool disabled {false};
-  
+
   //! \brief Mutex protecting `cv`, `count` and `disabled`.
   mutable ::std::mutex mutex;
-  
+
   //! \brief Condition variable used for signalling between `release()` and `waitZero()`.
   ::std::condition_variable cv;
 };
@@ -119,7 +119,7 @@ public:
     if (this->acquireSucceeded)
       this->semaphore.release();
   }
-  
+
   /**
    * \brief Whether the semaphore acquisition succeeded when constructing this guard.
    * \return Success value.
@@ -133,7 +133,7 @@ public:
 private:
   //! \brief The guarded semaphore.
   T& semaphore;
-  
+
   //! \brief Whether the acquire succeeded.
   bool acquireSucceeded {false};
 };

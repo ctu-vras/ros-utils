@@ -220,11 +220,11 @@ template <typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>
 inline T parseIntegralNumber(const std::string& string)
 {
   T result{};
-  
+
   auto cleanString = cras::stripLeading(string, ' ');
   cras::stripLeading(cleanString, '+');
   cras::stripTrailing(cleanString, ' ');
-  
+
   auto noSignString = cleanString;
   cras::stripLeading(noSignString, '-');
   auto base = 10;
@@ -336,7 +336,7 @@ template <typename T, ::std::enable_if_t<::std::is_floating_point_v<::std::decay
 inline T parseFloatingNumber(const std::string& string)
 {
   T result{};
-  
+
   auto cleanString = cras::stripLeading(string, ' ');
   cras::stripLeading(cleanString, '+');
   cras::stripTrailing(cleanString, ' ');

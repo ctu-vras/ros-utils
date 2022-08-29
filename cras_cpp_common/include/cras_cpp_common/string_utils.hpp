@@ -128,10 +128,10 @@ enum class ReplacePosition
 {
   //! \brief Act in the whole string.
   EVERYWHERE,
-  
+
   //! \brief Act only on the beginning of the string.
   START,
-  
+
   //! \brief Act only on the end of the string.
   END
 };
@@ -159,7 +159,7 @@ void replace(::std::string& str, const ::std::string& from, const ::std::string&
 
 /**
  * \brief Check whether `str` contains character `c`.
- * \param[in] str The string to search in. 
+ * \param[in] str The string to search in.
  * \param[in] c The character to search.
  * \return Whether `str` contains character `c`.
  */
@@ -167,7 +167,7 @@ bool contains(const ::std::string& str, char c);
 
 /**
  * \brief Check whether `str` contains substring `needle`.
- * \param[in] str The string to search in. 
+ * \param[in] str The string to search in.
  * \param[in] needle The substring to search.
  * \return Whether `str` contains substring `needle`.
  */
@@ -258,7 +258,7 @@ inline ::std::string format(::std::string format, ::va_list args)
 /**
  * \brief Put `s` in double quotes if `T` is a string type (std::string or char*).
  * \tparam T The type to check.
- * \param[in] s The input string. 
+ * \param[in] s The input string.
  * \return Either `s` in double quotes if `T` is a string type, or just `s`.
  */
 template<typename T, ::std::enable_if_t<!::cras::is_string<::std::decay_t<T>>::value, bool> = true>
@@ -270,7 +270,7 @@ inline ::std::string quoteIfStringType(const ::std::string& s, const T&)
 /**
  * \brief Put `s` in double quotes if `T` is a string type (std::string or char*).
  * \tparam T The type to check.
- * \param[in] s The input string. 
+ * \param[in] s The input string.
  * \return Either `s` in double quotes if `T` is a string type, or just `s`.
  */
 template<typename T, ::std::enable_if_t<::cras::is_string<::std::decay_t<T>>::value, bool> = true>
@@ -388,7 +388,7 @@ inline ::std::string to_string(const ::std::unordered_map<K, V>& value);
     ::std::stringstream ss; \
     ss << (prefix); \
     size_t i = 0; \
-    for (const auto& v: value) \
+    for (const auto& v : value) \
     { \
       ss << ::cras::quoteIfStringType(::cras::to_string(v), v); \
       if (i + 1 < value.size()) \
@@ -411,7 +411,7 @@ DECLARE_TO_STRING_VECTOR(::std::unordered_set, "{", "}")
     ::std::stringstream ss; \
     ss << "{"; \
     size_t i = 0; \
-    for (const auto& pair: value) \
+    for (const auto& pair : value) \
     { \
       ss << ::cras::quoteIfStringType(::cras::to_string(pair.first), pair.first) \
          << ": " \

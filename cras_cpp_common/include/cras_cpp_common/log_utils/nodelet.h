@@ -24,10 +24,9 @@ namespace cras
 class NodeletLogHelper : public ::cras::LogHelper
 {
 public:
-  
   //! \brief Type of the function returning the name of the nodelet.
   typedef ::std::function<const ::std::string&()> GetNameFn;
-  
+
   /**
    * Create the log helper reporting as the nodelet of name returned by getNameFn.
    * @param getNameFn A function returning the name of the nodelet.
@@ -99,7 +98,7 @@ protected:
   {
     NODELET_DEBUG_FILTER_NAMED(filter, name, "%s", text.c_str());
   }
-  
+
   void printInfo(const ::std::string& text) const override
   {
     auto name = this->getName();
@@ -151,7 +150,7 @@ protected:
   {
     NODELET_INFO_FILTER_NAMED(filter, name, "%s", text.c_str());
   }
-  
+
   void printWarn(const ::std::string& text) const override
   {
     NODELET_WARN("%s", text.c_str());
@@ -202,7 +201,7 @@ protected:
   {
     NODELET_WARN_FILTER_NAMED(filter, name, "%s", text.c_str());
   }
-  
+
   void printError(const ::std::string& text) const override
   {
     NODELET_ERROR("%s", text.c_str());
@@ -253,7 +252,7 @@ protected:
   {
     NODELET_ERROR_FILTER_NAMED(filter, name, "%s", text.c_str());
   }
-  
+
   void printFatal(const ::std::string& text) const override
   {
     NODELET_FATAL("%s", text.c_str());

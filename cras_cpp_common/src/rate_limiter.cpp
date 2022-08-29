@@ -60,7 +60,7 @@ bool ThrottleLimiter::shouldPublish(const ros::Time& stamp)
     this->lastPublishTime = stamp;
     return true;
   }
-  
+
   bool result {false};
   if (stamp >= (this->lastPublishTime + this->period))
   {
@@ -97,29 +97,29 @@ bool TokenBucketLimiter::shouldPublish(const ros::Time& stamp)
   // If time jumped back by a lot, reset
   if (this->jumpedBack(stamp, this->lastCheckTime))
     this->reset();
-  
+
   // If we're processing the first message, record its stamp and say that dt == 0, so nothing will be added to bucket
   if (this->lastCheckTime == ros::Time(0))
     this->lastCheckTime = stamp;
-  
+
   // Do not allow if time jumped back just a bit (large jumps are solved above)
   if (stamp < this->lastCheckTime)
   {
     this->lastCheckTime = stamp;
     return false;
   }
-  
+
   bool result {false};
-  
+
   const auto dt = stamp - this->lastCheckTime;
   this->lastCheckTime = stamp;
 
   // Refill rate is 1 token per every period
   this->tokensAvailable += (dt / this->period);
-  
+
   // Limit by bucket capacity
   this->tokensAvailable = (std::min)(this->tokensAvailable, ros::Duration(this->bucketCapacity, 0));
-  
+
   // If there is at least one whole token in the bucket, allow publishing
   if (this->tokensAvailable >= ros::Duration(1, 0))
   {

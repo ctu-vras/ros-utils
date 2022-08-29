@@ -77,7 +77,7 @@ public:
   {
     this->freqTask = ::std::make_unique<::diagnostic_updater::FrequencyStatus>(this->origParams);
     this->stampTask = ::std::make_unique<::diagnostic_updater::SlowTimeStampStatus>(this->origParams);
-    
+
     this->addTask(this->freqTask.get());
     this->addTask(this->stampTask.get());
   }
@@ -102,7 +102,7 @@ public:
         minRate, maxRate, rateTolerance, rateWindowSize, minDelay, maxDelay))
   {
   }
-  
+
   /**
    * \brief Create the diagnostic task checking frequency of messages and timestamp delay (if the message has header).
    * \param[in] name Name of the diagnostic task.
@@ -118,7 +118,7 @@ public:
   }
 
   /**
-   * \brief Record that a message has arrived now with the given timestamp. 
+   * \brief Record that a message has arrived now with the given timestamp.
    * \param[in] stamp Timestamp in the message header.
    */
   virtual void tick(const ::ros::Time& stamp)
@@ -129,7 +129,7 @@ public:
   }
 
   /**
-   * \brief Record that a message has arrived. 
+   * \brief Record that a message has arrived.
    * \param[in] message The message that arrived.
    */
   virtual void tick(const Message& message)
@@ -140,7 +140,7 @@ public:
   }
 
   /**
-   * \brief Record that a message has arrived. 
+   * \brief Record that a message has arrived.
    * \param[in] message The message that arrived.
    */
   virtual void tick(const typename Message::Ptr& message)
@@ -149,7 +149,7 @@ public:
   }
 
   /**
-   * \brief Record that a message has arrived. 
+   * \brief Record that a message has arrived.
    * \param[in] message The message that arrived.
    */
   virtual void tick(const typename Message::ConstPtr& message)
@@ -158,7 +158,7 @@ public:
   }
 
   /**
-   * \brief Record that a message has arrived. 
+   * \brief Record that a message has arrived.
    * \param[in] event The message event describing the message that arrived.
    */
   virtual void tick(const ::ros::MessageEvent<Message>& event)
@@ -203,7 +203,7 @@ public:
   {
     return this->origParams.tolerance_;
   }
-  
+
   /**
    * \brief Number of updates during which the frequency is computed.
    * \return The window size.
@@ -212,7 +212,7 @@ public:
   {
     return this->origParams.window_size_;
   }
-  
+
   /**
    * \brief Min acceptable delay (in s). It can be negative if timestamps in future are expected.
    * \tparam M SFINAE only. Do not set explicitly.
@@ -238,7 +238,7 @@ public:
 protected:
   //! \brief The frequency-checking diagnostic task. This will always be non-null.
   ::std::unique_ptr<::diagnostic_updater::FrequencyStatus> freqTask;
-  
+
   //! \brief The delay-checking diagnostic task. It will be non-null only for messages with header.
   ::std::unique_ptr<::diagnostic_updater::SlowTimeStampStatus> stampTask;
 

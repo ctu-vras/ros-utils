@@ -61,7 +61,7 @@ public:
     data_out.vector.x += ++this->data;
     return true;
   }
-  
+
 protected:
   bool configure() override
   {
@@ -84,19 +84,19 @@ public:
     ros::param::del("/nodelet/lazy_subscription");
     ros::param::del("/nodelet/publish_diagnostics");
   }
-  
+
   ~TestChainNodelet() override
   {
     this->filterChain.clear();
     PreloadingClassLoader<F<T>, filters::FilterBase<T>>::unPreload(
       "cras_cpp_common/TestFilter", this->filterChain.loader_);
   }
-  
+
   ros::NodeHandle publicNodeHandle()
   {
     return this->getNodeHandle();
   }
-  
+
   ros::NodeHandle privateNodeHandle()
   {
     return this->getPrivateNodeHandle();
@@ -107,14 +107,14 @@ TEST(FilterChainNodelet, BasicOneFilter)
 {
   TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("one_filter");
   nodelet.init("/nodelet", {}, {});
-  
+
   auto nh = nodelet.publicNodeHandle();
-  
+
   std_msgs::Float32ConstPtr filteredMsg = nullptr;
   size_t numReceived = 0;
 
   auto pub = nh.advertise<std_msgs::Float32>("in", 10);
-  
+
   // Test that the filter chain does lazy subscription by default
   for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
   {
@@ -122,45 +122,45 @@ TEST(FilterChainNodelet, BasicOneFilter)
     ros::WallDuration(0.01).sleep();
   }
   EXPECT_EQ(0u, pub.getNumSubscribers());
-  
+
   auto sub = nh.subscribe<std_msgs::Float32>("out", 10, [&](const std_msgs::Float32ConstPtr& msg)
     {
       filteredMsg = msg;
       numReceived++;
     });
-  
+
   for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(1u, pub.getNumSubscribers());
   EXPECT_EQ(1u, sub.getNumPublishers());
-  
+
   std_msgs::Float32 msg;
   msg.data = 0;
-  
+
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived == 0; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(1u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(1.0, filteredMsg->data);
-  
+
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived == 1; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(2u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(2.0, filteredMsg->data);
@@ -171,14 +171,14 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
   TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("three_filters");
   ros::param::set("/nodelet/lazy_subscription", false);
   nodelet.init("/nodelet", {}, {});
-  
+
   auto nh = nodelet.publicNodeHandle();
-  
+
   std_msgs::Float32ConstPtr filteredMsg = nullptr;
   size_t numReceived = 0;
-  
+
   auto pub = nh.advertise<std_msgs::Float32>("in", 10);
-  
+
   // Lazy subscription is disabled, so the nodelet should subscribe immediately
   for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
   {
@@ -192,28 +192,28 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
     filteredMsg = msg;
     numReceived++;
   });
-  
+
   ros::WallDuration(0.1).sleep();
-  
+
   std_msgs::Float32 msg;
   msg.data = 0;
-  
+
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived < 1; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   // filter1.data == 1 (enabled), filter2.data == 1 (enabled), filter3.data == 1 (enabled)
   EXPECT_EQ(1u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(3.0, filteredMsg->data);
-  
+
   nodelet.setDisabledFilters({"filter1"});
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived < 2; ++i)
   {
     ros::spinOnce();
@@ -224,10 +224,10 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
   EXPECT_EQ(2u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(4.0, filteredMsg->data);
-  
+
   nodelet.setDisabledFilters({"filter1", "filter3"});
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived < 3; ++i)
   {
     ros::spinOnce();
@@ -238,10 +238,10 @@ TEST(FilterChainNodelet, ThreeFiltersEnableDisable)
   EXPECT_EQ(3u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(3.0, filteredMsg->data);
-  
+
   nodelet.setDisabledFilters({});
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 10 && numReceived < 4; ++i)
   {
     ros::spinOnce();
@@ -259,14 +259,14 @@ TEST(FilterChainNodelet, ThreeFiltersFail)
   TestChainNodelet<std_msgs::Float32, IncFilter> nodelet("three_filters_fail");
   ros::param::set("/nodelet/lazy_subscription", false);
   nodelet.init("/nodelet", {}, {});
-  
+
   auto nh = nodelet.publicNodeHandle();
-  
+
   std_msgs::Float32ConstPtr filteredMsg = nullptr;
   size_t numReceived = 0;
-  
+
   auto pub = nh.advertise<std_msgs::Float32>("in", 10);
-  
+
   // Lazy subscription is disabled, so the nodelet should subscribe immediately
   for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
   {
@@ -280,20 +280,20 @@ TEST(FilterChainNodelet, ThreeFiltersFail)
     filteredMsg = msg;
     numReceived++;
   });
-  
+
   ros::WallDuration(0.1).sleep();
-  
+
   std_msgs::Float32 msg;
   msg.data = 0;
-  
+
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 4 && numReceived == 0; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.1).sleep();
   }
-  
+
   // The filter should fail so no message should be received
   EXPECT_EQ(0u, numReceived);
   ASSERT_EQ(nullptr, filteredMsg);
@@ -336,21 +336,21 @@ TEST(FilterChainNodelet, PublishDiagnostics)
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   ASSERT_NE(nullptr, diagMsg);
   ASSERT_EQ(1u, diagMsg->status.size());
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[0].level);
   diagMsg = nullptr;
-  
+
   pub.publish(std_msgs::Float32());
-  
+
   // diagnostics should be published every second, so waiting a little over 1 second should make sure we get it
   for (size_t i = 0; i < 120 && (numReceived == 0 || diagMsg == nullptr); ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(1u, numReceived);
   ASSERT_NE(nullptr, diagMsg);
   ASSERT_EQ(5u, diagMsg->status.size());
@@ -405,21 +405,21 @@ TEST(FilterChainNodelet, PublishDiagnosticsFail)
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   ASSERT_NE(nullptr, diagMsg);
   ASSERT_EQ(1u, diagMsg->status.size());
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::OK, diagMsg->status[0].level);
   diagMsg = nullptr;
-  
+
   pub.publish(std_msgs::Float32());
-  
+
   // diagnostics should be published every second, so waiting a little over 1 second should make sure we get it
   for (size_t i = 0; i < 120 && (numReceived == 0 || diagMsg == nullptr); ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(0u, numReceived);
   ASSERT_NE(nullptr, diagMsg);
   ASSERT_EQ(7u, diagMsg->status.size());
@@ -435,21 +435,21 @@ TEST(FilterChainNodelet, PublishDiagnosticsFail)
   EXPECT_EQ(10u, diagMsg->status[4].values.size());  // filter3 duration
   EXPECT_EQ(3u, diagMsg->status[5].values.size());  // individual filters diagnostics
   EXPECT_EQ(4u, diagMsg->status[6].values.size());  // in topic (lazy subscription, so it is last...)
-  
+
   // Disable the failing filter and check that the chain started working
 
   nodelet.setDisabledFilters({"filter2"});
   diagMsg = nullptr;
-  
+
   pub.publish(std_msgs::Float32());
-  
+
   // diagnostics should be published every second, so waiting a little over 1 second should make sure we get it
   for (size_t i = 0; i < 220 && (numReceived == 0 || diagMsg == nullptr); ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   EXPECT_EQ(1u, numReceived);
   EXPECT_EQ(3.0, received->data);
   ASSERT_NE(nullptr, diagMsg);
@@ -504,11 +504,11 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 {
   TestChainNodelet<geometry_msgs::Vector3Stamped, VectorFilter> n("three_filters");
   n.init("/nodelet", {}, {});
-  
+
   auto nh = n.publicNodeHandle();
 
   dynamic_reconfigure::Client<cras_cpp_common::FilterChainConfig> client("client", ros::NodeHandle(nh, "nodelet"));
-  
+
   geometry_msgs::Vector3StampedConstPtr filteredMsg = nullptr;
   size_t numReceived = 0;
   auto sub = nh.subscribe<geometry_msgs::Vector3Stamped>("out", 10,
@@ -517,7 +517,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
       filteredMsg = msg;
       numReceived++;
     });
-  
+
   size_t numReceived1 = 0, numReceived2 = 0, numReceived3 = 0;
   geometry_msgs::Vector3StampedConstPtr filterMsg1 = nullptr, filterMsg2 = nullptr, filterMsg3 = nullptr;
   auto sub1 = nh.subscribe<geometry_msgs::Vector3Stamped>("nodelet/filter0/filter1", 10,
@@ -526,7 +526,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
     [&](const geometry_msgs::Vector3StampedConstPtr& msg) { filterMsg2 = msg; numReceived2++; });
   auto sub3 = nh.subscribe<geometry_msgs::Vector3Stamped>("nodelet/filter2/filter3", 10,
     [&](const geometry_msgs::Vector3StampedConstPtr& msg) { filterMsg3 = msg; numReceived3++; });
-  
+
   auto pub = nh.advertise<geometry_msgs::Vector3Stamped>("in", 10);
 
   for (size_t i = 0; i < 100 && pub.getNumSubscribers() == 0; ++i)
@@ -540,25 +540,25 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   msg.header.stamp = ros::Time::now();
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived < 1; ++i)
   {
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   // filter1.data == 1 (enabled), filter2.data == 1 (enabled), filter3.data == 1 (enabled)
   EXPECT_EQ(1u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(3.0, filteredMsg->vector.x);
-  
+
   EXPECT_EQ(0u, numReceived1);
   EXPECT_EQ(nullptr, filterMsg1);
   EXPECT_EQ(0u, numReceived2);
   EXPECT_EQ(nullptr, filterMsg2);
   EXPECT_EQ(0u, numReceived3);
   EXPECT_EQ(nullptr, filterMsg3);
-  
+
   cras_cpp_common::FilterChainConfig config;
   getDefaultConfig(client, config);
   config.disabled_filters = "filter1";
@@ -566,7 +566,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   msg.header.stamp = ros::Time::now();
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived < 2; ++i)
   {
     ros::spinOnce();
@@ -590,7 +590,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   msg.header.stamp = ros::Time::now();
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived < 3; ++i)
   {
     ros::spinOnce();
@@ -614,7 +614,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   msg.header.stamp = ros::Time::now();
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived < 4; ++i)
   {
     ros::spinOnce();
@@ -636,10 +636,10 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
   const auto defaultMaxAge = config.max_age;
 
   // test that an old message does not pass through the filter
-  
+
   msg.header.stamp = ros::Time::now() - ros::Duration(defaultMaxAge + 1);
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived == 4; ++i)
   {
     ros::spinOnce();
@@ -657,15 +657,15 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
   EXPECT_EQ(nullptr, filterMsg2);
   EXPECT_EQ(0u, numReceived3);
   EXPECT_EQ(nullptr, filterMsg3);
-  
+
   // test that an old message does not pass through the filter with a custom max age
 
   config.max_age = defaultMaxAge / 2;
   updateConfig(client, config);
-  
+
   msg.header.stamp = ros::Time::now() - ros::Duration(defaultMaxAge / 2 + 1);
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived == 4; ++i)
   {
     ros::spinOnce();
@@ -688,7 +688,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   msg.header.stamp = ros::Time::now() - ros::Duration(defaultMaxAge / 2 - 1);
   pub.publish(msg);
-  
+
   for (size_t i = 0; i < 40 && numReceived < 5; ++i)
   {
     ros::spinOnce();
@@ -711,7 +711,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   config.publish_each_filter = true;
   updateConfig(client, config);
-  
+
   for (size_t i = 0;
     i < 10 && (sub1.getNumPublishers() == 0 || sub2.getNumPublishers() == 0 || sub3.getNumPublishers() == 0); ++i)
   {
@@ -731,15 +731,15 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
   EXPECT_EQ(6u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(15.0, filteredMsg->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived1);
   ASSERT_NE(nullptr, filterMsg1);
   EXPECT_EQ(4.0, filterMsg1->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived2);
   ASSERT_NE(nullptr, filterMsg2);
   EXPECT_EQ(10.0, filterMsg2->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived3);
   ASSERT_NE(nullptr, filterMsg3);
   EXPECT_EQ(15.0, filterMsg3->vector.x);
@@ -748,7 +748,7 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
 
   config.publish_each_filter = false;
   updateConfig(client, config);
-  
+
   msg.header.stamp = ros::Time::now();
   pub.publish(msg);
 
@@ -762,15 +762,15 @@ TEST(FilterChainNodelet, ThreeFiltersDynReconf)
   EXPECT_EQ(7u, numReceived);
   ASSERT_NE(nullptr, filteredMsg);
   EXPECT_EQ(18.0, filteredMsg->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived1);
   ASSERT_NE(nullptr, filterMsg1);
   EXPECT_EQ(4.0, filterMsg1->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived2);
   ASSERT_NE(nullptr, filterMsg2);
   EXPECT_EQ(10.0, filterMsg2->vector.x);
-  
+
   EXPECT_EQ(1u, numReceived3);
   ASSERT_NE(nullptr, filterMsg3);
   EXPECT_EQ(15.0, filterMsg3->vector.x);

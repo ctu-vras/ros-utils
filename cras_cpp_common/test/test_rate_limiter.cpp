@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
- 
+
 #include "gtest/gtest.h"
 
 #include <map>
@@ -40,10 +40,10 @@ TEST(ThrottleLimiter, BadConstruct)  // NOLINT
 TEST(ThrottleLimiter, RegularSequence)  // NOLINT
 {
   cras::ThrottleLimiter limiter(ros::Rate(7));
-  
+
   const auto times = createRegularSequence({1, 0}, ros::Duration(0.1), 10);
   const std::vector<bool> results = {true, false, true, false, true, false, true, false, true, false};
-  
+
   for (size_t i = 0; i < times.size(); ++i)
   {
     SCOPED_TRACE("Iteration " + std::to_string(i));
@@ -54,13 +54,13 @@ TEST(ThrottleLimiter, RegularSequence)  // NOLINT
 TEST(ThrottleLimiter, RegularSequenceRatio)  // NOLINT
 {
   cras::ThrottleLimiter limiter(ros::Rate(7));
-  
+
   const auto times = createRegularSequence({1, 0}, ros::Duration(0.1), 1000);
   size_t numPublished {0};
-  
+
   for (const auto& time : times)
     numPublished += limiter.shouldPublish(time);
-  
+
   EXPECT_EQ(500, numPublished);  // Ideally 700. But throttle is not very good at achieving the 70% throughput rate.
 }
 
@@ -90,11 +90,11 @@ TEST(ThrottleLimiter, IrregularSequence)  // NOLINT
 TEST(ThrottleLimiter, Reset)  // NOLINT
 {
   cras::ThrottleLimiter limiter(ros::Rate(1));
-  
+
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(1)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.1)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.2)));
-  
+
   limiter.reset();
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(1.3)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.4)));
@@ -104,18 +104,18 @@ TEST(ThrottleLimiter, Reset)  // NOLINT
 TEST(ThrottleLimiter, JumpBack)  // NOLINT
 {
   cras::ThrottleLimiter limiter(ros::Rate(1));
-  
+
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(10)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(10.1)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(9.9)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(8.9)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(7.9)));
-  
+
   // Jump back more than 3 seconds
   EXPECT_TRUE(limiter.shouldPublish(ros::Time(1.3)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.4)));
   EXPECT_FALSE(limiter.shouldPublish(ros::Time(1.5)));
-  
+
   EXPECT_THROW(limiter.setJumpBackTolerance(ros::Duration(-1)), std::invalid_argument);
 
   // Set jump tolerance to 5
@@ -138,7 +138,7 @@ TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
   std::vector<cras::TokenBucketLimiter*> limiters;
   std::map<cras::TokenBucketLimiter*, std::string> names;
 
-  cras::TokenBucketLimiter limiter03(ros::Duration(3, 0), 2, 1); limiters.push_back(&limiter03); names[&limiter03] = "03";
+  cras::TokenBucketLimiter limiter03(ros::Duration(3, 0), 2, 1); limiters.push_back(&limiter03); names[&limiter03] = "03";  // NOLINT
   cras::TokenBucketLimiter limiter05(ros::Rate(0.5), 2, 1); limiters.push_back(&limiter05); names[&limiter05] = "05";
   cras::TokenBucketLimiter limiter1(ros::Rate(1), 2, 1); limiters.push_back(&limiter1); names[&limiter1] = "1";
   cras::TokenBucketLimiter limiter2(ros::Rate(2), 2, 1); limiters.push_back(&limiter2); names[&limiter2] = "2";
@@ -164,7 +164,7 @@ TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
   };
 
   std::map<cras::TokenBucketLimiter*, std::vector<bool>> results;
-  
+
   for (const auto& time : times)
   {
     for (const auto& limiter : limiters)
@@ -207,7 +207,7 @@ TEST(TokenBucketLimiter, RegularSequenceRatio)  // NOLINT
   for (const auto& limiter : limiters)
   {
     SCOPED_TRACE(names[limiter.get()]);
-    EXPECT_NEAR(expectedPublished[limiter.get()], numPublished[limiter.get()], 1);    
+    EXPECT_NEAR(expectedPublished[limiter.get()], numPublished[limiter.get()], 1);
   }
 }
 

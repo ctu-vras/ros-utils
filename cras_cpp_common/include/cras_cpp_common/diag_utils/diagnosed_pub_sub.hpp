@@ -37,10 +37,10 @@ namespace cras
 
 /**
  * \brief Base for ROS publisher and subscriber with automatic message rate and delay diagnostics.
- * 
+ *
  * This class offers an option to configure the diagnostic task from a set of ROS parameters. The following parameters
  * are read:
- * 
+ *
  * - `rate/desired` (double, Hz, no default): If set, this value will be used as the default of min/max rates.
  * - `rate/min` (double, Hz, default 0.0 or desired): Minimum acceptable rate.
  * - `rate/max` (double, Hz, default +inf or desired): Maximum acceptable rate.
@@ -49,7 +49,7 @@ namespace cras
  * - `rate/window_size` (uint, default 5): Over how many diagnostics updates should the rate be computed.
  * - `delay/min` (double, s, default -1.0): Minimum acceptable delay (only computed for messages with a header).
  * - `delay/max` (double, s, default 5.0): Maximum acceptable delay (only computed for messages with a header).
- * 
+ *
  * \tparam Message Type of the published/subscribed message.
  * \tparam Enable SFINAE only. Do not explicitly set.
  */
@@ -59,17 +59,17 @@ class DiagnosedPubSub
 public:
   /**
    * \brief Use the given diagnostic task to diagnose the publisher/subscriber.
-   * \param[in] diag 
+   * \param[in] diag
    */
   explicit DiagnosedPubSub(const ::std::shared_ptr<::cras::TopicStatus<Message>>& diag);
-  
+
   /**
    * \brief Create the diagnostic task from the given params.
    * \param[in] name Name of the task.
    * \param[in] diagParams Parameters of the task.
    */
   explicit DiagnosedPubSub(const ::std::string& name, const ::cras::TopicStatusParam<Message>& diagParams);
-  
+
   /**
    * \brief Configure the diagnostic task from the given ROS parameter helper.
    * \param[in] params The ROS parameters to load configuration from.
@@ -83,15 +83,15 @@ public:
    * \param[in] params The ROS parameters to load configuration from.
    */
   explicit DiagnosedPubSub(const ::cras::BoundParamHelperPtr& params);
-  
+
   virtual ~DiagnosedPubSub() = default;
-  
+
   /**
    * \brief Add the diagnostic task to the given updater.
    * \param[in] updater The updater to add to.
    */
   virtual void attach(::diagnostic_updater::Updater& updater);
-  
+
   /**
    * \brief Get the topic diagnostic task.
    * \return The task.
@@ -142,7 +142,7 @@ public:
    * \param[in] diag The topic diagnostics task.
    */
   DiagnosedPublisher(const ::ros::Publisher &pub, const ::std::shared_ptr<::cras::TopicStatus<Message>>& diag);
-  
+
   /**
    * \brief Add a topic diagnostic task to the publisher.
    * \param[in] pub The ROS publisher.
@@ -151,7 +151,7 @@ public:
    */
   DiagnosedPublisher(const ::ros::Publisher &pub, const ::std::string& name,
     const ::cras::TopicStatusParam<Message>& diagParams);
-  
+
   /**
    * \brief Add a topic diagnostic task to the publisher.
    * \param[in] pub The ROS publisher.
@@ -161,7 +161,7 @@ public:
    */
   DiagnosedPublisher(const ::ros::Publisher &pub, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<Message>& defaultParams);
-  
+
   /**
    * \brief Add a topic diagnostic task to the publisher.
    * \param[in] pub The ROS publisher.
@@ -182,10 +182,10 @@ public:
   DiagnosedPublisher(const ::ros::Publisher &pub, ::diagnostic_updater::Updater& updater,
     const ::cras::BoundParamHelperPtr& params, const ::ros::Rate& defaultRate,
     const ::ros::Rate& defaultMinRate, const ::ros::Rate& defaultMaxRate);
-  
+
   [[deprecated]]
   ::ros::Rate getDesiredRate() const;
-  
+
   /**
    * \brief Publish a message.
    * \param[in] message The message to publish.
@@ -215,7 +215,7 @@ public:
    * \param[in] pub The new ROS publisher.
    */
   void setPublisher(const ::ros::Publisher& pub);
-  
+
 protected:
   //! \brief The ROS publisher.
   ::ros::Publisher publisher;
@@ -260,7 +260,7 @@ public:
   DiagnosedSubscriber(::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<Message>& defaultParams,
     const ::std::string& topic, uint32_t queue_size,
-    const ::boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {});
+    const ::boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {});
 
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
@@ -279,8 +279,8 @@ public:
   DiagnosedSubscriber(::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>& defaultParams,
     const ::std::string& topic, uint32_t queue_size,
-    const ::boost::function<void (C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {});
-  
+    const ::boost::function<void(C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {});
+
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
    * \tparam M SFINAE only. Do not set explicitly.
@@ -298,7 +298,7 @@ public:
   DiagnosedSubscriber(::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultParams,
     const ::std::string& topic, uint32_t queue_size, void(T::*cb)(M), T* obj, ::ros::TransportHints hints = {});
-  
+
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
    * \tparam M SFINAE only. Do not set explicitly.
@@ -316,7 +316,7 @@ public:
   DiagnosedSubscriber(::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultParams,
     const ::std::string& topic, uint32_t queue_size, void(T::*cb)(M) const, T* obj, ::ros::TransportHints hints = {});
-  
+
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
    * \tparam M SFINAE only. Do not set explicitly.
@@ -335,7 +335,7 @@ public:
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultParams,
     const ::std::string& topic, uint32_t queue_size, void(T::*cb)(M), const ::boost::shared_ptr<T>& obj,
     ::ros::TransportHints hints = {});
-  
+
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
    * \tparam M SFINAE only. Do not set explicitly.
@@ -354,7 +354,7 @@ public:
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultParams,
     const ::std::string& topic, uint32_t queue_size, void(T::*cb)(M) const, const ::boost::shared_ptr<T>& obj,
     ::ros::TransportHints hints = {});
-  
+
   /**
    * \brief Subscribe to the given topic reading diagnostic task configuration from ROS parameters.
    * \param[in] nh Node handle used for subscribing.
@@ -366,7 +366,7 @@ public:
    */
   DiagnosedSubscriber(::ros::NodeHandle nh, const ::cras::BoundParamHelperPtr& params,
     const ::cras::SimpleTopicStatusParam<Message>& defaultParams, ::ros::SubscribeOptions& options);
-  
+
   /**
    * \brief Get the created ROS subscriber.
    * \return The ROS subscriber.
@@ -402,7 +402,7 @@ protected:
    */
   ::boost::function<void(const ::ros::MessageEvent<Message>&)> addTick(
     const ::std::function<void(const ::ros::MessageEvent<Message>&)>& fn);
-  
+
   /**
    * \brief Wrap `fn` in a function that first calls `tick()` on the diagnostic task and then calls `fn()`.
    * \tparam T Ignored.
@@ -461,7 +461,7 @@ protected:
    */
   template <typename T, typename M, typename EnableM = ::std::enable_if_t<::cras::IsMessageParam<M>::value>>
   ::boost::function<void(M)> addTick(void(T::*fn)(M) const, const ::boost::shared_ptr<T>& obj);
-  
+
   //! \brief The ROS subscriber.
   ::ros::Subscriber subscriber;
 };
@@ -478,7 +478,7 @@ DiagnosedSubscriber(::ros::NodeHandle, const ::cras::BoundParamHelperPtr&,
 template <typename C, typename = ::std::enable_if_t<::cras::IsMessageParam<C>::value>>
 DiagnosedSubscriber(::ros::NodeHandle, const ::cras::BoundParamHelperPtr&,
   const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>&, const ::std::string&, uint32_t,
-  const ::boost::function<void (C)>&, ::ros::VoidConstPtr = {}, ::ros::TransportHints = {})
+  const ::boost::function<void(C)>&, ::ros::VoidConstPtr = {}, ::ros::TransportHints = {})
     -> DiagnosedSubscriber<::cras::BaseMessage<C>>;
 
 template<typename M, class T, typename = ::std::enable_if_t<::cras::IsMessageParam<M>::value>>

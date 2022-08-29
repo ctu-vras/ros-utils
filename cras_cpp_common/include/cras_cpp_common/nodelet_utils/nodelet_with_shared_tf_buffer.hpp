@@ -38,7 +38,7 @@ public:
    * \param[in] buffer The buffer to use.
    */
   virtual void setBuffer(const ::std::shared_ptr<::tf2_ros::Buffer>& buffer) = 0;
-  
+
   /**
    * \brief Get the TF buffer used by the nodelet. If none has been set by `setBuffer()`, a buffer is automatically
    * created.
@@ -48,7 +48,7 @@ public:
    *       get a tf2::BufferCore that offers the missing non-time-aware functionality.
    */
   virtual ::cras::NodeletAwareTFBuffer& getBuffer() const = 0;
-  
+
   /**
    * \brief Whether the buffer set using `setBuffer()` is used or a standalone buffer has been automatically created.
    * \return Whether the buffer set using `setBuffer()` is used or a standalone buffer has been automatically created.
@@ -70,7 +70,7 @@ struct NodeletWithSharedTfBuffer : public virtual NodeletType, public ::cras::No
 public:
   NodeletWithSharedTfBuffer();
   virtual ~NodeletWithSharedTfBuffer();
-  
+
   void setBuffer(const ::std::shared_ptr<::tf2_ros::Buffer>& buffer) override;
   ::cras::NodeletAwareTFBuffer& getBuffer() const override;
   bool usesSharedBuffer() const override;

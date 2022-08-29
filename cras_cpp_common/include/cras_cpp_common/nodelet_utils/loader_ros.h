@@ -55,7 +55,7 @@ namespace cras
 
 /**
  * \brief ROS interface for loading/unloading nodelets (internally using nodelet::Loader to do the work).
- * 
+ *
  * Advertised services are:
  * - load_nodelet (nodelet/NodeletLoad): Load a nodelet.
  * - unload_nodelet (nodelet/NodeletUnload): Unload a nodelet.
@@ -105,10 +105,10 @@ protected:
 
   //! \brief The actual nodelet loader to use.
   ::nodelet::Loader* parent_;
-  
+
   //! \brief The node handle to use for the advertised services.
   ::ros::NodeHandle nh_;
-  
+
   //! \brief Service server for load_nodelet service.
   ::ros::ServiceServer load_server_;
 
@@ -123,10 +123,10 @@ protected:
 
   //! \brief Callback queue used for the created bonds.
   ::ros::CallbackQueue bond_callback_queue_;
-  
+
   //! \brief Spinner of bond_callback_queue_.
   ::ros::AsyncSpinner bond_spinner_;
-  
+
   //! \brief Type of the map of nodelet name->bond.
   typedef ::boost::ptr_map<::std::string, ::bond::Bond> M_stringToBond;
 

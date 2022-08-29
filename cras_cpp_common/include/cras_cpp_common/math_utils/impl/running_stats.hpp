@@ -7,7 +7,7 @@
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
- * 
+ *
  * Inspiration taken from https://www.johndcook.com/blog/skewness_kurtosis/ .
  */
 
@@ -107,14 +107,14 @@ RunningStats<T> RunningStats<T>::operator+(const RunningStats<T>& other) const
 {
   RunningStats<T> stats;
   stats.count = this->count + other.count;
-  
+
   const auto sum = this->multiplyScalar(this->mean, this->count) + other.multiplyScalar(other.mean, other.count);
   stats.mean = stats.multiplyScalar(sum, 1.0 / stats.count);
-  
+
   const auto meanDelta = other.mean - this->mean;
   stats.var = this->var + other.var +
     stats.multiplyScalar(stats.multiply(meanDelta, meanDelta), this->count * other.count / stats.count);
-  
+
   return stats;
 }
 
@@ -145,22 +145,22 @@ template<typename T>
 RunningStats<T> RunningStats<T>::operator-(const RunningStats<T>& other) const
 {
   RunningStats<T> stats;
-  
+
   if (other.count > this->count)
     return stats;
-  
+
   stats.count = this->count - other.count;
-  
+
   if (stats.count == 0u)
     return stats;
-  
+
   const auto sum = this->multiplyScalar(this->mean, this->count) - other.multiplyScalar(other.mean, other.count);
   stats.mean = stats.multiplyScalar(sum, 1.0 / stats.count);
-  
+
   const auto meanDelta = other.mean - stats.mean;
   stats.var = this->var - other.var -
     stats.multiplyScalar(stats.multiply(meanDelta, meanDelta), stats.count * other.count / this->count);
-  
+
   return stats;
 }
 

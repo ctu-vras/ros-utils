@@ -70,10 +70,10 @@ struct XmlRpcValueTraits
 {
   //! \brief Corresponding XmlRpcValue type that can represent values of T. TypeInvalid for non-representable types.
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeInvalid };
-  
+
   //! \brief String representation of xmlRpcType.
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
-  
+
   //! \brief Whether T is a "canonical" type for XmlRpcValue, i.e. whether there is a conversion function defined for T
   //! on a XmlRpcValue. This is examined recursively for vectors/maps, and a vector/map is canonical if the innermost
   //! type is canonical.
@@ -251,7 +251,7 @@ template<typename T> struct XmlRpcValueTraits<::std::unordered_set<T>,
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
   constexpr static const bool isCanonical { false };
 };
-  
+
 template<typename T> struct XmlRpcValueTraits<::std::map<::std::string, T>,
   typename ::std::enable_if<::cras::XmlRpcValueTraits<T>::xmlRpcType != ::XmlRpc::XmlRpcValue::TypeInvalid>::type>
 {
@@ -259,7 +259,7 @@ template<typename T> struct XmlRpcValueTraits<::std::map<::std::string, T>,
   constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
   constexpr static const bool isCanonical { ::cras::XmlRpcValueTraits<T>::isCanonical };
 };
-  
+
 template<typename T> struct XmlRpcValueTraits<::std::unordered_map<::std::string, T>,
   typename ::std::enable_if<::cras::XmlRpcValueTraits<T>::xmlRpcType != ::XmlRpc::XmlRpcValue::TypeInvalid>::type>
 {

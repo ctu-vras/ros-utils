@@ -153,7 +153,7 @@ protected:
     this->str = text;
     this->level = ros::console::Level::Info;
   }
-  
+
   void printWarn(const std::string& text) const override
   {
     this->str = text;
@@ -215,7 +215,7 @@ protected:
     this->str = text;
     this->level = ros::console::Level::Warn;
   }
-  
+
   void printError(const std::string& text) const override
   {
     this->str = text;
@@ -277,7 +277,7 @@ protected:
     this->str = text;
     this->level = ros::console::Level::Error;
   }
-  
+
   void printFatal(const std::string& text) const override
   {
     this->str = text;
@@ -353,7 +353,7 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
 {
   std::shared_ptr<GetParamAdapter> params {nullptr};
   TestLogHelper logger {};
-  
+
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -364,7 +364,7 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
     EXPECT_EQ((expected), cras::getParam(*this->params, (param), (def), "",  {}, &this->logger));
     EXPECT_EQ((expected), cras::getParam(*this->params, (param), cras::optional(def), "",  {}, &this->logger));
   }
-  
+
   template <typename T, typename U>
   void test_s(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -393,7 +393,7 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()
   {
     // test that getParam result type is the same as the default value
@@ -431,12 +431,16 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
     EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "double_nan", 0.0, "", {}, &this->logger)));
     EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "double_nan", cras::optional(0.0), "", {}, &this->logger)));
 
-    { auto r = cras::getParamVerbose(*this->params, "nonexistent", std::numeric_limits<double>::quiet_NaN(), "", {}, &this->logger);
+    { auto r = cras::getParamVerbose(
+        *this->params, "nonexistent", std::numeric_limits<double>::quiet_NaN(), "", {}, &this->logger);
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    { auto r = cras::getParamVerbose(*this->params, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()), "", {}, &this->logger);
+    { auto r = cras::getParamVerbose(
+        *this->params, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()), "", {}, &this->logger);
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "nonexistent", std::numeric_limits<double>::quiet_NaN(), "", {}, &this->logger)));
-    EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()), "", {}, &this->logger)));
+    EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "nonexistent",
+      std::numeric_limits<double>::quiet_NaN(), "", {}, &this->logger)));
+    EXPECT_TRUE(std::isnan(cras::getParam(*this->params, "nonexistent",
+      cras::optional(std::numeric_limits<double>::quiet_NaN()), "", {}, &this->logger)));
   };
 
   public: void testOptions()
@@ -446,7 +450,7 @@ struct ParamUtilsGetParamTest : public GetParamTest<ParamUtilsGetParamTest>
     const auto& ns = this->params->getNamespace();
 
     auto& log = this->logger;
-    
+
     // test reading an existing param with default config
     opts = {}; log.reset();
     r = cras::getParamVerbose(*this->params, "bool_False", true, "", opts, &this->logger);
@@ -626,7 +630,7 @@ struct TestParamHelper : public ParamHelper
   explicit TestParamHelper(const LogHelperPtr& _log) : ParamHelper(_log)
   {
   }
-  
+
   std::shared_ptr<TestLogHelper> getLog() const
   {
     return std::dynamic_pointer_cast<TestLogHelper>(this->log);
@@ -638,12 +642,12 @@ struct TestBoundParamHelper : public BoundParamHelper
   TestBoundParamHelper(const LogHelperPtr& _log, const GetParamAdapterPtr& _param) : BoundParamHelper(_log, _param)
   {
   }
-  
+
   std::shared_ptr<TestLogHelper> getLog() const
   {
     return std::dynamic_pointer_cast<TestLogHelper>(this->log);
   }
-  
+
   GetParamAdapterPtr getParams() const
   {
     return this->param;
@@ -654,7 +658,7 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
 {
   TestParamHelper* p {nullptr};
   GetParamAdapterPtr params {nullptr};
-  
+
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -665,7 +669,7 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
     EXPECT_EQ((expected), this->p->getParam(*this->params, (param), (def)));
     EXPECT_EQ((expected), this->p->getParam(*this->params, (param), cras::optional(def)));
   }
-  
+
   template <typename T, typename U>
   void test_s(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -693,7 +697,7 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()
   {
     // test that getParam result type is the same as the default value
@@ -723,10 +727,12 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
 
     { auto r = this->p->getParamVerbose(*this->params, "nonexistent", std::numeric_limits<double>::quiet_NaN());
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    { auto r = this->p->getParamVerbose(*this->params, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()));
+    { auto r = this->p->getParamVerbose(*this->params, "nonexistent",
+        cras::optional(std::numeric_limits<double>::quiet_NaN()));
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
     EXPECT_TRUE(std::isnan(this->p->getParam(*this->params, "nonexistent", std::numeric_limits<double>::quiet_NaN())));
-    EXPECT_TRUE(std::isnan(this->p->getParam(*this->params, "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()))));
+    EXPECT_TRUE(std::isnan(this->p->getParam(*this->params, "nonexistent",
+      cras::optional(std::numeric_limits<double>::quiet_NaN()))));
   };
 
   public: void testOptions()
@@ -912,7 +918,7 @@ struct ParamHelperGetParamTest : public GetParamTest<ParamHelperGetParamTest>
 struct BoundParamHelperGetParamTest : public GetParamTest<BoundParamHelperGetParamTest>
 {
   TestBoundParamHelper* p {nullptr};
-  
+
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -923,7 +929,7 @@ struct BoundParamHelperGetParamTest : public GetParamTest<BoundParamHelperGetPar
     EXPECT_EQ((expected), this->p->getParam((param), (def)));
     EXPECT_EQ((expected), this->p->getParam((param), cras::optional(def)));
   }
-  
+
   template <typename T, typename U>
   void test_s(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -951,7 +957,7 @@ struct BoundParamHelperGetParamTest : public GetParamTest<BoundParamHelperGetPar
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()  // NOLINT
   {
     // test that getParam result type is the same as the default value
@@ -1185,12 +1191,12 @@ public:
   {
     return this->params.find(name) != this->params.end();
   }
-  
+
   std::string getNamespace() const noexcept override
   {
     return this->ns;
   }
-  
+
   std::shared_ptr<GetParamAdapter> getNamespaced(const std::string& subNs) const noexcept(false) override
   {
     const auto newNs = this->getNamespace() + "/" + subNs;
@@ -1225,12 +1231,12 @@ void setMap(XmlRpc::XmlRpcValue& x, const std::unordered_map<std::string, T>& ma
 std::shared_ptr<TestParamAdapter> getParams()
 {
   static std::shared_ptr<TestParamAdapter> p;
-  
+
   if (p)
     return p;
 
   p = std::make_shared<TestParamAdapter>("dict");
-  
+
   p->params["bool_True"] = true;
   p->params["bool_False"] = false;
   p->params["bool_true"] = true;
@@ -1256,7 +1262,7 @@ std::shared_ptr<TestParamAdapter> getParams()
   p->params["str_a"] = "a";
   p->params["str_asd"] = "asd";
   setArray<int>(p->params["list_empty"], {});
-  setArray<bool>(p->params["list_bool"], { true, false, true }); 
+  setArray<bool>(p->params["list_bool"], { true, false, true });
   setArray<int>(p->params["list_int"], { 0, 1, -1 });
   setArray<int>(p->params["list_uint"], { 0, 1, 2 });
   setArray<double>(p->params["list_double"], { 0.0, 1.0, -1.0 });
@@ -1299,7 +1305,7 @@ std::shared_ptr<TestParamAdapter> getParams()
     {"*::big_collision_box::bounding_box", 2.0},
     {"*::big_collision_box::shadow", 3.0}
   });
-  
+
   return p;
 }
 
@@ -1667,7 +1673,7 @@ TEST(BoundParamHelper, ParamsInNamespace)  // NOLINT
   EXPECT_FALSE(p2->hasParam("test/negative", false));  // do not search nested
   EXPECT_FALSE(p2->hasParam("non/existent", true));  // search nested
   EXPECT_FALSE(p2->hasParam("non/existent", false));  // do not search nested
-  
+
   EXPECT_TRUE(p2->hasParam("robot_description_param"));
   EXPECT_TRUE(p2->hasParam("inflation/scale", true));  // search nested
   EXPECT_FALSE(p2->hasParam("inflation/scale", false));  // do not search nested
@@ -1675,7 +1681,7 @@ TEST(BoundParamHelper, ParamsInNamespace)  // NOLINT
   EXPECT_FALSE(p2->hasParam("negative", false));  // do not search nested
   EXPECT_FALSE(p2->hasParam("existent", true));  // search nested
   EXPECT_FALSE(p2->hasParam("existent", false));  // do not search nested
-  
+
   EXPECT_EQ("test_robot_description", p2->getParam("robot_description_param", "fail"));
   EXPECT_EQ(1.1, p2->getParam("inflation/scale", 1.0));
 }
@@ -1692,42 +1698,42 @@ TEST(GetParamAdapters, NodeHandle)  // NOLINT
   ros::NodeHandle pnh("~");
   cras::NodeHandleGetParamAdapter aPub(nh);
   cras::NodeHandleGetParamAdapter aPrivate(pnh);
-  
+
   EXPECT_TRUE(aPub.hasParam("test_chain_config"));
   EXPECT_TRUE(aPub.hasParam("test_dict_config"));
   EXPECT_FALSE(aPub.hasParam("nonexistent"));
   EXPECT_FALSE(aPub.hasParam("name"));
-  
+
   EXPECT_EQ("/", aPub.getNamespace());
   EXPECT_EQ("/test_param_utils", aPrivate.getNamespace());
-  
+
   XmlRpc::XmlRpcValue x;
   EXPECT_TRUE(aPub.getParam("test_chain_config", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, x.getType());
   EXPECT_TRUE(aPub.getParam("test_dict_config", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType());
   // if lookup fails, x is not changed
   EXPECT_FALSE(aPub.getParam("nonexistent", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType());
   EXPECT_FALSE(aPub.getParam("1", x));  // no exception is thrown when an invalid name is passed
-  
+
   // Getting / works from any namespace
   EXPECT_TRUE(aPub.getParam("/", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType()); auto xPub = x;
   EXPECT_TRUE(aPrivate.getParam("/", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType()); auto xPrivate = x;
-  
+
   EXPECT_LE(2u, xPub.size());
   EXPECT_LE(2u, xPrivate.size());
   EXPECT_TRUE(xPub.hasMember("test_dict_config"));
   EXPECT_TRUE(xPrivate.hasMember("test_dict_config"));
   EXPECT_TRUE(xPub.hasMember("test_chain_config"));
   EXPECT_TRUE(xPrivate.hasMember("test_chain_config"));
-  
+
   ros::NodeHandle dnh("test_dict_config");
   cras::NodeHandleGetParamAdapter aDict(dnh);
   auto aDict2 = aPub.getNamespaced("test_dict_config");
-  
+
   EXPECT_TRUE(aDict.hasParam("name")); EXPECT_EQ(aDict.hasParam("name"), aDict2->hasParam("name"));
   EXPECT_TRUE(aDict.hasParam("type")); EXPECT_EQ(aDict.hasParam("type"), aDict2->hasParam("type"));
   EXPECT_TRUE(aDict.hasParam("params")); EXPECT_EQ(aDict.hasParam("params"), aDict2->hasParam("params"));
   EXPECT_FALSE(aDict.hasParam("non")); EXPECT_EQ(aDict.hasParam("non"), aDict2->hasParam("non"));
-  
+
   EXPECT_EQ("/test_dict_config", aDict.getNamespace());
   EXPECT_EQ("/test_dict_config", aDict2->getNamespace());
 }
@@ -1737,28 +1743,28 @@ TEST(GetParamAdapters, XmlRpcValue)  // NOLINT
   XmlRpc::XmlRpcValue params;
   getParams()->getParam("body_model", params);
   cras::XmlRpcValueGetParamAdapter a(params, "ns");
-  
+
   EXPECT_TRUE(a.hasParam("inflation"));
   EXPECT_TRUE(a.hasParam("per_link"));
   EXPECT_FALSE(a.hasParam("nonexistent"));
   EXPECT_FALSE(a.hasParam("scale"));
-  
+
   EXPECT_EQ("ns", a.getNamespace());
-  
+
   XmlRpc::XmlRpcValue x;
   EXPECT_TRUE(a.getParam("inflation", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeStruct, x.getType());
   EXPECT_TRUE(a.getParam("robot_description_param", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeString, x.getType());
   // if lookup fails, x is not changed
   EXPECT_FALSE(a.getParam("nonexistent", x)); EXPECT_EQ(XmlRpc::XmlRpcValue::TypeString, x.getType());
   EXPECT_FALSE(a.getParam("1", x));  // no exception is thrown when an invalid name is passed
-  
+
   auto a2 = a.getNamespaced("inflation");
   EXPECT_TRUE(a2->hasParam("scale")); a2->getParam("scale", x); EXPECT_EQ(1.1, static_cast<double>(x));
   EXPECT_TRUE(a2->hasParam("padding")); a2->getParam("padding", x); EXPECT_EQ(0.01, static_cast<double>(x));
   EXPECT_FALSE(a2->hasParam("non"));
-  
+
   EXPECT_EQ("ns/inflation", a2->getNamespace());
-  
+
   XmlRpc::XmlRpcValue badTypeParams = 1;
   EXPECT_THROW(cras::XmlRpcValueGetParamAdapter(badTypeParams, "ns"), std::runtime_error);
 }
@@ -1781,7 +1787,7 @@ TEST(GetParamOptions, Constructor)  // NOLINT
     EXPECT_TRUE(options.toParam(x, d, true, nullptr));
     EXPECT_EQ(3.14, d);
   }
-  
+
 #ifdef HAS_DESIGNATED_INITIALIZERS
   {  // test braced-initializer construction
     GetParamOptions<double> options{.throwIfConvertFails = true, .origParamName = "asd"};
@@ -1841,7 +1847,7 @@ TEST(GetParamOptions, Copy)  // NOLINT
       v = 2.0;
       return true;
     };
-  
+
   // test copy-assignment from a different type
   GetParamOptions<bool> oBool;
   oBool = oDouble;
@@ -1856,7 +1862,7 @@ TEST(GetParamOptions, Copy)  // NOLINT
   EXPECT_TRUE(oBool.toParam(x, b, true, nullptr)); EXPECT_FALSE(b);
   EXPECT_EQ(cras::to_string(true), oBool.resultToStr(true));
   EXPECT_EQ(cras::to_string(true), oBool.paramToStr(true));
-  
+
   // test copy-assignment to the same type
   GetParamOptions<double> oDouble2;
   oDouble2 = oDouble;
@@ -1896,7 +1902,7 @@ TEST(GetParamOptions, CustomType)  // NOLINT
   // Test support for completely custom datatypes in GetParamOptions.
   GetParamOptions<CustomDataType> o;
   EXPECT_EQ("test", o.toResult("test").param);
-  
+
   XmlRpc::XmlRpcValue v("tes");
   std::string s;
   EXPECT_TRUE(o.toParam(v, s, false, nullptr));
@@ -1904,7 +1910,7 @@ TEST(GetParamOptions, CustomType)  // NOLINT
 
   EXPECT_EQ("te", o.resultToStr(CustomDataType("te")));
   EXPECT_EQ("t", o.paramToStr("t"));
-  
+
   XmlRpc::XmlRpcValue xml;
   xml["p"] = "p";
   CustomDataType c("");
@@ -1923,7 +1929,7 @@ TEST(GetParamOptions, AsType)  // NOLINT
     v = 2.0;
     return true;
   };
-  
+
   auto oBool = oDouble.asType<bool>(
     [](const bool&){return 4.0;},
     &testToStr2<bool>,
@@ -1954,11 +1960,11 @@ TEST(GetParamResult, Test)  // NOLINT
   EXPECT_FALSE(info.convertFailed);
   EXPECT_TRUE(info.message.empty());
   EXPECT_EQ(ros::console::Level::Count, info.messageLevel);
-  
+
   info.defaultUsed = info.requiredMissing = info.convertFailed = true;
   info.message = "test";
   info.messageLevel = ros::console::Level::Warn;
-  
+
   GetParamResult<bool> r(true, info);
   EXPECT_TRUE(r.info.defaultUsed);
   EXPECT_TRUE(r.info.requiredMissing);

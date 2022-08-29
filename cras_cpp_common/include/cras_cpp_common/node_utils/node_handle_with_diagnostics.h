@@ -37,10 +37,10 @@ namespace cras
 
 /**
  * \brief Utils for adding diagnostics to a topic via node handle.
- * 
+ *
  * The publisher and subscriber diagnostic tasks can be configured from ROS parameters. The following parameters
  * are read:
- * 
+ *
  * - `rate/desired` (double, Hz, no default): If set, this value will be used as the default of min/max rates.
  * - `rate/min` (double, Hz, default 0.0 or desired): Minimum acceptable rate.
  * - `rate/max` (double, Hz, default +inf or desired): Maximum acceptable rate.
@@ -49,17 +49,17 @@ namespace cras
  * - `rate/window_size` (uint, default 5): Over how many diagnostics updates should the rate be computed.
  * - `delay/min` (double, s, default -1.0): Minimum acceptable delay (only computed for messages with a header).
  * - `delay/max` (double, s, default 5.0): Maximum acceptable delay (only computed for messages with a header).
- * 
+ *
  * The parameter namespace from which they are configured is determined as follows:
- * 
+ *
  * - If no explicit namespace is specified, the topic name is used.
  *   - Name remapping is done only "until" the topic name level. I.e. node name or parent namespaces are affected by
  *     remappings, but the topic name is not. If the topic name is absolute, it is taken as is without any remappings.
- *   - Explicit namespaces are remapped as normal ROS parameters.  
+ *   - Explicit namespaces are remapped as normal ROS parameters.
  * - If the namespace starts with ~ or is not specified (topic name is used), the private node namespace (node name) is
  *   prepended.
  *   - If this node handle already represents a private node handle, no additional namespace is prepended.
- * 
+ *
  * Here are a few examples:
  *   <pre>
  *     // node name is "diag_utils"
@@ -67,7 +67,7 @@ namespace cras
  *     cras::NodeHandleWithDiagnostics pnh("~");
  *     cras::NodeHandleWithDiagnostics tnh("test");
  *     cras::NodeHandleWithDiagnostics rnh("", {{"/topic", "/topic2"}});  // remap /topic->/topic2
- *     
+ *
  *     nh.advertiseDiagnosed(updater, "topic", 10);  // param namespace is /diag_utils/topic
  *     nh.advertiseDiagnosed(updater, "/topic", 10);  // param namespace is /topic
  *     nh.advertiseDiagnosed(updater, "test", "topic", 10);  // param namespace is /test
@@ -117,7 +117,7 @@ protected:
    * \return The prefix namespace.
    */
   virtual ::std::string prefixDiagNamespace(const ::std::string& ns) const;
-  
+
   /**
    * \brief Get the param helper from which parameters for the diagnostic task can be extracted.
    * \param[in] diagNs Namespace of the diagnostic task. Pass empty string if you want to search a parameter namespace
@@ -131,7 +131,7 @@ public:
   ///////////////////////
   // ADVERTISE METHODS //
   ///////////////////////
-  
+
   /**
    * \brief Advertise publication of a message, automatically adding diagnostics to it.
    * \tparam Message Type of the message to be published.
@@ -253,11 +253,11 @@ public:
   {
     return this->template advertiseDiagnosed<Message>(updater, "", options);
   }
- 
+
   ///////////////////////
   // SUBSCRIBE METHODS //
   ///////////////////////
-  
+
   /**
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
    * \tparam M Signature of the callback.
@@ -300,7 +300,7 @@ public:
   subscribeDiagnosed(::diagnostic_updater::Updater& updater,
     const ::cras::SimpleTopicStatusParam<Message>& defaultDiagParams, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
+    const boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
   {
     auto result = ::std::unique_ptr<::cras::DiagnosedSubscriber<Message>>(new ::cras::DiagnosedSubscriber<Message>(
       *this, this->getDiagParams(diagNamespace, topic), defaultDiagParams, topic, queue_size, cb, hints));
@@ -326,7 +326,7 @@ public:
   subscribeDiagnosed(::diagnostic_updater::Updater& updater,
     const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>& defaultDiagParams, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
+    const boost::function<void(C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
   {
     auto result = ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>>(
       new ::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>(
@@ -501,7 +501,7 @@ public:
   ::std::unique_ptr<::cras::DiagnosedSubscriber<Message>>
   subscribeDiagnosed(::diagnostic_updater::Updater& updater, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
+    const boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
   {
     return this->template subscribeDiagnosed<Message>(updater, ::cras::SimpleTopicStatusParam<Message>(), diagNamespace,
       topic, queue_size, cb, hints);
@@ -524,7 +524,7 @@ public:
   ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>>
   subscribeDiagnosed(::diagnostic_updater::Updater& updater, const ::std::string& diagNamespace,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
+    const boost::function<void(C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
   {
     return this->template subscribeDiagnosed<C>(updater, ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>(),
       diagNamespace, topic, queue_size, cb, obj, hints);
@@ -564,7 +564,7 @@ public:
    * \param[in] obj The object to call the callback on.
    * \param[in] hints Connection hints.
    * \return The subscriber object. Keep it alive whole time the subscription should be active!
-   */  
+   */
   template<typename M, class T, typename = ::std::enable_if_t<::cras::IsMessageParam<M>::value>>
   ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<M>>>
   subscribeDiagnosed(::diagnostic_updater::Updater& updater, const ::std::string& diagNamespace,
@@ -671,7 +671,7 @@ public:
   ::std::unique_ptr<::cras::DiagnosedSubscriber<Message>>
   subscribeDiagnosed(::diagnostic_updater::Updater& updater,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
+    const boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints = {})
   {
     return this->template subscribeDiagnosed<Message>(updater, "", topic, queue_size, cb, hints);
   }
@@ -693,7 +693,7 @@ public:
   ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>>
   subscribeDiagnosed(::diagnostic_updater::Updater& updater,
     const ::std::string& topic, uint32_t queue_size,
-    const boost::function<void (C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
+    const boost::function<void(C)>& cb, ::ros::VoidConstPtr obj = {}, ::ros::TransportHints hints = {})
   {
     return this->template subscribeDiagnosed<C>(updater, "", topic, queue_size, cb, obj, hints);
   }

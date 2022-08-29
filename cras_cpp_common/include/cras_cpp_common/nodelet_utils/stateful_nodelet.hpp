@@ -41,7 +41,7 @@ public:
   virtual void requestStop() = 0;
 };
 
-/** 
+/**
  * \brief A mixin that can tell when a nodelet is being unloaded.
  * \tparam NodeletType Type of the base nodelet.
  */
@@ -52,7 +52,7 @@ public:
   virtual ~StatefulNodelet();
   bool ok() const override;
   void requestStop() override;
-  
+
   [[deprecated("Use requestStop() instead.")]] void shutdown();
 
 protected:

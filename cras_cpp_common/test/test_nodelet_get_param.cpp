@@ -15,7 +15,7 @@
 
 #include <cras_cpp_common/nodelet_utils.hpp>
 
-#include "get_param_test.inc" 
+#include "get_param_test.inc"
 
 using namespace cras;
 
@@ -24,7 +24,7 @@ struct NodeletUtilsGetParamTest : public ::cras::Nodelet, public GetParamTest<No
   void onInit() override
   {
   }
-  
+
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -63,12 +63,13 @@ struct NodeletUtilsGetParamTest : public ::cras::Nodelet, public GetParamTest<No
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()
   {
     // test that getParam result type is the same as the default value
     static_assert(std::is_same<bool, decltype(this->getParam(this->getNodeHandle(), "bool_True", false))>::value);
-    static_assert(std::is_same<bool, decltype(this->getParam(this->getNodeHandle(), "bool_True", cras::optional(false)))>::value);
+    static_assert(
+      std::is_same<bool, decltype(this->getParam(this->getNodeHandle(), "bool_True", cras::optional(false)))>::value);
 
     // test that C-string methods return a std::string result
     static_assert(std::is_same<std::string, decltype(this->getParam(this->getNodeHandle(), "bool_True", "0"))>::value);
@@ -92,9 +93,11 @@ struct NodeletUtilsGetParamTest : public ::cras::Nodelet, public GetParamTest<No
 
     { auto r = this->getParamVerbose(this->getNodeHandle(), "nonexistent", std::numeric_limits<double>::quiet_NaN());
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    { auto r = this->getParamVerbose(this->getNodeHandle(), "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()));
+    { auto r = this->getParamVerbose(
+        this->getNodeHandle(), "nonexistent", cras::optional(std::numeric_limits<double>::quiet_NaN()));
       EXPECT_TRUE(std::isnan(r)); EXPECT_EQ(true, r.info.defaultUsed); }
-    EXPECT_TRUE(std::isnan(this->getParam(this->getNodeHandle(), "nonexistent", std::numeric_limits<double>::quiet_NaN())));
+    EXPECT_TRUE(std::isnan(this->getParam(this->getNodeHandle(), "nonexistent",
+      std::numeric_limits<double>::quiet_NaN())));
     EXPECT_TRUE(std::isnan(this->getParam(this->getNodeHandle(), "nonexistent",
       cras::optional(std::numeric_limits<double>::quiet_NaN()))));
   };

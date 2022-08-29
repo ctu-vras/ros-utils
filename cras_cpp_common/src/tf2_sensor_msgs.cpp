@@ -48,7 +48,7 @@ void unregisterCloudChannelType(const std::string& channelPrefix)
 
 /**
  * \brief Check whether a given field name matches a channel name.
- * \param[in] fieldName Name of a pointcloud field. 
+ * \param[in] fieldName Name of a pointcloud field.
  * \param[in] channelName Name of a channel.
  * \param[in] channelType Type of the channel.
  * \return Whether the field belongs to the given channel.
@@ -142,9 +142,9 @@ sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& 
   const geometry_msgs::TransformStamped& tf, const std::unordered_map<std::string, CloudChannelType>& channels)
 {
   std::unordered_set<std::string> channelsPresent;
-  for (const auto& field: in.fields)
+  for (const auto& field : in.fields)
   {
-    for (const auto& channelAndType: channels)
+    for (const auto& channelAndType : channels)
     {
       const auto& channel = channelAndType.first;
       const auto& channelType = channelAndType.second;
@@ -160,7 +160,7 @@ sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& 
 
   const auto transform = tf2::transformToEigen(tf).cast<float>();
 
-  for (const auto& channel: channelsPresent)
+  for (const auto& channel : channelsPresent)
     transformChannel(in, out, transform, channel, channels.at(channel));
 
   return out;
@@ -185,9 +185,9 @@ sensor_msgs::PointCloud2& transformOnlyChannels(const sensor_msgs::PointCloud2& 
 {
   std::unordered_set<std::string> channelsPresent;
   out.point_step = 0;
-  for (const auto& field: in.fields)
+  for (const auto& field : in.fields)
   {
-    for (const auto& channelAndType: channels)
+    for (const auto& channelAndType : channels)
     {
       const auto& channel = channelAndType.first;
       const auto& channelType = channelAndType.second;
@@ -213,7 +213,7 @@ sensor_msgs::PointCloud2& transformOnlyChannels(const sensor_msgs::PointCloud2& 
 
   const auto transform = tf2::transformToEigen(tf).cast<float>();
 
-  for (const auto& channel: channelsPresent)
+  for (const auto& channel : channelsPresent)
   {
     const auto channelType = channels.at(channel);
     if (channelType != CloudChannelType::SCALAR)

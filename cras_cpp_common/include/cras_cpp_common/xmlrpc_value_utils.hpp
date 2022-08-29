@@ -44,7 +44,7 @@ namespace cras
  *                               the target container type.
  * \param[in,out] errors If non-null, any conversion error messages will be stored here.
  * \return True if the conversion succeeded. If skipNonConvertible is true, conversion will succeed if at least one
- *         contained value succeeded converting (if converting to a container type). 
+ *         contained value succeeded converting (if converting to a container type).
  */
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::XmlRpc::XmlRpcValue& v, bool /*skipNonConvertible*/ = false,
   ::std::list<::std::string>* errors = nullptr)
@@ -62,7 +62,7 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, bool& v, bool /*skipNonConve
     v = x;
     return true;
   }
-  
+
   if (x.getType() == ::XmlRpc::XmlRpcValue::TypeInt)
   {
     const auto i = static_cast<int>(x);

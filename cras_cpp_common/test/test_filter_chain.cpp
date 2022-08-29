@@ -58,7 +58,7 @@ public:
     data_out = value;
     return true;
   }
-  
+
   const nodelet::Nodelet* getNodelet() const
   {
     return this->nodelet;
@@ -73,7 +73,7 @@ protected:
     this->loadConfiguration(config);
     return true;
   }
-  
+
   T value;
 };
 
@@ -111,30 +111,30 @@ TEST(FilterChain, Basic)
 
   EXPECT_TRUE(chain.update(10.0, out));
   EXPECT_EQ(3.0, out);
-  
+
   chain.setDisabledFilters({"test_filter", "mean"});
 
   EXPECT_TRUE(chain.update(7.0, out));
   EXPECT_EQ(7.0, out);
 
   chain.enableFilter("test_filter");
-  
+
   EXPECT_TRUE(chain.update(10.0, out));
   EXPECT_EQ(3.0, out);
 
   chain.enableFilter("mean");
   chain.disableFilter("test_filter");
-  
+
   EXPECT_TRUE(chain.update(0.0, out));
   EXPECT_EQ(10.0, out);
 
   chain.enableFilter("test_filter");
-  
+
   EXPECT_TRUE(chain.update(0.0, out));
   EXPECT_EQ(3.0, out);
 
   chain.enableFilter("nonexistent");
-  
+
   EXPECT_TRUE(chain.update(0.0, out));
   EXPECT_EQ(3.0, out);
 
@@ -177,7 +177,7 @@ TEST(FilterChain, Basic)
   // chain is cleared, so the filters should not be there
   EXPECT_TRUE(chain.update(5.0, out));
   EXPECT_EQ(5.0, out);
-  
+
   EXPECT_TRUE(chain.configure(config, "test"));
 
   EXPECT_TRUE(chain.update(0.0, out));
@@ -271,7 +271,7 @@ TEST(FilterChain, Callback)
   EXPECT_EQ(10, out);
   EXPECT_EQ(4, numCalled);
   EXPECT_EQ(4, numStartedCalled);
-  
+
   chain.disableFilter("test_filter");
 
   numCalled = 0;
@@ -280,7 +280,7 @@ TEST(FilterChain, Callback)
   EXPECT_EQ(3, out);
   EXPECT_EQ(3, numCalled);
   EXPECT_EQ(3, numStartedCalled);
-  
+
   chain.enableFilter("test_filter");
 
   numCalled = 0;
@@ -358,16 +358,16 @@ TEST(FilterChain, SetNodelet)
   chain.addFilter(f);
 
   EXPECT_EQ(nullptr, f->getNodelet());
-  
+
   TestNodelet n;
   chain.setNodelet(&n);
-  
+
   EXPECT_EQ(&n, f->getNodelet());
 
   chain.setNodelet(nullptr);
 
   EXPECT_EQ(nullptr, f->getNodelet());
-  
+
   // test that nodelets are set for disabled filters, too
   chain.disableFilter("test_filter");
 

@@ -3,11 +3,11 @@
 /**
  * \file
  * \brief This file contains a set of classes that make work with nodelets easier.
- * 
+ *
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague
- * 
+ *
  * \details
  * There are a few helper "mixins":
  *
@@ -29,18 +29,18 @@
  *
  * If you just want to build your nodelet from scratch, you should start by deriving it from the cras::Nodelet class
  * which has all the mixins and is based on nodelet::Nodelet.
- * 
+ *
  * Here's an example how your custom nodelet class should be started:
- * 
+ *
  * <code>
  * class MyClass : public cras\:\:Nodelet
  * {
  * ...
  * }
  * </code>
- * 
+ *
  * In case you need to base your class on something else than nodelet::Nodelet, here's an example with a PCLNodelet:
- * 
+ *
  * <code>
  * class MyClass : public cras\:\:NodeletBase<pcl_ros\:\:PCLNodelet>
  * {
@@ -50,16 +50,16 @@
  *
  * NodeletAwareTFBuffer is a class that is able to correctly end canTransform() calls in case the nodelet is asked to
  * unload while the canTransform() call is waiting.
- * 
+ *
  * \note The "mixin" classes are templated so that each of them has a virtual base class BaseNodelet. It is important
  * that this base class is virtual, otherwise NodeletBase and other classes combining multiple mixins would contain
  * multiple "copies" of BaseNodelet, and that would lead to ambiguous function calls etc. Virtual inheritance instead
  * creates just a single copy of BaseNodelet shared by all the mixins.
- * 
+ *
  * \note The mixins can call methods from other mixins by dynamic_casting this to OtherMixin<BaseNodelet>*. It is not
  * guaranteed that all mixins will be always available, so be sure to correctly handle the case when the dynamic_cast
  * yields nullptr.
- * 
+ *
  * \note If the mixins need to expose a public API (as is the case of NodeletWithSharedTfBuffer), the public API must
  * be extracted to a separate interface class that is not templated (otherwise, the users of the public API would need
  * to dynamic cast the nodelet to Mixin<NodeletType>, but NodeletType could be anything from the view of a public user).

@@ -22,7 +22,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   cras::NodeHandle pnh("~");
   cras::NodeHandle tnh("test");
   cras::NodeHandle rnh("", {{"a", "d"}});
-  
+
   pnh.deleteParam("/");
   pnh.setParam("topic/rate/min", 5.0);
   pnh.setParam("topic/rate/max", 5.0);
@@ -66,7 +66,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   pnh.setParam("/a/rate/window_size", 10);
   pnh.setParam("/a/delay/min", 2.0);
   pnh.setParam("/a/delay/max", 3.0);
-  
+
   ros::Time::setNow({10, 0});
   diagnostic_msgs::DiagnosticArrayConstPtr msg;
   size_t numDiagCalled {0};
@@ -74,12 +74,12 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
     [&msg, &numDiagCalled](const diagnostic_msgs::DiagnosticArrayConstPtr& m) { msg = m; numDiagCalled++;});
 
   size_t numCalled {0};
-  
+
   auto sub1 = nh.subscribe<std_msgs::Header>("a", 1000, [&numCalled](const std_msgs::HeaderConstPtr&){++numCalled;});
   auto sub2 = pnh.subscribe<std_msgs::Header>("b", 1000, [&numCalled](const std_msgs::HeaderConstPtr&){++numCalled;});
   auto sub3 = tnh.subscribe<std_msgs::Header>("c", 1000, [&numCalled](const std_msgs::HeaderConstPtr&){++numCalled;});
   auto sub4 = nh.subscribe<std_msgs::Header>("d", 1000, [&numCalled](const std_msgs::HeaderConstPtr&){++numCalled;});
-  
+
   diagnostic_updater::Updater updater1(nh);  // NOLINT
   auto pub1 = nh.advertiseDiagnosed<std_msgs::Header>(updater1, "a", 10);
 
@@ -124,27 +124,27 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
 
   diagnostic_updater::Updater updater15(nh);  // NOLINT
   auto pub15 = tnh.advertiseDiagnosed<std_msgs::Header>(updater15, {10.0, 10.0, 0.1, 5}, "~topic", "c", 10);
-  
+
   ros::AdvertiseOptions opts16;
   opts16.init<std_msgs::Header>("a", 10);
   diagnostic_updater::Updater updater16(nh);  // NOLINT
   auto pub16 = nh.advertiseDiagnosed<std_msgs::Header>(updater16, opts16);
-  
+
   ros::AdvertiseOptions opts17;
   opts17.init<std_msgs::Header>("a", 10);
   diagnostic_updater::Updater updater17(nh);  // NOLINT
   auto pub17 = nh.advertiseDiagnosed<std_msgs::Header>(updater17, "topic", opts17);
-  
+
   ros::AdvertiseOptions opts18;
   opts18.init<std_msgs::Header>("a", 10);
   diagnostic_updater::Updater updater18(nh);  // NOLINT
   auto pub18 = nh.advertiseDiagnosed<std_msgs::Header>(updater18, {10.0, 10.0, 0.1, 5}, "topic", opts18);
-  
+
   ros::AdvertiseOptions opts19;
   opts19.init<std_msgs::Header>("a", 10);
   diagnostic_updater::Updater updater19(nh);  // NOLINT
   auto pub19 = nh.advertiseDiagnosed<std_msgs::Header>(updater19, "~topic", opts19);
-  
+
   ros::AdvertiseOptions opts20;
   opts20.init<std_msgs::Header>("a", 10);
   diagnostic_updater::Updater updater20(nh);  // NOLINT
@@ -166,9 +166,9 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
 
   diagnostic_updater::Updater updater25(nh);  // NOLINT
   auto pub25 = tnh.advertiseDiagnosed<std_msgs::Header>(updater25, "/a", 10);
-  
+
   ros::WallDuration(0.25).sleep();
-  
+
   const size_t numCallbacks = 25;
 
   for (size_t i = 0; i < 100 && numDiagCalled < numCallbacks; ++i)
@@ -176,9 +176,9 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   std_msgs::Header pubMsg;
-  
+
   for (size_t i = 0; i < 10; ++i)
   {
     ros::Time::setNow(ros::Time(10) + ros::Duration(0.1) * i);
@@ -209,7 +209,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
     pub24->publish(pubMsg);
     pub25->publish(pubMsg);
   }
-  
+
   ros::Time::setNow({11, 0});
 
   for (size_t i = 0; i < 100 && numCalled < numCallbacks * 10u; ++i)
@@ -218,7 +218,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
     ros::WallDuration(0.01).sleep();
   }
   EXPECT_EQ(numCallbacks * 10u, numCalled);
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater1.force_update();
@@ -233,7 +233,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater2.force_update();
@@ -248,7 +248,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater3.force_update();
@@ -263,7 +263,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater4.force_update();
@@ -278,7 +278,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater5.force_update();
@@ -293,7 +293,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater6.force_update();
@@ -308,7 +308,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater7.force_update();
@@ -323,7 +323,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater8.force_update();
@@ -338,7 +338,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater9.force_update();
@@ -353,7 +353,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater10.force_update();
@@ -368,7 +368,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater11.force_update();
@@ -383,7 +383,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater12.force_update();
@@ -398,7 +398,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater13.force_update();
@@ -413,7 +413,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater14.force_update();
@@ -428,7 +428,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater15.force_update();
@@ -443,7 +443,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater16.force_update();
@@ -458,7 +458,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater17.force_update();
@@ -473,7 +473,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater18.force_update();
@@ -488,7 +488,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater19.force_update();
@@ -503,7 +503,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater20.force_update();
@@ -518,7 +518,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater21.force_update();
@@ -533,7 +533,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater22.force_update();
@@ -548,7 +548,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater23.force_update();
@@ -563,7 +563,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater24.force_update();
@@ -578,7 +578,7 @@ TEST(NodeUtils, AdvertiseDiagnosedNoHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::WARN, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater25.force_update();
@@ -602,7 +602,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   cras::NodeHandle pnh("~");
   cras::NodeHandle tnh("test");
   cras::NodeHandle rnh("", {{"/a", "/d"}});
-  
+
   pnh.deleteParam("/");
   pnh.setParam("topic/rate/min", 5.0);
   pnh.setParam("topic/rate/max", 5.0);
@@ -646,7 +646,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   pnh.setParam("/a/rate/window_size", 10);
   pnh.setParam("/a/delay/min", 2.0);
   pnh.setParam("/a/delay/max", 3.0);
-  
+
   ros::Time::setNow({10, 0});
   diagnostic_msgs::DiagnosticArrayConstPtr msg;
   size_t numDiagCalled {0};
@@ -654,7 +654,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
     [&msg, &numDiagCalled](const diagnostic_msgs::DiagnosticArrayConstPtr& m) { msg = m; numDiagCalled++;});
 
   size_t numCalled {0};
-  
+
   auto sub1 = nh.subscribe<diagnostic_msgs::DiagnosticArray>("a", 1000,
     [&numCalled](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numCalled;});
   auto sub2 = pnh.subscribe<diagnostic_msgs::DiagnosticArray>("b", 1000,
@@ -663,7 +663,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
     [&numCalled](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numCalled;});
   auto sub4 = nh.subscribe<diagnostic_msgs::DiagnosticArray>("d", 1000,
     [&numCalled](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numCalled;});
-  
+
   diagnostic_updater::Updater updater1(nh);  // NOLINT
   auto pub1 = nh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(updater1, "a", 10);
 
@@ -714,28 +714,28 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   diagnostic_updater::Updater updater15(nh);  // NOLINT
   auto pub15 = tnh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(
     updater15, {10.0, 10.0, 0.1, 5, 0.5, 1.0}, "~topic", "c", 10);
-  
+
   ros::AdvertiseOptions opts16;
   opts16.init<diagnostic_msgs::DiagnosticArray>("a", 10);
   diagnostic_updater::Updater updater16(nh);  // NOLINT
   auto pub16 = nh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(updater16, opts16);
-  
+
   ros::AdvertiseOptions opts17;
   opts17.init<diagnostic_msgs::DiagnosticArray>("a", 10);
   diagnostic_updater::Updater updater17(nh);  // NOLINT
   auto pub17 = nh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(updater17, "topic", opts17);
-  
+
   ros::AdvertiseOptions opts18;
   opts18.init<diagnostic_msgs::DiagnosticArray>("a", 10);
   diagnostic_updater::Updater updater18(nh);  // NOLINT
   auto pub18 = nh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(
     updater18, {10.0, 10.0, 0.1, 5, 0.5, 1.0}, "topic", opts18);
-  
+
   ros::AdvertiseOptions opts19;
   opts19.init<diagnostic_msgs::DiagnosticArray>("a", 10);
   diagnostic_updater::Updater updater19(nh);  // NOLINT
   auto pub19 = nh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(updater19, "~topic", opts19);
-  
+
   ros::AdvertiseOptions opts20;
   opts20.init<diagnostic_msgs::DiagnosticArray>("a", 10);
   diagnostic_updater::Updater updater20(nh);  // NOLINT
@@ -758,9 +758,9 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
 
   diagnostic_updater::Updater updater25(nh);  // NOLINT
   auto pub25 = tnh.advertiseDiagnosed<diagnostic_msgs::DiagnosticArray>(updater25, "/a", 10);
-  
+
   ros::WallDuration(0.25).sleep();
-  
+
   const size_t numCallbacks = 25;
 
   for (size_t i = 0; i < 100 && numDiagCalled < numCallbacks; ++i)
@@ -768,9 +768,9 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   diagnostic_msgs::DiagnosticArray pubMsg;
-  
+
   for (size_t i = 0; i < 10; ++i)
   {
     ros::Time::setNow(ros::Time(10) + ros::Duration(0.1) * i);
@@ -801,7 +801,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
     pub24->publish(pubMsg);
     pub25->publish(pubMsg);
   }
-  
+
   ros::Time::setNow({11, 0});
 
   for (size_t i = 0; i < 100 && numCalled < numCallbacks * 10u; ++i)
@@ -810,7 +810,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
     ros::WallDuration(0.01).sleep();
   }
   EXPECT_EQ(numCallbacks * 10u, numCalled);
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater1.force_update();
@@ -825,7 +825,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater2.force_update();
@@ -840,7 +840,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater3.force_update();
@@ -855,7 +855,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater4.force_update();
@@ -870,7 +870,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater5.force_update();
@@ -885,7 +885,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater6.force_update();
@@ -900,7 +900,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater7.force_update();
@@ -915,7 +915,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater8.force_update();
@@ -930,7 +930,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater9.force_update();
@@ -945,7 +945,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater10.force_update();
@@ -960,7 +960,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater11.force_update();
@@ -975,7 +975,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater12.force_update();
@@ -990,7 +990,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater13.force_update();
@@ -1005,7 +1005,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater14.force_update();
@@ -1020,7 +1020,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater15.force_update();
@@ -1035,7 +1035,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater16.force_update();
@@ -1050,7 +1050,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater17.force_update();
@@ -1065,7 +1065,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater18.force_update();
@@ -1080,7 +1080,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater19.force_update();
@@ -1095,7 +1095,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater20.force_update();
@@ -1110,7 +1110,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater21.force_update();
@@ -1125,7 +1125,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater22.force_update();
@@ -1140,7 +1140,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater23.force_update();
@@ -1155,7 +1155,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater24.force_update();
@@ -1170,7 +1170,7 @@ TEST(NodeUtils, AdvertiseDiagnosedWithHeader)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(7u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater25.force_update();
@@ -1193,13 +1193,13 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   cras::NodeHandle pnh("~");
   cras::NodeHandle tnh("test");
   cras::NodeHandle rnh("", {{"/a", "/d"}});
-  
+
   ros::Time::setNow({10, 0});
   diagnostic_msgs::DiagnosticArrayConstPtr msg;
   size_t numDiagCalled = 0;
   auto sub = nh.subscribe<diagnostic_msgs::DiagnosticArray>("/diagnostics", 10,
     [&msg, &numDiagCalled](const diagnostic_msgs::DiagnosticArrayConstPtr& m) { msg = m; numDiagCalled++;});
-  
+
   pnh.deleteParam("/");
   pnh.setParam("topic/rate/min", 5.0);
   pnh.setParam("topic/rate/max", 5.0);
@@ -1248,7 +1248,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   auto pub2 = pnh.advertise<diagnostic_msgs::DiagnosticArray>("b", 10);
   auto pub3 = tnh.advertise<diagnostic_msgs::DiagnosticArray>("c", 10);
   auto pub4 = nh.advertise<diagnostic_msgs::DiagnosticArray>("d", 10);
-  
+
   size_t numCalled {0};
 
   diagnostic_updater::Updater updater1(nh);  // NOLINT
@@ -1356,7 +1356,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
     [&numCalled](const diagnostic_msgs::DiagnosticArrayConstPtr&){++numCalled;});
 
   ros::WallDuration(0.25).sleep();
-  
+
   const size_t numCallbacks = 23;
 
   for (size_t i = 0; i < 100 && numDiagCalled < numCallbacks; ++i)
@@ -1364,9 +1364,9 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
     ros::spinOnce();
     ros::WallDuration(0.01).sleep();
   }
-  
+
   diagnostic_msgs::DiagnosticArray pubMsg;
-  
+
   for (size_t i = 0; i < 10; ++i)
   {
     ros::Time::setNow(ros::Time(10) + ros::Duration(0.1) * i);
@@ -1376,7 +1376,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
     pub3.publish(pubMsg);
     pub4.publish(pubMsg);
   }
-  
+
   ros::Time::setNow({11, 0});
 
   for (size_t i = 0; i < 100 && numCalled < numCallbacks * 10u; ++i)
@@ -1385,7 +1385,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
     ros::WallDuration(0.01).sleep();
   }
   EXPECT_EQ(numCallbacks * 10u, numCalled);
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater1.force_update();
@@ -1400,7 +1400,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater2.force_update();
@@ -1415,7 +1415,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater3.force_update();
@@ -1430,7 +1430,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater4.force_update();
@@ -1445,7 +1445,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater5.force_update();
@@ -1460,7 +1460,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater6.force_update();
@@ -1475,7 +1475,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater7.force_update();
@@ -1490,7 +1490,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater8.force_update();
@@ -1505,7 +1505,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater9.force_update();
@@ -1520,7 +1520,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater10.force_update();
@@ -1535,7 +1535,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater11.force_update();
@@ -1550,7 +1550,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater12.force_update();
@@ -1565,7 +1565,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater13.force_update();
@@ -1580,7 +1580,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater14.force_update();
@@ -1595,7 +1595,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater15.force_update();
@@ -1610,7 +1610,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater16.force_update();
@@ -1625,7 +1625,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater17.force_update();
@@ -1640,7 +1640,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater18.force_update();
@@ -1655,7 +1655,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater19.force_update();
@@ -1670,7 +1670,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too low.; Timestamps too far in past seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater20.force_update();
@@ -1685,7 +1685,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater21.force_update();
@@ -1700,7 +1700,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater22.force_update();
@@ -1715,7 +1715,7 @@ TEST(NodeUtils, SubscribeConfiguration)  // NOLINT
   EXPECT_EQ("Frequency too high.; Timestamps too far in future seen.", msg->status[0].message);
   EXPECT_EQ(diagnostic_msgs::DiagnosticStatus::ERROR, msg->status[0].level);
   EXPECT_LE(10u, msg->status[0].values.size());
-  
+
   msg = nullptr;
   numDiagCalled = 0;
   updater23.force_update();
@@ -1740,11 +1740,11 @@ TEST(NodeUtils, SubscribeSignatures1ArgNoHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd,), CRAS_TEST_SINGLE_ARG("a", 10,),,
+    CRAS_TEST_SINGLE_ARG(upd,), CRAS_TEST_SINGLE_ARG("a", 10,),,  // NOLINT
     m.frame_id, m->frame_id, m.getConstMessage()->frame_id)
-  
+
   auto pub = nh.advertise<Msg>("a", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1778,11 +1778,11 @@ TEST(NodeUtils, SubscribeSignatures1ArgWithHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd,), CRAS_TEST_SINGLE_ARG("b", 10,), Header,
+    CRAS_TEST_SINGLE_ARG(upd,), CRAS_TEST_SINGLE_ARG("b", 10,), Header,  // NOLINT
     m.header.frame_id, m->header.frame_id, m.getConstMessage()->header.frame_id)
-  
+
   auto pub = nh.advertise<Msg>("b", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1816,11 +1816,11 @@ TEST(NodeUtils, SubscribeSignatures2ArgNoHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, "ns",), CRAS_TEST_SINGLE_ARG("c", 10,),,
+    CRAS_TEST_SINGLE_ARG(upd, "ns",), CRAS_TEST_SINGLE_ARG("c", 10,),,  // NOLINT
     m.frame_id, m->frame_id, m.getConstMessage()->frame_id)
-  
+
   auto pub = nh.advertise<Msg>("c", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1854,11 +1854,11 @@ TEST(NodeUtils, SubscribeSignatures2ArgWithHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, "ns",), CRAS_TEST_SINGLE_ARG("d", 10,), Header,
+    CRAS_TEST_SINGLE_ARG(upd, "ns",), CRAS_TEST_SINGLE_ARG("d", 10,), Header,  // NOLINT
     m.header.frame_id, m->header.frame_id, m.getConstMessage()->header.frame_id)
-  
+
   auto pub = nh.advertise<Msg>("d", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1892,11 +1892,11 @@ TEST(NodeUtils, SubscribeSignatures3ArgNoHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {}, "ns",), CRAS_TEST_SINGLE_ARG("e", 10,),,
+    CRAS_TEST_SINGLE_ARG(upd, {}, "ns",), CRAS_TEST_SINGLE_ARG("e", 10,),,  // NOLINT
     m.frame_id, m->frame_id, m.getConstMessage()->frame_id)
-  
+
   auto pub = nh.advertise<Msg>("e", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1930,11 +1930,11 @@ TEST(NodeUtils, SubscribeSignatures3ArgWithHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {}, "ns",), CRAS_TEST_SINGLE_ARG("f", 10,), Header,
+    CRAS_TEST_SINGLE_ARG(upd, {}, "ns",), CRAS_TEST_SINGLE_ARG("f", 10,), Header,  // NOLINT
     m.header.frame_id, m->header.frame_id, m.getConstMessage()->header.frame_id)
-  
+
   auto pub = nh.advertise<Msg>("f", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -1970,9 +1970,9 @@ TEST(NodeUtils, SubscribeSignatures3ArgFilledNoHeader)  // NOLINT
   ::diagnostic_updater::Updater upd;
 
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(5.0, 10.0, 0.1, 10)}, "ns",), CRAS_TEST_SINGLE_ARG("g", 10,),,
+    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(5.0, 10.0, 0.1, 10)}, "ns",), CRAS_TEST_SINGLE_ARG("g", 10,),,  // NOLINT
     m.frame_id, m->frame_id, m.getConstMessage()->frame_id)
-  
+
   auto pub = nh.advertise<Msg>("g", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -2006,12 +2006,12 @@ TEST(NodeUtils, SubscribeSignatures3ArgFilledWithHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(5.0, 10.0, 0.1, 10, 0.1, 9.0)}, "nh",),
-    CRAS_TEST_SINGLE_ARG("h", 10,), Header,
+    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(5.0, 10.0, 0.1, 10, 0.1, 9.0)}, "nh",),  // NOLINT
+    CRAS_TEST_SINGLE_ARG("h", 10,), Header,  // NOLINT
     m.header.frame_id, m->header.frame_id, m.getConstMessage()->header.frame_id)
-  
+
   auto pub = nh.advertise<Msg>("h", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -2048,9 +2048,9 @@ TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitNoHeader)  // NOLINT
   ::diagnostic_updater::Updater upd;
 
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {.maxRate = 10.0}, "ns",), CRAS_TEST_SINGLE_ARG("i", 10,),,
+    CRAS_TEST_SINGLE_ARG(upd, {.maxRate = 10.0}, "ns",), CRAS_TEST_SINGLE_ARG("i", 10,),,  // NOLINT
     m.frame_id, m->frame_id, m.getConstMessage()->frame_id)
-  
+
   auto pub = nh.advertise<Msg>("i", 100);
   auto message = Msg();
   getFrame(message) = "test";
@@ -2086,12 +2086,12 @@ TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitWithHeader)  // NOLINT
 
   ::cras::NodeHandle nh;
   ::diagnostic_updater::Updater upd;
-  
+
   CRAS_TEST_SUBSCRIBE_CALLBACKS(nh.subscribeDiagnosed,  // NOLINT
-    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(.maxRate = 10.0, .maxDelay = 6.0)}, "nh",),
-    CRAS_TEST_SINGLE_ARG("j", 10,), Header,
+    CRAS_TEST_SINGLE_ARG(upd, {CRAS_TEST_SINGLE_ARG(.maxRate = 10.0, .maxDelay = 6.0)}, "nh",),  // NOLINT
+    CRAS_TEST_SINGLE_ARG("j", 10,), Header,  // NOLINT
     m.header.frame_id, m->header.frame_id, m.getConstMessage()->header.frame_id)
-  
+
   auto pub = nh.advertise<Msg>("j", 100);
   auto message = Msg();
   getFrame(message) = "test";

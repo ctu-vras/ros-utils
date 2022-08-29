@@ -160,7 +160,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] param The parameter adapter from which parameters are read.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
@@ -182,7 +182,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value,
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] param The parameter adapter from which parameters are read.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use.
@@ -203,7 +203,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] param The parameter adapter from which parameters are read.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
@@ -225,7 +225,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value,
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] param The parameter adapter from which parameters are read.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use.
@@ -242,7 +242,7 @@ public:
   {
     return ::cras::getParam(param, name, defaultValue, unit, options, this->log.get());
   }
-  
+
   /**
    * \brief Return the log helper used for logging.
    * \return The log helper.
@@ -251,7 +251,7 @@ public:
   {
     return this->log;
   }
-  
+
   /**
    * \brief Set the log helper used for logging.
    * \param[in] logger The new log helper.

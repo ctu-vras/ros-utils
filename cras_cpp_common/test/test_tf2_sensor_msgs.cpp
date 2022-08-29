@@ -68,7 +68,7 @@ sensor_msgs::PointCloud2 createCloud(const uint32_t width)
   msg.width = width;
   msg.is_dense = true;
   msg.is_bigendian = false;
-  
+
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2Fields(14,
@@ -120,7 +120,7 @@ sensor_msgs::PointCloud2 createCloud(const uint32_t width)
     it_g = &it_rgb[1];
     it_b = &it_rgb[2];
   };
-  
+
   for (const auto& point : pointsIn)
   {
     *it_x = point.x;
@@ -142,7 +142,7 @@ sensor_msgs::PointCloud2 createCloud(const uint32_t width)
 
     nextPoint();
   }
-  
+
   return msg;
 }
 
@@ -484,7 +484,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudNoChannels)  // NOLINT
   {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
-    
+
     EXPECT_NEAR(pointIn.x, *it_x, 1e-6);
     EXPECT_NEAR(pointIn.y, *it_y, 1e-6);
     EXPECT_NEAR(pointIn.z, *it_z, 1e-6);
@@ -562,7 +562,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudSomeChannels)  // NOLINT
     it_g = &it_rgb[1];
     it_b = &it_rgb[2];
   };
-  
+
   for (size_t i = 0; i < pointsOut.size(); ++i)
   {
     const auto& point = pointsOut[i];
@@ -580,7 +580,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudSomeChannels)  // NOLINT
     EXPECT_NEAR(point.normal_x, *it_normal_x, 1e-6);
     EXPECT_NEAR(point.normal_y, *it_normal_y, 1e-6);
     EXPECT_NEAR(point.normal_z, *it_normal_z, 1e-6);
-    
+
     // should not be changed
     EXPECT_NEAR(pointIn.test_x, *it_test_x, 1e-6);
     EXPECT_NEAR(pointIn.test_y, *it_test_y, 1e-6);
@@ -601,10 +601,10 @@ TEST(TF2SensorMsgs, CreateTransformedCloudChangeDefaultChannels)  // NOLINT
   const auto msg = createCloud(2);
 
   cras::registerCloudChannelType("test_", cras::CloudChannelType::DIRECTION);
-  
+
   sensor_msgs::PointCloud2 out;
   cras::transformWithChannels(msg, out, createTestTf());
-  
+
   cras::unregisterCloudChannelType("test_");
 
   ASSERT_EQ("base_link", out.header.frame_id);
@@ -648,7 +648,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudChangeDefaultChannels)  // NOLINT
     it_g = &it_rgb[1];
     it_b = &it_rgb[2];
   };
-  
+
   for (size_t i = 0; i < pointsOut.size(); ++i)
   {
     const auto& point = pointsOut[i];
@@ -716,7 +716,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
   {
     ++it_x; ++it_y; ++it_z; ++it_normal_x; ++it_normal_y; ++it_normal_z; ++it_intensity;
   };
-  
+
   for (size_t i = 0; i < pointsOut.size(); ++i)
   {
     const auto& pointIn = pointsIn[i];

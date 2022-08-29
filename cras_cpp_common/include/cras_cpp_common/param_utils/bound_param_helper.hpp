@@ -39,7 +39,7 @@ public:
       ::cras::ParamHelper(log), param(param)
   {
   }
-  
+
   ~BoundParamHelper() override = default;
 
   /**
@@ -150,7 +150,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
    *                         If a required param is not found, a GetParamException is thrown.
@@ -170,7 +170,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value,
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use.
    * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
@@ -189,7 +189,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
    *                         If a required param is not found, a GetParamException is thrown.
@@ -209,7 +209,7 @@ public:
   /**
    * \brief Get the value of the given ROS parameter, falling back to the specified default value,
    *        and print out a ROS log message with the loaded values (if specified).
-   * \details This is a variant allowing use of C-string instead of std::string. 
+   * \details This is a variant allowing use of C-string instead of std::string.
    * \param[in] name Name of the parameter.
    * \param[in] defaultValue The default value to use.
    * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
@@ -255,7 +255,7 @@ public:
   }
 
   /**
-   * \brief Return a parameter helper of a sub-namespace. 
+   * \brief Return a parameter helper of a sub-namespace.
    * \param[in] ns Namespace.
    * \return The new helper.
    */
@@ -263,7 +263,7 @@ public:
   {
     return ::std::make_shared<::cras::BoundParamHelper>(this->log, this->param->getNamespaced(ns));
   }
-  
+
   /**
    * \brief Return the namespace this helper operates in.
    * \return The namespace.

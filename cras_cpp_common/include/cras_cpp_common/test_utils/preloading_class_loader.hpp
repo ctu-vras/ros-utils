@@ -19,7 +19,7 @@
 /*
  * In the classes where you need to use this classloader, insert the following code at the very beginning of the CPP
  * file:
- * 
+ *
 // HACK: we need to alter the private lowlever_class_loader_ of pluginlib::ClassLoader
 #define private public
 #include <pluginlib/class_loader.hpp>
@@ -76,7 +76,7 @@ public:
 
   /**
    * \brief Revert the effect of `preload()`.
-   * \param[in] pluginlibType 
+   * \param[in] pluginlibType
    * \param[in] loader The pluginlib classloader from which the class should be "un-injected".
    * \note All instances of the preloaded class should be destroyed prior to calling this function, otherwise segfaults
    *       can happen.

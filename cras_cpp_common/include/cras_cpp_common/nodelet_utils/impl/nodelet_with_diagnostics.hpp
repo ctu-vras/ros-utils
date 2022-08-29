@@ -48,7 +48,7 @@ struct NodeletWithDiagnosticsPrivate
 {
   //! \brief The diagnostics updater used for the nodelet.
   ::std::shared_ptr<::cras::DiagnosticUpdater> updater;
-  
+
   //! \brief Log helper.
   ::cras::LogHelperPtr log;
 
@@ -294,7 +294,8 @@ template<typename T>
   const ::ros::Rate& defaultRate, const ::ros::Rate& defaultMinRate, const ::ros::Rate& defaultMaxRate)
 {
   return ::std::move(this->template advertiseDiagnosed<T>(
-    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultMinRate), ::cras::frequency(defaultMaxRate)}, paramNamespace, topic, queueSize, false));
+    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultMinRate), ::cras::frequency(defaultMaxRate)},
+    paramNamespace, topic, queueSize, false));
 }
 
 template <typename NodeletType>
@@ -304,7 +305,8 @@ template<typename T>
   const ::ros::Rate& defaultRate)
 {
   return ::std::move(this->template advertiseDiagnosed<T>(
-    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultRate), ::cras::frequency(defaultRate)}, paramNamespace, topic, queueSize, false));
+    nh, this->getPrivateNodeHandle(), {::cras::frequency(defaultRate), ::cras::frequency(defaultRate)},
+    paramNamespace, topic, queueSize, false));
 }
 
 template <typename NodeletType>
@@ -339,7 +341,7 @@ template <typename Message, typename Enable>
 NodeletWithDiagnostics<NodeletType>::subscribeDiagnosed(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh,
   const ::cras::SimpleTopicStatusParam<Message>& defaultDiagParams, const ::std::string& diagNamespace,
   const ::std::string& topic, uint32_t queue_size,
-  const ::boost::function<void (const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints)
+  const ::boost::function<void(const ::boost::shared_ptr<Message>&)>& cb, ::ros::TransportHints hints)
 {
   auto result = ::std::unique_ptr<::cras::DiagnosedSubscriber<Message>>(new ::cras::DiagnosedSubscriber<Message>(
     subscriberNh, this->getDiagParams(diagNh, diagNamespace, topic), defaultDiagParams,
@@ -354,7 +356,7 @@ template <typename C, typename Enable>
 NodeletWithDiagnostics<NodeletType>::subscribeDiagnosed(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh,
   const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<C>>& defaultDiagParams, const ::std::string& diagNamespace,
   const ::std::string& topic, uint32_t queue_size,
-  const ::boost::function<void (C)>& cb, ::ros::VoidConstPtr obj, ::ros::TransportHints hints)
+  const ::boost::function<void(C)>& cb, ::ros::VoidConstPtr obj, ::ros::TransportHints hints)
 {
   auto result = ::std::unique_ptr<::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>>(
     new ::cras::DiagnosedSubscriber<::cras::BaseMessage<C>>(
@@ -465,7 +467,7 @@ template <typename NodeletType>
 
   auto paramAdapter = ::std::make_shared<::cras::NodeHandleGetParamAdapter>(nh);
   auto params = ::std::make_shared<::cras::BoundParamHelper>(this->data->log, paramAdapter);
-  
+
   if (!diagNamespace.empty())
     return params->paramsInNamespace(diagNamespace[0] == '~' ? diagNamespace.substr(1) : diagNamespace);
 
@@ -489,7 +491,7 @@ template <typename NodeletType>
     xml = params->getParam(resolvedParentNs, xml, "", {false});
     adapter = ::std::make_shared<::cras::XmlRpcValueGetParamAdapter>(xml, resolvedParentNs);
   }
-  
+
   // Construct the final param adapter for the topic namespace, falling back to an empty adapter if the namespace does
   // not exist.
   const auto cleanTopic = ::cras::stripLeadingSlash(topic);

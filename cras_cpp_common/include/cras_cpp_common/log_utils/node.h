@@ -226,7 +226,7 @@ protected:
   {
     ROS_ERROR_FILTER_NAMED(filter, name, "%s", text.c_str());
   }
-  
+
   void printFatal(const ::std::string& text) const override
   {
     ROS_FATAL("%s", text.c_str());

@@ -100,7 +100,7 @@ TEST(NodeletAwareTfBuffer, RequestStop)  // NOLINT
   // Put some transform in the TF buffer.
   buf.setTransform(getTransform(), "test");
 
-  // We have data at time 10, so no waiting is needed and canTransform() can immediately return with success. 
+  // We have data at time 10, so no waiting is needed and canTransform() can immediately return with success.
   EXPECT_TRUE(buf.canTransform("b", "a", ros::Time(10), ros::Duration(0.1)));
 
   // There is no data for time 11, so the buffer waits; but we do not advance time. Normally, the canTransform() call
@@ -124,35 +124,35 @@ TEST(NodeletAwareTfBuffer, RequestStop)  // NOLINT
   // The callback has not yet been triggered.
   EXPECT_FALSE(started);
   EXPECT_FALSE(executed);
-  
+
   // Publish a message and thus trigger nodelet->cb(). It is not, however, processed until someone spins the global
   // callback queue.
   pub.publish(std_msgs::Header());
   ros::WallDuration(0.1).sleep();  // Wait for the publication to get processed (this sleep prevents flakiness)
   EXPECT_FALSE(started);
   EXPECT_FALSE(executed);
-  
+
   // Spin the global callback queue, triggering nodelet->cb(). Do it in a thread so that the main program can continue.
   std::thread t(&ros::spinOnce);
 
   // Give things a little time to get processed.
   ros::WallDuration(0.2).sleep();
-  
+
   // The callback should have started being processed by now and should be hanging in an infinite wait. The timeout of
   // the callback is 0.1 s, and above we have waited for 0.2 s. So if the callback would for some reason timeout in
   // wall time, the value of `executed` should be wrong.
   EXPECT_TRUE(started);
   EXPECT_FALSE(executed);
-  
+
   // Calling requestStop() should break the infinite wait.
   nodelet->requestStop();
-  
+
   // Give things a little time to get processed.
   ros::WallDuration(0.1).sleep();
 
   // By now, the callback should already have finished.
   EXPECT_TRUE(executed);
-  
+
   // Do not wait for the spinning thread. If the test would block indefinitely, we cannot join() the thread here. So we
   // detach it, letting its cleanup to be done once the whole test suite is finished.
   if (t.joinable())
@@ -169,7 +169,7 @@ TEST(NodeletAwareTfBuffer, UnloadStateful)  // NOLINT
   ros::Time::setNow({10, 0});
   ASSERT_TRUE(ros::Time::isSimTime());
   ASSERT_EQ(10, ros::Time::now().sec);
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -198,7 +198,7 @@ TEST(NodeletAwareTfBuffer, UnloadStateful)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
@@ -256,7 +256,7 @@ TEST(NodeletAwareTfBuffer, UnloadStateful)  // NOLINT
 
   // Give things a little time to get processed.
   ros::WallDuration(0.1).sleep();
-  
+
   // After the nodelet is unloaded and some short wait, the callback should be stopped.
   EXPECT_TRUE(executed);
 }
@@ -271,7 +271,7 @@ TEST(NodeletAwareTfBuffer, UnloadNormal)  // NOLINT
   ros::Time::setNow({10, 0});
   ASSERT_TRUE(ros::Time::isSimTime());
   ASSERT_EQ(10, ros::Time::now().sec);
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -300,7 +300,7 @@ TEST(NodeletAwareTfBuffer, UnloadNormal)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
@@ -358,7 +358,7 @@ TEST(NodeletAwareTfBuffer, UnloadNormal)  // NOLINT
 
   // Give things a little time to get processed.
   ros::WallDuration(0.1).sleep();
-  
+
   // After the nodelet is unloaded and some short wait, the callback should be stopped.
   EXPECT_TRUE(executed);
 
@@ -386,7 +386,7 @@ TEST(NodeletAwareTfBuffer, Transforms)  // NOLINT
   buf.setTransform(getTransform("b", "c", {10, 0}, 0, 1), "test");
   buf.setTransform(getTransform("b", "d", {10, 0}, 0, 0, 0, 0, 0, 1, 0), "test");
   buf.setTransform(getTransform("b", "d", {12, 0}, 0, 0, 0, 0, 0, 1, 0), "test");
-  
+
   EXPECT_TRUE(buf.canTransform("a", "c", {10, 0}, {1, 0}));
   auto tf = buf.lookupTransform("a", "c", {10, 0}, {1, 0});
 
@@ -401,7 +401,7 @@ TEST(NodeletAwareTfBuffer, Transforms)  // NOLINT
   EXPECT_EQ(0, tf.transform.rotation.y);
   EXPECT_EQ(0, tf.transform.rotation.z);
   EXPECT_EQ(1, tf.transform.rotation.w);
-  
+
   EXPECT_TRUE(buf.canTransform("a", "d", {10, 0}, {1, 0}));
   tf = buf.lookupTransform("a", "d", {10, 0}, {1, 0});
 
@@ -416,7 +416,7 @@ TEST(NodeletAwareTfBuffer, Transforms)  // NOLINT
   EXPECT_EQ(0, tf.transform.rotation.y);
   EXPECT_EQ(1, tf.transform.rotation.z);
   EXPECT_EQ(0, tf.transform.rotation.w);
-  
+
   EXPECT_TRUE(buf.canTransform("d", {10, 0}, "d", {12, 0}, "a", {1, 0}));
   tf = buf.lookupTransform("d", {10, 0}, "d", {12, 0}, "a", {1, 0});
 
@@ -431,7 +431,7 @@ TEST(NodeletAwareTfBuffer, Transforms)  // NOLINT
   EXPECT_EQ(0, tf.transform.rotation.y);
   EXPECT_EQ(0, tf.transform.rotation.z);
   EXPECT_EQ(1, tf.transform.rotation.w);
-  
+
   geometry_msgs::Vector3Stamped v;
   v.header.stamp = {10, 0};
   v.header.frame_id = "a";
@@ -447,7 +447,7 @@ TEST(NodeletAwareTfBuffer, Transforms)  // NOLINT
   EXPECT_EQ(-10, v2.vector.x);
   EXPECT_EQ(0, v2.vector.y);
   EXPECT_EQ(0, v2.vector.z);
-  
+
   geometry_msgs::PointStamped p;
   p.header.stamp = {10, 0};
   p.header.frame_id = "a";

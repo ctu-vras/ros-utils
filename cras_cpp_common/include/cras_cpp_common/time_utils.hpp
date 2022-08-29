@@ -70,7 +70,7 @@ namespace ros
 
 /**
  * \brief Test two rates for equality.
- * \param[in] r1 First rate. 
+ * \param[in] r1 First rate.
  * \param[in] r2 Second rate.
  * \return Whether the rates are exactly equal.
  */
@@ -78,7 +78,7 @@ bool operator==(const ::ros::Rate& r1, const ::ros::Rate& r2);
 
 /**
  * \brief Test two rates for equality.
- * \param[in] r1 First rate. 
+ * \param[in] r1 First rate.
  * \param[in] r2 Second rate.
  * \return Whether the rates are exactly equal.
  */
@@ -86,8 +86,8 @@ bool operator==(const ::ros::WallRate& r1, const ::ros::WallRate& r2);
 
 /**
  * \brief Multiply two durations. The units of the result are [s^2].
- * \param[in] val1 Duration to multiply. 
- * \param[in] val2 Duration to multiply. 
+ * \param[in] val1 Duration to multiply.
+ * \param[in] val2 Duration to multiply.
  * \return The multiple.
  * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
  */
@@ -95,8 +95,8 @@ bool operator==(const ::ros::WallRate& r1, const ::ros::WallRate& r2);
 
 /**
  * \brief Divide duration val1 by val2. The result is unitless.
- * \param[in] numerator Duration to multiply. 
- * \param[in] denominator Duration to multiply. 
+ * \param[in] numerator Duration to multiply.
+ * \param[in] denominator Duration to multiply.
  * \return The fraction.
  * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
  */
@@ -104,8 +104,8 @@ bool operator==(const ::ros::WallRate& r1, const ::ros::WallRate& r2);
 
 /**
  * \brief Multiply two durations. The units of the result are [s^2].
- * \param[in] val1 Duration to multiply. 
- * \param[in] val2 Duration to multiply. 
+ * \param[in] val1 Duration to multiply.
+ * \param[in] val2 Duration to multiply.
  * \return The multiple.
  * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
  */
@@ -113,8 +113,8 @@ bool operator==(const ::ros::WallRate& r1, const ::ros::WallRate& r2);
 
 /**
  * \brief Divide duration val1 by val2. The result is unitless.
- * \param[in] numerator Duration to multiply. 
- * \param[in] denominator Duration to multiply. 
+ * \param[in] numerator Duration to multiply.
+ * \param[in] denominator Duration to multiply.
  * \return The fraction.
  * \note This function will throw an exception if the result is out of bounds of the standard ROS duration range.
  */

@@ -117,7 +117,7 @@ bool InterruptibleTFBuffer::canTransform(const std::string& target_frame, const 
     ros::Time::now() < endTime &&
       !buffer->canTransform(target_frame, source_frame, time) &&
       (ros::Time::now() + ros::Duration(3)) >= startTime &&  // Don't wait when we detect a bag loop
-      (ros::ok() || !ros::isInitialized()) && // Make sure we haven't been stopped
+      (ros::ok() || !ros::isInitialized()) &&  // Make sure we haven't been stopped
       this->ok()  // Make sure the buffer is not requested to stop
     )
   {

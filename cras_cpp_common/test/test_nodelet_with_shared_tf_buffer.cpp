@@ -149,7 +149,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadShared)  // NOLINT
   ros::Time::setNow({10, 0});
   ASSERT_TRUE(ros::Time::isSimTime());
   ASSERT_EQ(10, ros::Time::now().sec);
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -178,14 +178,14 @@ TEST(NodeletWithSharedTfBuffer, UnloadShared)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
 
   auto parentBuf = std::make_shared<tf2_ros::Buffer>(ros::Duration(30));
   nodelet->setBuffer(parentBuf);
-  
+
   auto& buf = nodelet->getBuffer();
 
   ros::NodeHandle nh;
@@ -235,7 +235,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadShared)  // NOLINT
 
   // Give things a little time to get processed.
   ros::WallDuration(0.1).sleep();
-  
+
   // After the nodelet is unloaded and some short wait, the callback should be stopped.
   EXPECT_TRUE(executed);
 
@@ -254,7 +254,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadStandalone)  // NOLINT
   ros::Time::setNow({10, 0});
   ASSERT_TRUE(ros::Time::isSimTime());
   ASSERT_EQ(10, ros::Time::now().sec);
-  
+
   // Can't be shared_ptr - it would lead to a segfault as Loader::unload() destroys the callback queues that the nodelet
   // needs for its own destruction (to unregister its subscription helper). If the nodelet would outlive Loader in a
   // shared_ptr, its destruction would therefore fail.
@@ -283,7 +283,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadStandalone)  // NOLINT
   // Detach the loaderThread so that it doesn't cause a segfault when exiting the program (as we can't join() it).
   loaderThread.detach();
   nodelet::Loader& loader = *loaderPointer;
-  
+
   // Load a nodelet using the Loader. This will trigger the custom create_instance function and set `nodelet`.
   EXPECT_TRUE(loader.load("my_nodelet", "MyNodelet", {}, {}));
   EXPECT_NE(nullptr, nodelet);
@@ -309,7 +309,7 @@ TEST(NodeletWithSharedTfBuffer, UnloadStandalone)  // NOLINT
   ros::spinOnce();
   ros::WallDuration(0.2).sleep();
   ros::spinOnce();
-  
+
   // We have data at time 10, so no waiting is needed and canTransform() can immediately return with success.
   EXPECT_TRUE(buf.canTransform("b", "a", ros::Time(10), ros::Duration(0)));
 
@@ -366,6 +366,6 @@ int main(int argc, char **argv)
   // ROS init.
   ros::init(argc, argv, "test_nodelet_with_shared_tf_buffer");
   ros::start();
-  
+
   return RUN_ALL_TESTS();
 }

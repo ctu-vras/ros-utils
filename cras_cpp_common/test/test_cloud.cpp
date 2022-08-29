@@ -48,7 +48,7 @@ TEST(Cloud, CreateFilteredCloudUnorganized)  // NOLINT
 
   mod.setPointCloud2FieldsByString(1, "xyz");
   fillXYZ(msg, mod, 3);
-  
+
   sensor_msgs::PointCloud2 out;
   CREATE_FILTERED_CLOUD(msg, out, true, *x_it == 2.0)
 
@@ -161,7 +161,7 @@ TEST(Cloud, GenericConstIterator)  // NOLINT
   cras::GenericCloudConstIter it_g_x(msg, "x");
   cras::GenericCloudConstIter it_g_y(msg, "y");
   cras::GenericCloudConstIter it_g_z(msg, "z");
-  
+
   for (size_t i = 0; i < 4; ++i)
   {
     EXPECT_EQ(i, *reinterpret_cast<const float*>(it_g_x.rawData()));
@@ -183,7 +183,7 @@ TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
   cras::GenericCloudConstIter it_g_x(msg, "x");
   cras::GenericCloudConstIter it_g_y(msg, "y");
   cras::GenericCloudConstIter it_g_z(msg, "z");
-  
+
   for (size_t i = 0; i < 4; ++i)
   {
     EXPECT_EQ(i, *it_g_x.dataAs<float>());
@@ -295,7 +295,7 @@ TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
   sensor_msgs::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
-  
+
   fillXYZ(msg, mod, 4);
   fillXYZ(msg2, mod2, 4, true);
 
@@ -337,7 +337,7 @@ TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
   sensor_msgs::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
-  
+
   fillXYZ(msg, mod, 4);
   fillXYZ(msg2, mod2, 4, true);
 
@@ -376,7 +376,7 @@ TEST(Cloud, CopyChannelData)  // NOLINT
   sensor_msgs::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
-  
+
   sensor_msgs::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
@@ -389,10 +389,10 @@ TEST(Cloud, CopyChannelData)  // NOLINT
     "c", 1, F::INT8, "d", 1, F::INT16, "e", 1, F::INT32,
     "f", 1, F::UINT8, "g", 1, F::UINT16, "h", 1, F::UINT32);
   mod3.resize(4);
-  
+
   fillXYZ(msg, mod, 4);
   fillXYZ(msg2, mod2, 4, true);
-  
+
   cras::copyChannelData(msg, msg2, "x");
 
   sensor_msgs::PointCloud2ConstIterator<float> it_x(msg2, "x");
@@ -453,7 +453,7 @@ TEST(Cloud, HasGetField)  // NOLINT
   mod.setPointCloud2FieldsByString(1, "xyz");
   mod.resize(1);
   const auto& msg = msgOrig;
-  
+
   sensor_msgs::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(2, "xyz", "rgba");
@@ -469,22 +469,22 @@ TEST(Cloud, HasGetField)  // NOLINT
   EXPECT_TRUE(cras::hasField(msg2, "rgba"));
   EXPECT_FALSE(cras::hasField(msg, "test"));
   EXPECT_FALSE(cras::hasField(msg2, "test"));
-  
+
   EXPECT_EQ("x", cras::getField(msg, "x").name);
   EXPECT_EQ(1, cras::getField(msg, "x").count);
   EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "x").datatype);
   EXPECT_EQ(0, cras::getField(msg, "x").offset);
-  
+
   EXPECT_EQ("y", cras::getField(msg, "y").name);
   EXPECT_EQ(1, cras::getField(msg, "y").count);
   EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "y").datatype);
   EXPECT_EQ(4, cras::getField(msg, "y").offset);
-  
+
   EXPECT_EQ("z", cras::getField(msg, "z").name);
   EXPECT_EQ(1, cras::getField(msg, "z").count);
   EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "z").datatype);
   EXPECT_EQ(8, cras::getField(msg, "z").offset);
-  
+
   EXPECT_EQ(cras::getField(msg2, "x"), cras::getField(msg, "x"));
   EXPECT_EQ(cras::getField(msg2, "y"), cras::getField(msg, "y"));
   EXPECT_EQ(cras::getField(msg2, "z"), cras::getField(msg, "z"));
@@ -497,7 +497,7 @@ TEST(Cloud, HasGetField)  // NOLINT
   EXPECT_THROW(cras::getField(msg, "rgba"), std::runtime_error);
   EXPECT_THROW(cras::getField(msg, "test"), std::runtime_error);
   EXPECT_THROW(cras::getField(msg2, "test"), std::runtime_error);
-  
+
   // Test that getField returns a reference to the field on non-const messages.
   cras::getField(msg2, "x").offset = 42;
   EXPECT_EQ(42, msg2.fields[0].offset);
@@ -513,7 +513,7 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
     "c", 1, F::INT8, "d", 1, F::INT16, "e", 1, F::INT32,
     "f", 1, F::UINT8, "g", 1, F::UINT16, "h", 1, F::UINT32);
   mod.resize(1);
-  
+
   EXPECT_EQ(msg.fields[1].offset - msg.fields[0].offset, cras::sizeOfPointField(F::FLOAT64));
   EXPECT_EQ(msg.fields[2].offset - msg.fields[1].offset, cras::sizeOfPointField(F::FLOAT32));
   EXPECT_EQ(msg.fields[3].offset - msg.fields[2].offset, cras::sizeOfPointField(F::INT8));
@@ -522,7 +522,7 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
   EXPECT_EQ(msg.fields[6].offset - msg.fields[5].offset, cras::sizeOfPointField(F::UINT8));
   EXPECT_EQ(msg.fields[7].offset - msg.fields[6].offset, cras::sizeOfPointField(F::UINT16));
   EXPECT_EQ(msg.point_step - msg.fields[7].offset, cras::sizeOfPointField(F::UINT32));
-  
+
   EXPECT_EQ(msg.fields[1].offset - msg.fields[0].offset, cras::sizeOfPointField(msg.fields[0]));
   EXPECT_EQ(msg.fields[2].offset - msg.fields[1].offset, cras::sizeOfPointField(msg.fields[1]));
   EXPECT_EQ(msg.fields[3].offset - msg.fields[2].offset, cras::sizeOfPointField(msg.fields[2]));
@@ -531,7 +531,7 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
   EXPECT_EQ(msg.fields[6].offset - msg.fields[5].offset, cras::sizeOfPointField(msg.fields[5]));
   EXPECT_EQ(msg.fields[7].offset - msg.fields[6].offset, cras::sizeOfPointField(msg.fields[6]));
   EXPECT_EQ(msg.point_step - msg.fields[7].offset, cras::sizeOfPointField(msg.fields[7]));
-  
+
   EXPECT_THROW(cras::sizeOfPointField(sensor_msgs::PointField::FLOAT64 + 2), std::runtime_error);
 }
 

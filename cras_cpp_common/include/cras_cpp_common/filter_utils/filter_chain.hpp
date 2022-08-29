@@ -53,7 +53,7 @@ public:
   typedef ::std::function<
     void(const F& data, const size_t filterNum, const ::std::string& name, const ::std::string& type)>
     FilterStartCallback;
-  
+
   /**
    * \brief Callback to be called after each filter processes the data.
    *
@@ -77,12 +77,12 @@ public:
   explicit FilterChain(const ::std::string& dataType, const FilterFinishedCallback& filterFinishedCallback = {},
     const FilterStartCallback& filterStartCallback = {},
     const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
-  
+
   /**
    * \brief Inform this chain that it is running in the given nodelet, so that it can do appropriate optimizations.
    *        This should be done after the filters are configured.
    * \param[in] nodelet The nodelet this chain is running in.
-   *                    Setting to nullptr will inform the chain it is not running inside a nodelet. 
+   *                    Setting to nullptr will inform the chain it is not running inside a nodelet.
    */
   void setNodelet(const ::nodelet::Nodelet* nodelet);
 
@@ -91,22 +91,22 @@ public:
    * \param[in] callback The callback to set.
    */
   void setFilterStartCallback(const FilterStartCallback& callback);
-  
+
   /**
    * \brief Set the filter finished callback.
    * \param[in] callback The callback to set.
    */
   void setFilterFinishedCallback(const FilterFinishedCallback& callback);
-  
+
   /**
    * \brief Do the filtering.
    * This function intentionally shadows filters::FilterChain::update() which is non-virtual.
-   * \param[in] data_in Input data. 
+   * \param[in] data_in Input data.
    * \param[out] data_out The filtered data.
    * \return Whether the filtering succeeded. If false, data_out should not be considered valid.
    */
   bool update(const F& data_in, F& data_out);
-  
+
   /**
    * \brief Temporarily disable the filter with the given name.
    * \param[in] name Name of the filter to disable. If the filter is not found, nothing happens.
@@ -118,20 +118,20 @@ public:
    * \param[in] name Name of the filter to enable. If the filter is not found, nothing happens.
    */
   void enableFilter(const ::std::string& name);
-  
+
   /**
    * \brief Set which filters are temporarily disabled. This overrides any previous calls to
    *        disableFilter() and enableFilter().
-   * \param[in] filters The filters to disable. 
+   * \param[in] filters The filters to disable.
    */
   void setDisabledFilters(::std::unordered_set<::std::string> filters);
-  
+
   /**
    * \brief Get which filters are temporarily disabled.
-   * \return The disabled filters. 
+   * \return The disabled filters.
    */
   ::std::unordered_set<::std::string> getDisabledFilters() const;
-  
+
   /**
    * \brief Clear all filters from this chain.
    * This function intentionally shadows filters::FilterChain::clear() which is non-virtual.
@@ -165,19 +165,19 @@ protected:
    * \brief Update the contents of activeFilters with just the filters that have not been disabled.
    */
   void updateActiveFilters();
-  
+
   //! \brief The optional callback to call when a filter starts its work.
   FilterStartCallback filterStartCallback;
 
   //! \brief The optional callback to call when a filter finishes its work.
   FilterFinishedCallback filterFinishedCallback;
-  
+
   //! \brief A set of filters that have been temporarily disabled.
   ::std::unordered_set<::std::string> disabledFilters;
-  
+
   //! \brief A list of filters that should be treated as active and should act on the input data.
   ::std::vector<::std::shared_ptr<::filters::FilterBase<F>>> activeFilters;
-  
+
   //! \brief Mutex protecting activeFilters access.
   mutable ::std::mutex activeFiltersMutex;
 

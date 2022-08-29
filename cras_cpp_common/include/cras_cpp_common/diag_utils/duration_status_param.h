@@ -31,13 +31,13 @@ struct DurationStatusParam
   explicit DurationStatusParam(
     const ::ros::Duration& minDuration = {0, 0}, const ::ros::Duration& maxDuration = ::ros::DURATION_MAX,
     double tolerance = 0.1, size_t windowSize = 5, bool noEventsIsOk = true);
-  
+
   /**
    * \brief Copy constructor.
    * \param[in] other The object to copy from.
    */
   DurationStatusParam(const ::cras::DurationStatusParam& other);  // NOLINT
-  
+
   /**
    * \brief Initialize this object from `SimpleDuraitonStatusParam`.
    * \param[in] params The parameters to initialize with.
@@ -75,10 +75,10 @@ struct SimpleDurationStatusParam
 {
   //! \brief Minimum duration considered as valid.
   decltype(::cras::DurationStatusParam::minDuration) minDuration {0, 0};
-  
+
   //! \brief Maximum duration considered as valid.
   decltype(::cras::DurationStatusParam::minDuration) maxDuration {::ros::DURATION_MAX};
-  
+
   //! \brief Tolerance of the duration.
   decltype(::cras::DurationStatusParam::tolerance) tolerance {0.1};
 

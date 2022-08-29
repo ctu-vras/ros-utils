@@ -1,7 +1,7 @@
 /**
  * \file
  * \brief ThreadNameUpdatingNodelet mixin allows nodelet to update the name of the thread it gets executed in (private
- * implementation details, do not include this directly). 
+ * implementation details, do not include this directly).
  * \author Martin Pecka
  * SPDX-License-Identifier: BSD-3-Clause
  * SPDX-FileCopyrightText: Czech Technical University in Prague

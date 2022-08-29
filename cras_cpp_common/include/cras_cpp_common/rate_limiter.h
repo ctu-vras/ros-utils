@@ -26,7 +26,7 @@ public:
    * \param[in] rate The desired rate of messages.
    */
   explicit RateLimiter(const ::ros::Rate& rate);
-  
+
   /**
    * \brief Create limiter with rate corresponding to the given period.
    * \param[in] period Average delay between two desired output messages.
@@ -40,12 +40,12 @@ public:
    * \return Whether to continue publishing the message.
    */
   virtual bool shouldPublish(const ::ros::Time& stamp) = 0;
-  
+
   /**
    * \brief Reset the rate-limiter as if it were newly created with the same parameters.
    */
   virtual void reset() = 0;
-  
+
   /**
    * \brief Set the limit for telling between small and large backwards time jumps. Small jumps result in ignoring the
    *        messages, while a large jump results in a reset of the rate-limter.
@@ -55,7 +55,6 @@ public:
   void setJumpBackTolerance(const ::ros::Duration& tolerance);
 
 protected:
-  
   /**
    * \brief Decide whether the newly coming message should be treated as a backwards jump in time.
    * \param[in] stamp Reception time of the new message.
@@ -63,13 +62,13 @@ protected:
    * \return True if the message should be treated as a large time jump.
    */
   bool jumpedBack(const ::ros::Time& stamp, const ::ros::Time& previousStamp) const;
-  
+
   //! \brief The desired rate (1/period).
   ::ros::Rate rate;
-  
+
   //! \brief The desired period between message (1/rate).
   ::ros::Duration period;
-  
+
   //! \brief Threshold for jump back detection.
   ::ros::Duration jumpBackTolerance {3, 0};
 };
@@ -131,14 +130,14 @@ public:
 protected:
   //! \brief Stamp of the last incoming message. Zero at the beginning.
   ::ros::Time lastCheckTime {0, 0};
-  
+
   //! \brief Number of tokens that can fit into the bucket. This influences the maximum burst size.
   size_t bucketCapacity;
-  
+
   //! \brief The number of currently available tokens. This units of this number are actually not seconds, but Duration
   //!        is used here to achieve higher decimal point accuracy.
   ros::Duration tokensAvailable;
-  
+
   //! \brief The number of tokens that are initially in the buffer (and after reset).
   double initialTokensAvailable;
 };

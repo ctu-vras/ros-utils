@@ -26,10 +26,10 @@ namespace cras
 struct SimpleTopicStatusParamNoHeader
 {
   typedef ::std::remove_pointer_t<decltype(::diagnostic_updater::FrequencyStatusParam::max_freq_)> RateType;
-  
+
   //! \brief Minimum allowed frequency.
   RateType minRate {0};
-  
+
   //! \brief Maximum allowed frequency.
   RateType maxRate {::std::numeric_limits<RateType>::infinity()};
 
@@ -49,22 +49,22 @@ struct SimpleTopicStatusParamNoHeader
 struct SimpleTopicStatusParamWithHeader
 {
   typedef ::std::remove_pointer_t<decltype(::diagnostic_updater::FrequencyStatusParam::max_freq_)> RateType;
-  
+
   //! \brief Minimum allowed frequency.
   RateType minRate {0};
-  
+
   //! \brief Maximum allowed frequency.
   RateType maxRate {::std::numeric_limits<RateType>::infinity()};
-  
+
   //! \brief Tolerance of the rate.
   decltype(::diagnostic_updater::FrequencyStatusParam::tolerance_) rateTolerance {0.1};
-  
+
   //! \brief Number of updates during which the frequency is computed.
   decltype(::diagnostic_updater::FrequencyStatusParam::window_size_) rateWindowSize {5};
-  
+
   //! \brief Min acceptable delay (in s). It can be negative if timestamps in future are expected.
   decltype(::diagnostic_updater::TimeStampStatusParam::min_acceptable_) minDelay {-1.0};
-  
+
   //! \brief Max acceptable delay (in s). It can be negative if timestamps in future are expected.
   decltype(::diagnostic_updater::TimeStampStatusParam::max_acceptable_) maxDelay {5.0};
 };
@@ -139,7 +139,7 @@ public:
   explicit FrequencyStatusParam(
     double min_freq = 0.0, double max_freq = ::std::numeric_limits<double>::infinity(),
     double tolerance = 0.1, int window_size = 5);
-  
+
   /**
    * \brief Copy values from another object of this type. If it uses the internal pointers, their values are copied and
    * a new set of internal pointers is created for this object, making it independent of the other one. If the other
@@ -147,14 +147,14 @@ public:
    * \param[in] other The object to copy from.
    */
   FrequencyStatusParam(const ::cras::FrequencyStatusParam& other);  // NOLINT
-  
+
   /**
    * \brief Copy values from the original `diagnostic_updater::FrequencyStatusParam`. This object will use pointers to
    * the same memory for min/max rate as the other one.
    * \param[in] other The object to copy from.
    */
   FrequencyStatusParam(const ::diagnostic_updater::FrequencyStatusParam& other);  // NOLINT
-  
+
   /**
    * \brief Initialize this object from `SimpleTopicStatusParam`. Internal pointers for min/max rate will be used, so
    * the `params` object may cease to exist.
@@ -176,7 +176,7 @@ public:
    * \param[in] other The object to copy from.
    */
   ::cras::FrequencyStatusParam& operator=(const ::diagnostic_updater::FrequencyStatusParam& other);
-  
+
   /**
    * \brief Get the expected/average rate. If min and max are the same, their value will be returned. If min rate is
    * non-positive, the max rate is returned. Otherwise, if max rate is infinite, the min rate will be returned. If min
@@ -188,7 +188,7 @@ public:
 private:
   /**
    * \brief This method handles copying of the internal pointers if they are used.
-   * \param[in] other 
+   * \param[in] other
    */
   void copyAdditionalData(const ::cras::FrequencyStatusParam& other);
 
@@ -197,7 +197,7 @@ private:
 
   //! \brief Maximum frequency. This field is used by the internal pointers if they are used, otherwise it is ignored.
   double maxFreq {::std::numeric_limits<double>::infinity()};
-  
+
   //! \brief Whether internal pointers are used or not (depends on whether this object was constructed with explicit
   //! rate pointers or not).
   bool usesInternalPointers {false};
@@ -237,23 +237,23 @@ public:
   TopicStatusParamWithHeader(  // NOLINT(google-explicit-constructor)
     double min_freq = 0.0, double max_freq = ::std::numeric_limits<double>::infinity(),
     double tolerance = 0.1, int window_size = 5, double min_acceptable = -1.0, double max_acceptable = 5.0);
-  
+
   /**
    * \brief Construct the object from a `FrequencyStatusParam` using default timestamp delay values.
-   * \param[in] freqParam The param to initialize from. 
+   * \param[in] freqParam The param to initialize from.
    */
   explicit TopicStatusParamWithHeader(const ::diagnostic_updater::FrequencyStatusParam& freqParam);
 
   /**
    * \brief Construct the object from a `TimeStampStatusParam` using default rate values.
-   * \param[in] stampParam The param to initialize from. 
+   * \param[in] stampParam The param to initialize from.
    */
   explicit TopicStatusParamWithHeader(const ::diagnostic_updater::TimeStampStatusParam& stampParam);
 
   /**
    * \brief Construct the object from a `FrequencyStatusParam` and `TimeStampStatusParam`.
-   * \param[in] freqParam The rate param to initialize from. 
-   * \param[in] stampParam The timestamp delay param to initialize from. 
+   * \param[in] freqParam The rate param to initialize from.
+   * \param[in] stampParam The timestamp delay param to initialize from.
    */
   TopicStatusParamWithHeader(
     const ::diagnostic_updater::FrequencyStatusParam& freqParam,

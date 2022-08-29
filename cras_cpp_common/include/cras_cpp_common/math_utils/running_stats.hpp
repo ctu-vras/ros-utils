@@ -17,10 +17,10 @@ namespace cras
 /**
  * \brief Computation of running average and variance using Welford's algorithm.
  * \tparam T Type of the values. It has to support operator+ and operator- with T.
- * 
+ *
  * This class can keep track of mean and variance of a stream of data using an efficient online algorithm.
  * The required memory is constant, and time to insert a new value and update the stats is also constant.
- * 
+ *
  * You can also add and subtract instances of this class which behaves as if you merged / diffed the streams that
  * created the stats.
  */
@@ -28,7 +28,6 @@ template<typename T>
 class RunningStats
 {
 public:
-  
   /**
    * \brief Reset the statistics to represent an empty sequence.
    */
@@ -86,7 +85,7 @@ public:
    * \note This function runs in O(1) time.
    */
   T getStandardDeviation() const;
-  
+
   /**
    * \brief Combine the two sequences represented by this and other and represent their joint stats.
    * \param[in] other The other stats to merge.
@@ -94,7 +93,7 @@ public:
    * \note This function runs in O(1) time.
    */
   RunningStats<T>& operator+=(const RunningStats<T>& other);
-  
+
   /**
    * \brief Combine the two sequences represented by this and other and represent their joint stats.
    * \param[in] other The other stats to merge.
@@ -102,7 +101,7 @@ public:
    * \note This function runs in O(1) time.
    */
   RunningStats<T> operator+(const RunningStats<T>& other) const;
-  
+
   /**
    * \brief Add the sample to the stats.
    * \param[in] sample The sample to add.
@@ -110,7 +109,7 @@ public:
    * \note This function runs in O(1) time.
    */
   RunningStats<T>& operator+=(const T& sample);
-  
+
   /**
    * \brief Return a copy of this with the added sample.
    * \param[in] sample The sample to add.
@@ -118,7 +117,7 @@ public:
    * \note This function runs in O(1) time.
    */
   RunningStats<T> operator+(const T& sample) const;
-  
+
   /**
    * \brief Subtract the sequence represented by other from the sequence represented by this and update the stats.
    * \param[in] other The stats to subtract.
@@ -159,9 +158,8 @@ public:
    * \note Removing from an empty instance does nothing.
    */
   RunningStats<T> operator-(const T& sample) const;
-  
+
 protected:
-  
   /**
    * \brief val * scalar
    * \param[in] val The value to multiply.
@@ -177,26 +175,26 @@ protected:
    * \return val1 * val2
    */
   static T multiply(const T& val1, const T& val2);
-  
+
   /**
    * \brief Return the square root of the given value (whatever meaning that might have).
    * \param[in] val The value to take root of.
    * \return The square root.
    */
   static T sqrt(const T& val);
-  
+
   /**
    * \brief Return a T value representing zero.
    * \return 0.
    */
   static T zero();
-  
+
   //! \brief Number of represented samples.
   size_t count {0u};
-  
+
   //! \brief Mean of represented samples.
   T mean {RunningStats<T>::zero()};
-  
+
   //! \brief Sk term of the computation such that var(X0...Xk) = this->var/this->count.
   T var {RunningStats<T>::zero()};
 };

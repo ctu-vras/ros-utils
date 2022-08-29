@@ -46,7 +46,7 @@ class FilterChainDiagnostics;
 /**
  * \brief A versatile nodelet that can load and run a filter chain.
  * \tparam F Type of the filtered data.
- * 
+ *
  * The following ROS parameters are read:
  * - ~lazy_subscription (bool): If true, the nodelet will only subscribe the input topic when there is at least one
  *                              subscriber for the output (filtered) topic. Default is true.
@@ -68,17 +68,17 @@ class FilterChainDiagnostics;
  *                               This parameter is only read when `publish_diagnostics` is true.
  * - ~update_duration (struct): Configuration of duration diagnostics for the overall callback. See DurationStatus task.
  * - ~{FILTER_NAME}/update_duration (struct): Configuration of callback duration diagnostics for filter {FILTER_NAME}.
- * 
+ *
  * Subscribed topics:
  * - {TOPIC_IN} (F): The input data. {TOPIC_IN} is the name passed as `topicIn` parameter in the constructor
  *                   (by default `in`).
- *                   
+ *
  * Published topics:
  * - {TOPIC_FILTERED} (F): The filtered data. {TOPIC_FILTERED} is the name passed as `topicFiltered` parameter in the
  *                         constructor (by default `out`).
  * - ~filter{I}/{FILTER_NAME} (F): Output of {I}-th filter with name {FILTER_NAME} (if `publish_each_filter` is true).
  * - /diagnostics: Standard diagnostics output (if any diagnostics are enabled).
- * 
+ *
  * The following options can be set at runtime via dynamic reconfigure:
  * - publish_each_filter (bool): If true, an additional publisher will be created for each filter in the chain and it
  *                               will publish the message as it looked directly after the filter was applied. Name of
@@ -98,14 +98,13 @@ class FilterChainDiagnostics;
 template<class F>
 class FilterChainNodelet : public ::cras::Nodelet
 {
-
 public:
   //! \brief Type of the filtered data.
   typedef F DataType;
-  
+
   //! \brief Accessor to DataType field of the filtered message type.
   typedef ::ros::message_traits::DataType<F> MsgDataType;
-  
+
   /**
    * \brief Read ROS parameters, initialize publishers/subscribers, initialize other class members.
    *        ROS::init() is assumed to have been called before.
@@ -116,7 +115,7 @@ public:
    */
   FilterChainNodelet(const ::std::string& dataType, const ::std::string& topicIn, const ::std::string& topicFiltered,
     const ::std::string& configNamespace);
-  
+
   /**
    * \brief Read ROS parameters, initialize publishers/subscribers, initialize other class members.
    *        ROS::init() is assumed to have been called before.
@@ -126,7 +125,7 @@ public:
    */
   FilterChainNodelet(const ::std::string& topicIn, const ::std::string& topicFiltered,
     const ::std::string& configNamespace);
-  
+
   /**
    * \brief Read ROS parameters, initialize publishers/subscribers, initialize other class members.
    *        ROS::init() is assumed to have been called before. Topic "in" is subscribed and "out" is published.
@@ -148,7 +147,7 @@ public:
 
   /**
    * \brief Set which filters are temporarily disabled.
-   * \param[in] filters The filters to disable. 
+   * \param[in] filters The filters to disable.
    */
   void setDisabledFilters(::std::unordered_set<::std::string> filters);
 
@@ -159,13 +158,12 @@ public:
   void setMaxAge(const ::ros::Duration& maxAge);
 
 protected:
-
   /**
    * \brief Dynamic reconfiguration of parameters.
    * \param[in,out] config The configuration to apply.
    */
   void dynreconfCallback(::cras_cpp_common::FilterChainConfig& config, uint32_t);
-  
+
   /**
    * \brief Update dynamic parameters on the server to correspond to current settings of this nodelet.
    */
@@ -189,11 +187,11 @@ protected:
    * \brief Callback called when a subscriber of the output topic disappears.
    */
   virtual void disconnectCb(const ::ros::SingleSubscriberPublisher&);
-  
+
   /**
    * \brief Get timestamp from a message with header.
    * \tparam T Type of the message.
-   * \param[in] data The input message. 
+   * \param[in] data The input message.
    * \return message.header.stamp field.
    */
   template <typename T, ::std::enable_if_t<::ros::message_traits::HasHeader<T>::value, bool> = true>
@@ -236,7 +234,7 @@ protected:
    */
   virtual void filterFinishedCallback(const F& data, size_t filterNum, const ::std::string& name,
     const ::std::string& type, bool success);
-  
+
   //! \brief Public NodeHandle.
   ::ros::NodeHandle nodeHandle;
 
@@ -245,7 +243,7 @@ protected:
 
   //! \brief Subscriber to data.
   ::ros::Subscriber subscriber;
-  
+
   //! \brief Subscriber diagnostics.
   ::std::unique_ptr<::cras::DiagnosedSubscriber<F>> subscriberDiag;
 
@@ -254,16 +252,16 @@ protected:
 
   //! \brief Publisher for the filtered data.
   ::ros::Publisher filteredPublisher;
-  
+
   //! \brief Publisher diagnostics.
   ::std::unique_ptr<::cras::DiagnosedPublisher<F>> publisherDiag;
 
   //! \brief Topic for incoming messages.
   ::std::string topicIn;
-  
+
   //! \brief Topic for outgoing (filtered) messages.
   ::std::string topicFiltered;
-  
+
   //! \brief ROS parameter namespace from which filter configuration will be read.
   ::std::string configNamespace;
 
@@ -272,43 +270,43 @@ protected:
 
   //! \brief Queue size for publishers.
   size_t publisherQueueSize {15_sz};
-  
+
   //! \brief Publishers for individual filter results.
   ::std::unordered_map<::std::string, ::ros::Publisher> filterPublishers;
-  
+
   //! \brief Mutex that protects filterPublishers.
   ::std::mutex filterPublishersMutex;
-  
-  //! \brief Mutex that protects subscriber, subscriberDiag. 
+
+  //! \brief Mutex that protects subscriber, subscriberDiag.
   ::std::mutex connectMutex;
 
   //! \brief Whether to use the lazy subscription model (subscribe to input only when someone subscribes to output).
   bool lazySubscription {true};
-  
+
   //! \brief Queue size for subscriber.
   size_t subscriberQueueSize {15_sz};
-  
+
   //! \brief Whether topic frequency/delay statistics should be published to diagnostics.
   bool publishTopicDiagnostics {false};
-  
+
   //! \brief Whether callback duration statistics should be published to diagnostics.
   bool publishDurationDiagnostics {false};
-  
+
   //! \brief Whether overall chain diagnostics should be published to diagnostics.
   bool publishChainDiagnostics {false};
 
   //! \brief Maximum age of a message for it to be considered. Older messages are thrown away when received.
   ::ros::Duration maxAge;
-  
+
   //! \brief Mutex protecting the dynamic reconfigure options, maxAge and publishFilters.
   mutable ::boost::recursive_mutex configMutex;
 
   //! \brief Dynamic reconfigure server.
   ::std::unique_ptr<::dynamic_reconfigure::Server<::cras_cpp_common::FilterChainConfig>> dynreconfServer;
-  
+
   //! \brief Diagnostic task for overall callback duration.
   ::std::unique_ptr<::cras::DurationStatus> callbackDurationDiag;
-  
+
   //! \brief Diagnostic tasks for duration of each filter callback.
   ::std::unordered_map<::std::string, ::std::unique_ptr<::cras::DurationStatus>> filterCallbackDurationDiags;
 
@@ -317,7 +315,7 @@ protected:
 };
 
 /**
- * \brief Diagnostics of performance of a filter chain. 
+ * \brief Diagnostics of performance of a filter chain.
  * \tparam F Type of filtered data.
  */
 template <typename F>
@@ -329,7 +327,7 @@ public:
    * \param[in] chain The diagnosed chain.
    */
   FilterChainDiagnostics(const ::std::string& name, const ::cras::FilterChain<F>& chain);
-  
+
   /**
    * \brief Call this function every time a filter finished callback is called.
    * \param[in] filterName Name of the filter.
@@ -338,20 +336,20 @@ public:
   void addReport(const ::std::string& filterName, bool success);
 
   void run(::diagnostic_updater::DiagnosticStatusWrapper& stat) override;
-  
+
 protected:
   //! \brief The diagnosed chain.
   const ::cras::FilterChain<F>& chain;
-  
+
   //! \brief Mutex protecting numCallbacks, numSuccesses and numFailures.
   ::std::mutex mutex;
-  
+
   //! \brief The overall number of callbacks since last update.
   ::std::unordered_map<::std::string, size_t> numCallbacks;
-  
+
   //! \brief The number of successful filter runs since last update.
   ::std::unordered_map<::std::string, size_t> numSuccesses;
-  
+
   //! \brief The number of failed filter runs since last update.
   ::std::unordered_map<::std::string, size_t> numFailures;
 };

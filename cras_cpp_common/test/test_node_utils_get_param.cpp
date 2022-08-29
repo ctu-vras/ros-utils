@@ -17,14 +17,14 @@
 
 #include <cras_cpp_common/node_utils/param_helper.h>
 
-#include "get_param_test.inc" 
+#include "get_param_test.inc"
 
 using namespace cras;
 
 struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
 {
   cras::NodeParamHelper nh;
-  
+
   template <typename T, typename U>
   void test(const std::string& param, const T& def, const U& expected, const bool defUsed)
   {
@@ -63,7 +63,7 @@ struct NodeUtilsGetParamTest : public GetParamTest<NodeUtilsGetParamTest>
   {
     this->test_s((param), (def), (def), true);
   }
-  
+
   void testMisc()
   {
     // test that getParam result type is the same as the default value
