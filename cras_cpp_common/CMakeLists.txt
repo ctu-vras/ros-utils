@@ -360,6 +360,10 @@ if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(roslint REQUIRED)
   
+  # catkin_lint
+  
+  roslint_custom(catkin_lint "-W2" .)
+  
   # Roslint C++
   
   file(GLOB_RECURSE ROSLINT_SRC1 include/*.h include/*.hpp)
