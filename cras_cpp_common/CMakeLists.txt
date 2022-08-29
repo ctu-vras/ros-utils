@@ -357,14 +357,15 @@ install(TARGETS
 )
 
 if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
+  find_package(roslaunch REQUIRED)
   find_package(roslint REQUIRED)
+  find_package(rostest REQUIRED)
   
-  # catkin_lint
+  # catkin_lint - checks validity of package.xml and CMakeLists.txt
   
   roslint_custom(catkin_lint "-W2" .)
   
-  # Roslint C++
+  # Roslint C++ - checks formatting and some other rules for C++ files
   
   file(GLOB_RECURSE ROSLINT_INCLUDE include/*.h include/*.hpp)
   list(FILTER ROSLINT_INCLUDE EXCLUDE REGEX ".*/external/.*")
@@ -382,6 +383,8 @@ if (CATKIN_ENABLE_TESTING)
   
   set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
   roslint_cpp(${ROSLINT_TEST})
+  
+  add_dependencies(run_tests roslint_${PROJECT_NAME})
 
   # GTEST tests (no rosmaster required)
   
@@ -440,10 +443,12 @@ if (CATKIN_ENABLE_TESTING)
 
   add_rostest_gtest(test_cras_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
   target_link_libraries(test_cras_filter_chain_nodelet cras_filter_chain_nodelet ${catkin_LIBRARIES})
+  roslaunch_add_file_check(test/test_filter_chain_nodelet.test USE_TEST_DEPENDENCIES)
 
   add_rostest_gtest(test_cras_nodelet_manager test/test_nodelet_manager.test test/test_nodelet_manager.cpp)
   target_link_libraries(test_cras_nodelet_manager
     cras_nodelet_manager cras_nodelet_manager_sharing_tf_buffer cras_test_utils ${catkin_LIBRARIES})
+  roslaunch_add_file_check(test/test_nodelet_manager.test USE_TEST_DEPENDENCIES)
 
   add_rostest_gtest(test_cras_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
   target_link_libraries(test_cras_diag_utils cras_diag_utils ${catkin_LIBRARIES})
@@ -451,10 +456,12 @@ if (CATKIN_ENABLE_TESTING)
   if (HAS_DESIGNATED_INITIALIZERS)
     target_compile_definitions(test_cras_diag_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
   endif()
+  roslaunch_add_file_check(test/test_diag_utils.test USE_TEST_DEPENDENCIES)
   
   add_rostest_gtest(test_cras_filter_base test/test_filter_base.test test/test_filter_base.cpp)
   target_link_libraries(test_cras_filter_base cras_filter_base ${catkin_LIBRARIES})
   target_compile_options(test_cras_filter_base PRIVATE -fno-var-tracking-assignments)  # speed up build
+  # roslaunch_add_file_check(test/test_filter_base.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
   
   add_rostest_gtest(test_cras_param_utils test/test_param_utils.test test/test_param_utils.cpp)
   target_link_libraries(test_cras_param_utils cras_param_utils ${catkin_LIBRARIES})
@@ -462,10 +469,12 @@ if (CATKIN_ENABLE_TESTING)
   if (HAS_DESIGNATED_INITIALIZERS)
     target_compile_definitions(test_cras_param_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
   endif()
+  # roslaunch_add_file_check(test/test_param_utils.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
 
   add_rostest_gtest(test_cras_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
   target_link_libraries(test_cras_nodelet_get_param cras_nodelet_utils cras_param_utils ${catkin_LIBRARIES})
   target_compile_options(test_cras_nodelet_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
+  # roslaunch_add_file_check(test/test_nodelet_get_param.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
 
   # node_utils runs multiple tests from a single rostest launch file
 
@@ -485,6 +494,7 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest(test/test_node_utils.test DEPENDENCIES
     test_cras_node_utils_diagnostics
     test_cras_node_utils_get_param)
+  # roslaunch_add_file_check(test/test_node_utils.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
 
   # nodelet_utils runs multiple tests from a single rostest launch file
 
@@ -518,4 +528,5 @@ if (CATKIN_ENABLE_TESTING)
     test_cras_nodelet_log_macros
     test_cras_nodelet_with_shared_tf_buffer
     test_cras_stateful_nodelet)
+  roslaunch_add_file_check(test/test_nodelet_utils.test USE_TEST_DEPENDENCIES)
 endif()
