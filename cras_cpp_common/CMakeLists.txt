@@ -370,7 +370,7 @@ if (CATKIN_ENABLE_TESTING)
   endif()
   
   # ROS buildfarm calls this without any environment, so we have problems reading the list of packages from env
-  roslint_custom(catkin_lint "-W2" --rosdistro "${distro}" .)
+  # roslint_custom(catkin_lint "-W2" --rosdistro "${distro}" .)
   
   # Roslint C++ - checks formatting and some other rules for C++ files
   
