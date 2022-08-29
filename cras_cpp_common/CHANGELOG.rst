@@ -2,6 +2,18 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* De-flake throttle test and enable catkin_lint when it has chance to run correctly.
+* Add linters and licenses.
+* Set up roslaunch-check for test files.
+* added catkin_lint
+* added roslint, fixed issues.
+* catkin_lint, moved external folder inside include/project to avoid collisions with other projects.
+* Avoid threading errors when stopping nodes created by node_from_nodelet.
+* time_utils: Fix build on 32bit armhf.
+* Contributors: Martin Pecka
+
 2.0.1 (2022-08-26)
 ------------------
 * Added LICENSE file.

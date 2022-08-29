@@ -2,6 +2,13 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* De-flake throttle test and enable catkin_lint when it has chance to run correctly.
+* Added website links.
+* Add linters and licenses.
+* Contributors: Martin Pecka
+
 2.0.1 (2022-08-26)
 ------------------
 * Moved hack_frame_id from cras_py_common to cras_topic_tools.

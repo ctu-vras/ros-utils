@@ -2,6 +2,12 @@
 Changelog for package tf_static_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+2.0.1
+-----
+
 1.0.0
 -----
 * TF static publisher now doesn't spam if there are no transforms to publish. It also publishes only when the transforms really change.

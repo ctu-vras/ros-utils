@@ -2,6 +2,26 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added option to change_header to apply current ROS time to stamp.
+* De-flake throttle test and enable catkin_lint when it has chance to run correctly.
+* Satisfy more pedantic Noetic linter.
+* Added website links.
+* Add linters and licenses.
+* Fixed dependency.
+* Added linters.
+* Fix catkin_lint, re-enable testing.
+* Improved comments in nodelet.xml.
+* De-flake and speed up throttle test.
+* De-flake and speed up repeater test.
+* De-flake and speed up relay test.
+* De-flake and speed up filter test.
+* De-flake and speed up change_header test.
+* Avoid threading errors when stopping nodes created by node_from_nodelet.
+* Fix compilation on GCC 7.
+* Contributors: Martin Pecka
+
 2.0.1 (2022-08-26)
 ------------------
 * Moved hack_frame_id from cras_py_common to cras_topic_tools.

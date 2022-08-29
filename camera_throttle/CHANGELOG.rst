@@ -2,6 +2,12 @@
 Changelog for package camera_throttle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+2.0.1
+-----
+
 1.0.0
 -----
 * Add support for flipping camera.
