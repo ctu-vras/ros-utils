@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/param_utils.hpp>

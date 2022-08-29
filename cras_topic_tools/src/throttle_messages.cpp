@@ -11,6 +11,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>

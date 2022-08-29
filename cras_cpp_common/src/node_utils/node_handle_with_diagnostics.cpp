@@ -6,6 +6,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <memory>
 #include <string>
 
 #include <diagnostic_updater/diagnostic_updater.h>

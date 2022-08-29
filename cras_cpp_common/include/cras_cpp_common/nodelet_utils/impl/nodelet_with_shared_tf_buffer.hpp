@@ -14,6 +14,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <nodelet/nodelet.h>
 #include <tf2_ros/buffer.h>

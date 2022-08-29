@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <memory>
 #include <string>
 
 #include <nodelet/nodelet.h>

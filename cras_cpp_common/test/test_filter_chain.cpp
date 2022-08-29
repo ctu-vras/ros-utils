@@ -20,7 +20,9 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include <cras_cpp_common/filter_utils/filter_chain.hpp>
 

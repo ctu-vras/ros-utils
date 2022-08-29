@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 #include <limits>
+#include <memory>
 #include <thread>
 
 #include <cras_cpp_common/time_utils.hpp>

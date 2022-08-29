@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 #include <limits>
+#include <memory>
 #include <string>
 
 #include <ros/ros.h>
@@ -1805,12 +1806,12 @@ public:
   mutable std::string constCbEventFrame {};
 };
 
-std::string cbConstPtrFrame {};
-std::string cbPtrFrame {};
-std::string cbConstRefFrame {};
-std::string cbValueFrame {};
-std::string cbConstEventFrame {};
-std::string cbEventFrame {};
+std::string cbConstPtrFrame {};  // NOLINT  
+std::string cbPtrFrame {};  // NOLINT
+std::string cbConstRefFrame {};  // NOLINT
+std::string cbValueFrame {};  // NOLINT
+std::string cbConstEventFrame {};  // NOLINT
+std::string cbEventFrame {};  // NOLINT
 
 void cbConstPtr(const std_msgs::HeaderConstPtr& m) {cbConstPtrFrame = m->frame_id;}
 void cbPtr(const std_msgs::HeaderPtr& m) {cbPtrFrame = m->frame_id;}
@@ -1829,12 +1830,12 @@ void cbHeaderConstEvent(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray
 void cbHeaderEvent(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) {
   cbEventFrame = m.getConstMessage()->header.frame_id;}
 
-std::string optionsCbConstPtrFrame {};
-std::string optionsCbPtrFrame {};
-std::string optionsCbConstRefFrame {};
-std::string optionsCbValueFrame {};
-std::string optionsCbConstEventFrame {};
-std::string optionsCbEventFrame {};
+std::string optionsCbConstPtrFrame {};  // NOLINT
+std::string optionsCbPtrFrame {};  // NOLINT
+std::string optionsCbConstRefFrame {};  // NOLINT
+std::string optionsCbValueFrame {};  // NOLINT
+std::string optionsCbConstEventFrame {};  // NOLINT
+std::string optionsCbEventFrame {};  // NOLINT
 
 void optionsCbConstPtr(const std_msgs::HeaderConstPtr& m) {optionsCbConstPtrFrame = m->frame_id;}
 void optionsCbPtr(const std_msgs::HeaderPtr& m) {optionsCbPtrFrame = m->frame_id;}
@@ -1854,12 +1855,12 @@ void optionsHeaderCbConstEvent(const ros::MessageEvent<diagnostic_msgs::Diagnost
 void optionsHeaderCbEvent(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) {
   optionsCbEventFrame = m.getConstMessage()->header.frame_id;}
 
-std::string lambdaCbConstPtrFrame {};
-std::string lambdaCbPtrFrame {};
-std::string lambdaCbConstRefFrame {};
-std::string lambdaCbValueFrame {};
-std::string lambdaCbConstEventFrame {};
-std::string lambdaCbEventFrame {};
+std::string lambdaCbConstPtrFrame {};  // NOLINT
+std::string lambdaCbPtrFrame {};  // NOLINT
+std::string lambdaCbConstRefFrame {};  // NOLINT
+std::string lambdaCbValueFrame {};  // NOLINT
+std::string lambdaCbConstEventFrame {};  // NOLINT
+std::string lambdaCbEventFrame {};  // NOLINT
 
 auto lambdaCbConstPtr = [](const std_msgs::HeaderConstPtr& m){lambdaCbConstPtrFrame = m->frame_id;};
 auto lambdaCbPtr = [](const std_msgs::HeaderPtr& m){lambdaCbPtrFrame = m->frame_id;};
@@ -1880,12 +1881,12 @@ auto lambdaHeaderCbConstEvent = [](const ros::MessageEvent<diagnostic_msgs::Diag
 auto lambdaHeaderCbEvent = [](const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) {
   lambdaCbEventFrame = m.getConstMessage()->header.frame_id;};
 
-std::string lambdaHintsConstPtrFrame {};
-std::string lambdaHintsPtrFrame {};
-std::string lambdaHintsConstRefFrame {};
-std::string lambdaHintsValueFrame {};
-std::string lambdaHintsConstEventFrame {};
-std::string lambdaHintsEventFrame {};
+std::string lambdaHintsConstPtrFrame {};  // NOLINT
+std::string lambdaHintsPtrFrame {};  // NOLINT
+std::string lambdaHintsConstRefFrame {};  // NOLINT
+std::string lambdaHintsValueFrame {};  // NOLINT
+std::string lambdaHintsConstEventFrame {};  // NOLINT
+std::string lambdaHintsEventFrame {};  // NOLINT
 
 auto lambdaHintsConstPtr = [](const std_msgs::HeaderConstPtr& m){lambdaHintsConstPtrFrame = m->frame_id;};
 auto lambdaHintsPtr = [](const std_msgs::HeaderPtr& m){lambdaHintsPtrFrame = m->frame_id;};
@@ -1908,12 +1909,12 @@ auto lambdaHeaderHintsConstEvent = [](const ros::MessageEvent<diagnostic_msgs::D
 auto lambdaHeaderHintsEvent = [](const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) {
   lambdaHintsEventFrame = m.getConstMessage()->header.frame_id;};
 
-std::string boostLambdaConstPtrFrame {};
-std::string boostLambdaPtrFrame {};
-std::string boostLambdaConstRefFrame {};
-std::string boostLambdaValueFrame {};
-std::string boostLambdaConstEventFrame {};
-std::string boostLambdaEventFrame {};
+std::string boostLambdaConstPtrFrame {};  // NOLINT
+std::string boostLambdaPtrFrame {};  // NOLINT
+std::string boostLambdaConstRefFrame {};  // NOLINT
+std::string boostLambdaValueFrame {};  // NOLINT
+std::string boostLambdaConstEventFrame {};  // NOLINT
+std::string boostLambdaEventFrame {};  // NOLINT
 
 boost::function<void(const std_msgs::HeaderConstPtr&)> boostLambdaConstPtr =  // NOLINT
   [](const std_msgs::HeaderConstPtr& m){boostLambdaConstPtrFrame = m->frame_id;};
@@ -1944,18 +1945,18 @@ boost::function<void(const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>&)
   [](const ros::MessageEvent<diagnostic_msgs::DiagnosticArray>& m) {
     boostLambdaEventFrame = m.getConstMessage()->header.frame_id;};
 
-std::string noCaptureLambdaConstPtrFrame {};
-std::string noCaptureLambdaPtrFrame {};
-std::string noCaptureLambdaConstRefFrame {};
-std::string noCaptureLambdaValueFrame {};
-std::string noCaptureLambdaConstEventFrame {};
-std::string noCaptureLambdaEventFrame {};
-std::string valueCaptureLambdaConstPtrFrame {};
-std::string valueCaptureLambdaPtrFrame {};
-std::string valueCaptureLambdaConstRefFrame {};
-std::string valueCaptureLambdaValueFrame {};
-std::string valueCaptureLambdaConstEventFrame {};
-std::string valueCaptureLambdaEventFrame {};
+std::string noCaptureLambdaConstPtrFrame {};  // NOLINT
+std::string noCaptureLambdaPtrFrame {};  // NOLINT
+std::string noCaptureLambdaConstRefFrame {};  // NOLINT
+std::string noCaptureLambdaValueFrame {};  // NOLINT
+std::string noCaptureLambdaConstEventFrame {};  // NOLINT
+std::string noCaptureLambdaEventFrame {};  // NOLINT
+std::string valueCaptureLambdaConstPtrFrame {};  // NOLINT
+std::string valueCaptureLambdaPtrFrame {};  // NOLINT
+std::string valueCaptureLambdaConstRefFrame {};  // NOLINT
+std::string valueCaptureLambdaValueFrame {};  // NOLINT
+std::string valueCaptureLambdaConstEventFrame {};  // NOLINT
+std::string valueCaptureLambdaEventFrame {};  // NOLINT
 
 TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesNoHeader)  // NOLINT
 {

@@ -13,6 +13,7 @@
 #include <ros/topic_manager.h>
 #undef private
 
+#include <memory>
 #include <string>
 
 #include <ros/ros.h>

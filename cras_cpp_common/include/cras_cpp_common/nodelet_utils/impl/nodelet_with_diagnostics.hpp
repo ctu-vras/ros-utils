@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>

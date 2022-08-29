@@ -15,7 +15,7 @@
 namespace cras
 {
 
-const std::string NOT_SET {"getNameFn is not set!"};
+const std::string NOT_SET {"getNameFn is not set!"};  // NOLINT
 
 NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNameFn)
 {

@@ -11,6 +11,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include <std_msgs/Bool.h>
@@ -24,7 +25,7 @@ namespace cras
 namespace priority_mux
 {
 
-static const ::std::string NONE_TOPIC = "__none";
+static const ::std::string NONE_TOPIC = "__none";  // NOLINT
 
 struct TopicConfig
 {

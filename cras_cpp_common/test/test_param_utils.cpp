@@ -11,7 +11,9 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <ros/ros.h>

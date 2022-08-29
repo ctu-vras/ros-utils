@@ -11,6 +11,7 @@
 #include <cras_cpp_common/tf2_utils.hpp>
 #include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
 
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>

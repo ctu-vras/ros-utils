@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>

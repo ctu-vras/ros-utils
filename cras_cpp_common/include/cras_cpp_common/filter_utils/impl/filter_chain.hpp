@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_set>
