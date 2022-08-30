@@ -24,7 +24,7 @@ class Repeat(unittest.TestCase):
         rospy.init_node(NAME)
 
         self.start_timeout = float(rospy.get_param("~start_timeout", 5))
-        self.test_duration = float(rospy.get_param("~test_duration", 5))
+        self.test_duration = float(rospy.get_param("~test_duration", 10))
 
         self.msg_counts = dict()
 
