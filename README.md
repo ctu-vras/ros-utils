@@ -1,5 +1,27 @@
 # ros-utils
 
-Various ROS utilities
+<img src="ctu-fee.jpg" alt="CTU-CRAS-Norlab team on DARPA SubT Challenge" width="200" />
+
+Various ROS utilities and building blocks developed by [Center for Robotics and Autonomous Systems (CRAS)](https://robotics.fel.cvut.cz/cras/) at [Faculty of Electrical Engineering](https://fel.cvut.cz/) of [Czech Technical University in Prague](https://www.cvut.cz).
+
+Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean Challenge](https://robotics.fel.cvut.cz/cras/darpa-subt/).
 
 * `cras_cpp_common`: convenience utilities for ROS programming in C++
+* `cras_py_common`: convenience utilities for ROS programming in Python
+* `cras_topic_tools`: nodes and nodeletes for safe and efficient manipulation with topics
+
+## Support and Build Status
+
+This package is supported on Melodic and Noetic until their End of Life (and maybe later). It is occasionally tested with non-default GCC versions like Melodic+GCC8 or Noetic+GCC11.
+
+Development versions:
+[![CI](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml)
+[![Dev melodic](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/badge/icon?subject=melodic+ubuntu)](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/)
+[![Dev noetic ubuntu](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/badge/icon?subject=noetic+ubuntu)](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/)
+[![Dev noetic debian](https://build.ros.org/job/Ndev_db__cras_ros_utils__debian_buster_amd64/badge/icon?subject=noetic+debian)](https://build.ros.org/job/Ndev_db__cras_ros_utils__debian_buster_amd64/)
+
+Releases:
+[![Melodic version](https://img.shields.io/ros/v/melodic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-melodic-cras-cpp-common/)
+[![Noetic version](https://img.shields.io/ros/v/noetic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-noetic-cras-cpp-common/)
+
+<img src="ctu-cras-norlab-team.jpg" alt="CTU-CRAS-Norlab team on DARPA SubT Challenge" width="75%" />
