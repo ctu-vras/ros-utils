@@ -67,10 +67,6 @@ __param_conversions = {  # Dict[Type, Dict[Type, Callable[[Type], Type]]]
     int: {
         bool: int,
     },
-    long: {
-        bool: long,
-        int: long,
-    },
     float: {
         int: float,
     },
