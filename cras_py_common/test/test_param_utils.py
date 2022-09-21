@@ -586,6 +586,32 @@ class NodeUtils(unittest.TestCase):
         quat_almost_equal(
             get_param("test_dict_config/params/quat9", result_type=gm.Quaternion), gm.Quaternion(1, 0, 0, 0))
 
+        self.assertEqual(
+            get_param("test_dict_config/params/quat_dict_4_full", result_type=gm.Quaternion), gm.Quaternion(1, 0, 0, 0))
+        self.assertEqual(
+            get_param("test_dict_config/params/quat_dict_4_part", result_type=gm.Quaternion), gm.Quaternion(1, 0, 0, 0))
+        self.assertRaises(GetParamException, get_param, "test_dict_config/params/quat_dict_4_y_only",
+                          throw_if_convert_fails=True, result_type=gm.Quaternion)
+        quat_almost_equal(
+            get_param("test_dict_config/params/quat_dict_3_short_full", result_type=gm.Quaternion),
+            gm.Quaternion(0, 1, 0, 0))
+        quat_almost_equal(
+            get_param("test_dict_config/params/quat_dict_3_short_part", result_type=gm.Quaternion),
+            gm.Quaternion(0, 1, 0, 0))
+        quat_almost_equal(
+            get_param("test_dict_config/params/quat_dict_3_long_full", result_type=gm.Quaternion),
+            gm.Quaternion(0, 1, 0, 0))
+        quat_almost_equal(
+            get_param("test_dict_config/params/quat_dict_3_long_part", result_type=gm.Quaternion),
+            gm.Quaternion(0, 1, 0, 0))
+        quat_almost_equal(
+            get_param("test_dict_config/params/quat_dict_3_long_yaw_only", result_type=gm.Quaternion),
+            gm.Quaternion(0, 0, 1, 0))
+        self.assertRaises(GetParamException, get_param, "test_dict_config/params/quat_dict_wrong",
+                          throw_if_convert_fails=True, result_type=gm.Quaternion)
+        self.assertRaises(GetParamException, get_param, "test_dict_config/params/quat_dict_wrong_mixed",
+                          throw_if_convert_fails=True, result_type=gm.Quaternion)
+
         t = get_param("test_dict_config/params/tf7", result_type=gm.Pose)
         self.assertEqual(t.position, gm.Point(1, 2, 3))
         self.assertEqual(t.orientation, gm.Quaternion(1, 0, 0, 0))
@@ -609,6 +635,22 @@ class NodeUtils(unittest.TestCase):
         t = get_param("test_dict_config/params/tf16", result_type=gm.Transform)
         self.assertEqual(t.translation, gm.Vector3(1, 2, 3))
         quat_almost_equal(t.rotation, gm.Quaternion(1, 0, 0, 0))
+
+        t = get_param("test_dict_config/params/pose_dict_lists", result_type=gm.Pose)
+        self.assertEqual(t.position, gm.Point(1, 2, 3))
+        quat_almost_equal(t.orientation, gm.Quaternion(1, 0, 0, 0))
+
+        t = get_param("test_dict_config/params/pose_dict_dicts", result_type=gm.Pose)
+        self.assertEqual(t.position, gm.Point(1, 2, 3))
+        quat_almost_equal(t.orientation, gm.Quaternion(0, 0, 0, 1))
+
+        t = get_param("test_dict_config/params/transform_dict_lists", result_type=gm.Transform)
+        self.assertEqual(t.translation, gm.Vector3(1, 2, 3))
+        quat_almost_equal(t.rotation, gm.Quaternion(1, 0, 0, 0))
+
+        t = get_param("test_dict_config/params/transform_dict_dicts", result_type=gm.Transform)
+        self.assertEqual(t.translation, gm.Vector3(1, 2, 3))
+        quat_almost_equal(t.rotation, gm.Quaternion(0, 0, 0, 1))
 
 
 if __name__ == '__main__':

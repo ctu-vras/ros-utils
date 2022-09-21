@@ -31,3 +31,59 @@ Release jobs Noetic
 [![Bin ubuntu noetic-armhf](https://build.ros.org/job/Nbin_ufhf_uFhf__cras_py_common__ubuntu_focal_armhf__binary/badge/icon?subject=focal+armhf)](https://build.ros.org/job/Nbin_ufhf_uFhf__cras_py_common__ubuntu_focal_armhf__binary/)
 [![Bin debian noetic-amd64](https://build.ros.org/job/Nbin_db_dB64__cras_py_common__debian_buster_amd64__binary/badge/icon?subject=buster+amd64)](https://build.ros.org/job/Nbin_db_dB64__cras_py_common__debian_buster_amd64__binary/)
 [![Bin debian noetic-arm64](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_py_common__debian_buster_arm64__binary/badge/icon?subject=buster+arm64)](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_py_common__debian_buster_arm64__binary/)
+
+## List of Provided Modules
+
+The most useful functions and classes from these modules are available directly from the `cras` package, i.e.
+
+```python
+from cras import to_str
+# instead of
+from cras.string_utils import to_str
+```
+
+- `geometry_utils`: Finally THE module providing easy and foolproof conversion between quaternions and roll/pitch/yaw notation.
+- `log_utils`: Some convenience for `rospy` logging. This is mostly an internal library, but it can be used elsewhere, too.
+- `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
+- `string_utils`: Universal `to_str()` that converts almost anything to a sensible string.
+- `test_utils`: Utilities for writing unit tests, e.g. a tool that can "read" what was written by `rospy.loginfo()`.
+- `time_utils`: Conversions between `rospy.Rate` and frequency. `rospy.Rate` equality comparison. Min/max time and duration constants.
+
+## `param_utils`: Parameter Reading Helpers
+
+`param_utils` provide a type-safe, unified and highly configurable interface for reading ROS parameters. Read a numpy matrix, vector of unsigned ints, `rospy.Duration` or `geometry_msgs.msg.Vector3` directly without the need to write a single line of conversion code or value checking. Type of the value to read is automatically determined either from the provided default value, or from `result_type` parameter.
+
+Example usage:
+
+```python
+from cras import get_param, GetParamException
+from geometry_msgs.msg import Vector3
+
+# read array of 3 doubles from parameter server into a geometry_msgs.msg.Vector3, defaulting to the specified vector if not set.
+gravity = get_param("gravity", Vector3(0, 0, -9.81), "m.s^-2")
+
+# required parameters are specified by not having a default; if you still want conversion to some type, use result_type
+try:
+    gravity2 = get_param("gravity", "m.s^-2", result_type=Vector3)
+except GetParamException as e:
+    # the exception is raised if the required parameter is not set
+    # e.info contains details about the unsuccessful lookup
+    print(e.info.message)
+```
+
+You can also configure the parameter lookup behavior, e.g. to throw exception if the value cannot be converted to the requested type (normally, the default value is used in such case):
+
+```python
+# will throw GetParamException if int_param has a value different from 0 and 1
+from cras import get_param
+bool_param = get_param("int_param", False, throw_if_convert_fails=True)
+```
+
+Finally, there is also a more verbose version of `get_param()` that tells more about how the lookup went:
+
+```python
+from cras import get_param_verbose
+res = get_param_verbose("int", 0)
+int_param = res.value
+was_default_used = res.info.default_used
+```

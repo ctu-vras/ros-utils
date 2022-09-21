@@ -1,7 +1,26 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
-"""Utilities for working with ROS parameters."""
+"""Utilities for working with ROS parameters.
+
+Package cras.impl contains some predefined advanced parameter parsers. Other advanced parsers can be registered using
+:func:`register_param_conversion()`.
+
+The predefined conversions can parse:
+
+- :class:`rospy.Duration` from a float or from dict {'sec', 'nsec'}
+- :class:`rospy.Time` from a float or from dict {'sec', 'nsec'}
+- :class:`geometry_msgs.msg.Vector3` from a 3-tuple or from dict {'x', 'y', 'z'}
+- :class:`geometry_msgs.msg.Point` from a 3-tuple or from dict {'x', 'y', 'z'}
+- :class:`geometry_msgs.msg.Point32` from a 3-tuple or from dict {'x', 'y', 'z'}
+- :class:`geometry_msgs.msg.Pose2D` from a 3-tuple or from dict {'x', 'y', 'theta'}
+- :class:`geometry_msgs.msg.Quaternion` from a 4-tuple (`w` last!) or from dict {'x', 'y', 'z', 'w'}, or from
+    {'r', 'p', 'y'} or from {'roll', 'pitch', 'yaw'}. Any missing dict key will be replaced by 0. Beware that if you
+    specify only 'y' key, it is ambiguous. The quaternion is not explicitly normalized (when specified with 4 elements).
+- :class:`geometry_msgs.msg.Pose` from a 6-tuple (xyzrpy), 7-tuple (xyzxyzw), 16-tuple (row-major homogeneous transform
+    matrix) or from dict {'position', 'orientation'}, where 'position' is parsed as `Point` and
+    'orientation' as `Quaternion` (by any of their supported specifications).
+"""
 
 from functools import partial
 

@@ -3,6 +3,9 @@
 
 """Utilities for more convenient usage of rospy."""
 
+from .geometry_utils import quat_get_rpy, quat_get_roll, quat_get_pitch, quat_get_yaw, \
+    quat_tuple_from_rpy, quat_msg_from_rpy
+
 from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
     log_functions, log_throttle_functions, log_throttle_identical_functions, log_once_functions, log_levels, \
     log_level_names, log_level_ros_to_py_name, log_level_py_to_ros, log_level_ros_to_py, log_level_py_name_to_ros
