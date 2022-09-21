@@ -157,7 +157,7 @@ def get_param_verbose(param_name, default_value=None, unit="", print_default_as_
                 result.info.message_level = Log.ERROR
                 # If we did not find a convert function, e.message is empty and expected_types are not.
                 if expected_types is not None:
-                    types = ", ".join(to_str(type) for type in expected_types)
+                    types = ", ".join(sorted([to_str(type) for type in expected_types]))
                     result.info.message = \
                         "%s: Parameter %s found, but it has wrong XmlRpc type. Expected one of %s, got type %s with " \
                         "value %s." % (rospy.get_name(), param_name, types, value_type.__name__, to_str(value))
@@ -166,7 +166,7 @@ def get_param_verbose(param_name, default_value=None, unit="", print_default_as_
                         "%s: Parameter %s found with correct XmlRpc type %s and value %s, but its conversion to " \
                         "type %s has failed due to the following errors: %s." % (
                             rospy.get_name(), param_name, to_str(value_type), to_str(value), to_str(target_type),
-                            e.message)
+                            str(e))
                 if throw_if_convert_fails or default_value is None:
                     if default_value is None:
                         result.info.required_missing = True

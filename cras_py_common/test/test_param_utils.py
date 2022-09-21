@@ -226,7 +226,7 @@ class NodeUtils(unittest.TestCase):
             self.assertEqual("/param_utils_test: Parameter test_dict_config/params/int_2 found with correct XmlRpc "
                              "type int and value 2, but its conversion to type bool has failed due to the following "
                              "errors: Cannot convert int value 2 to bool.", e.info.message)
-            self.assertEqual(e.info.message, e.message)
+            self.assertEqual(e.info.message, str(e))
 
         try:
             get_param("test_dict_config/params/int_2", throw_if_convert_fails=True, result_type=bool)
@@ -240,7 +240,7 @@ class NodeUtils(unittest.TestCase):
             self.assertEqual("/param_utils_test: Parameter test_dict_config/params/int_2 found with correct XmlRpc "
                              "type int and value 2, but its conversion to type bool has failed due to the following "
                              "errors: Cannot convert int value 2 to bool.", e.info.message)
-            self.assertEqual(e.info.message, e.message)
+            self.assertEqual(e.info.message, str(e))
 
     def test_get_param_verbose(self):
         self.assertIsInstance(get_param_verbose("test_dict_config"), GetParamResult)
@@ -411,9 +411,14 @@ class NodeUtils(unittest.TestCase):
             get_param("test_dict_config/nonexistent", CustomClass(), unit="units")
 
     def test_get_param_custom_conversion(self):
+        err = ""
+        try:
+            CustomClass(1)
+        except Exception as e:
+            err = str(e)
         msg = "/param_utils_test: Parameter test_dict_config/params/double_1 found with correct XmlRpc type float " \
-              "and value 1.0, but its conversion to type CustomClass has failed due to the following errors: " \
-              "object() takes no parameters."
+              "and value 1.0, but its conversion to type CustomClass has failed due to the following " \
+              "errors: %s." % (err,)
         with RosconsoleCapture(self, Log.ERROR, msg):
             self.assertRaises(GetParamException, get_param, "test_dict_config/params/double_1", result_type=CustomClass)
 

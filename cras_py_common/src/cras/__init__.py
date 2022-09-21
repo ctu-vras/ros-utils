@@ -10,9 +10,9 @@ from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
 from .param_utils import get_param, get_param_verbose, GetParamException, GetParamResult, GetParamResultInfo, \
     register_param_conversion, register_default_unit
 
-import impl.param_utils_geometry_msgs
-import impl.param_utils_numpy
-import impl.param_utils_rospy
+import cras.impl.param_utils_geometry_msgs
+import cras.impl.param_utils_numpy
+import cras.impl.param_utils_rospy
 
 from .time_utils import DURATION_MIN, DURATION_MAX, TIME_MIN, TIME_MAX, slowest_rate, slowest_negative_rate,\
     frequency, safe_rate, rate_equals

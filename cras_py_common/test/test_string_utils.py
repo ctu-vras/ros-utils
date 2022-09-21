@@ -39,8 +39,8 @@ class StringUtils(unittest.TestCase):
         self.assertEqual("1.000000001", to_str(Time(1, 1)))
         self.assertEqual("1.100000000", to_str(Time(1, 100000000)))
         self.assertEqual("1.0", to_str(Rate(1)))
-        self.assertEqual("10.0", to_str(Rate(10)))
-        self.assertEqual("-10.0", to_str(Rate(-10)))
+        self.assertEqual("10.0", to_str(Rate(10))[:4])
+        self.assertEqual("-10.0", to_str(Rate(-10))[:5])  # on Noetic, the number is not exactly 10
 
         # use of __name__ if defined
         self.assertEqual("int", to_str(type(1)))
