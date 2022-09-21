@@ -70,13 +70,13 @@ class Repeat(unittest.TestCase):
         self.assertAlmostEqual(self.get_freq("node_out_param"), 13.0, delta=3.0)
         # Default rate is 1.0
         self.assertAlmostEqual(self.get_freq("node_out_invalid_rate"), 1.0, delta=0.5)
-        self.assertAlmostEqual(self.get_freq("node_out_fast"), 20.0, delta=3.0)
+        self.assertAlmostEqual(self.get_freq("node_out_fast"), 20.0, delta=4.0)
         # Timer should fire each 0.2 s, but each 0.1 s a message arrives and resets it.
         self.assertAlmostEqual(self.get_freq("node_out_fast_reset_lower"), 10.0, delta=3.0)
         # Timer should fire each 0.06 s and each 0.1 s a message arrives and resets it. So we +- sum the rates.
-        self.assertAlmostEqual(self.get_freq("node_out_fast_reset_higher"), 22.5, delta=3.0)
+        self.assertAlmostEqual(self.get_freq("node_out_fast_reset_higher"), 22.5, delta=5.5)
         self.assertEqual(self.get_freq("node_out_fast_timer_reset_lower"), 0)
-        self.assertAlmostEqual(self.get_freq("node_out_fast_timer_reset_higher"), 90.0, delta=5.0)
+        self.assertAlmostEqual(self.get_freq("node_out_fast_timer_reset_higher"), 90.0, delta=8.0)
 
     def always_count_msg(self, topic, _):
         self.msg_counts[topic] += 1
