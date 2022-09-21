@@ -47,7 +47,7 @@ import rospy
 from roslib.message import get_message_class
 from std_msgs.msg import Header
 
-from cras.node_utils import get_param
+import cras
 
 pub = None
 
@@ -138,10 +138,10 @@ if __name__ == "__main__":
         filter_fn_str = argv[3]
 
     type_check_ok = None
-    pass_raw_buffer = get_param("~pass_raw_buffer", False)
-    pass_only_header = get_param("~pass_only_header", False)
-    in_queue_size = get_param("~in_queue_size", 10, "messages")
-    out_queue_size = get_param("~out_queue_size", 10, "messages")
+    pass_raw_buffer = cras.get_param("~pass_raw_buffer", False)
+    pass_only_header = cras.get_param("~pass_only_header", False)
+    in_queue_size = cras.get_param("~in_queue_size", 10, "messages")
+    out_queue_size = cras.get_param("~out_queue_size", 10, "messages")
 
     if pass_only_header and pass_raw_buffer:
         rospy.logfatal("Cannot set both pass_raw_buffer and pass_only_header.")

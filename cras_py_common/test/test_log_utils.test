@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <test test-name="log_utils_test" pkg="cras_py_common" type="test_log_utils.py" />
+</launch>

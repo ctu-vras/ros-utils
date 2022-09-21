@@ -28,7 +28,7 @@ Release jobs Noetic
 
 ## Provided Nodes and Nodelets
 
-Here is an overview of the provided nodes and nodelets. See their API docs (link TBD) for details.
+Here is an overview of the provided nodes and nodelets. See their [API docs](https://docs.ros.org/en/api/cras_topic_tools/html/) for details.
 Most of these nodes/nodelets are message-type-agnostic, but they may differ between messages that have or do not have a `std_msgs/Header header` field.
 
 - `change_header`: Allows modifying headers of messages (frame ID, timestamp).

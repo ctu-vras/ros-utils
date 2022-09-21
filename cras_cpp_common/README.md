@@ -4,7 +4,7 @@ A Czech-army knife for ROS code written in C++.
 
 The aim of this package is to provide some missing utility functions to roscpp. Using libraries from this package, you should be able to write more efficient, safer and less error-prone code without much boilerplate. As this package is intended to handle a lot of the boring code for you "behind the scenes", ubiquitous effort was put into unit-testing everything, so that you can rely on the provided code without the usual fear whether it works or not.
 
-This readme shortly introduces the provided libraries. Detailed documentation can be found in the comments in code and in the API docs (link TBD). Examples of usage can be found in the dependent packages from `ros-utils`, and in the unit tests.
+This readme shortly introduces the provided libraries. Detailed documentation can be found in the comments in code and in the [API docs](https://docs.ros.org/en/api/cras_cpp_common/html/). Examples of usage can be found in the dependent packages from `ros-utils`, and in the unit tests.
 
 Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean Challenge](https://robotics.fel.cvut.cz/cras/darpa-subt/).
 
