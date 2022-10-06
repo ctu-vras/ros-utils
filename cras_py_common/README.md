@@ -47,7 +47,7 @@ from cras.string_utils import to_str
 - `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
 - `string_utils`: Universal `to_str()` that converts almost anything to a sensible string.
 - `test_utils`: Utilities for writing unit tests, e.g. a tool that can "read" what was written by `rospy.loginfo()`.
-- `time_utils`: Conversions between `rospy.Rate` and frequency. `rospy.Rate` equality comparison. Min/max time and duration constants.
+- `time_utils`: Conversions between `rospy.Rate` and frequency. `rospy.Rate` equality comparison. Min/max time and duration constants. `WallTime`, `WallRate`, `SteadyTime`, `SteadyRate`, and a `Timer` that can use these custom rates.
 
 ## `param_utils`: Parameter Reading Helpers
 

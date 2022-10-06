@@ -5,12 +5,13 @@
 import genpy
 import rospy
 
-from .time_utils import frequency
+from .time_utils import frequency, WallTime, WallRate, SteadyTime, SteadyRate
 
 
 STRING_TYPE = str
 """A type that represents all string types, compatible with Py2 and Py3"""
 try:
+    # noinspection PyCompatibility
     STRING_TYPE = basestring
 except NameError:
     pass
@@ -30,6 +31,10 @@ __to_str_functions = {
     rospy.Time: __time_val_to_str,
     rospy.Duration: __time_val_to_str,
     rospy.Rate: lambda r: str(frequency(r)),
+    WallTime: __time_val_to_str,
+    SteadyTime: __time_val_to_str,
+    WallRate: lambda r: str(frequency(r)),
+    SteadyRate: lambda r: str(frequency(r)),
 }
 
 
@@ -44,8 +49,9 @@ def register_to_str(data_type, fn):
 
 __numpy_array_type = None
 try:
-    import numpy as np
-    __numpy_array_type = np.ndarray
+    # noinspection PyUnresolvedReferences
+    import numpy
+    __numpy_array_type = numpy.ndarray
 except ImportError:
     pass
 

@@ -19,6 +19,7 @@ if (CATKIN_ENABLE_TESTING)
   endif()
 
   add_rostest(test/test_log_utils.test)
+  add_rostest(test/test_node_utils.test)
   add_rostest(test/test_param_utils.test)
 
   catkin_add_nosetests(test/test_geometry_utils.py)
