@@ -2,6 +2,12 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* cras_py_common: Extended functionality to get closer to cras_cpp_common.
+* Improved readmes and added more badges to them.
+* Contributors: Martin Pecka
+
 2.0.2 (2022-08-29)
 ------------------
 * De-flake throttle test and enable catkin_lint when it has chance to run correctly.

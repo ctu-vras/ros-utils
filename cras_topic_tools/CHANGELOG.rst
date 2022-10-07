@@ -2,6 +2,13 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Lower test_repeat thresholds even more, OSRF buildfarm is really bad at this
+* cras_py_common: Extended functionality to get closer to cras_cpp_common.
+* Improved readmes and added more badges to them.
+* Contributors: Martin Pecka
+
 2.0.2 (2022-08-29)
 ------------------
 * Added option to change_header to apply current ROS time to stamp.
