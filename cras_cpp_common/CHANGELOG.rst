@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.3 (2022-10-07)
+------------------
 * cras_py_common: Extended functionality to get closer to cras_cpp_common.
 * Improved readmes and added more badges to them.
 * Contributors: Martin Pecka

@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.3 (2022-10-07)
+------------------
 * Improved time_utils, added node_utils.
 * Added geometry_utils.py.
 * Remove support for long integer type to achieve compatibility with Python 3.
