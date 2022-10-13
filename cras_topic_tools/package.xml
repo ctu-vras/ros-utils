@@ -1,16 +1,46 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>cras_topic_tools</name>
-  <version>1.0.0</version>
-  <description>topic_tools improvements</description>
+  <version>2.0.3</version>
+  <description>Nodes and nodeletes for safe and efficient manipulation with topics</description>
 
   <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
 
   <license>BSD</license>
 
+  <url type="website">https://wiki.ros.org/cras_topic_tools</url>
+  <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
+  <url type="repository">https://github.com/ctu-vras/ros-utils</url>
+
   <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>cras_cpp_common</depend>
+  
+  <build_depend>boost</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>topic_tools</build_depend>
+
+  <build_export_depend>boost</build_export_depend>
+
+  <exec_depend>cras_py_common</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>topic_tools</exec_depend>
+
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-catkin-lint</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-lint</test_depend>
+  <test_depend>roslaunch</test_depend>
+  <test_depend>roslint</test_depend>
+  <test_depend>rostest</test_depend>
+  <test_depend>rostopic</test_depend>
+  <test_depend>std_msgs</test_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet.xml" />
+  </export>
 </package>

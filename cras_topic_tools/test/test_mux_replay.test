@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="/use_sim_time" value="false" />
+
+    <node name="mux" pkg="topic_tools" type="mux" args="out in1 in2" />
+
+    <node name="mux_replay" pkg="cras_topic_tools" type="mux_replay" />
+
+    <test test-name="replay" pkg="cras_topic_tools" type="test_mux_replay" retry="1" />
+
+</launch>

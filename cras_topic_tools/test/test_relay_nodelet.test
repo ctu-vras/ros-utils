@@ -1,0 +1,38 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub" args="pub -r 10 node_in std_msgs/String chatter" />
+
+    <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
+
+    <!-- Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="relay_input" args="load cras_topic_tools/relay manager">
+        <remap from="~input" to="node_in" />
+    </node>
+
+    <!-- Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="relay" args="load cras_topic_tools/relay manager node_in" />
+
+    <!-- Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="relay_explicit" args="load cras_topic_tools/relay manager node_in node_out" />
+
+    <!-- Lazy + Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="relay_input_lazy" args="load cras_topic_tools/relay manager">
+        <remap from="~input" to="node_in" />
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Lazy + Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="relay_lazy" args="load cras_topic_tools/relay manager node_in_lazy">
+        <param name="lazy" value="true" />
+        <remap from="node_in_lazy" to="node_in" />
+    </node>
+
+    <!-- Lazy + Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="relay_explicit_lazy" args="load cras_topic_tools/relay manager node_in node_out_lazy">
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Run the test suite -->
+    <test test-name="relay_test" pkg="cras_topic_tools" type="test_relay" />
+</launch>

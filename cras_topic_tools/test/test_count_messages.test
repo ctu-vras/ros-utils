@@ -1,0 +1,28 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="cras_topic_tools" type="count_messages" name="count">
+        <remap from="~input" to="node_in" />
+    </node>
+    <test test-name="count_messages_test" pkg="cras_topic_tools" type="test_count_messages" retry="3">
+        <param name="publisher_topic" value="node_in"/>
+        <param name="wait_time" value="10.0" />
+        <remap from="~count" to="/count/count" />
+        <remap from="~bytes" to="/count/bytes" />
+        <remap from="reset" to="/count/reset" />
+    </test>
+
+    <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
+
+    <node pkg="nodelet" type="nodelet" name="count_nodelet" args="load cras_topic_tools/count_messages manager">
+        <remap from="~input" to="nodelet_in" />
+    </node>
+    <test test-name="count_messages_nodelet_test" pkg="cras_topic_tools" type="test_count_messages" retry="3">
+        <param name="publisher_topic" value="nodelet_in"/>
+        <param name="wait_time" value="10.0" />
+        <remap from="~count" to="/count_nodelet/count" />
+        <remap from="~bytes" to="/count_nodelet/bytes" />
+        <remap from="reset" to="/count_nodelet/reset" />
+    </test>
+
+</launch>

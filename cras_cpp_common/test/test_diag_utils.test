@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <test test-name="test_diag_utils" pkg="cras_cpp_common" type="test_cras_diag_utils"/>
+</launch>

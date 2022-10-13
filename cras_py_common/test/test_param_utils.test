@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <rosparam command="load" file="$(dirname)/test_params.yaml" />
+    <test test-name="param_utils_test" pkg="cras_py_common" type="test_param_utils.py" />
+</launch>

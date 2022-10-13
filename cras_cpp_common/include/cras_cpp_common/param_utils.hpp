@@ -1,331 +1,531 @@
 #pragma once
 
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/xmlrpc_value_traits.hpp>
+/**
+ * \file
+ * \brief This file provides helper methods easing access to parameters passed to nodes, nodelets and filters.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
 
+#include <functional>
 #include <list>
+#include <map>
+#include <memory>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
-/**
- * This file provides helper methods easing access to parameters passed to nodes, nodelets and filters.
- */
+#include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/optional.hpp>
+#include <cras_cpp_common/string_utils.hpp>
+#include <cras_cpp_common/type_utils.hpp>
+#include <cras_cpp_common/xmlrpc_value_utils.hpp>
+#include <cras_cpp_common/param_utils/get_param_adapter.hpp>
+#include <cras_cpp_common/param_utils/get_param_options.hpp>
+#include <cras_cpp_common/param_utils/get_param_result.hpp>
 
-namespace cras {
-
-class BoundParamHelper;
-typedef std::shared_ptr<BoundParamHelper> BoundParamHelperPtr;
-
-struct RawGetParamAdapter {
-  virtual bool getParam(const std::string &, bool&) const = 0;
-  virtual bool getParam(const std::string &, int&) const = 0;
-  virtual bool getParam(const std::string &, float&) const = 0;
-  virtual bool getParam(const std::string &, double&) const = 0;
-  virtual bool getParam(const std::string &, std::string&) const = 0;
-  virtual bool getParam(const std::string &, std::vector<bool>&) const = 0;
-  virtual bool getParam(const std::string &, std::vector<int>&) const = 0;
-  virtual bool getParam(const std::string &, std::vector<float>&) const = 0;
-  virtual bool getParam(const std::string &, std::vector<double>&) const = 0;
-  virtual bool getParam(const std::string &, std::vector<std::string>&) const = 0;
-  virtual bool getParam(const std::string &, std::map<std::string, bool>&) const = 0;
-  virtual bool getParam(const std::string &, std::map<std::string, int>&) const = 0;
-  virtual bool getParam(const std::string &, std::map<std::string, float>&) const = 0;
-  virtual bool getParam(const std::string &, std::map<std::string, double>&) const = 0;
-  virtual bool getParam(const std::string &, std::map<std::string, std::string>&) const = 0;
-  virtual bool getParam(const std::string &, XmlRpc::XmlRpcValue&) const = 0;
-  virtual std::string getNamespace() const = 0;
-  virtual bool hasParam(const std::string&) const = 0;
-  virtual std::shared_ptr<RawGetParamAdapter> getNamespaced(const std::string& ns) const = 0;
-
-  // these would normally be written as specializations in ParamHelper, but C++ forbids partial function specialization
-  template<typename T>
-  bool getParam(const std::string& name, std::set<T>& set) const {
-    std::vector<T> vector;
-    const auto success = this->getParam(name, vector);
-    if (!success)
-      return false;
-    set.clear();
-    set.insert(vector.begin(), vector.end());
-    return true;
-  }
-
-  template<typename T>
-  bool getParam(const std::string& name, std::unordered_set<T>& set) const {
-    std::vector<T> vector;
-    const auto success = this->getParam(name, vector);
-    if (!success)
-      return false;
-    set.clear();
-    set.insert(vector.begin(), vector.end());
-    return true;
-  }
-
-  template<typename T>
-  bool getParam(const std::string& name, std::list<T>& list) const {
-    std::vector<T> vector;
-    const auto success = this->getParam(name, vector);
-    if (!success)
-      return false;
-    list.clear();
-    list.insert(vector.begin(), vector.end());
-    return true;
-  }
-
-  template<typename K, typename V>
-  bool getParam(const std::string& name, std::unordered_map<K, V>& map) const {
-    std::map<K, V> tmp;
-    const auto success = this->getParam(name, tmp);
-    if (!success)
-      return false;
-    map.clear();
-    map.insert(tmp.begin(), tmp.end());
-    return true;
-  }
-};
-
-struct NodeRawGetParamAdapter : public RawGetParamAdapter
+namespace cras
 {
-  explicit NodeRawGetParamAdapter(const ros::NodeHandle &nh) : nh(nh) {}
-  virtual ~NodeRawGetParamAdapter() = default;
-
-  bool getParam(const std::string& name, bool& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, int& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, float& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, double& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::string& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::vector<bool>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::vector<int>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::vector<float>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::vector<double>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::vector<std::string>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::map<std::string, bool>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::map<std::string, int>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::map<std::string, float>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::map<std::string, double>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, std::map<std::string, std::string>& v) const override { return nh.getParam(name, v); }
-  bool getParam(const std::string& name, XmlRpc::XmlRpcValue& v) const override { return nh.getParam(name, v); }
-
-  std::string getNamespace() const override { return this->nh.getNamespace(); }
-  bool hasParam(const std::string& name) const override { return this->nh.hasParam(name); }
-  std::shared_ptr<RawGetParamAdapter> getNamespaced(const std::string &ns) const override {
-    return std::make_shared<NodeRawGetParamAdapter>(ros::NodeHandle(this->nh, ns));
-  }
-protected:
-  ros::NodeHandle nh;
-};
-
-template<typename T>
-T getParam(ros::NodeHandle&, const std::string&, const T& = T(), const std::string& = "");
-std::string getParam(ros::NodeHandle&, const std::string&, const char *, const std::string& = "");
 
 /**
- * This class provides a unified experience for both nodes, nodelets and filters for getting ROS parameter values.
- * Each parameter has to be provided a default value, and each parameter read is logged - specified parameters with INFO
- * verbosity level, defaulted parameters with WARN level. There are also lots of template specializations for builtin
- * ROS types or unsigned values which ease the process of reading the parameters correctly.
+ * \brief Exception thrown when conversion of a parameter fails during getParam() if option throwIfConvertFails is true
+ *        or when a missing parameter is required.
  */
-class ParamHelper {
+class GetParamException : public ::std::runtime_error
+{
 public:
   /**
-   * Create the param helper using the given log helper for logging messages.
-   * @param log The log helper to use for logging.
+   * \brief Construct the exception.
+   * \param info Details about getParam() execution until the failure.
    */
-  explicit ParamHelper(const std::shared_ptr<LogHelper>& log) : log(log) {}
-  virtual ~ParamHelper() = default;
+  explicit GetParamException(const ::cras::GetParamResultInfo& info) : ::std::runtime_error(info.message), info(info) {}
 
-  template<typename T>
-  friend T getParam(ros::NodeHandle&, const std::string&, const T&, const std::string&);
-  friend std::string getParam(ros::NodeHandle&, const std::string&, const char*, const std::string&);
+  //! \brief Details about getParam() execution.
+  ::cras::GetParamResultInfo info;
+};
 
+/**
+ * \brief This type is a TrueType if the combination of ResultType and ParamServerType is valid.
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ */
+template <typename ResultType, typename ParamServerType>
+using check_get_param_types = typename std::enable_if_t<
+  // getParam() cannot handle cras::optional types
+  !::cras::is_optional<ResultType>::value &&
+  // C strings are handled via overloads as GetParamOptions is undefined for them
+  !::cras::is_c_string<ResultType>::value &&
+  !::cras::is_c_string<ParamServerType>::value
+>;
 
-protected:
-  /**
-   * \brief Get the value of the given ROS parameter, falling back to the specified default value, and print out a
-   *        ROS info/warning message with the loaded values.
-   * \tparam T Param type (the C++ type; various specializations make it possible to convert different parameter server
-   *         values to the corresponding C++ type if the conversion is non-trivial).
-   * \param node The node handle to read the param value from.
-   * \param name Name of the parameter.
-   * \param defaultValue The default value to use.
-   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages more informative.
-   * \return The loaded param value.
-   */
-  template<typename T>
-  inline T getParam(const RawGetParamAdapter& param, const std::string &name,
-                    const T &defaultValue = T(), const std::string &unit = "") const
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+ *        and print out a ROS log message with the loaded values (if specified).
+ *
+ * \details Overloads defining conversion to various types can be defined in several forms. You can either overload
+ *          cras::convert() that converts the XmlRpcValue to an intermediate value, or you can make the intermediate
+ *          value autoconvertible to the result type, or you can create a specialization of DefaultToResultFn and
+ *          DefaultParamServerType, or you can overload getParamVerbose() itself.
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+ *                         If a required param is not found, a GetParamException is thrown.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return A wrapper containing the loaded parameter value and details about the function execution.
+ */
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
+inline ::cras::GetParamResult<ResultType> getParamVerbose(
+  const ::cras::GetParamAdapter& param, const ::std::string& name,
+  const ::cras::optional<ResultType>& defaultValue = ResultType(),
+  const ::std::string& unit = "",
+  const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {},
+  const ::cras::LogHelper* const logger = nullptr)
+{
+  ::cras::GetParamResultInfo info;
+  ParamServerType value;
+  bool shouldThrow {false};
+  bool useDefault {false};
+  const bool isRequired = !defaultValue.has_value();
+  ::std::list<::std::string> errors;
+
+  info.convertFailed = false;
+  info.requiredMissing = false;
+  const auto origNs = options.origNamespace.empty() ? param.getNamespace() : options.origNamespace;
+  const auto origParamName = options.origParamName.empty() ? name : options.origParamName;
+
+  ::XmlRpc::XmlRpcValue xmlValue;
+  if (param.getParam(name, xmlValue))  // try getting the parameter as XmlRpcValue
   {
-    T value;
-    if (param.getParam(name, value))
+    if (!options.toParam(xmlValue, value, !options.throwIfConvertFails, &errors))  // try converting to ParamServerType
     {
-      this->log->logInfo("%s: Found parameter: %s, value: %s%s",
-          param.getNamespace().c_str(), name.c_str(), cras::to_string(value).c_str(),
-          cras::prependIfNonEmpty(unit, " ").c_str());
-      return value;
+      // if conversion failed, report appropriate error
+      if (::cras::XmlRpcValueTraits<ParamServerType>::xmlRpcType != xmlValue.getType())
+      {
+        info.message = ::cras::format(
+          "%s: Parameter %s found, but it has wrong XmlRpc type. Expected type %s, got type %s with value %s.",
+          origNs.c_str(), origParamName.c_str(),
+          ::cras::XmlRpcValueTraits<ParamServerType>::stringType,
+          ::cras::to_cstring(xmlValue.getType()),
+          ::cras::to_string(xmlValue).c_str());
+      }
+      else
+      {
+        info.message = ::cras::format(
+          "%s: Parameter %s found with correct XmlRpc type %s and value %s, "
+          "but its conversion to type %s has failed due to the following errors: %s.",
+          origNs.c_str(), origParamName.c_str(),
+          ::cras::XmlRpcValueTraits<ParamServerType>::stringType,
+          ::cras::to_string(xmlValue).c_str(),
+          ::cras::getTypeName<ParamServerType>().c_str(),
+          ::cras::to_string(errors).c_str());
+      }
+      info.messageLevel = ::ros::console::Level::Error;
+
+      if (isRequired || options.throwIfConvertFails)
+        shouldThrow = true;
+      else
+        useDefault = true;
+
+      info.convertFailed = true;
+      if (isRequired)
+        info.requiredMissing = true;
     }
-    else if (param.hasParam(name))
+  }
+  else  // param does not exist on param server
+  {
+    // nested parameters contain a slash and the name of the parameter can be split by the slashes
+    // and searched for recursively
+    if (options.allowNestedParams && ::cras::contains(name, '/'))
     {
-      XmlRpc::XmlRpcValue v;
-      param.getParam(name, v);
-      this->log->logError("%s: Parameter %s found, but has wrong type. Expected XmlRpc type %s, got %s. Assigning default: %s%s",
-        param.getNamespace().c_str(), name.c_str(),
-        cras::XmlRpcValueTraits<T>::stringType, cras::to_string(v.getType()).c_str(),
-        cras::to_string(defaultValue).c_str(), cras::prependIfNonEmpty(unit, " ").c_str());
-      return defaultValue;
+      const auto parts = ::cras::split(name, "/", 1);
+      if (parts.size() == 2 && !parts[0].empty() && !parts[1].empty())
+      {
+        const auto head = parts[0];
+        const auto tail = parts[1];
+        try
+        {
+          auto nsParams = param.getNamespaced(head);
+          auto nestedOptions = options;
+          nestedOptions.origNamespace = origNs;
+          nestedOptions.origParamName = origParamName;
+          return ::cras::getParamVerbose(*nsParams, tail, defaultValue, unit, nestedOptions, logger);
+        }
+        catch (const ::std::runtime_error& e)
+        {
+          // ignore the error, we just couldn't find the nested param
+        }
+      }
+    }
+    // nested param processing calls return on success, so if we got here, it failed
+    info.message = ::cras::format("%s: Cannot find value for parameter: %s.",
+         origNs.c_str(), origParamName.c_str());
+    if (!isRequired)
+    {
+      info.messageLevel = options.printDefaultAsWarn ? ::ros::console::Level::Warn : ::ros::console::Level::Info;
+      useDefault = true;
     }
     else
     {
-      this->log->logWarn("%s: Cannot find value for parameter: %s, assigning default: %s%s",
-           param.getNamespace().c_str(), name.c_str(), cras::to_string(defaultValue).c_str(),
-           cras::prependIfNonEmpty(unit, " ").c_str());
-      return defaultValue;
+      info.messageLevel = ::ros::console::Level::Error;
+      info.requiredMissing = true;
+      shouldThrow = true;
     }
   }
 
-  // std::string - char interop specializations
-  inline std::string getParam(const RawGetParamAdapter& param, const std::string &name, const char *defaultValue, const std::string &unit = "") const
+  ::std::string defaultUsedMessage {};
+  if (defaultValue.has_value())
+    defaultUsedMessage = ::cras::format(" Assigning default: %s%s.",
+      options.resultToStr(defaultValue.value()).c_str(), ::cras::prependIfNonEmpty(unit, " ").c_str());
+
+  if (useDefault)
+    info.message += defaultUsedMessage;
+
+  info.defaultUsed = useDefault;
+
+  if (shouldThrow)
   {
-    return this->getParam<std::string>(param, name, std::string(defaultValue), unit);
+    if (logger != nullptr && options.printMessages)
+      logger->print(info.messageLevel, info.message);
+    throw GetParamException(info);
   }
 
-  // getParam helper for unsigned values
-  template <typename Unsigned, typename Signed>
-  inline Unsigned getParamUnsigned(const RawGetParamAdapter& param, const std::string& name, const Unsigned& defaultValue, const std::string& unit = "") const
+  // using a pointer allows using ResultType without a no-arg constructor (copy/move constructor is enough)
+  ::std::unique_ptr<ResultType> resultValue;
+  if (useDefault)
   {
-    const Signed signedValue = this->getParam(param, name, static_cast<Signed>(defaultValue), unit);
-    if (signedValue < 0)
+    resultValue = ::std::make_unique<ResultType>(defaultValue.value());
+  }
+  else
+  {
+    try
     {
-      this->log->logError("%s: Value %i of unsigned parameter %s is negative.",
-          param.getNamespace().c_str(), signedValue, name.c_str());
-      throw std::invalid_argument(name);
+      resultValue = ::std::make_unique<ResultType>(options.toResult(value));  // try converting to ResultType
+
+      info.message = ::cras::format("%s: Found parameter: %s, value: %s%s.",
+        origNs.c_str(), origParamName.c_str(), options.resultToStr(*resultValue).c_str(),
+        ::cras::prependIfNonEmpty(unit, " ").c_str());
+      if (errors.empty())
+      {
+        info.messageLevel = ros::console::Level::Info;
+      }
+      else
+      {
+        info.message += " Some parts of the value were skipped because of the following conversion errors: " +
+          ::cras::to_string(errors);
+        info.messageLevel = ::ros::console::Level::Warn;
+      }
     }
-    return static_cast<Unsigned>(signedValue);
+    catch (const std::runtime_error& e)  // conversion from ParamServerType to ResultType failed
+    {
+      info.message = ::cras::format(
+        "%s: Cannot convert value '%s' of parameter %s to requested type %s (error: %s).",
+        origNs.c_str(), options.paramToStr(value).c_str(),
+        origParamName.c_str(),
+        ::cras::getTypeName<ResultType>().c_str(),
+        e.what());
+      info.messageLevel = ::ros::console::Level::Error;
+
+      if (isRequired || options.throwIfConvertFails)
+      {
+        shouldThrow = true;
+      }
+      else  // use default if provided
+      {
+        info.message += defaultUsedMessage;
+        resultValue = ::std::make_unique<ResultType>(defaultValue.value());
+        info.defaultUsed = true;
+      }
+
+      info.convertFailed = true;
+      if (isRequired)
+        info.requiredMissing = true;
+    }
   }
 
-  // converting getParam()
-  template <typename TargetType, typename OrigType>
-  inline TargetType getParamConvert(const RawGetParamAdapter& param, const std::string& name, const OrigType& defaultValue, const std::string& unit, std::function<TargetType(const OrigType&)> toTarget) const
-  {
-    const OrigType paramValue = this->getParam(param, name, defaultValue, unit);
-    return toTarget(paramValue);
-  }
+  if (logger != nullptr && options.printMessages)
+    logger->print(info.messageLevel, info.message);
 
-  // converting getParam()
-  template <typename TargetType, typename OrigType>
-  inline TargetType getParamConvert(const RawGetParamAdapter& param, const std::string& name, const TargetType& defaultValue, const std::string& unit, std::function<TargetType(const OrigType&)> toTarget, std::function<OrigType(const TargetType&)> toOrig) const
-  {
-    const OrigType paramValue = this->getParam(param, name, toOrig(defaultValue), unit);
-    return toTarget(paramValue);
-  }
+  if (shouldThrow)
+    throw GetParamException(info);
 
-  // generic casting getParam()
-  template <typename CastType, typename OrigType>
-  inline CastType getParamCast(const RawGetParamAdapter& param, const std::string& name, const OrigType& defaultValue, const std::string& unit = "") const
-  {
-    return this->getParamConvert<CastType, OrigType>(param, name, defaultValue, unit,
-      [](const OrigType& o) { return static_cast<CastType>(o); });
-  }
-
-  // generic casting getParam()
-  template <typename CastType, typename OrigType>
-  inline CastType getParamCast(const RawGetParamAdapter& param, const std::string& name, const CastType& defaultValue, const std::string& unit = "") const
-  {
-    return this->getParamConvert<CastType, OrigType>(param, name, defaultValue, unit,
-      [](const OrigType& o) { return static_cast<CastType>(o); },
-      [](const CastType& o) { return static_cast<OrigType>(o); });
-  }
-
-  std::shared_ptr<LogHelper> log; //!< The log helper to use for logging parameter read messages.
-};
-
-// getParam specializations for unsigned values
-
-// try out the _sz operator from type_utils.hpp!
-template<> inline size_t
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const size_t& defaultValue, const std::string& unit) const {
-  return this->getParamUnsigned<size_t, int>(param, name, defaultValue, unit);
-}
-
-template<> inline unsigned int
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const unsigned int& defaultValue, const std::string& unit) const {
-  return this->getParamUnsigned<unsigned int, int>(param, name, defaultValue, unit);
-}
-
-// ROS types specializations
-
-template<> inline ros::Time
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::Time& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::Time, double>(param, name, defaultValue.toSec(), unit);
-}
-
-template<> inline ros::Duration
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::Duration& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::Duration, double>(param, name, defaultValue.toSec(), unit.empty() ? "s" : unit);
-}
-
-template<> inline ros::Rate
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::Rate& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::Rate, double>(param, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit.empty() ? "Hz" : unit);
-}
-
-template<> inline ros::WallTime
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::WallTime& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::WallTime, double>(param, name, defaultValue.toSec(), unit);
-}
-
-template<> inline ros::WallDuration
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::WallDuration& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::WallDuration, double>(param, name, defaultValue.toSec(), unit.empty() ? "s" : unit);
-}
-
-template<> inline ros::WallRate
-ParamHelper::getParam(const RawGetParamAdapter& param, const std::string& name, const ros::WallRate& defaultValue, const std::string& unit) const {
-  return this->getParamCast<ros::WallRate, double>(param, name, 1.0 / defaultValue.expectedCycleTime().toSec(), unit.empty() ? "Hz" : unit);
+  return {*resultValue, info};
 }
 
 /**
- * Bound param helper (allows omitting the param adapter in each getParam call).
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
-class BoundParamHelper : public ParamHelper
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
+inline ::cras::GetParamResult<ResultType> getParamVerbose(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const ResultType& defaultValue = ResultType(),
+  const ::std::string& unit = "",
+  const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {},
+  const ::cras::LogHelper* const logger = nullptr)
 {
-public:
-  /**
-   * Create the bound param helper.
-   * @param log The log helper to use for logging parameter read messages.
-   * @param param The raw parameter adapter to bind to.
-   */
-  BoundParamHelper(const std::shared_ptr<LogHelper>& log, const std::shared_ptr<RawGetParamAdapter>& param) :
-    ParamHelper(log), param(param) {}
+  return ::cras::getParamVerbose(param, name, ::cras::optional<ResultType>(defaultValue), unit, options, logger);
+}
 
-  /**
-   * \brief Get the value of the given parameter, falling back to the specified default value, and print out a
-   *      ROS info/warning message with the loaded values.
-   * \tparam T Param type (the C++ type; various specializations make it possible to convert different parameter server
-   *       values to the corresponding C++ type if the conversion is non-trivial).
-   * \param name Name of the parameter.
-   * \param defaultValue The default value to use.
-   * \param unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages more informative.
-   * \return The loaded param value.
-   */
-  template<typename T>
-  inline T getParam(const std::string &name, const T &defaultValue = T(), const std::string &unit = "") const {
-    return ParamHelper::getParam(*this->param, name, defaultValue, unit);
-  }
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+ *                         If a required param is not found, a GetParamException is thrown.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return The loaded parameter value.
+ */
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
+inline ResultType getParam(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const ::cras::optional<ResultType>& defaultValue = ResultType(),
+  const ::std::string& unit = "",
+  const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {},
+  const ::cras::LogHelper* const logger = nullptr)
+{
+  return ::cras::getParamVerbose(param, name, defaultValue, unit, options, logger).value;
+}
 
-  // std::string - char interop specializations
-  inline std::string getParam(const std::string &name, const char *defaultValue, const std::string &unit = "") const {
-    return ParamHelper::getParam(*this->param, name, defaultValue, unit);
-  }
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \tparam ResultType Param type (the C++ type). It is converted from the intermediate ParamServerType
+ *                    using options.toResult function (which defaults to static_cast).
+ * \tparam ParamServerType Intermediate type to which the XmlRpcValue read from parameter server is converted. The
+ *                         conversion is done using options.toParam function (which defaults to cras::convert). Most
+ *                         overloads of cras::convert are in xmlrpc_value_utils.hpp, but you can add your own.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return The loaded parameter value.
+ */
+template<typename ResultType, typename ParamServerType = typename ::cras::DefaultParamServerType<ResultType>::type,
+  ::cras::check_get_param_types<ResultType, ParamServerType>* = nullptr>
+inline ResultType getParam(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const ResultType& defaultValue = ResultType(),
+  const ::std::string& unit = "",
+  const ::cras::GetParamOptions<ResultType, ParamServerType>& options = {},
+  const ::cras::LogHelper* const logger = nullptr)
+{
+  return ::cras::getParamVerbose(param, name, defaultValue, unit, options, logger).value;
+}
 
-  inline bool hasParam(const std::string& name) const { return this->param->hasParam(name); }
+// std::string - char interop specializations
 
-  inline std::shared_ptr<BoundParamHelper> paramsInNamespace(const std::string& ns) const
-  {
-    return std::make_shared<BoundParamHelper>(this->log, this->param->getNamespaced(ns));
-  }
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \details This is a variant allowing use of C-string instead of std::string.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+ *                         If a required param is not found, a GetParamException is thrown.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return A wrapper containing the loaded parameter value and details about the function execution.
+ */
+inline ::cras::GetParamResult<::std::string> getParamVerbose(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const ::cras::optional<const char *>& defaultValue, const ::std::string &unit = "",
+  const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
+{
+  ::cras::optional<::std::string> defaultStr;
+  if (defaultValue.has_value())
+    defaultStr = defaultValue.value();
+  return ::cras::getParamVerbose(param, name, defaultStr, unit, options, logger);
+}
 
-protected:
-  std::shared_ptr<RawGetParamAdapter> param; //!< The bound parameter adapter.
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \details This is a variant allowing use of C-string instead of std::string.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return A wrapper containing the loaded parameter value and details about the function execution.
+ */
+inline ::cras::GetParamResult<::std::string> getParamVerbose(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const char* defaultValue, const ::std::string &unit = "",
+  const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
+{
+  ::cras::optional<::std::string> defaultStr(defaultValue);
+  return ::cras::getParamVerbose(param, name, defaultStr, unit, options, logger);
+}
+
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \details This is a variant allowing use of C-string instead of std::string.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use. If std::nullopt, then the parameter is required.
+ *                         If a required param is not found, a GetParamException is thrown.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return The loaded parameter value.
+ */
+inline ::std::string getParam(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const ::cras::optional<const char *>& defaultValue, const ::std::string &unit = "",
+  const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
+{
+  return ::cras::getParamVerbose(param, name, defaultValue, unit, options, logger).value;
+}
+
+/**
+ * \brief Get the value of the given ROS parameter, falling back to the specified default value,
+ *        and print out a ROS log message with the loaded values (if specified).
+ * \details This is a variant allowing use of C-string instead of std::string.
+ * \param[in] param The parameter adapter from which parameters are read.
+ * \param[in] name Name of the parameter.
+ * \param[in] defaultValue The default value to use.
+ * \param[in] unit Optional string serving as a [physical/SI] unit of the parameter, just to make the messages
+ *                 more informative.
+ * \param[in] options Options specifying detailed behavior of this function. Use the braced initializer syntax for
+ *                    comfortable writing, e.g. `{.throwIfConvertFails = true, .allowNestedParams = false}`.
+ * \param[in] logger The LogHelper used for printing messages. If nullptr, no messages are printed.
+ * \return The loaded parameter value.
+ */
+inline ::std::string getParam(
+  const ::cras::GetParamAdapter& param, const ::std::string &name,
+  const char* defaultValue, const ::std::string &unit = "",
+  const ::cras::GetParamOptions<::std::string>& options = {}, const ::cras::LogHelper* const logger = nullptr)
+{
+  return ::cras::getParamVerbose(param, name, defaultValue, unit, options, logger).value;
+}
+
+/**
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType. If ::cras::to_string() cannot convert ResultType to string, you have to declare
+ *        overload ::cras::to_string(const ResultType&) prior to calling this macro.
+ * \param resultType Type of the result values.
+ * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
+ * \param defaultUnit The unit to use if the users doesn't pass any.
+ * \param convertToResultFn The ToResultFn to use for parameter conversion.
+ * \note This macro has to be called in the `::cras` namespace.
+ * \note If ::cras::convert() cannot convert XmlRpcValue to paramServerType, you have to define specialization
+ *       ::cras::DefaultToParamFn<paramServerType> which implements the toParam() conversion function.
+ */
+#define DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, convertToResultFn) \
+template<>\
+struct ParamToStringFn<resultType>\
+{\
+  static ::std::string to_string(const resultType& v){ return ::cras::to_string(v); }\
+};\
+\
+template<>\
+struct DefaultToResultFn<resultType, paramServerType>\
+{\
+  static resultType toResult(const paramServerType& v){ return convertToResultFn(v); }\
+};\
+\
+template<>\
+struct DefaultParamServerType<resultType>\
+{\
+  typedef paramServerType type;\
 };
 
+/**
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType. paramServerType is converted to resultType via resultType one-arg constructor.
+ * \param resultType Type of the result values.
+ * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
+ * \param defaultUnit The unit to use if the users doesn't pass any.
+ * \note This macro has to be called in the `::cras` namespace.
+ */
+#define DEFINE_CONVERTING_GET_PARAM_WITH_CONSTRUCTOR(resultType, paramServerType, defaultUnit) \
+DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
+  ([](const paramServerType& v) { return resultType(v); }))
+
+/**
+ * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
+ *        ResultType and ParamServerType. They will be automatically used when the user requests a parameter
+ *        of type ResultType. paramServerType is converted to resultType via static_cast.
+ * \param resultType Type of the result values.
+ * \param paramServerType Type of the intermediate values to which XmlRpcValues are converted.
+ * \param defaultUnit The unit to use if the users doesn't pass any.
+ * \note This macro has to be called in the `::cras` namespace.
+ */
+#define DEFINE_CONVERTING_GET_PARAM_WITH_CAST(resultType, paramServerType, defaultUnit) \
+DEFINE_CONVERTING_GET_PARAM(resultType, paramServerType, defaultUnit, \
+  ([](const paramServerType& v) { return static_cast<resultType>(v); }))
 }
+
+#if __has_include(<ros/duration.h>)
+#include "param_utils/get_param_specializations/ros.hpp"
+#endif
+
+#if __has_include(<geometry_msgs/Vector3.h>)
+#include "param_utils/get_param_specializations/geometry_msgs.hpp"
+#endif
+
+#if __has_include(<tf2/LinearMath/Vector3.h>)
+#include "param_utils/get_param_specializations/tf2.hpp"
+#endif
+
+#if __has_include(<Eigen/Core>)
+#include "param_utils/get_param_specializations/eigen.hpp"
+#endif

@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <rosparam command="load" file="$(dirname)/test_params.yaml" />
+    <test test-name="test_nodelet_get_param" pkg="cras_cpp_common" type="test_cras_nodelet_get_param"/>
+</launch>

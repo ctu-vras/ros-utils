@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Test helper for testing count_messages
+
+import rospy
+import rostest
+import unittest
+import time
+import sys
+
+from std_msgs.msg import String
+
+NAME = "test_count_messages"
+
+
+class CountMessages(unittest.TestCase):
+    def __init__(self, *args):
+        super(CountMessages, self).__init__(*args)
+        rospy.init_node(NAME)
+
+    def test_max_repeats(self):
+        pub = rospy.Publisher(rospy.get_param("~publisher_topic"), String, latch=True, queue_size=100)
+        reset_pub = rospy.Publisher("reset", String, queue_size=1)
+        wait_time = float(rospy.get_param("~wait_time", 20.0))
+
+        # Publish first message to the counter so that it starts counting
+        pub.publish(String())
+
+        # Wait until the message is counted
+        wallclock_timeout = time.time() + wait_time
+        while int(rospy.get_param("~count", 0)) != 1 and time.time() < wallclock_timeout:
+            time.sleep(0.1)
+
+        # Each String message with empty data is 4 bytes long - it has to store just the length of the string (as int32)
+
+        self.assertEqual(int(rospy.get_param("~count", 0)), 1)
+        self.assertEqual(int(rospy.get_param("~bytes", 0)), 4)
+
+        # Publish some more messages and wait until they are counted
+
+        pub.publish(String())
+        pub.publish(String())
+        pub.publish(String())
+        pub.publish(String())
+
+        wallclock_timeout = time.time() + wait_time
+        while int(rospy.get_param("~count", 0)) != 5 and time.time() < wallclock_timeout:
+            time.sleep(0.1)
+
+        self.assertEqual(int(rospy.get_param("~count", 0)), 5)
+        self.assertEqual(int(rospy.get_param("~bytes", 0)), 5 * 4)
+
+        # Publish to the reset topic should result in resetting the count
+
+        reset_pub.publish(String())
+
+        wallclock_timeout = time.time() + wait_time
+        while int(rospy.get_param("~count", 1)) != 0 and time.time() < wallclock_timeout:
+            time.sleep(0.1)
+
+        self.assertEqual(int(rospy.get_param("~count", 1)), 0)
+        self.assertEqual(int(rospy.get_param("~bytes", 0)), 0)
+
+        # Now publish a new message
+
+        pub.publish(String("a"))
+
+        wallclock_timeout = time.time() + wait_time
+        while int(rospy.get_param("~count", 0)) != 1 and time.time() < wallclock_timeout:
+            time.sleep(0.1)
+
+        self.assertEqual(int(rospy.get_param("~count", 0)), 1)
+        self.assertEqual(int(rospy.get_param("~bytes", 0)), 5)  # we have added one byte of text
+
+
+if __name__ == "__main__":
+    time.sleep(0.75)
+    try:
+        rostest.run('rostest', NAME, CountMessages, sys.argv)
+    except KeyboardInterrupt:
+        pass
+    print("exiting")
+

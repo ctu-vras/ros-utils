@@ -1,0 +1,57 @@
+/**
+ * \file
+ * \brief Template for node made from a nodelet.
+ * \author Martin Pecka
+ * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
+#include <ros/datatypes.h>
+#include <ros/init.h>
+#include <ros/this_node.h>
+
+#include <nodelet/detail/callback_queue.h>
+#include <nodelet/detail/callback_queue_manager.h>
+
+#include <cras_cpp_common/log_utils/node.h>
+#include <cras_cpp_common/param_utils/param_helper.hpp>
+
+#include <@NODELET_INCLUDE_FILE@>
+
+#cmakedefine01 CRAS_NODE_ANONYMOUS
+
+int main(int argc, char** argv)
+{
+  // Remove the program name from argv because the nodelet handling code does not expect it
+  argc -= 1;
+  argv += 1;
+  ros::V_string my_argv;
+  ros::removeROSArgs(argc, argv, my_argv);
+  uint32_t initOptions = 0;
+  if (CRAS_NODE_ANONYMOUS)
+    initOptions = ros::init_options::AnonymousName;
+  ros::init(argc, argv, "@NODE_NAME@", initOptions);
+
+  ros::NodeHandle pnh("~");
+  nodelet::detail::CallbackQueueManager manager(pnh.param("num_worker_threads", @CRAS_NODE_DEFAULT_NUM_THREADS@));
+  
+  // Declaration order of these variables is important to make sure they can be properly stopped and destroyed.
+  auto nodelet = boost::make_shared<@NODELET_CLASS@>();
+  auto paramHelper = boost::dynamic_pointer_cast<cras::ParamHelper>(nodelet);
+  if (paramHelper != nullptr)
+    paramHelper->setLogger(std::make_shared<cras::NodeLogHelper>());
+  auto stQueue = boost::make_shared<nodelet::detail::CallbackQueue>(&manager, nodelet);
+  auto mtQueue = boost::make_shared<nodelet::detail::CallbackQueue>(&manager, nodelet);
+  manager.addQueue(stQueue, false);
+  manager.addQueue(mtQueue, true);
+  
+  nodelet->init(ros::this_node::getName(), {}, my_argv, stQueue.get(), mtQueue.get());
+	
+  ros::spin();
+
+  // Destroying the nodelet helps stopping the queues.
+  nodelet.reset();
+
+  // Manager and callback queues are stopped and joined automatically in their destructors.
+  // Explicitly removing the queues could lead to "boost: mutex lock failed" errors when stopping the node.
+}

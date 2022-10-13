@@ -1,0 +1,117 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub"
+          args="pub node_in geometry_msgs/PointStamped &quot;{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}, point: {x: 0.0, y: 0.0, z: 0.0}}&quot;" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_fast"
+          args="pub -r 10 node_in_fast geometry_msgs/PointStamped &quot;{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}, point: {x: 0.0, y: 0.0, z: 0.0}}&quot;" />
+
+    <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
+
+    <!-- Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="repeat_input" args="load cras_topic_tools/repeat manager">
+        <param name="rate" value="13" />
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+        <remap from="~input" to="node_in" />
+    </node>
+
+    <!-- Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="repeat" args="load cras_topic_tools/repeat manager node_in 13">
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="repeat_explicit" args="load cras_topic_tools/repeat manager node_in 13 node_out">
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Lazy + Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="repeat_input_lazy" args="load cras_topic_tools/repeat manager">
+        <param name="lazy" value="true" />
+        <param name="rate" value="13" />
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+        <remap from="~input" to="node_in" />
+    </node>
+
+    <!-- Lazy + Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="repeat_lazy" args="load cras_topic_tools/repeat manager node_in_lazy 13">
+        <param name="lazy" value="true" />
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+        <remap from="node_in_lazy" to="node_in" />
+    </node>
+
+    <!-- Lazy + Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="repeat_explicit_lazy" args="load cras_topic_tools/repeat manager node_in 13 node_out_lazy">
+        <param name="lazy" value="true" />
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Rate param has priority over CLI -->
+    <node pkg="nodelet" type="nodelet" name="repeat_freq_param" args="load cras_topic_tools/repeat manager node_in 10 node_out_param">
+        <param name="rate" value="13.0" />
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Invalid rate -->
+    <node pkg="nodelet" type="nodelet" name="repeat_invalid_rate" args="load cras_topic_tools/repeat manager node_in rate node_out_invalid_rate">
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Max repeats-->
+    <node pkg="nodelet" type="nodelet" name="repeat_max_repeats" args="load cras_topic_tools/repeat manager node_in_max_repeats 20 node_out_max_repeats">
+        <param name="max_repeats" value="15" />
+    </node>
+
+    <!-- Max age -->
+    <node pkg="nodelet" type="nodelet" name="repeat_max_age" args="load cras_topic_tools/repeat manager node_in_max_age 20 node_out_max_age">
+        <param name="max_age" value="0.1" />
+    </node>
+
+    <!-- Discard older -->
+    <node pkg="nodelet" type="nodelet" name="repeat_discard_older" args="load cras_topic_tools/repeat manager node_in_discard_older 1 node_out_discard_older">
+        <param name="discard_older_messages" value="true" />
+    </node>
+
+    <!-- Publish both when a message arrives and on timer - the output rate should be double -->
+    <node pkg="nodelet" type="nodelet" name="repeat_fast" args="load cras_topic_tools/repeat manager node_in_fast 10 node_out_fast">
+        <param name="publish_only_on_timer" value="false" />
+        <param name="reset_on_msg" value="false" />
+    </node>
+
+    <!-- Publish both when a message arrives and on timer, but reset timer on message arrival. -->
+    <node pkg="nodelet" type="nodelet" name="repeat_fast_reset_lower" args="load cras_topic_tools/repeat manager node_in_fast 5 node_out_fast_reset_lower">
+        <param name="publish_only_on_timer" value="false" />
+        <param name="reset_on_msg" value="true" />
+    </node>
+
+    <!-- Publish both when a message arrives and on timer, but reset timer on message arrival. -->
+    <node pkg="nodelet" type="nodelet" name="repeat_fast_reset_higher" args="load cras_topic_tools/repeat manager node_in_fast 15 node_out_fast_reset_higher">
+        <param name="publish_only_on_timer" value="false" />
+        <param name="reset_on_msg" value="true" />
+    </node>
+
+    <!-- Publish only on timer, but reset timer on message arrival. -->
+    <node pkg="nodelet" type="nodelet" name="repeat_fast_timer_reset_lower" args="load cras_topic_tools/repeat manager node_in_fast 5 node_out_fast_timer_reset_lower">
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="true" />
+    </node>
+
+    <!-- Publish only on timer, but reset timer on message arrival. 100 Hz timer, each 10 Hz a timer can be reset by
+         incoming messages, so the result should be somehwere around 90 Hz. -->
+    <node pkg="cras_topic_tools" type="repeat" name="repeat_fast_timer_reset_higher"
+          args="node_in_fast 100 node_out_fast_timer_reset_higher">
+        <param name="publish_only_on_timer" value="true" />
+        <param name="reset_on_msg" value="true" />
+    </node>
+
+    <!-- Run the test suite -->
+    <test test-name="repeat_test" pkg="cras_topic_tools" type="test_repeat" retry="3" />
+</launch>

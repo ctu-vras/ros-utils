@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+nodelet:
+  one_filter:
+  - name: "chain"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True
+  three_filters:
+  - name: "filter1"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True
+  - name: "filter2"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True
+  - name: "filter3"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True
+  three_filters_fail:
+  - name: "filter1"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True
+  - name: "filter2"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: False
+  - name: "filter3"
+    type: "cras_cpp_common/TestFilter"
+    params:
+      bool_True: True

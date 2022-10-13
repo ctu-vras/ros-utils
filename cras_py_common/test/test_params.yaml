@@ -1,0 +1,192 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Keep this file in sync with test_param_utils.py
+
+test_dict_config:
+  name: "dict"
+  type: "cras_cpp_common/NonExistentFilter"
+  params:
+    bool_True: True
+    bool_False: False
+    bool_true: true
+    bool_false: false
+    int_0: 0
+    int_1: 1
+    int_2: 2
+    int_minus_1: -1
+    int_max: 2147483647
+    int_min: -2147483648
+    # uint_max: 4294967295  # cannot be used, YAML limits to +2^31
+    double_0: 0.0
+    double_1: 1.0
+    double_3_14: 3.14
+    double_minus_1: -1.0
+    double_minus_3_14: -3.14
+    double_lowest: -1.79769e+308
+    double_min: 2.22507e-308
+    double_max: 1.79769e+308
+    double_nan: .NaN
+    double_inf: .Inf
+    double_minus_inf: -.Inf
+    str_empty: ""
+    str_a: "a"
+    str_asd: "asd"
+    list_empty: [ ]
+    list_bool: [ True, False, True ]
+    list_int: [ 0, 1, -1 ]
+    list_uint: [ 0, 1, 2 ]
+    list_double: [ 0.0, 1.0, -1.0 ]
+    list_str: [ "a", "b", "cde" ]
+    dict_empty: {}  # rosparam cannot load this
+    dict_bool: {"a": True, "b": False, "c": True}
+    dict_int: {"a": 0, "b": 1, "c": -1}
+    dict_uint: {"a": 0, "b": 1, "c": 2}
+    dict_double: {"aaa": 0.0, "bbb": 1.0, "ccc": -1.0}
+    dict_str: {"aaa": "a", "bbb": "b", "ccc": "c"}
+    dict_mixed: {"": 0, "bbb": 1.0, "ccc": False}
+    dict_str_recursive: {"a": {"b": 1, "c": 2}, "d": {"e": 3, "f": 4, "g": 5}}
+    dict_crazy: {"a": {"aa": [0, 1]}, "b": {"bb": [-2, -3]}}
+    quat3: [ deg(180.0), 0.0, 0.0 ]
+    quat4: [ 1.0, 0.0, 0.0, 0.0 ]
+    quat9: [ 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0 ]
+    tf6: [ 1.0, 2.0, 3.0, deg(180.0), 0.0, 0.0]
+    tf7: [ 1.0, 2.0, 3.0, 1.0, 0.0, 0.0, 0.0]
+    tf16: [ 1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 2.0, 0.0, 0.0, -1.0, 3.0, 0.0, 0.0, 0.0, 1.0]
+    frames:
+      fixed: 'odom'
+      sensor: 'laser'
+    filter:
+      keep_clouds_organized: True
+      model_pose_update_interval: 0.002  # do not get lower, the processing is then too slow
+    test:
+      negative: -1
+    sensor:
+      point_by_point: True
+      min_distance: 0.1
+      max_distance: 10.0
+    ignored_links:
+      bounding_sphere: ["antenna", "base_link::big_collision_box"]
+      shadow_test: ["laser", "base_link::big_collision_box"]
+    body_model:
+      inflation:
+        scale: 1.1
+        padding: 0.01
+      per_link:
+        scale:
+          "antenna::contains": 1.2
+          "antenna::bounding_sphere": 1.2
+          "antenna::bounding_box": 1.2
+          "*::big_collision_box::contains": 2
+          "*::big_collision_box::bounding_sphere": 2
+          "*::big_collision_box::bounding_box": 2
+          "*::big_collision_box::shadow": 3
+          "wrong_type": True
+          "wrong_type2": "str"
+        padding:
+          "laser::shadow": 0.015
+          "base_link": 0.05
+        all_wrong:
+          "laser": "0.015"
+          "base_link": "0.05"
+      robot_description_param: 'test_robot_description'
+    transforms:
+      buffer_length: 60.0
+      timeout:
+        reachable: 0.2
+        unreachable: 0.2
+    bounding_sphere:
+      compute: True
+      debug: False
+      marker: False
+      publish_cut_out_pointcloud: False
+    bounding_box:
+      compute: False
+      debug: False
+      marker: False
+      publish_cut_out_pointcloud: False
+    oriented_bounding_box:
+      compute: False
+      debug: False
+      marker: False
+      publish_cut_out_pointcloud: False
+    local_bounding_box:
+      frame_id: "base_link"
+      compute: True
+      debug: False
+      marker: False
+      publish_cut_out_pointcloud: False
+    debug:
+      pcl:
+        inside: False
+        clip: False
+        shadow: False
+      marker:
+        contains: False
+        shadow: False
+    timeout:
+      sec: 1
+      nsec: 2
+    timeout_negative:
+      sec: -1
+      nsec: 2
+    point:
+      x: 0
+      y: 1
+      z: -1
+    pose_2d:
+      x: 0
+      y: 1
+      theta: -1
+    quat_dict_4_full:
+      x: 1
+      y: 0
+      z: 0
+      w: 0
+    quat_dict_4_part:
+      x: 1
+    quat_dict_4_y_only:
+      y: 1
+    quat_dict_3_short_full:
+      r: 0
+      p: deg(180.0)
+      y: 0
+    quat_dict_3_short_part:
+      p: deg(180.0)
+    quat_dict_3_long_full:
+      roll: 0
+      pitch: deg(180.0)
+      yaw: 0
+    quat_dict_3_long_part:
+      pitch: deg(180.0)
+    quat_dict_3_long_yaw_only:
+      yaw: deg(180.0)
+    quat_dict_wrong:
+      wrong: 1
+    quat_dict_wrong_mixed:
+      x: 1
+      wrong: 1
+    pose_dict_lists:
+      position: [1, 2 ,3]
+      orientation: [1, 0, 0, 0]
+    pose_dict_dicts:
+      position:
+        x: 1
+        y: 2
+        z: 3
+      orientation:
+        r: 0
+        p: 0
+        y: 0
+    transform_dict_lists:
+      translation: [1, 2 ,3]
+      rotation: [1, 0, 0, 0]
+    transform_dict_dicts:
+      translation:
+        x: 1
+        y: 2
+        z: 3
+      rotation:
+        r: 0
+        p: 0
+        y: 0

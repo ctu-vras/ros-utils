@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="use_sim_time" value="true" />
+    <test test-name="node_utils_test" pkg="cras_py_common" type="test_node_utils.py" />
+</launch>

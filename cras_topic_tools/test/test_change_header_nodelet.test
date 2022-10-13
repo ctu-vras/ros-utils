@@ -1,0 +1,138 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub"
+          args="pub -r 10 node_in geometry_msgs/PointStamped &quot;{header: {seq: 1, stamp: {secs: 11, nsecs: 0}, frame_id: 'test'}, point: {x: 1.0, y: 2.0, z: 3.0}}&quot;" />
+
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_no_header" args="pub -r 10 node_in_no_header std_msgs/String chatter" />
+
+    <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
+
+    <!-- Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="change_header_input" args="load cras_topic_tools/change_header manager">
+        <param name="frame_id" value="abcd" />
+        <remap from="~input" to="node_in" />
+    </node>
+
+    <!-- Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="change_header" args="load cras_topic_tools/change_header manager node_in">
+        <param name="frame_id" value="abcd" />
+    </node>
+
+    <!-- Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="change_header_explicit" args="load cras_topic_tools/change_header manager node_in node_out">
+        <param name="frame_id" value="abcd" />
+    </node>
+
+    <!-- Lazy + Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="change_header_input_lazy" args="load cras_topic_tools/change_header manager">
+        <param name="frame_id" value="abcd" />
+        <param name="lazy" value="true" />
+        <remap from="~input" to="node_in" />
+    </node>
+
+    <!-- Lazy + Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="change_header_lazy" args="load cras_topic_tools/change_header manager node_in_lazy">
+        <param name="frame_id" value="abcd" />
+        <param name="lazy" value="true" />
+        <remap from="node_in_lazy" to="node_in" />
+    </node>
+
+    <!-- Lazy + Explicit output name -->
+    <node pkg="nodelet" type="nodelet" name="change_header_explicit_lazy" args="load cras_topic_tools/change_header manager node_in node_out_lazy">
+        <param name="frame_id" value="abcd" />
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Change absolute -->
+    <node pkg="nodelet" type="nodelet" name="change_header_absolute" args="load cras_topic_tools/change_header manager node_in node_out_absolute">
+        <param name="frame_id" value="abcd" />
+        <param name="stamp" value="10.0" />
+    </node>
+    
+    <!-- Change stamp to ros time -->
+    <node pkg="nodelet" type="nodelet" name="change_header_ros_time" args="load cras_topic_tools/change_header manager node_in node_out_ros_time">
+        <param name="stamp_ros_time" value="true" />
+    </node>
+
+    <!-- Change stamp to ros time and add some relative value -->
+    <node pkg="nodelet" type="nodelet" name="change_header_ros_time_rel" args="load cras_topic_tools/change_header manager node_in node_out_ros_time_rel">
+        <param name="stamp_ros_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
+    <!-- Change stamp to wall time -->
+    <node pkg="nodelet" type="nodelet" name="change_header_wall_time" args="load cras_topic_tools/change_header manager node_in node_out_wall_time">
+        <param name="stamp_wall_time" value="true" />
+    </node>
+
+    <!-- Change stamp to wall time and add some relative value -->
+    <node pkg="nodelet" type="nodelet" name="change_header_wall_time_rel" args="load cras_topic_tools/change_header manager node_in node_out_wall_time_rel">
+        <param name="stamp_wall_time" value="true" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
+    <!-- Change prefix -->
+    <node pkg="nodelet" type="nodelet" name="change_header_prefix" args="load cras_topic_tools/change_header manager node_in node_out_prefix">
+        <param name="frame_id_prefix" value="abcd" />
+        <param name="stamp_relative" value="-10.0" />
+    </node>
+
+    <!-- Change suffix -->
+    <node pkg="nodelet" type="nodelet" name="change_header_suffix" args="load cras_topic_tools/change_header manager node_in node_out_suffix">
+        <param name="frame_id_suffix" value="abcd" />
+        <param name="stamp_relative" value="10.0" />
+    </node>
+
+    <!-- Replace start of frame ID -->
+    <node pkg="nodelet" type="nodelet" name="replace_header_start" args="load cras_topic_tools/change_header manager node_in node_out_replace_start">
+        <param name="frame_id_replace_start" value="t|asd" />
+    </node>
+
+    <!-- Replace end of frame ID -->
+    <node pkg="nodelet" type="nodelet" name="replace_header_end" args="load cras_topic_tools/change_header manager node_in node_out_replace_end">
+        <param name="frame_id_replace_end" value="t|asd" />
+    </node>
+
+    <!-- Replace anywhere in frame ID -->
+    <node pkg="nodelet" type="nodelet" name="replace_header" args="load cras_topic_tools/change_header manager node_in node_out_replace">
+        <param name="frame_id_replace" value="t|asd" />
+    </node>
+
+    <!-- Do not modify anything -->
+    <node pkg="nodelet" type="nodelet" name="nothing" args="load cras_topic_tools/change_header manager node_in node_out_nothing" />
+
+    <!-- No header -->
+    <node pkg="nodelet" type="nodelet" name="change_header_no_header" args="load cras_topic_tools/change_header manager node_in_no_header node_out_no_header" required="true">
+        <param name="frame_id" value="test" />
+    </node>
+
+    <!-- Change stamp too much to negative - the resulting stamp should be 1 nsec (the lowest valid time). -->
+    <node pkg="nodelet" type="nodelet" name="change_header_negative_stamp" args="load cras_topic_tools/change_header manager node_in node_out_negative_stamp">
+        <param name="stamp_relative" value="-20.0" />
+    </node>
+
+    <!-- Test all parameters at once -->
+    <node pkg="nodelet" type="nodelet" name="change_header_all" args="load cras_topic_tools/change_header manager node_in node_out_all">
+        <param name="stamp" value="10.0" />
+        <param name="stamp_relative" value="-2.0" />
+        <param name="frame_id" value="cras" />
+        <param name="frame_id_prefix" value="cbc" />
+        <param name="frame_id_suffix" value="sts" />
+        <param name="frame_id_replace_start" value="c|d" />
+        <param name="frame_id_replace_end" value="s|z" />
+    </node>
+
+    <!-- Test all parameters except absolute changes at once -->
+    <node pkg="nodelet" type="nodelet" name="change_header_all_relative" args="load cras_topic_tools/change_header manager node_in node_out_all_relative">
+        <param name="stamp_relative" value="-2.0" />
+        <param name="frame_id_prefix" value="cbc" />
+        <param name="frame_id_suffix" value="sts" />
+        <param name="frame_id_replace_start" value="c|d" />
+        <param name="frame_id_replace_end" value="s|z" />
+    </node>
+
+    <!-- Run the test suite -->
+    <test test-name="change_header_test" pkg="cras_topic_tools" type="test_change_header" />
+
+</launch>
