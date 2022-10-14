@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.4 (2022-10-14)
+------------------
 * Fixed StaticTransformBroadcaster on Noetic and added unit test for it.
 * Added missing license notices.
 * Contributors: Martin Pecka
