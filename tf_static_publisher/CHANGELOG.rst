@@ -2,6 +2,9 @@
 Changelog for package tf_static_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.0.3 (2022-10-07)
 ------------------
 * tf_static_publisher: Fix CMake warning on Noetic.

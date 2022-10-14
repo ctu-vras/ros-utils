@@ -2,6 +2,9 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.0.3 (2022-10-07)
 ------------------
 * Lower test_repeat thresholds even more, OSRF buildfarm is really bad at this

@@ -2,6 +2,9 @@
 Changelog for package camera_throttle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.0.3 (2022-10-07)
 ------------------
 
