@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 """Unit test for cras.string_utils"""
 
 import unittest
