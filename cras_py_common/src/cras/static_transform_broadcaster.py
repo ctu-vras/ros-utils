@@ -28,4 +28,4 @@ class StaticTransformBroadcaster(tfBroadcaster):
         for tf in transform:
             StaticTransformBroadcaster.tfs[(tf.header.frame_id, tf.child_frame_id)] = tf
 
-        super(StaticTransformBroadcaster, self).sendTransform(StaticTransformBroadcaster.tfs.values())
+        super(StaticTransformBroadcaster, self).sendTransform(list(StaticTransformBroadcaster.tfs.values()))

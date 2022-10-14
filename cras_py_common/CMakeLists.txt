@@ -21,6 +21,7 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest(test/test_log_utils.test)
   add_rostest(test/test_node_utils.test)
   add_rostest(test/test_param_utils.test)
+  add_rostest(test/test_static_transform_broadcaster.test)
 
   catkin_add_nosetests(test/test_geometry_utils.py)
   catkin_add_nosetests(test/test_string_utils.py)

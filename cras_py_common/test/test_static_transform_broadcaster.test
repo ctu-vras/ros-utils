@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <node name="publish_static_tfs" pkg="cras_py_common" type="publish_static_tfs.py" />
+    <test test-name="static_transform_broadcaster_test" pkg="cras_py_common" type="test_static_tf_broadcaster.py" required="true"/>
+</launch>
