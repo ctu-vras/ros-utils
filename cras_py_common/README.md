@@ -45,6 +45,7 @@ from cras.string_utils import to_str
 - `geometry_utils`: Finally THE module providing easy and foolproof conversion between quaternions and roll/pitch/yaw notation.
 - `log_utils`: Some convenience for `rospy` logging. This is mostly an internal library, but it can be used elsewhere, too.
 - `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
+- `static_transform_broadcaster`: An drop-in replacement of `tf2_ros.static_transform_broadcaster` that can safely publish multiple transforms from a single node ([upstreaming to tf2_ros in progress](https://github.com/ros/geometry2/pull/484)).
 - `string_utils`: Universal `to_str()` that converts almost anything to a sensible string.
 - `test_utils`: Utilities for writing unit tests, e.g. a tool that can "read" what was written by `rospy.loginfo()`.
 - `time_utils`: Conversions between `rospy.Rate` and frequency. `rospy.Rate` equality comparison. Min/max time and duration constants. `WallTime`, `WallRate`, `SteadyTime`, `SteadyRate`, and a `Timer` that can use these custom rates.
