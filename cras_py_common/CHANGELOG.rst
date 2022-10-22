@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.5 (2022-10-23)
+------------------
 * Added static_transform_broadcaster docs to readme.
 * Contributors: Martin Pecka
 
