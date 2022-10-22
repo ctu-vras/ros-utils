@@ -2,6 +2,11 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added support for std::array parameters.
+* Contributors: Martin Pecka
+
 2.0.4 (2022-10-14)
 ------------------
 

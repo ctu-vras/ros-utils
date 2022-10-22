@@ -2,6 +2,11 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added static_transform_broadcaster docs to readme.
+* Contributors: Martin Pecka
+
 2.0.4 (2022-10-14)
 ------------------
 * Fixed StaticTransformBroadcaster on Noetic and added unit test for it.
