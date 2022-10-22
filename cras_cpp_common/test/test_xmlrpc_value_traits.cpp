@@ -6,6 +6,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <array>
 #include <list>
 #include <map>
 #include <mutex>
@@ -33,6 +34,12 @@ TEST(XmlRpcValueTraits, Type)
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, XmlRpcValueTraits<std::vector<double>>::xmlRpcType);
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, XmlRpcValueTraits<std::vector<std::string>>::xmlRpcType);
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeBase64, XmlRpcValueTraits<std::vector<char>>::xmlRpcType);
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<bool, 4>>::xmlRpcType));
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<int, 4>>::xmlRpcType));
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<float, 4>>::xmlRpcType));
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<double, 4>>::xmlRpcType));
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<std::string, 4>>::xmlRpcType));
+  EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, (XmlRpcValueTraits<std::array<char, 4>>::xmlRpcType));
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, XmlRpcValueTraits<std::list<bool>>::xmlRpcType);
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, XmlRpcValueTraits<std::list<int>>::xmlRpcType);
   EXPECT_EQ(XmlRpc::XmlRpcValue::TypeArray, XmlRpcValueTraits<std::list<float>>::xmlRpcType);
@@ -105,6 +112,12 @@ TEST(XmlRpcValueTraits, String)
   EXPECT_STREQ("array", XmlRpcValueTraits<std::vector<double>>::stringType);
   EXPECT_STREQ("array", XmlRpcValueTraits<std::vector<std::string>>::stringType);
   EXPECT_STREQ("binary", XmlRpcValueTraits<std::vector<char>>::stringType);
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<bool, 4>>::stringType));
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<int, 4>>::stringType));
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<float, 4>>::stringType));
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<double, 4>>::stringType));
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<std::string, 4>>::stringType));
+  EXPECT_STREQ("array", (XmlRpcValueTraits<std::array<char, 4>>::stringType));
   EXPECT_STREQ("array", XmlRpcValueTraits<std::list<bool>>::stringType);
   EXPECT_STREQ("array", XmlRpcValueTraits<std::list<int>>::stringType);
   EXPECT_STREQ("array", XmlRpcValueTraits<std::list<float>>::stringType);
@@ -194,6 +207,7 @@ TEST(XmlRpcValueTraits, IsCanonical)
   EXPECT_FALSE(XmlRpcValueTraits<short>::isCanonical);  // NOLINT
   EXPECT_FALSE(XmlRpcValueTraits<long>::isCanonical);  // NOLINT
   EXPECT_FALSE(XmlRpcValueTraits<float>::isCanonical);
+  EXPECT_FALSE((XmlRpcValueTraits<std::array<float, 4>>::isCanonical));
   EXPECT_FALSE(XmlRpcValueTraits<std::vector<float>>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<std::vector<signed char>>::isCanonical);
   EXPECT_FALSE(XmlRpcValueTraits<std::vector<unsigned char>>::isCanonical);

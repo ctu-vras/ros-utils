@@ -8,6 +8,7 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <list>
 #include <map>
 #include <set>
@@ -213,6 +214,25 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::unordered_set<double>>(x, {0.0, 1.0, -1.0}, true, false);}
   {TRACE; test_converts<std::unordered_set<long double>>(x, {0.0, 1.0, -1.0}, true, false);}
 
+  {TRACE; test_converts<std::array<int, 3>>(x, {0, 1, -1}, true, false);}
+  {TRACE; test_converts<std::array<char, 3>>(x, {0, 1, -1}, true, false);}
+  {TRACE; test_converts<std::array<short, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
+  {TRACE; test_converts<std::array<long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
+  {TRACE; test_converts<std::array<long long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
+  {TRACE; test_converts<std::array<float, 3>>(x, {0.0f, 1.0f, -1.0f}, true, false);}
+  {TRACE; test_converts<std::array<double, 3>>(x, {0.0, 1.0, -1.0}, true, false);}
+  {TRACE; test_converts<std::array<long double, 3>>(x, {0.0, 1.0, -1.0}, true, false);}
+  {TRACE; test_not_converts<std::array<bool, 3>>(x, true);}
+  {TRACE; test_not_converts<std::array<unsigned char, 3>>(x, true);}
+  {TRACE; test_not_converts<std::array<unsigned short, 3>>(x, true);}  // NOLINT
+  {TRACE; test_not_converts<std::array<unsigned int, 3>>(x, true);}
+  {TRACE; test_not_converts<std::array<size_t, 3>>(x, true);}
+  {TRACE; test_not_converts<std::array<unsigned long, 3>>(x, true);}  // NOLINT
+  {TRACE; test_not_converts<std::array<unsigned long long, 3>>(x,true);}  // NOLINT
+  {TRACE; test_not_converts<std::array<int, 2>>(x, true);}
+  {TRACE; test_not_converts<std::array<int, 4>>(x, true);}
+
+
   // test with skipNonConvertible = false should result in complete failure
   {TRACE; test_not_converts<std::vector<unsigned int>>(x, false);}
   {TRACE; test_not_converts<std::list<unsigned int>>(x, false);}
@@ -229,6 +249,9 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::set<std::set<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
   {TRACE; test_converts<std::vector<std::set<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
   {TRACE; test_converts<std::vector<std::list<double>>>(x, {{0.0, 1.0}, {-1.0}}, true, false);}
+  {TRACE; test_converts<std::array<std::list<double>, 2>>(
+    x, {std::list<double>({0.0, 1.0}), std::list<double>({-1.0})}, true, false);}
+  {TRACE; test_not_converts<std::list<std::array<double, 2>>>(x, false);}
 
   x[0][0].clear(); x[0][0].setSize(1); x[0][0][0] = 0;
   x[0][1].clear(); x[0][1].setSize(1); x[0][1][0] = 1;

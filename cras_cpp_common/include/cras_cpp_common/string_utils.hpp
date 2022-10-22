@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <array>
 #include <cstdarg>
 #include <functional>
 #include <list>
@@ -403,6 +404,22 @@ DECLARE_TO_STRING_VECTOR(::std::vector, "[", "]")
 DECLARE_TO_STRING_VECTOR(::std::list, "[", "]")
 DECLARE_TO_STRING_VECTOR(::std::set, "{", "}")
 DECLARE_TO_STRING_VECTOR(::std::unordered_set, "{", "}")
+
+template<typename T, unsigned long int N>
+inline ::std::string to_string(const ::std::array<T, N>& value)
+{
+  ::std::stringstream ss;
+  ss << ("[");
+  size_t i = 0;
+  for (const auto& v: value)
+  {
+    ss << ::cras::quoteIfStringType(::cras::to_string(v), v);
+    if (i + 1 < value.size())ss << ", ";
+    ++i;
+  }
+  ss << ("]");
+  return ss.str();
+}
 
 #define DECLARE_TO_STRING_MAP(mapType) \
   template<typename K, typename V> \

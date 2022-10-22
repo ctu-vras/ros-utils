@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <array>
 #include <ctime>
 #include <list>
 #include <map>
@@ -245,6 +246,14 @@ template<typename T> struct XmlRpcValueTraits<::std::set<T>,
 };
 
 template<typename T> struct XmlRpcValueTraits<::std::unordered_set<T>,
+  typename ::std::enable_if<::cras::XmlRpcValueTraits<T>::xmlRpcType != ::XmlRpc::XmlRpcValue::TypeInvalid>::type>
+{
+  constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeArray };
+  constexpr static const char* stringType { ::cras::to_cstring(xmlRpcType) };
+  constexpr static const bool isCanonical { false };
+};
+
+template<typename T, unsigned long int N> struct XmlRpcValueTraits<::std::array<T, N>,
   typename ::std::enable_if<::cras::XmlRpcValueTraits<T>::xmlRpcType != ::XmlRpc::XmlRpcValue::TypeInvalid>::type>
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeArray };

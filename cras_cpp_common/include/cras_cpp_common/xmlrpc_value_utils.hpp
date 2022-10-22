@@ -8,6 +8,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <array>
 #include <limits>
 #include <list>
 #include <map>
@@ -218,6 +219,11 @@ template<typename T>
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::unordered_set<T>& v,
   bool skipNonConvertible = false, ::std::list<::std::string>* errors = nullptr);
 
+//! \overload cras::convert(const XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&, bool, ::std::list<::std::string>*)
+template<typename T, unsigned long int N>
+inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v,
+  bool skipNonConvertible = false, ::std::list<::std::string>* errors = nullptr);
+
 #define DEFINE_ARRAY_CONVERT(arrayType, insertFn) \
   template<typename T> \
   inline bool convert(const ::XmlRpc::XmlRpcValue& x, arrayType<T>& v, bool skipNonConvertible, \
@@ -244,6 +250,33 @@ DEFINE_ARRAY_CONVERT(::std::vector, push_back)
 DEFINE_ARRAY_CONVERT(::std::list, push_back)
 DEFINE_ARRAY_CONVERT(::std::set, insert)
 DEFINE_ARRAY_CONVERT(::std::unordered_set, insert)
+
+template<typename T, unsigned long int N>
+inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v, bool skipNonConvertible,
+  ::std::list<::std::string>* errors)
+{
+  if (x.getType() != ::XmlRpc::XmlRpcValue::TypeArray)
+  {
+    if (errors != nullptr)
+      errors->push_back(::cras::format("Cannot convert type %s to array.", ::cras::to_cstring(x.getType())));
+    return false;
+  }
+  if (x.size() != N)
+  {
+    if (errors != nullptr)
+      errors->push_back(::cras::format("The array is expected to have %i items, but %i was given.", N, x.size()));
+    return false;
+  }
+  for (size_t i = 0; i < x.size(); ++i)
+  {
+    T t;
+    if (convert(x[i], t, skipNonConvertible, errors))
+      v[i] = t;
+    else  // we cannot skip non-convertible values because we do not know what to use instead of them
+      return false;
+  }
+  return true;
+}
 
 #define DEFINE_STRUCT_CONVERT(mapType) \
   template<typename T> \

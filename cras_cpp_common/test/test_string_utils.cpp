@@ -8,6 +8,7 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <limits>
 #include <list>
 #include <map>
@@ -134,6 +135,7 @@ TEST(StringUtils, ToStringBasic)  // NOLINT
   EXPECT_EQ("[True, False]", to_string(std::list<bool>({true, false})));
   EXPECT_EQ("[]", to_string(std::list<bool>()));
   EXPECT_EQ("[\"a\"]", to_string(std::list<std::string>({"a"})));
+  EXPECT_EQ("[True, False]", to_string(std::array<bool, 2>({true, false})));
   EXPECT_EQ("{1}", to_string(std::unordered_set<int>({1})));
   EXPECT_EQ("{False}", to_string(std::unordered_set<bool>({false})));
   EXPECT_EQ("{}", to_string(std::unordered_set<bool>()));

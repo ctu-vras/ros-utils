@@ -127,6 +127,12 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
       }
       else
       {
+        ::std::list<::std::string> uniqueErrors;
+        for (const auto& error : errors)
+        {
+          if (std::find(uniqueErrors.begin(), uniqueErrors.end(), error) == uniqueErrors.end())
+            uniqueErrors.push_back(error);
+        }
         info.message = ::cras::format(
           "%s: Parameter %s found with correct XmlRpc type %s and value %s, "
           "but its conversion to type %s has failed due to the following errors: %s.",
@@ -134,7 +140,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
           ::cras::XmlRpcValueTraits<ParamServerType>::stringType,
           ::cras::to_string(xmlValue).c_str(),
           ::cras::getTypeName<ParamServerType>().c_str(),
-          ::cras::to_string(errors).c_str());
+          ::cras::to_string(uniqueErrors).c_str());
       }
       info.messageLevel = ::ros::console::Level::Error;
 
@@ -227,8 +233,14 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
       }
       else
       {
+        ::std::list<::std::string> uniqueErrors;
+        for (const auto& error : errors)
+        {
+          if (std::find(uniqueErrors.begin(), uniqueErrors.end(), error) == uniqueErrors.end())
+            uniqueErrors.push_back(error);
+        }
         info.message += " Some parts of the value were skipped because of the following conversion errors: " +
-          ::cras::to_string(errors);
+          ::cras::to_string(uniqueErrors);
         info.messageLevel = ::ros::console::Level::Warn;
       }
     }

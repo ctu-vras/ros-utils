@@ -618,6 +618,16 @@ struct GetParamTest
       "list_double", std::unordered_set<double>(), std::unordered_set<double>({0.0, 1.0, -1.0}), false);}
     {TRACE ((T*)this)->test_s(
       "list_str", std::unordered_set<std::string>(), std::unordered_set<std::string>({"a", "b", "cde"}), false);}
+
+    {TRACE ((T*)this)->test_s(
+      "list_empty", std::array<std::string, 1>({"a"}), std::array<std::string, 1>({"a"}), true);}
+    {TRACE ((T*)this)->test_s("list_bool", std::array<bool, 3>(), std::array<bool, 3>({true, false, true}), false);}
+    {TRACE ((T*)this)->test_s("list_int", std::array<int, 3>(), std::array<int, 3>({0, 1, -1}), false);}
+    {TRACE ((T*)this)->test_s(
+      "list_uint", std::array<unsigned int, 3>(), std::array<unsigned int, 3>({0u, 1u, 2u}), false);}
+    {TRACE ((T*)this)->test_s("list_double", std::array<double, 3>(), std::array<double, 3>({0.0, 1.0, -1.0}), false);}
+    {TRACE ((T*)this)->test_s(
+      "list_str", std::array<std::string, 3>(), std::array<std::string, 3>({"a", "b", "cde"}), false);}
   }
 
   inline void testDict()
