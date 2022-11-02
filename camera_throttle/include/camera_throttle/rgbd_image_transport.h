@@ -69,7 +69,8 @@ class RgbdImageTransport : public image_transport::ImageTransport
   RgbdCameraSubscriber subscribeRgbdCamera(const std::string& rgb_base_topic, const std::string& depth_base_topic, size_t queue_size,
                                    const RgbdCameraSubscriber::Callback& callback,
                                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints());
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints());
 
   /**
    * \brief Subscribe to a synchronized image & camera info topic pair, version for bare function.
@@ -79,10 +80,11 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                              const sensor_msgs::CameraInfoConstPtr&,
                                              const sensor_msgs::ImageConstPtr&,
                                              const sensor_msgs::CameraInfoConstPtr&),
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, queue_size, RgbdCameraSubscriber::Callback(fp), ros::VoidPtr(),
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth);
   }
 
   /**
@@ -95,10 +97,11 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                                 const sensor_msgs::CameraInfoConstPtr&,
                                                 const sensor_msgs::ImageConstPtr&,
                                                 const sensor_msgs::CameraInfoConstPtr&), T* obj,
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, queue_size, boost::bind(fp, obj, _1, _2, _3, _4), ros::VoidPtr(),
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth);
   }
 
   /**
@@ -112,10 +115,11 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                                 const sensor_msgs::ImageConstPtr&,
                                                 const sensor_msgs::CameraInfoConstPtr&),
                                    const boost::shared_ptr<T>& obj,
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, queue_size, boost::bind(fp, obj.get(), _1, _2, _3, _4), obj,
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth);
   }
 
 
@@ -131,7 +135,9 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                    const std::string& pcl_topic, size_t queue_size,
                                    const RgbdCameraSubscriber::PclCallback& callback,
                                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints());
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints(),
+                                   const ros::TransportHints& transport_hints_pcl = ros::TransportHints());
 
   /**
    * \brief Subscribe to a synchronized image & camera info topic pair, version for bare function.
@@ -143,10 +149,12 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                              const sensor_msgs::ImageConstPtr&,
                                              const sensor_msgs::CameraInfoConstPtr&,
                                              const sensor_msgs::PointCloud2ConstPtr&),
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints(),
+                                   const ros::TransportHints& transport_hints_pcl = ros::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, pcl_topic, queue_size, RgbdCameraSubscriber::PclCallback(fp), ros::VoidPtr(),
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth, transport_hints_pcl);
   }
 
   /**
@@ -161,10 +169,12 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                                 const sensor_msgs::ImageConstPtr&,
                                                 const sensor_msgs::CameraInfoConstPtr&,
                                                 const sensor_msgs::PointCloud2ConstPtr&), T* obj,
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints(),
+                                   const ros::TransportHints& transport_hints_pcl = ros::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, pcl_topic, queue_size, boost::bind(fp, obj, _1, _2, _3, _4, _5), ros::VoidPtr(),
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth, transport_hints_pcl);
   }
 
   /**
@@ -180,10 +190,12 @@ class RgbdImageTransport : public image_transport::ImageTransport
                                                 const sensor_msgs::CameraInfoConstPtr&,
                                                 const sensor_msgs::PointCloud2ConstPtr&),
                                    const boost::shared_ptr<T>& obj,
-                                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints())
+                                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints(),
+                                   const ros::TransportHints& transport_hints_pcl = ros::TransportHints())
   {
     return subscribeRgbdCamera(rgb_base_topic, depth_base_topic, pcl_topic, queue_size, boost::bind(fp, obj.get(), _1, _2, _3, _4, _5), obj,
-                           transport_hints);
+                           transport_hints_rgb, transport_hints_depth, transport_hints_pcl);
   }
 
   protected: ros::NodeHandle rgbNh;

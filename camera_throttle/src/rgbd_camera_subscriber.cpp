@@ -87,7 +87,8 @@ struct RgbdCameraSubscriber::Impl
 RgbdCameraSubscriber::RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh,
                                    const std::string& rgb_base_topic, const std::string& depth_base_topic, size_t queue_size,
                                    const Callback& callback, const ros::VoidPtr& tracked_object,
-                                   const image_transport::TransportHints& transport_hints)
+                                   const image_transport::TransportHints& transport_hints_rgb,
+                                   const image_transport::TransportHints& transport_hints_depth)
     : impl(new Impl(queue_size))
 {
   this->impl->hasPcl = false;
@@ -99,10 +100,10 @@ RgbdCameraSubscriber::RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::No
   const auto depth_topic = depth_nh.resolveName(depth_base_topic);
   const auto depth_info_topic = image_transport::getCameraInfoTopic(depth_topic);
   
-  impl->rgbSub.subscribe(image_it, rgb_topic, queue_size, transport_hints);
-  impl->rgbInfoSub.subscribe(rgb_nh, rgb_info_topic, queue_size, transport_hints.getRosHints());
-  impl->depthSub.subscribe(image_it, depth_topic, queue_size, transport_hints);
-  impl->depthInfoSub.subscribe(depth_nh, depth_info_topic, queue_size, transport_hints.getRosHints());
+  impl->rgbSub.subscribe(image_it, rgb_topic, queue_size, transport_hints_rgb);
+  impl->rgbInfoSub.subscribe(rgb_nh, rgb_info_topic, queue_size, transport_hints_rgb.getRosHints());
+  impl->depthSub.subscribe(image_it, depth_topic, queue_size, transport_hints_depth);
+  impl->depthInfoSub.subscribe(depth_nh, depth_info_topic, queue_size, transport_hints_depth.getRosHints());
   impl->sync.connectInput(impl->rgbSub, impl->rgbInfoSub, impl->depthSub, impl->depthInfoSub);
   // need for Boost.Bind here is kind of broken
   impl->sync.registerCallback(boost::bind(callback, _1, _2, _3, _4));
@@ -121,7 +122,9 @@ RgbdCameraSubscriber::RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::No
                                    const std::string& rgb_base_topic, const std::string& depth_base_topic,
                                    const std::string& pcl_topic, size_t queue_size,
                                    const PclCallback& callback, const ros::VoidPtr& tracked_object,
-                                   const image_transport::TransportHints& transport_hints)
+                                   const image_transport::TransportHints& transport_hints_rgb,
+                                   const image_transport::TransportHints& transport_hints_depth,
+                                   const ros::TransportHints& transport_hints_pcl)
     : impl(new Impl(queue_size))
 {
   this->impl->hasPcl = true;
@@ -133,11 +136,11 @@ RgbdCameraSubscriber::RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::No
   const auto depth_topic = depth_nh.resolveName(depth_base_topic);
   const auto depth_info_topic = image_transport::getCameraInfoTopic(depth_topic);
 
-  impl->rgbSub.subscribe(image_it, rgb_topic, queue_size, transport_hints);
-  impl->rgbInfoSub.subscribe(rgb_nh, rgb_info_topic, queue_size, transport_hints.getRosHints());
-  impl->depthSub.subscribe(image_it, depth_topic, queue_size, transport_hints);
-  impl->depthInfoSub.subscribe(depth_nh, depth_info_topic, queue_size, transport_hints.getRosHints());
-  impl->pclSub.subscribe(pcl_nh, pcl_topic, queue_size, transport_hints.getRosHints());
+  impl->rgbSub.subscribe(image_it, rgb_topic, queue_size, transport_hints_rgb);
+  impl->rgbInfoSub.subscribe(rgb_nh, rgb_info_topic, queue_size, transport_hints_rgb.getRosHints());
+  impl->depthSub.subscribe(image_it, depth_topic, queue_size, transport_hints_depth);
+  impl->depthInfoSub.subscribe(depth_nh, depth_info_topic, queue_size, transport_hints_depth.getRosHints());
+  impl->pclSub.subscribe(pcl_nh, pcl_topic, queue_size, transport_hints_pcl);
   impl->syncPcl.connectInput(impl->rgbSub, impl->rgbInfoSub, impl->depthSub, impl->depthInfoSub, impl->pclSub);
   // need for Boost.Bind here is kind of broken
   impl->syncPcl.registerCallback(boost::bind(callback, _1, _2, _3, _4, _5));

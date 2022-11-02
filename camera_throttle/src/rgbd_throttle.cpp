@@ -203,17 +203,20 @@ void RgbdCameraThrottleNodelet::info_disconnect_cb(const ros::SingleSubscriberPu
 
 void RgbdCameraThrottleNodelet::onFirstConnect()
 {
+  const auto& defaultTransport = this->getPrivateNodeHandle().param("image_transport", std::string("raw"));
+  image_transport::TransportHints hintsRgb(defaultTransport, {}, this->getPrivateNodeHandle(), "image_transport_rgb");
+  image_transport::TransportHints hintsDepth(defaultTransport, {}, this->getPrivateNodeHandle(), "image_transport_depth");
   if (this->subscribePcl)
   {
     NODELET_DEBUG("Started lazy-subscription to %s, %s and %s", this->subRgbNh.resolveName(this->subRGBBaseName).c_str(),
                   this->subDepthNh.resolveName(this->subDepthBaseName).c_str(),
                   this->subPclNh.resolveName("points_in").c_str());
-    this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, "points_in", this->queueSize, &RgbdCameraThrottleNodelet::cbPcl, this);
+    this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, "points_in", this->queueSize, &RgbdCameraThrottleNodelet::cbPcl, this, hintsRgb, hintsDepth);
   } else
   {
     NODELET_DEBUG("Started lazy-subscription to %s and %s", this->subRgbNh.resolveName(this->subRGBBaseName).c_str(),
                   this->subDepthNh.resolveName(this->subDepthBaseName).c_str());
-    this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, this->queueSize, &RgbdCameraThrottleNodelet::cb, this);
+    this->sub = this->subTransport->subscribeRgbdCamera(this->subRGBBaseName, this->subDepthBaseName, this->queueSize, &RgbdCameraThrottleNodelet::cb, this, hintsRgb, hintsDepth);
   }
 }
 

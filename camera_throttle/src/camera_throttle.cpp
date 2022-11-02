@@ -140,7 +140,8 @@ void CameraThrottleNodelet::info_disconnect_cb(const ros::SingleSubscriberPublis
 void CameraThrottleNodelet::onFirstConnect()
 {
   NODELET_DEBUG("Started lazy-subscription to %s", this->subNh.resolveName(this->subBaseName).c_str());
-  this->sub = this->subTransport->subscribeCamera(this->subBaseName, this->queueSize, &CameraThrottleNodelet::cb, this);
+  image_transport::TransportHints hints("raw", {}, this->getPrivateNodeHandle());
+  this->sub = this->subTransport->subscribeCamera(this->subBaseName, this->queueSize, &CameraThrottleNodelet::cb, this, hints);
 }
 
 void CameraThrottleNodelet::onLastDisconnect()

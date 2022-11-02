@@ -22,6 +22,7 @@ namespace camera_throttle
  *  ~fix_frame_id: If set and nonempty, the images and camera infos will get this frame ID instead of the one they came with.
  *  ~flip_horizontal: If true, flip the image horizontally. Camera info remains unchanged.
  *  ~flip_vertical: If true, flip the image vertically. Camera info remains unchanged.
+ *  ~image_transport: Specifies the image transport to use for subscribing the image.
  *
  * Topics:
  *  camera_in: The input camera topics

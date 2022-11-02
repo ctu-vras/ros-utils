@@ -98,12 +98,15 @@ private:
                    const std::string& rgb_base_topic, const std::string& depth_base_topic,
                    size_t queue_size, const Callback& callback,
                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),
-                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints());
+                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints());
   RgbdCameraSubscriber(RgbdImageTransport& image_it, ros::NodeHandle& rgb_nh, ros::NodeHandle& depth_nh, ros::NodeHandle& pcl_nh,
                    const std::string& rgb_base_topic, const std::string& depth_base_topic,
                    const std::string& pcl_topic, size_t queue_size, const PclCallback& callback,
                    const ros::VoidPtr& tracked_object = ros::VoidPtr(),
-                   const image_transport::TransportHints& transport_hints = image_transport::TransportHints());
+                   const image_transport::TransportHints& transport_hints_rgb = image_transport::TransportHints(),
+                   const image_transport::TransportHints& transport_hints_depth = image_transport::TransportHints(),
+                   const ros::TransportHints& transport_hints_pcl = ros::TransportHints());
 
   struct Impl;
   std::shared_ptr<Impl> impl;

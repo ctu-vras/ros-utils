@@ -75,18 +75,21 @@ RgbdCameraPublisher RgbdImageTransport::advertiseRgbdCamera(const std::string& r
 RgbdCameraSubscriber RgbdImageTransport::subscribeRgbdCamera(const std::string& rgb_base_topic, const std::string& depth_base_topic, size_t queue_size,
                                                  const RgbdCameraSubscriber::Callback& callback,
                                                  const ros::VoidPtr& tracked_object,
-                                                 const image_transport::TransportHints& transport_hints)
+                                                 const image_transport::TransportHints& transport_hints_rgb,
+                                                 const image_transport::TransportHints& transport_hints_depth)
 {
-  return RgbdCameraSubscriber(*this, this->rgbNh, this->depthNh, rgb_base_topic, depth_base_topic, queue_size, callback, tracked_object, transport_hints);
+  return RgbdCameraSubscriber(*this, this->rgbNh, this->depthNh, rgb_base_topic, depth_base_topic, queue_size, callback, tracked_object, transport_hints_rgb, transport_hints_depth);
 }
 
 RgbdCameraSubscriber RgbdImageTransport::subscribeRgbdCamera(const std::string& rgb_base_topic, const std::string& depth_base_topic,
                                                    const std::string& pcl_topic, size_t queue_size,
                                                  const RgbdCameraSubscriber::PclCallback& callback,
                                                  const ros::VoidPtr& tracked_object,
-                                                 const image_transport::TransportHints& transport_hints)
+                                                 const image_transport::TransportHints& transport_hints_rgb,
+                                                 const image_transport::TransportHints& transport_hints_depth,
+                                                 const ros::TransportHints& transport_hints_pcl)
 {
-  return RgbdCameraSubscriber(*this, this->rgbNh, this->depthNh, this->pclNh, rgb_base_topic, depth_base_topic, pcl_topic, queue_size, callback, tracked_object, transport_hints);
+  return RgbdCameraSubscriber(*this, this->rgbNh, this->depthNh, this->pclNh, rgb_base_topic, depth_base_topic, pcl_topic, queue_size, callback, tracked_object, transport_hints_rgb, transport_hints_depth, transport_hints_pcl);
 }
 
 }

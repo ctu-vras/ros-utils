@@ -24,6 +24,9 @@ namespace camera_throttle
  *  ~subscribe_pcl: If true, also the pointcloud will be subscribed and throttled. Default is true.
  *  ~fix_rgb_frame_id: If set and nonempty, the RGB images and camera infos will get this frame ID instead of the one they came with.
  *  ~fix_depth_frame_id: If set and nonempty, the Depth images and camera infos will get this frame ID instead of the one they came with.
+ *  ~image_transport: Specifies the image transport to use for subscribing RGB and depth.
+ *  ~image_transport_rgb: Specifies the image transport to use for subscribing RGB (overrides `~image_transport`).
+ *  ~image_transport_depth: Specifies the image transport to use for subscribing depth (overrides `~image_transport`).
  *
  * Topics:
  *  camera_rgb_in: The input RGB camera topics
