@@ -5,7 +5,7 @@
 
 import rospy
 
-from .type_utils import get_msg_type
+from .message_utils import get_msg_type
 
 
 class GenericMessageSubscriber(object):
