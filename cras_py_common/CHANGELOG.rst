@@ -2,6 +2,11 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Moved get_msg_type from type_utils to message_utils and added get_msg_field there.
+* Contributors: Martin Pecka
+
 2.0.6 (2022-11-24)
 ------------------
 * Added topic_utils and type_utils.
