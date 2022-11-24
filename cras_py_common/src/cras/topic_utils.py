@@ -36,3 +36,16 @@ class GenericMessageSubscriber(object):
         msg = self._msg_class().deserialize(raw_msg._buff)
         msg._connection_header = raw_msg._connection_header
         self._callback(msg)
+
+    # allow calling unregister(), get_num_subscribers(), .name etc.
+    def __getattr__(self, item):
+        if self._msg_class is not None:
+            if item == "data_class":
+                return self._msg_class
+            elif item == "type":
+                # noinspection PyProtectedMember
+                return self._msg_class._type
+            elif item == "md5sum":
+                # noinspection PyProtectedMember
+                return self._msg_class._md5sum
+        return getattr(self._sub, item)

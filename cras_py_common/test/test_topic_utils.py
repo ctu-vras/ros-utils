@@ -27,6 +27,10 @@ class TopicUtils(unittest.TestCase):
     def test_generic_subscriber(self):
         self._last_generic_msg = None
         sub = cras.GenericMessageSubscriber("test", self.cb_generic_sub, queue_size=1)
+        self.assertEqual(sub.data_class, rospy.AnyMsg)
+        self.assertEqual(sub.name, "test")
+        self.assertEqual(sub.resolved_name, "/test")
+
         for i in range(100):
             time.sleep(0.01)
             if rospy.is_shutdown():
@@ -35,9 +39,17 @@ class TopicUtils(unittest.TestCase):
                 break
         self.assertIsNotNone(self._last_generic_msg)
 
+        self.assertEqual(sub.data_class, String)
+        self.assertGreater(sub.get_num_connections(), 0)
+
         msg = self._last_generic_msg
         self.assertIsInstance(msg, String)
         self.assertEqual(msg.data, "test")
+
+        sub.unregister()
+        self._last_generic_msg = None
+        time.sleep(0.3)
+        self.assertIsNone(self._last_generic_msg)
 
 
 if __name__ == '__main__':
