@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.10 (2022-11-24)
+-------------------
 * Fix test bug.
 * Contributors: Martin Pecka
 
