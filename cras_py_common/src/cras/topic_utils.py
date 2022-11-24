@@ -24,14 +24,15 @@ class GenericMessageSubscriber(object):
         self._callback = callback
         self._msg_class = None
 
-    def _raw_cb(self, msg):
+    def _raw_cb(self, raw_msg):
         """Callback receiving the raw (serialized) messages, deserializing them and calling the user callback.
 
-        :param rospy.AnyMsg msg: The raw message.
+        :param rospy.AnyMsg raw_msg: The raw message.
         """
         if self._msg_class is None:
             # noinspection PyProtectedMember
-            self._msg_class = get_msg_type(msg._connection_header['type'])
+            self._msg_class = get_msg_type(raw_msg._connection_header['type'])
         # noinspection PyProtectedMember
-        msg = self._msg_class().deserialize(msg._buff)
+        msg = self._msg_class().deserialize(raw_msg._buff)
+        msg._connection_header = raw_msg._connection_header
         self._callback(msg)
