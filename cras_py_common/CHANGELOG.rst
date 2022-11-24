@@ -2,6 +2,11 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix test bug.
+* Contributors: Martin Pecka
+
 2.0.9 (2022-11-24)
 ------------------
 * Relay attribute access in GenericMessageSubscriber to the raw subscriber (to allow e.g. calling unsubscribe()).
