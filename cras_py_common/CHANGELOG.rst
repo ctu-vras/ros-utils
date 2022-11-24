@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.8 (2022-11-24)
+------------------
 * Pass connection header to user callback in GenericMessageSubscriber.
 * Contributors: Martin Pecka
 
