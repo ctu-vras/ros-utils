@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.6 (2022-11-24)
+------------------
 * Added topic_utils and type_utils.
 * Contributors: Martin Pecka
 
