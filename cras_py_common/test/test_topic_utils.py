@@ -28,7 +28,7 @@ class TopicUtils(unittest.TestCase):
         self._last_generic_msg = None
         sub = cras.GenericMessageSubscriber("test", self.cb_generic_sub, queue_size=1)
         self.assertEqual(sub.data_class, rospy.AnyMsg)
-        self.assertEqual(sub.name, "test")
+        self.assertEqual(sub.name, "/test")
         self.assertEqual(sub.resolved_name, "/test")
 
         for i in range(100):
