@@ -2,6 +2,11 @@
 Changelog for package camera_throttle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Correctly propagate ~image_transport parameter to image subscribers.
+* Contributors: Martin Pecka
+
 2.0.5 (2022-10-23)
 ------------------
 

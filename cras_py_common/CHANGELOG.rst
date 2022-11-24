@@ -2,6 +2,11 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added topic_utils and type_utils.
+* Contributors: Martin Pecka
+
 2.0.5 (2022-10-23)
 ------------------
 * Added static_transform_broadcaster docs to readme.
