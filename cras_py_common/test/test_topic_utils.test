@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="use_sim_time" value="false" />
+    <test test-name="topic_utils_test" pkg="cras_py_common" type="test_topic_utils.py" />
+    <node name="pub" pkg="rostopic" type="rostopic" args="pub -r 10 test std_msgs/String 'data: &quot;test&quot;'" /> 
+</launch>

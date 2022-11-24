@@ -28,3 +28,7 @@ except ImportError:
     pass
 
 from .string_utils import to_str, register_to_str
+
+from .topic_utils import GenericMessageSubscriber
+
+from .type_utils import get_msg_type
