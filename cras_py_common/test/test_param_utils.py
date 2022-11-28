@@ -9,6 +9,7 @@ import math
 import numpy as np
 import unittest
 
+from enum import Enum
 from math import radians as rad
 
 import geometry_msgs.msg as gm
@@ -18,7 +19,7 @@ import rostest
 from rosgraph_msgs.msg import Log
 
 from cras import get_param, rate_equals, get_param_verbose, GetParamException, GetParamResult, GetParamResultInfo, \
-    slowest_rate, to_str, register_default_unit, register_param_conversion
+    slowest_rate, to_str, register_default_unit, register_enum_conversion, register_param_conversion
 from cras.test_utils import RosconsoleCapture
 
 
@@ -27,10 +28,17 @@ class CustomClass(object):
         return "custom"
 
 
+class TestEnum(Enum):
+    a = 1,
+    asd = 2
+
+
 class NodeUtils(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(NodeUtils, self).__init__(*args, **kwargs)
         rospy.init_node("param_utils_test")
+
+        register_enum_conversion(TestEnum)
 
     def test_get_param_basic(self):
         self.assertRaises(GetParamException, get_param, "nonexistent")
@@ -115,6 +123,7 @@ class NodeUtils(unittest.TestCase):
         self.assertEqual(get_param("test_dict_config/params/str_empty", "a"), "")
         self.assertEqual(get_param("test_dict_config/params/str_a", ""), "a")
         self.assertEqual(get_param("test_dict_config/params/str_asd", ""), "asd")
+        self.assertEqual(get_param("test_dict_config/params/str_asd", TestEnum.a), TestEnum.asd)
         self.assertEqual(get_param("test_dict_config/params/list_empty", [1]), list())
         self.assertEqual(get_param("test_dict_config/params/list_bool", []), [True, False, True])
         self.assertEqual(get_param("test_dict_config/params/list_int", []), [0, 1, -1])
@@ -152,6 +161,7 @@ class NodeUtils(unittest.TestCase):
         self.assertEqual(get_param("nonexistent", ""), "")
         self.assertEqual(get_param("nonexistent", "a"), "a")
         self.assertEqual(get_param("nonexistent", "asd"), "asd")
+        self.assertEqual(get_param("nonexistent", TestEnum.asd), TestEnum.asd)
         self.assertEqual(get_param("nonexistent", []), list())
         self.assertEqual(get_param("nonexistent", [True, False, True]), [True, False, True])
         self.assertEqual(get_param("nonexistent", [0, 1, -1]), [0, 1, -1])
@@ -176,6 +186,7 @@ class NodeUtils(unittest.TestCase):
         self.assertEqual(get_param("test_dict_config/params/int_1", 0.0), 1.0)
         self.assertEqual(get_param("test_dict_config/params/int_2", 0.0), 2.0)
         self.assertEqual(get_param("test_dict_config/params/int_minus_1", 0.0), -1.0)
+        self.assertEqual(get_param("test_dict_config/params/str_asd", TestEnum.a), TestEnum.asd)
 
     def test_get_param_result_convert(self):
         self.assertIsInstance(get_param("test_dict_config/params/bool_True", result_type=int), int)
@@ -191,6 +202,7 @@ class NodeUtils(unittest.TestCase):
         self.assertEqual(get_param("test_dict_config/params/int_1", result_type=float), 1.0)
         self.assertEqual(get_param("test_dict_config/params/int_2", result_type=float), 2.0)
         self.assertEqual(get_param("test_dict_config/params/int_minus_1", result_type=float), -1.0)
+        self.assertEqual(get_param("test_dict_config/params/str_asd", result_type=TestEnum), TestEnum.asd)
 
     def test_get_param_result_vs_default_convert(self):
         # result_type wins over defult_value
@@ -240,6 +252,21 @@ class NodeUtils(unittest.TestCase):
             self.assertEqual("/param_utils_test: Parameter test_dict_config/params/int_2 found with correct XmlRpc "
                              "type int and value 2, but its conversion to type bool has failed due to the following "
                              "errors: Cannot convert int value 2 to bool.", e.info.message)
+            self.assertEqual(e.info.message, str(e))
+
+        try:
+            get_param("test_dict_config/name", throw_if_convert_fails=True, result_type=TestEnum)
+            self.fail("Expected GetParamException")
+        except GetParamException as e:
+            assert isinstance(e.info, GetParamResultInfo)
+            self.assertTrue(e.info.convert_failed)
+            self.assertTrue(e.info.required_missing)
+            self.assertFalse(e.info.default_used)
+            self.assertEqual(Log.ERROR, e.info.message_level)
+            self.assertEqual("/param_utils_test: Parameter test_dict_config/name found with correct XmlRpc type str "
+                             "and value dict, but its conversion to type TestEnum has failed due to the following "
+                             "errors: Cannot convert 'dict' to <enum 'TestEnum'>. Allowed values are: "
+                             "asd,a.", e.info.message)
             self.assertEqual(e.info.message, str(e))
 
     def test_get_param_verbose(self):

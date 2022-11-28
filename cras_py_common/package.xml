@@ -18,6 +18,7 @@
   <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-enum34</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-monotonic</exec_depend>
   <exec_depend>rosgraph_msgs</exec_depend>
   <exec_depend>rospy</exec_depend>

@@ -5,6 +5,7 @@
 
 """Unit test for cras.string_utils"""
 
+from enum import Enum
 import unittest
 
 import rospy
@@ -19,6 +20,16 @@ class TestClass:
         return "test"
 
 
+class TestEnum(Enum):
+    A = 1,
+    B = 2,
+
+
+class TestEnum2(Enum):
+    A = 1,
+    B = 2,
+
+
 class StringUtils(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -31,6 +42,8 @@ class StringUtils(unittest.TestCase):
         self.assertEqual("1.0", to_str(1.0))
         self.assertEqual("3.14", to_str(3.14))
         self.assertEqual("abc", to_str("abc"))
+        self.assertEqual("A", to_str(TestEnum.A))
+        self.assertEqual("B", to_str(TestEnum.B))
 
         self.assertEqual("1.000000000", to_str(Duration(1)))
         self.assertEqual("1.000000001", to_str(Duration(1, 1)))
@@ -98,6 +111,8 @@ class StringUtils(unittest.TestCase):
         self.assertEqual("test", to_str(TestClass()))
         register_to_str(TestClass, lambda _: "new")
         self.assertEqual("new", to_str(TestClass()))
+        register_to_str(TestEnum2, lambda _: "test")
+        self.assertEqual("test", to_str(TestEnum2.A))
 
 
 if __name__ == '__main__':

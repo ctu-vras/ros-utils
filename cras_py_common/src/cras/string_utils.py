@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
 """Utilities helpful when working with strings in Python and rospy."""
+
+from enum import Enum
 import genpy
 import rospy
 
@@ -77,6 +79,10 @@ def to_str(obj):
         # keep this algorithm in sync with cras_cpp_common/string_utils/ros.hpp
         s = str(obj)
         return s.rstrip("\n").replace("\n", ", ")
+
+    if isinstance(obj, Enum):
+        # represent enum values just by the values without a namespace
+        return obj.name
 
     if isinstance(obj, dict):
         items = list()

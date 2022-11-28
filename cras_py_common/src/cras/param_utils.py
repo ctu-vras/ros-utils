@@ -22,6 +22,7 @@ The predefined conversions can parse:
     'orientation' as `Quaternion` (by any of their supported specifications).
 """
 
+from enum import Enum
 from functools import partial
 
 import rospy
@@ -105,6 +106,31 @@ def register_param_conversion(result_type, param_type, convert_fn):
     if result_type not in __param_conversions:
         __param_conversions[result_type] = dict()
     __param_conversions[result_type][param_type] = convert_fn
+
+
+def __convert_str_to_enum(enum_type, str_value):
+    """Convert the given string to a value of the given enum.
+
+    :param Type enum_type: The enum type.
+    :param str str_value: The string to convert.
+    :return: The corresponding enum value.
+    :rtype: Enum
+    :raises: ValueError if the string does not correspond to any value of the enum.
+    """
+    try:
+        return enum_type[str_value]
+    except KeyError:
+        raise ValueError("Cannot convert '%s' to %s. Allowed values are: %s" % (
+            str_value, enum_type, ",".join([v.name for v in enum_type])))
+
+
+def register_enum_conversion(enum_type):
+    """Register a function converting ROS parameters of type `str` to the given enum (by taking names of the enum values
+    and reading them from the string).
+
+    :param Type enum_type: Type of the enum.
+    """
+    register_param_conversion(enum_type, str, partial(__convert_str_to_enum, enum_type))
 
 
 def register_default_unit(result_type, unit):

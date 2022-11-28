@@ -15,7 +15,7 @@ from .message_utils import get_msg_field, get_msg_type
 from .node_utils import Node
 
 from .param_utils import get_param, get_param_verbose, GetParamException, GetParamResult, GetParamResultInfo, \
-    register_param_conversion, register_default_unit
+    register_default_unit, register_enum_conversion, register_param_conversion
 
 import cras.impl.param_utils_geometry_msgs
 import cras.impl.param_utils_numpy
