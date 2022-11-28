@@ -6,8 +6,10 @@
 Conversions quaternion<->roll/pitch/yaw are consistent with those in cras_cpp_common tf2_utils.
 """
 
+
 from geometry_msgs.msg import Quaternion
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
+# tf.transformations imports are moved inside the functions so that tf2_ros doesn't need to be imported when doing a
+# simple "import cras" and not using this module. tf2_ros import requires the ROS_PACKAGE_PATH to be filled.
 
 
 def quat_get_rpy(quaternion, *args):
@@ -20,6 +22,7 @@ def quat_get_rpy(quaternion, *args):
     :rtype: Tuple[float]
     :raises ValueError: If invalid number of arguments is passed or they have invalid number of elements.
     """
+    from tf.transformations import euler_from_quaternion
     q = quaternion
     if len(args) > 0:
         if len(args) != 3:
@@ -81,6 +84,7 @@ def quat_tuple_from_rpy(roll, pitch=None, yaw=None):
     :rtype: Tuple[float]
     :raises ValueError: If invalid number of arguments is passed or they have invalid number of elements.
     """
+    from tf.transformations import quaternion_from_euler
     if isinstance(roll, list) or isinstance(roll, tuple):
         if pitch is not None or yaw is not None or len(roll) != 3:
             raise ValueError("quat_tuple_from_rpy() can be called either with a 3-tuple or with 3 float arguments.")
