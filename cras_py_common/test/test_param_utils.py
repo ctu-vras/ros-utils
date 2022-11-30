@@ -263,10 +263,11 @@ class NodeUtils(unittest.TestCase):
             self.assertTrue(e.info.required_missing)
             self.assertFalse(e.info.default_used)
             self.assertEqual(Log.ERROR, e.info.message_level)
-            self.assertEqual("/param_utils_test: Parameter test_dict_config/name found with correct XmlRpc type str "
-                             "and value dict, but its conversion to type TestEnum has failed due to the following "
-                             "errors: Cannot convert 'dict' to <enum 'TestEnum'>. Allowed values are: "
-                             "asd,a.", e.info.message)
+            self.assertIn(e.info.message,
+                          ["/param_utils_test: Parameter test_dict_config/name found with correct XmlRpc type str "
+                           "and value dict, but its conversion to type TestEnum has failed due to the following "
+                           "errors: Cannot convert 'dict' to <enum 'TestEnum'>. Allowed values are: %s." % v
+                           for v in (("asd,a",), ("a,asd",))])
             self.assertEqual(e.info.message, str(e))
 
     def test_get_param_verbose(self):
