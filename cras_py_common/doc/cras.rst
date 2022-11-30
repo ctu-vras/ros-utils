@@ -20,6 +20,22 @@ cras.log\_utils module
    :undoc-members:
    :show-inheritance:
 
+cras.message\_utils module
+----------------------
+
+.. automodule:: cras.message_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cras.node\_utils module
+----------------------
+
+.. automodule:: cras.node_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cras.param\_utils module
 ------------------------
 
@@ -56,6 +72,14 @@ cras.time\_utils module
 -----------------------
 
 .. automodule:: cras.time_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cras.topic\_utils module
+-----------------------
+
+.. automodule:: cras.topic_utils
    :members:
    :undoc-members:
    :show-inheritance:
