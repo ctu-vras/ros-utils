@@ -683,4 +683,3 @@ class NodeUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     rostest.rosrun("cras_py_common", "test_param_utils", NodeUtils)
-    unittest.main()

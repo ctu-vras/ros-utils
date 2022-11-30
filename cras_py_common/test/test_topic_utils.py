@@ -54,4 +54,3 @@ class TopicUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     rostest.rosrun("cras_py_common", "test_topic_utils", TopicUtils)
-    unittest.main()

@@ -176,4 +176,3 @@ class LogUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     rostest.rosrun("cras_py_common", "test_log_utils", LogUtils)
-    unittest.main()
