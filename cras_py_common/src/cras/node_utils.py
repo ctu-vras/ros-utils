@@ -24,11 +24,17 @@ class Node(object):
     - `~reset_on_time_jump_forward` (bool, default True in sim time and False in wall time):
         Whether to call :func:`reset()` when ROS time jumps forward.
 
+    This class subscribes the following topics:
+    - `/reset` (any type): When a message is received on this topic, the node is reset.
+    - `~reset` (any type): When a message is received on this topic, the node is reset.
+
     :ivar rospy.Duration _jump_back_tolerance: Threshold for ROS time jump back detection.
     :ivar rospy.Duration _jump_forward_tolerance: Threshold for ROS time jump forward detection.
     :ivar rospy.Time _last_time_stamp: Last recorded time stamp. Used for time jump back detection.
     :ivar bool _reset_on_time_jump_back: Whether to call :func:`reset()` when ROS time jumps back.
     :ivar bool _reset_on_time_jump_forward: Whether to call :func:`reset()` when ROS time jumps forward.
+    :ivar rospy.Subscriber _reset_sub: Subscriber of the `/reset` topic.
+    :ivar rospy.Subscriber _reset_priv_sub: Subscriber of the `~reset` topic.
     """
 
     def __init__(self):
@@ -47,6 +53,9 @@ class Node(object):
         self._reset_on_time_jump_back = get_param("~reset_on_time_jump_back", True, print_messages=False)
         self._reset_on_time_jump_forward = get_param("~reset_on_time_jump_forward", not is_wall_time,
                                                      print_messages=False)
+
+        self._reset_sub = rospy.Subscriber("/reset", rospy.AnyMsg, self._on_reset_msg, queue_size=1)
+        self._reset_priv_sub = rospy.Subscriber("~reset", rospy.AnyMsg, self._on_reset_msg, queue_size=1)
 
         self._last_time_stamp = None
         self._auto_check_timer = None
@@ -102,3 +111,7 @@ class Node(object):
         if self._auto_check_timer is not None:
             self._auto_check_timer.shutdown()
             self._auto_check_timer = None
+
+    def _on_reset_msg(self, _):
+        """Callback for messages on the `/reset` topic."""
+        self.reset()

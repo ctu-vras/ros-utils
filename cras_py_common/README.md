@@ -45,12 +45,38 @@ from cras.string_utils import to_str
 - [`geometry_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.geometry_utils): Finally THE module providing easy and foolproof conversion between quaternions and roll/pitch/yaw notation.
 - [`log_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.log_utils): Some convenience for `rospy` logging. This is mostly an internal library, but it can be used elsewhere, too.
 - [`message_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.message_utils): Conversion of `std_msgs/String` to Python type etc. Generic access to message fields using a string "address".
+- [`node_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.node_utils): Utilities for easier writing of nodes, adding e.g. easy-to-write `reset()` function that is automatically called when ROS time jumps back/forward.
 - [`param_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.param_utils): Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
 - [`static_transform_broadcaster`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.static_transform_broadcaster): An drop-in replacement of `tf2_ros.static_transform_broadcaster` that can safely publish multiple transforms from a single node ([upstreaming to tf2_ros in progress](https://github.com/ros/geometry2/pull/484)).
 - [`string_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.string_utils): Universal `to_str()` that converts almost anything to a sensible string.
 - [`test_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.test_utils): Utilities for writing unit tests, e.g. a tool that can "read" what was written by `rospy.loginfo()`.
 - [`time_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.time_utils): Conversions between `rospy.Rate` and frequency. `rospy.Rate` equality comparison. Min/max time and duration constants. `WallTime`, `WallRate`, `SteadyTime`, `SteadyRate`, and a `Timer` that can use these custom rates.
 - [`topic_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.topic_utils): Generic topic subscriber.
+
+## `node_utils`: Resettable nodes
+
+Nodes can support resetting of their state. This is a concept very useful for simulation or postprocessing. Each node that supports resetting should be marked like this in its documentation:
+
+> **Note**
+> This node is resettable and checks for time jumps.
+
+This particularly means that the node subscribes to topics `/reset` and `~reset` (any type). Whenever a message is received on either of these topics, the node's `reset()` method is called.
+
+Resetting is also done automatically any time the node figures out ROS time jumped back/forward too much. It is configured via these parameters:
+- `/jump_back_tolerance` (float, default 3.0 in wall time and 0.0 in sim time):
+  Threshold for ROS time jump back detection.
+- `~jump_back_tolerance` (float, default from `/jump_back_tolerance`): Threshold for ROS time jump back detection.
+- `~reset_on_time_jump_back` (bool, default True): Whether to call `reset()` when ROS time jumps back.
+- `/jump_forward_tolerance` (float, default 10.0 in sim time and max duration in wall time):
+  Threshold for ROS time jump forward detection.
+- `~jump_forward_tolerance` (float, default from `/jump_forward_tolerance`):
+  Threshold for ROS time jump forward detection.
+- `~reset_on_time_jump_forward` (bool, default True in sim time and False in wall time):
+  Whether to call `reset()` when ROS time jumps forward.
+
+The node should either call `self.check_time_jump()` in each message callback, or call `self.start_auto_check_time_jump()` when the node is initialized (this runs a background thread doing the checks).
+
+Please note that you may have to increase the jump forward tolerance if playing bag files with very high rates. In such case, it is safer to increase the threshold to 60 seconds or even more.
 
 ## `param_utils`: Parameter Reading Helpers
 

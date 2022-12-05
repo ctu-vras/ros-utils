@@ -8,6 +8,7 @@ import time
 
 import rospy
 import rostest
+from std_msgs.msg import Bool
 import unittest
 
 import cras
@@ -28,6 +29,8 @@ class NodeUtils(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(NodeUtils, self).__init__(*args, **kwargs)
         rospy.init_node("node_utils_test")
+        self.reset_pub = rospy.Publisher("/reset", Bool, queue_size=1)
+        self.reset_priv_pub = rospy.Publisher("~reset", Bool, queue_size=1)
 
     def test_reset(self):
         node = TestNode()
@@ -68,6 +71,21 @@ class NodeUtils(unittest.TestCase):
         self.assertEqual(4, node.num_reset_calls)
         time.sleep(0.5)
         self.assertEqual(5, node.num_reset_calls)
+        node.stop_auto_check_time_jump()
+        time.sleep(0.5)
+        self.assertEqual(5, node.num_reset_calls)
+        self.reset_pub.publish(Bool(True))
+        for _ in range(100):
+            if node.num_reset_calls == 6:
+                break
+            time.sleep(0.005)
+        self.assertEqual(6, node.num_reset_calls)
+        self.reset_priv_pub.publish(Bool(True))
+        for _ in range(100):
+            if node.num_reset_calls == 7:
+                break
+            time.sleep(0.005)
+        self.assertEqual(7, node.num_reset_calls)
 
 
 if __name__ == '__main__':
