@@ -47,3 +47,16 @@ Merge two or more bag files into one.
 - `-c`, `--compress`: Compress output bag with LZ4 compression.
 - `-b`, `--bz2`: Compress output bag with BZ2 compression.
 
+### size_per_topic
+
+Print total cumulative serialized message size per topic.
+
+#### Usage
+
+    rosrun cras_bag_tools size_per_topic [-c] [-a] BAG
+
+- `BAG`: Bag file.
+- `-c`, `--csv`: Output as CSV.
+- `-a`, `--sort-alphabetical`: Sort by topic names (default is by topic sizes).
+
+

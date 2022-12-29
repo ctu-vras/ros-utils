@@ -10,6 +10,7 @@ catkin_package()
 catkin_install_python(PROGRAMS
   scripts/fix_msg_defs
   scripts/merge_bag
+  scripts/size_per_topic
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
