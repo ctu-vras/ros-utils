@@ -1,6 +1,12 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+"""Module that allows to fix message definitions in a bag file according to local definitions."""
+
 from __future__ import print_function
 
 import sys
+from typing import AnyStr, List
 
 import roslib.message
 from rosbag.bag import Bag
@@ -12,11 +18,11 @@ def fix_msg_defs(bag, topics=None):
     (according to the definitions found in the currently sourced workspace).
 
     :param rosbag.Bag bag: The bag file.
-    :param List[str] topics: The topics to fix. Leave out to fix all topics.
+    :param List[AnyStr] topics: The topics to fix. Leave out to fix all topics.
     """
     assert isinstance(bag, Bag)
     # fix message definitions (they're not stored recursively sometimes)
-    connections = bag._get_connections(topics=topics if len(topics) > 0 else None)
+    connections = bag._get_connections(topics=topics if topics is not None and len(topics) > 0 else None)
     msg_def_maps = dict()
     msg_md5_maps = dict()
     already_reported_types = set()
