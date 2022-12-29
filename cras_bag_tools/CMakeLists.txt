@@ -22,10 +22,10 @@ if(CATKIN_ENABLE_TESTING)
   # see https://github.com/ros-infrastructure/ros_buildfarm/issues/923
   if(DEFINED ENV{ROS_ROOT})
     roslint_custom(catkin_lint "-W2" .)
-  endif()
 
-  # Run roslint on Python sources
-  file(GLOB python_files scripts/* src/${PROJECT_NAME}/*.py)
-  roslint_python("${python_files}")
-  roslint_add_test()
+    # Run roslint on Python sources
+    file(GLOB python_files scripts/* src/${PROJECT_NAME}/*.py)
+    roslint_python("${python_files}")
+    roslint_add_test()
+  endif()
 endif()
