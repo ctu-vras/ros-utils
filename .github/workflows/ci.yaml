@@ -18,9 +18,9 @@ jobs:
       AFTER_SETUP_TARGET_WORKSPACE: 'cd $BASEDIR/target_ws/src/ros-utils; for d in *; do if [[ "$d" != "cras_cpp_common" ]] && [[ "$d" != "cras_py_common" ]] && [[ "$d" != "cras_topic_tools" ]] && [[ "$d" != "cras_bag_tools" ]]; then rm -rf "$d"; fi; done'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # This step will fetch/store the directory used by ccache before/after the ci run
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
