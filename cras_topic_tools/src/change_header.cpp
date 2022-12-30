@@ -84,7 +84,7 @@ void ChangeHeaderNodelet::onInit()
 
   if (params->hasParam("stamp"))
     changeHeaderParams.newStampAbs = params->getParam<ros::Time>("stamp", cras::nullopt);
-  
+
   changeHeaderParams.newStampRosTime = params->getParam("stamp_ros_time", false);
   changeHeaderParams.newStampWallTime = params->getParam("stamp_wall_time", false);
 

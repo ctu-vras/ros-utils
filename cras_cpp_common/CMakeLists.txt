@@ -397,7 +397,7 @@ if (CATKIN_ENABLE_TESTING)
   set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
   roslint_cpp(${ROSLINT_TEST})
   
-  # add_dependencies(run_tests roslint_${PROJECT_NAME})
+  roslint_add_test()
 
   # GTEST tests (no rosmaster required)
   

@@ -405,13 +405,13 @@ DECLARE_TO_STRING_VECTOR(::std::list, "[", "]")
 DECLARE_TO_STRING_VECTOR(::std::set, "{", "}")
 DECLARE_TO_STRING_VECTOR(::std::unordered_set, "{", "}")
 
-template<typename T, unsigned long int N>
+template<typename T, size_t N>
 inline ::std::string to_string(const ::std::array<T, N>& value)
 {
   ::std::stringstream ss;
   ss << ("[");
   size_t i = 0;
-  for (const auto& v: value)
+  for (const auto& v : value)
   {
     ss << ::cras::quoteIfStringType(::cras::to_string(v), v);
     if (i + 1 < value.size())ss << ", ";

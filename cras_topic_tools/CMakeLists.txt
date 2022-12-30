@@ -102,7 +102,7 @@ if (CATKIN_ENABLE_TESTING)
 
   #catkin_lint: ignore_once env_var
   if(DEFINED ENV{ROS_ROOT} AND EXISTS "${ROS_HOME}/rosdep/sources.cache")
-    roslint_custom(catkin_lint "-W2" .)
+    roslint_custom(catkin_lint "-W2" "--ignore" "description_boilerplate" .)
   endif()
 
   # Roslint C++ - checks formatting and some other rules for C++ files
@@ -119,7 +119,7 @@ if (CATKIN_ENABLE_TESTING)
   set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
   roslint_cpp(${ROSLINT_TEST})
 
-  # add_dependencies(run_tests roslint_${PROJECT_NAME})
+  roslint_add_test()
 
   # GTest tests
 

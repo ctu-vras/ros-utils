@@ -28,6 +28,12 @@ if (CATKIN_ENABLE_TESTING)
     roslint_custom(catkin_lint "-W2" .)
   endif()
 
+  # Run roslint on Python sources
+  file(GLOB_RECURSE python_files src/*.py)
+  roslint_python("${python_files}")
+
+  roslint_add_test()
+
   add_rostest(test/test_log_utils.test)
   add_rostest(test/test_node_utils.test)
   add_rostest(test/test_param_utils.test)

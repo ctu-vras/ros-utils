@@ -60,10 +60,10 @@ struct ChangeHeaderParams
 
   //! \brief Add this value to stamp. In case of under/overflow, TIME_MIN or TIME_MAX are set.
   ::cras::optional<::ros::Duration> newStampRel;
-  
+
   //! \brief Change stamp to current ROS time.
   bool newStampRosTime {false};
-  
+
   //! \brief Change stamp to current wall time.
   bool newStampWallTime {false};
 };
@@ -153,7 +153,7 @@ protected:
       const auto now = ros::WallTime::now();
       header->stamp = {now.sec, now.nsec};
     }
-    
+
     if (this->params.newStampRel.has_value())
     {
       // Correctly handle overflow cases

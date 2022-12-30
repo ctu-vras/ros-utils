@@ -253,7 +253,7 @@ template<typename T> struct XmlRpcValueTraits<::std::unordered_set<T>,
   constexpr static const bool isCanonical { false };
 };
 
-template<typename T, unsigned long int N> struct XmlRpcValueTraits<::std::array<T, N>,
+template<typename T, size_t N> struct XmlRpcValueTraits<::std::array<T, N>,
   typename ::std::enable_if<::cras::XmlRpcValueTraits<T>::xmlRpcType != ::XmlRpc::XmlRpcValue::TypeInvalid>::type>
 {
   constexpr static const ::XmlRpc::XmlRpcValue::Type xmlRpcType { ::XmlRpc::XmlRpcValue::TypeArray };

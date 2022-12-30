@@ -22,17 +22,14 @@ try:
         iinfo = np.iinfo(target_type)
         return __convert_with_bounds_check(target_type, iinfo.min, iinfo.max, value)
 
-
     def __convert_np_float_with_bounds_check(target_type, value):
         iinfo = np.finfo(target_type)
         return __convert_with_bounds_check(target_type, iinfo.min, iinfo.max, value)
-
 
     def __convert_list_to_ndarray(target_type, value):
         if not isinstance(value, list):
             raise ValueError("Can only convert lists to ndarray, but %s was given." % (to_str(type(value)),))
         return target_type(value)
-
 
     param_utils.register_param_conversion(np.bool, bool, np.bool)
     param_utils.register_param_conversion(np.int, int, partial(__convert_np_int_with_bounds_check, np.int))

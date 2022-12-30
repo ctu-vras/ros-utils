@@ -220,7 +220,7 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::unordered_set<T>& v,
   bool skipNonConvertible = false, ::std::list<::std::string>* errors = nullptr);
 
 //! \overload cras::convert(const XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&, bool, ::std::list<::std::string>*)
-template<typename T, unsigned long int N>
+template<typename T, size_t N>
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v,
   bool skipNonConvertible = false, ::std::list<::std::string>* errors = nullptr);
 
@@ -251,7 +251,7 @@ DEFINE_ARRAY_CONVERT(::std::list, push_back)
 DEFINE_ARRAY_CONVERT(::std::set, insert)
 DEFINE_ARRAY_CONVERT(::std::unordered_set, insert)
 
-template<typename T, unsigned long int N>
+template<typename T, size_t N>
 inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v, bool skipNonConvertible,
   ::std::list<::std::string>* errors)
 {

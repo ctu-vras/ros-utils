@@ -35,7 +35,8 @@ if(CATKIN_ENABLE_TESTING)
   endif()
 
   # Run roslint on Python sources
-  file(GLOB python_files scripts/* src/${PROJECT_NAME}/*.py)
+  file(GLOB_RECURSE python_files scripts/* src/*.py)
   roslint_python("${python_files}")
+
   roslint_add_test()
 endif()
