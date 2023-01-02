@@ -21,7 +21,7 @@ cras.log\_utils module
    :show-inheritance:
 
 cras.message\_utils module
-----------------------
+--------------------------
 
 .. automodule:: cras.message_utils
    :members:
@@ -29,7 +29,7 @@ cras.message\_utils module
    :show-inheritance:
 
 cras.node\_utils module
-----------------------
+-----------------------
 
 .. automodule:: cras.node_utils
    :members:
@@ -77,7 +77,7 @@ cras.time\_utils module
    :show-inheritance:
 
 cras.topic\_utils module
------------------------
+------------------------
 
 .. automodule:: cras.topic_utils
    :members:

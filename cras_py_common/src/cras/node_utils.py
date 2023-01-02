@@ -13,6 +13,7 @@ class Node(object):
     """Base class for all nodes.
 
     This class reads the following ROS parameters:
+
     - `/jump_back_tolerance` (float, default 3.0 in wall time and 0.0 in sim time):
         Threshold for ROS time jump back detection.
     - `~jump_back_tolerance` (float, default from `/jump_back_tolerance`): Threshold for ROS time jump back detection.
