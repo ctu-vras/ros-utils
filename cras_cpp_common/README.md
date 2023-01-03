@@ -33,6 +33,7 @@ Release jobs Noetic
 
 ## List of provided libraries
 
+- `optional`: Provides forward compatibility for [`std::any`](https://en.cppreference.com/w/cpp/utility/any).
 - `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
 - `diag_utils`: Helpers for easy setup of a diagnosed publisher/subscriber that checks message rate or delay. Configuration of the expected rates/delays is via ROS parameters.
 - `filter_utils`:
