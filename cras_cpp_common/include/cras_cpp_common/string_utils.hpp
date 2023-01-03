@@ -30,14 +30,21 @@ namespace cras
  * \param[in,out] s The string from which c should be removed.
  * \param[in] c The character to remove.
  */
-void stripLeading(::std::string& s, const char& c);
+void stripLeading(::std::string& s, const char& c = ' ');
 
 /**
  * \brief Strip `c` from the end of the given string (if there is one).
  * \param[in,out] s The string from which c should be removed.
  * \param[in] c The character to remove.
  */
-void stripTrailing(::std::string& s, const char& c);
+void stripTrailing(::std::string& s, const char& c = ' ');
+
+/**
+ * \brief Strip `c` from the beginning and end of the given string (if it is there).
+ * \param[in,out] s The string from which c should be removed.
+ * \param[in] c The character to remove.
+ */
+void strip(::std::string& s, const char& c = ' ');
 
 /**
  * \brief Strip leading slash from the given string (if there is one).
@@ -52,7 +59,7 @@ void stripLeadingSlash(::std::string& s, bool warn = false);
  * \param[in] c The character to remove.
  * \return The string without c at the start.
  */
-::std::string stripLeading(const ::std::string& s, const char& c);
+::std::string stripLeading(const ::std::string& s, const char& c = ' ');
 
 /**
  * \brief Return a copy of the given string with c removed from its end (if there is one).
@@ -60,7 +67,15 @@ void stripLeadingSlash(::std::string& s, bool warn = false);
  * \param[in] c The character to remove.
  * \return The string without c at the end.
  */
-::std::string stripTrailing(const ::std::string& s, const char& c);
+::std::string stripTrailing(const ::std::string& s, const char& c = ' ');
+
+/**
+ * \brief Return a copy of the given string with c removed from its beginning and end (if it was there).
+ * \param[in] s The string from which c should be removed.
+ * \param[in] c The character to remove.
+ * \return The string without c at the beginning and end.
+ */
+::std::string strip(const ::std::string& s, const char& c = ' ');
 
 /**
  * \brief Return a copy of the given string with leading slash removed (if there is one).

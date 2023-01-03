@@ -71,6 +71,32 @@ TEST(StringUtils, StripTrailing)  // NOLINT
   EXPECT_EQ("atestatest", stripTrailing("atestatesta", 'a'));
 }
 
+TEST(StringUtils, StripInplace)  // NOLINT
+{
+  std::string s;
+
+  s = "test"; strip(s, 'a'); EXPECT_EQ("test", s);
+  s = "testa"; strip(s, 'a'); EXPECT_EQ("test", s);
+  s = ""; strip(s, 'a'); EXPECT_EQ("", s);
+  s = "a"; strip(s, 'a'); EXPECT_EQ("", s);
+  s = "aa"; strip(s, 'a'); EXPECT_EQ("", s);
+  s = "aaa"; strip(s, 'a'); EXPECT_EQ("a", s);
+  s = "atestatesta"; strip(s, 'a'); EXPECT_EQ("testatest", s);
+  s = "aatestatestaa"; strip(s, 'a'); EXPECT_EQ("atestatesta", s);
+}
+
+TEST(StringUtils, Strip)  // NOLINT
+{
+  EXPECT_EQ("test", strip("test", 'a'));
+  EXPECT_EQ("test", strip("testa", 'a'));
+  EXPECT_EQ("", strip("", 'a'));
+  EXPECT_EQ("", strip("a", 'a'));
+  EXPECT_EQ("", strip("aa", 'a'));
+  EXPECT_EQ("a", strip("aaa", 'a'));
+  EXPECT_EQ("testatest", strip("atestatesta", 'a'));
+  EXPECT_EQ("atestatesta", strip("aatestatestaa", 'a'));
+}
+
 TEST(StringUtils, StripLeadingSlashInplace)  // NOLINT
 {
   std::string s;

@@ -47,6 +47,12 @@ void stripTrailing(std::string& s, const char& c)
     s.pop_back();
 }
 
+void strip(std::string& s, const char& c)
+{
+  stripLeading(s, c);
+  stripTrailing(s, c);
+}
+
 void stripLeadingSlash(std::string& s, const bool warn)
 {
   if (s.length() > 0 && s[0] == '/')
@@ -71,6 +77,11 @@ std::string stripTrailing(const std::string& s, const char& c)
     return s.substr(0, s.length() - 1);
 
   return s;
+}
+
+std::string strip(const std::string& s, const char& c)
+{
+  return stripLeading(stripTrailing(s, c), c);
 }
 
 std::string stripLeadingSlash(const std::string& s, const bool warn)
