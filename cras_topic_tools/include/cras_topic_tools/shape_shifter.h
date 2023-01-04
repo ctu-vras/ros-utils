@@ -8,6 +8,9 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+#include <type_traits>
+
+#include <ros/message_traits.h>
 #include <std_msgs/Header.h>
 #include <topic_tools/shape_shifter.h>
 
@@ -66,6 +69,17 @@ size_t getBufferLength(const ::topic_tools::ShapeShifter& msg);
 bool setHeader(::topic_tools::ShapeShifter& msg, ::std_msgs::Header& header);
 
 /**
+ * \brief Resize the internal buffer of the message.
+ * \param[in,out] msg The message to change.
+ * \param[in] newLength New length of the internal buffer.
+ * \note If the new size is the same as the old one, nothing happens. If the new one is longer, the buffer is
+ *       reallocated and the contents of the old buffer are copied to it. If the new one is shorter, the contained data
+ *       are cropped to the new length.
+ * \note Use this function with care. After calling it, the message object becomes invalid until you fix it.
+ */
+void resizeBuffer(::topic_tools::ShapeShifter& msg, size_t newLength);
+
+/**
  * \brief Copy `in` ShapeShifter to `out`.
  * \param[in] in Input message.
  * \param[in] out Output message.
@@ -73,4 +87,16 @@ bool setHeader(::topic_tools::ShapeShifter& msg, ::std_msgs::Header& header);
  */
 void copyShapeShifter(const ::topic_tools::ShapeShifter& in, ::topic_tools::ShapeShifter& out);
 
+/**
+ * \brief Copy the message instance into the given ShapeShifter.
+ * \tparam T Type of the message.
+ * \param[in] msg The message to copy.
+ * \param[out] shifter The ShapeShifter to copy to.
+ * \note All old references to the shifter's internal buffer have to be treated as invalid after calling this function.
+ */
+template<typename T, typename EnableT = ::std::enable_if_t<::ros::message_traits::IsMessage<::std::decay_t<T>>::value>>
+void msgToShapeShifter(const T& msg, ::topic_tools::ShapeShifter& shifter);
+
 }
+
+#include "impl/shape_shifter.hpp"

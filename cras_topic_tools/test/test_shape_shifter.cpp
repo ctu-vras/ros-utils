@@ -19,23 +19,40 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/PointStamped.h>
 
-template<typename T>
-void createShifter(const T& msg, topic_tools::ShapeShifter& shifter, std::vector<uint8_t>& buf, size_t& length)
+TEST(ShapeShifter, MsgToShapeShifter)  // NOLINT
 {
-  // Serialize the message into a byte buffer
-  length = ros::serialization::serializationLength(msg);
-  buf.resize(length);
-  ros::serialization::OStream ostream(buf.data(), length);
-  ros::serialization::serialize(ostream, msg);
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
 
-  // Load the byte buffer into the shape shifter object
-  ros::serialization::IStream istream(buf.data(), length);
-  shifter.read(istream);
-  shifter.morph(ros::message_traits::MD5Sum<T>::value(), ros::message_traits::DataType<T>::value(),
-    ros::message_traits::Definition<T>::value(), "0");
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  cras::msgToShapeShifter(msg, shifter);
 
-  // Just verify that we have loaded the buffer into the shape shifter correctly by round-tripping the message
-  EXPECT_EQ(msg, *shifter.instantiate<T>());
+  ASSERT_NO_THROW(shifter.instantiate<geometry_msgs::PointStamped>());
+  const auto msg2 = *shifter.instantiate<geometry_msgs::PointStamped>();
+
+  topic_tools::ShapeShifter shifter2;
+  cras::msgToShapeShifter(msg2, shifter2);
+
+  ASSERT_NO_THROW(shifter2.instantiate<geometry_msgs::PointStamped>());
+  const auto msg3 = *shifter2.instantiate<geometry_msgs::PointStamped>();
+
+  ASSERT_EQ(cras::getBufferLength(shifter), cras::getBufferLength(shifter2));
+  
+  // Compare shifter buffers
+  for (size_t i = 0; i < cras::getBufferLength(shifter); ++i)
+    EXPECT_EQ(cras::getBuffer(shifter2)[i], cras::getBuffer(shifter)[i]);
+
+  // Compare messages
+  EXPECT_EQ(msg, msg2);
+  EXPECT_EQ(msg, msg3);
+  EXPECT_EQ(msg2, msg3);
 }
 
 TEST(ShapeShifter, GetBuffer)  // NOLINT
@@ -51,9 +68,13 @@ TEST(ShapeShifter, GetBuffer)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
+  cras::msgToShapeShifter(msg, shifter);
+
+  const auto length = ros::serialization::serializationLength(msg);
   std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  buf.resize(length);
+  ros::serialization::OStream ostream(buf.data(), length);
+  ros::serialization::serialize(ostream, msg);
 
   // Compare getBuffer() contents with the contents of the byte buffer
   EXPECT_EQ(length, cras::getBufferLength(shifter));
@@ -77,9 +98,7 @@ TEST(ShapeShifter, GetHeaderOK)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());
@@ -96,9 +115,7 @@ TEST(ShapeShifter, GetHeaderFromHeader)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());
@@ -113,9 +130,7 @@ TEST(ShapeShifter, GetHeaderFromBool)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto header = cras::getHeader(shifter);
   EXPECT_FALSE(header.has_value());
@@ -129,9 +144,7 @@ TEST(ShapeShifter, GetHeaderFromLongString)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto header = cras::getHeader(shifter);
   EXPECT_FALSE(header.has_value());
@@ -145,9 +158,7 @@ TEST(ShapeShifter, GetHeaderFromFakeString)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());  // The string decodes as a Header with seq == length of msg.data
@@ -170,9 +181,7 @@ TEST(ShapeShifter, SetHeaderSameLength)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto newHeader = msg.header;
   newHeader.frame_id = "abcd";
@@ -201,9 +210,7 @@ TEST(ShapeShifter, SetHeaderShorter)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto newHeader = msg.header;
   newHeader.frame_id = "ab";
@@ -232,9 +239,7 @@ TEST(ShapeShifter, SetHeaderLonger)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   auto newHeader = msg.header;
   newHeader.frame_id = "abcdefgh";
@@ -263,9 +268,7 @@ TEST(ShapeShifter, CopyShapeShifter)  // NOLINT
 
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
-  std::vector<uint8_t> buf;
-  size_t length;
-  createShifter(msg, shifter, buf, length);
+  cras::msgToShapeShifter(msg, shifter);
 
   topic_tools::ShapeShifter shifter2;
   // If we used shifter2 = shifter, we'd get a segfault in Melodic when this function ends

@@ -42,6 +42,6 @@ Most of these nodes/nodelets are message-type-agnostic, but they may differ betw
 
 A few convenience libraries for working with generic topics are also provided:
 
-- `shape_shifter`: Easily get the buffer of header of a `ShapeShifter` message.
+- `shape_shifter`: Easily get the buffer of header of a `ShapeShifter` message or convert a message to `ShapeShifter`.
 - `lazy_subscriber`: Base class for all lazy subscribers.
 - `generic_lazy_pub_sub`: Base implementation of a generic pair of publisher-subscriber of a type not known at compile type.

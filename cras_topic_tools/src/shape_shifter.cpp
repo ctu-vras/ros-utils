@@ -36,19 +36,11 @@ const uint8_t* getBuffer(const topic_tools::ShapeShifter& msg)
   return msg.msgBuf.data();
 }
 
-/**
- * \brief Resize the internal buffer of the message.
- * \param[in,out] msg The message to change.
- * \param[in] newLength New length of the internal buffer.
- * \note If the new size is the same as the old one, nothing happens. If the new one is longer, the buffer is
- *       reallocated and the contents of the old buffer are copied to it. If the new one is shorter, the contained data
- *       are cropped to the new length.
- * \note Use this function with care. After calling it, the message object becomes invalid until you fix it.
- */
 void resizeBuffer(topic_tools::ShapeShifter& msg, size_t newLength)
 {
   if (newLength == msg.size())
     return;
+  // resize() makes sure that if the buffer was reallocated, the start of the old buffer will get copied to the new one
   msg.msgBuf.resize(newLength);
 }
 
@@ -69,15 +61,6 @@ const uint8_t* getBuffer(const topic_tools::ShapeShifter& msg)
   return msg.msgBuf;
 }
 
-/**
- * \brief Resize the internal buffer of the message.
- * \param[in,out] msg The message to change.
- * \param[in] newLength New length of the internal buffer.
- * \note If the new size is the same as the old one, nothing happens. If the new one is longer, the buffer is
- *       reallocated and the contents of the old buffer are copied to it. If the new one is shorter, the contained data
- *       are cropped to the new length.
- * \note Use this function with care. After calling it, the message object becomes invalid until you fix it.
- */
 void resizeBuffer(topic_tools::ShapeShifter& msg, size_t newLength)
 {
   if (newLength == msg.size())
@@ -93,6 +76,7 @@ void resizeBuffer(topic_tools::ShapeShifter& msg, size_t newLength)
     msg.msgBuf = new uint8_t[newLength];
     msg.msgBufAlloc = newLength;
     msg.msgBufUsed = newLength;
+    // Not exactly needed, but to keep compatibility with the Noetic version
     std::memcpy(msg.msgBuf, oldBuf, oldLength);
     delete[] oldBuf;
   }
