@@ -4,6 +4,14 @@ cras package
 Submodules
 ----------
 
+cras.ctypes\_utils module
+-------------------------
+
+.. automodule:: cras.ctypes_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cras.geometry\_utils module
 ---------------------------
 
