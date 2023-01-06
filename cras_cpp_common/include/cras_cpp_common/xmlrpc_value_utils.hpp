@@ -18,6 +18,11 @@
 #include <unordered_set>
 #include <vector>
 
+#include <dynamic_reconfigure/BoolParameter.h>
+#include <dynamic_reconfigure/Config.h>
+#include <dynamic_reconfigure/DoubleParameter.h>
+#include <dynamic_reconfigure/IntParameter.h>
+#include <dynamic_reconfigure/StrParameter.h>
 #include <XmlRpcValue.h>
 #include <XmlRpcException.h>
 
@@ -302,5 +307,66 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v, bool 
 
 DEFINE_STRUCT_CONVERT(::std::map)
 DEFINE_STRUCT_CONVERT(::std::unordered_map)
+
+inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::dynamic_reconfigure::Config& v, bool skipNonConvertible,
+    ::std::list<::std::string>* errors)
+{
+  if (x.getType() != ::XmlRpc::XmlRpcValue::TypeStruct)
+  {
+    if (errors != nullptr)
+      errors->push_back(::cras::format(
+        "Cannot convert type %s to dynamic_reconfigure/Config.", ::cras::to_cstring(x.getType())));
+    return false;
+  }
+  for (auto it = x.begin(); it != x.end(); ++it)
+  {
+    const auto& name = it->first;
+    const auto& val = it->second;
+    switch (val.getType())
+    {
+      case XmlRpc::XmlRpcValue::TypeBoolean:
+      {
+        dynamic_reconfigure::BoolParameter p;
+        p.name = name;
+        p.value = static_cast<bool>(val);
+        v.bools.push_back(p);
+        break;
+      }
+      case XmlRpc::XmlRpcValue::TypeInt:
+      {
+        dynamic_reconfigure::IntParameter p;
+        p.name = name;
+        p.value = static_cast<int>(val);
+        v.ints.push_back(p);
+        break;
+      }
+      case XmlRpc::XmlRpcValue::TypeDouble:
+      {
+        dynamic_reconfigure::DoubleParameter p;
+        p.name = name;
+        p.value = static_cast<double>(val);
+        v.doubles.push_back(p);
+        break;
+      }
+      case XmlRpc::XmlRpcValue::TypeString:
+      {
+        dynamic_reconfigure::StrParameter p;
+        p.name = name;
+        p.value = static_cast<std::string>(val);
+        v.strs.push_back(p);
+        break;
+      }
+      default:
+      {
+        if (errors != nullptr)
+          errors->push_back(::cras::format("Field %s of type %s cannot be stored in dynamic_reconfigure/Config.",
+            name.c_str(), ::cras::to_cstring(x.getType())));
+        if (!skipNonConvertible)
+          return false;
+      }
+    }
+  }
+  return true;
+}
 
 }

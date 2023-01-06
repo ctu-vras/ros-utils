@@ -413,6 +413,24 @@ TEST(XmlRpcValueUtils, ConvertMapArrays)
     x, false);}
 }
 
+TEST(XmlRpcValueUtils, ConvertDynamicReconfigureConfig)
+{
+  XmlRpc::XmlRpcValue x;
+
+  dynamic_reconfigure::Config c;
+  {dynamic_reconfigure::BoolParameter p; p.name = "a"; p.value = true; c.bools.push_back(p);}
+  {dynamic_reconfigure::IntParameter p; p.name = "b"; p.value = 1; c.ints.push_back(p);}
+  {dynamic_reconfigure::DoubleParameter p; p.name = "c"; p.value = 1.0; c.doubles.push_back(p);}
+  {dynamic_reconfigure::StrParameter p; p.name = "d"; p.value = "test"; c.strs.push_back(p);}
+  
+  x.clear(); x["a"] = true; x["b"] = 1; x["c"] = 1.0; x["d"] = "test";
+  {TRACE; test_converts<dynamic_reconfigure::Config>(x, c, true, false);}
+  
+  x["wrong"][0] = 1;
+  {TRACE; test_converts<dynamic_reconfigure::Config>(x, c, true, true);}
+  {TRACE; test_not_converts<dynamic_reconfigure::Config>(x, false);}
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
