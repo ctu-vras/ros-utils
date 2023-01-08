@@ -46,8 +46,6 @@ namespace cras
  * \brief Convert XmlRpcValue `x` to value `v`.
  * \param[in] x The XmlRpcValue to convert.
  * \param[out] v The value to convert to.
- * \param[in] skipNonConvertible If true and converting to a container type, skip those values that cannot be held by
- *                               the target container type.
  * \param[in,out] errors If non-null, any conversion error messages will be stored here.
  * \return True if the conversion succeeded. If skipNonConvertible is true, conversion will succeed if at least one
  *         contained value succeeded converting (if converting to a container type).

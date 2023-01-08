@@ -59,7 +59,7 @@ namespace cras
 
 /**
  * \brief Convert Eigen isometry to URDF Pose.
- * \param[in] poose The pose to convert.
+ * \param[in] pose The pose to convert.
  * \return The corresponding URDF Pose.
  */
 ::urdf::Pose toURDF(const ::Eigen::Isometry3d& pose);

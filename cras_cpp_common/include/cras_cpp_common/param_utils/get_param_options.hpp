@@ -53,8 +53,8 @@ struct DefaultToParamFn
 {
   /**
    * \brief Function converting XmlRpcValue to an intermediate value of type ParamServerType.
-   * \param[in] xmlValue The XmlRpcValue read from parameter server.
-   * \param[out] value The converted value. It is not valid if this function returns false.
+   * \param[in] x The XmlRpcValue read from parameter server.
+   * \param[out] v The converted value. It is not valid if this function returns false.
    * \param[in] skipNonConvertible If true and the target value is a container, all non-convertible items will be
    *                               skipped. If false, non-convertible values mean failure of the whole conversion.
    *                               If all items of a container are skipped (and there were some),

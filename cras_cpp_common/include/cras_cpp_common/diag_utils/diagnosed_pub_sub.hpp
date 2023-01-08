@@ -147,7 +147,7 @@ public:
    * \brief Add a topic diagnostic task to the publisher.
    * \param[in] pub The ROS publisher.
    * \param[in] name Name of the diagnostic task
-   * \param[in] diag Parameters of the topic diagnostics task.
+   * \param[in] diagParams Parameters of the topic diagnostics task.
    */
   DiagnosedPublisher(const ::ros::Publisher &pub, const ::std::string& name,
     const ::cras::TopicStatusParam<Message>& diagParams);

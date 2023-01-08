@@ -512,7 +512,6 @@ public:
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
    * \tparam C Signature of the callback.
    * \param[in] updater The diagnostic updater to add the diagnostic task to.
-   * \param[in] defaultDiagParams Default parameters of the diagnostic task.
    * \param[in] diagNamespace Parameter namespace in which the parameters for the diagnostic task will be searched.
    * \param[in] topic The topic to subscribe to.
    * \param[in] queue_size Size of the subscription queue.
@@ -681,8 +680,6 @@ public:
    * \brief Subscribe to the given topic, automatically updating the diagnostic task every time a message is received.
    * \tparam C Signature of the callback.
    * \param[in] updater The diagnostic updater to add the diagnostic task to.
-   * \param[in] defaultDiagParams Default parameters of the diagnostic task.
-   * \param[in] diagNamespace Parameter namespace in which the parameters for the diagnostic task will be searched.
    * \param[in] topic The topic to subscribe to.
    * \param[in] queue_size Size of the subscription queue.
    * \param[in] cb The callback to call when a message is received.

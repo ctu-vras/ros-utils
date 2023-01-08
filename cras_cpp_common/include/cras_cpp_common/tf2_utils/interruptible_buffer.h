@@ -80,7 +80,7 @@ public:
    * \brief Test if a transform is possible.
    * \param[in] target_frame The frame into which to transform.
    * \param[in] source_frame The frame from which to transform.
-   * \param[in] target_time The time at which to transform.
+   * \param[in] time The time at which to transform.
    * \param[in] timeout How long to block before failing.
    * \return True if the transform is possible, false otherwise.
    */

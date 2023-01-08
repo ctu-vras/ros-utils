@@ -46,10 +46,11 @@ public:
    * \brief Create the diagnostic task for a header-less message (checking frequency only).
    * \tparam M SFINAE only. Do not set explicitly.
    * \param[in] name Name of the diagnostic task.
-   * \param[in] minRate Minimum allowed frequency.
-   * \param[in] maxRate Maximum allowed frequency.
-   * \param[in] rateTolerance Tolerance of the rate.
-   * \param[in] rateWindowSize Number of updates during which the frequency is computed.
+   * \param[in] minDuration Minimum allowed duration.
+   * \param[in] maxDuration Maximum allowed duration.
+   * \param[in] tolerance Tolerance of duration.
+   * \param[in] windowSize Number of updates during which the duration is computed.
+   * \param[in] noEventsIsOk Whether it should be treated as correct if there was no event during an update window.
    */
   explicit DurationStatus(const ::std::string& name,
     const ::ros::Duration& minDuration = {0, 0}, const ::ros::Duration& maxDuration = ::ros::DURATION_MAX,

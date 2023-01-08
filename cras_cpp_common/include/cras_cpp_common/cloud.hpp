@@ -57,7 +57,7 @@ typedef ::sensor_msgs::PointCloud2Modifier CloudModifier;
  */
 typedef ::cras::impl::GenericCloudIterator<> GenericCloudIter;
 
-//! \copydoc :cras::GenericCloudIter
+//! \copydoc ::cras::GenericCloudIter
 typedef ::cras::impl::GenericCloudConstIterator<> GenericCloudConstIter;
 
 /**

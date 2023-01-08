@@ -247,7 +247,7 @@ protected:
   /**
    * \brief Creates a version of this param helper "bound" to the given node handle, so that it is not needed to
    *        specify the node handle in the subsequent getParam() calls.
-   * \param node[in] The node to bind to.
+   * \param[in] node The node to bind to.
    * \param[in] ns If nonempty, returns just the parameters in the given namespace.
    * \return The bound param helper.
    */

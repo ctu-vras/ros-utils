@@ -243,6 +243,8 @@ protected:
    * \brief Advertise a topic and setup up an automatic topic diagnostic task for it.
    * \tparam Message The published message type.
    * \tparam Enable SFINAE only. Do not explicitly set.
+   * \param[in] publisherNh Node handle used for the publisher of messages.
+   * \param[in] diagNh Node handle used for configuration of the diagnostics.
    * \param[in] diagNamespace Parameter namespace in which the parameters for the diagnostic task will be searched
    *                          (using the private node handle of the nodelet).
    * \param[in] topic The topic to subscribe to (relative to public node handle of the nodelet).
@@ -259,6 +261,8 @@ protected:
    * \brief Advertise a topic and setup up an automatic topic diagnostic task for it.
    * \tparam Message The published message type.
    * \tparam Enable SFINAE only. Do not explicitly set.
+   * \param[in] publisherNh Node handle used for the publisher of messages.
+   * \param[in] diagNh Node handle used for configuration of the diagnostics.
    * \param[in] diagNamespace Parameter namespace in which the parameters for the diagnostic task will be searched
    *                          (using the private node handle of the nodelet).
    * \param[in,out] options Topic advertise options (topic is relative to public node handle of the nodelet).
@@ -699,50 +703,50 @@ protected:
     CRAS_SINGLE_ARG(subscriberNh, this->getDefaultDiagNh(subscriberNh, diagNamespace), ),
     CRAS_SINGLE_ARG(const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultDiagParams,
       const ::std::string& diagNamespace, ),
-    CRAS_SINGLE_ARG(defaultDiagParams, diagNamespace, ))
+    CRAS_SINGLE_ARG(defaultDiagParams, diagNamespace, ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(),
     CRAS_SINGLE_ARG(this->getNodeHandle(), ),
     CRAS_SINGLE_ARG(const ::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>& defaultDiagParams,
       const ::std::string& diagNamespace, ),
-    CRAS_SINGLE_ARG(defaultDiagParams, diagNamespace, ))
+    CRAS_SINGLE_ARG(defaultDiagParams, diagNamespace, ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh, ),
     CRAS_SINGLE_ARG(subscriberNh, diagNh, ),
     CRAS_SINGLE_ARG(const ::std::string& diagNamespace, ),
-    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ))
+    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(::ros::NodeHandle subscriberNh, ),
     CRAS_SINGLE_ARG(subscriberNh, this->getDefaultDiagNh(subscriberNh, diagNamespace), ),
     CRAS_SINGLE_ARG(const ::std::string& diagNamespace, ),
-    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ))
+    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(),
     CRAS_SINGLE_ARG(this->getNodeHandle(), ),
     CRAS_SINGLE_ARG(const ::std::string& diagNamespace, ),
-    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ))
+    CRAS_SINGLE_ARG(::cras::SimpleTopicStatusParam<::cras::BaseMessage<M>>(), diagNamespace, ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(::ros::NodeHandle subscriberNh, ::ros::NodeHandle diagNh, ),
     CRAS_SINGLE_ARG(subscriberNh, diagNh, ),
     CRAS_SINGLE_ARG(),
-    CRAS_SINGLE_ARG("", ))
+    CRAS_SINGLE_ARG("", ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(::ros::NodeHandle subscriberNh, ),
     CRAS_SINGLE_ARG(subscriberNh, this->getDefaultDiagNh(subscriberNh, ""), ),
     CRAS_SINGLE_ARG(),
-    CRAS_SINGLE_ARG("", ))
+    CRAS_SINGLE_ARG("", ));
 
   CRAS_NODELET_DIAG_GENERATE_OVERLOADS(
     CRAS_SINGLE_ARG(),
     CRAS_SINGLE_ARG(this->getNodeHandle(), ),
     CRAS_SINGLE_ARG(),
-    CRAS_SINGLE_ARG("", ))
+    CRAS_SINGLE_ARG("", ));
 
   using NodeletType::getName;
 

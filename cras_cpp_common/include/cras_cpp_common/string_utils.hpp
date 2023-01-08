@@ -233,7 +233,7 @@ inline ::std::string format(const char* format, ::va_list args)
 /**
  * printf-like support working with std::string and automatically managing memory.
  * \param[in] format The printf-like format string.
- * \param[in] args Arguments of the format string.
+ * \param[in] ... Arguments of the format string.
  * \return The formatted string.
  */
 inline ::std::string format(const char* format, ...)
@@ -248,7 +248,7 @@ inline ::std::string format(const char* format, ...)
 /**
  * printf-like support working with std::string and automatically managing memory.
  * \param[in] format The printf-like format string.
- * \param[in] args Arguments of the format string.
+ * \param[in] ... Arguments of the format string.
  * \return The formatted string.
  */
 inline ::std::string format(::std::string format, ...)

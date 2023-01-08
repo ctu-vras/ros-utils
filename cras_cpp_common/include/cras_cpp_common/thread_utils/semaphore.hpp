@@ -103,7 +103,7 @@ private:
  * \tparam T Type of the semaphore. Can be any type with methods `bool acquire()` and `void release()`.
  * \note The usage pattern is slightly different than the normal lock_guard - because acquire() can return false (e.g.
  *       if the semaphore is blocked for new acquisitions), the pattern should be the following:
- *       `SemaphoreGuard<ReverseSemaphore> guard(sem); if (!guard.acquired()) return;
+ *       `SemaphoreGuard&lt;ReverseSemaphore&gt; guard(sem); if (!guard.acquired()) return;
  */
 template <typename T>
 class SemaphoreGuard

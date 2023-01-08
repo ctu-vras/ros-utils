@@ -27,7 +27,9 @@ using ::std::apply;
 #else
 namespace impl
 {
+//! @cond Doxygen_Suppress
 #include <cras_cpp_common/external/invoke.hpp/invoke.hpp>
+//! @endcond
 }
 using ::cras::impl::invoke_hpp::invoke;
 using ::cras::impl::invoke_hpp::invoke_result;
