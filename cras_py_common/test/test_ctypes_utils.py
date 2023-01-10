@@ -64,7 +64,7 @@ class CtypesUtils(unittest.TestCase):
         buf = get_ro_c_buffer(b'\x01\x02')
         self.assertEqual(string_at(buf, 2), b'\x01\x02')
 
-        buf = get_ro_c_buffer(BufferStringIO(b'\x01\x02'), 2)
+        buf = get_ro_c_buffer(BufferStringIO(b'\x01\x02'))
         self.assertEqual(string_at(buf, 2), b'\x01\x02')
 
 

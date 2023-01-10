@@ -44,14 +44,19 @@ def get_ro_c_buffer(buf, buf_len=None):
     """Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy. 
     
     :param [list|tuple|BufferStringIO|bytes] buf: The source buffer.
-    :param int buf_len: Length of the buffer (if `None`, `len(buf)` is used if it exists).
+    :param int buf_len: Length of the buffer (if `None`, `len(buf)` is used if it exists, or stream length).
     :return: The ctypes c_uint8 array.
     """
-    if buf_len is None:
-        buf_len = len(buf)
     if isinstance(buf, list) or isinstance(buf, tuple):
+        if buf_len is None:
+            buf_len = len(buf)
         return (c_uint8 * buf_len).from_buffer(bytearray(buf))
     elif hasattr(buf, "getvalue"):  # check for BufferStringIO instance cannot be done directly
+        if buf_len is None:
+            pos = buf.tell()
+            buf.seek(0, os.SEEK_END)
+            buf_len = buf.tell()
+            buf.seek(pos)
         return (c_uint8 * buf_len).from_buffer_copy(buf.getvalue())
     else:
         return cast(buf, POINTER(c_uint8))
