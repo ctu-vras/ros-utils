@@ -4,7 +4,7 @@
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
 """Unit test for cras.string_utils"""
-
+import os
 from enum import Enum
 import unittest
 
@@ -13,6 +13,7 @@ from rospy import Duration, Rate, Time
 from geometry_msgs.msg import Transform
 
 from cras import to_str, register_to_str
+from cras.string_utils import BufferStringIO
 
 
 class TestClass:
@@ -113,6 +114,23 @@ class StringUtils(unittest.TestCase):
         self.assertEqual("new", to_str(TestClass()))
         register_to_str(TestEnum2, lambda _: "test")
         self.assertEqual("test", to_str(TestEnum2.A))
+
+    def test_buffer_string_io(self):
+        buf = BufferStringIO(b'test')
+        self.assertEqual(type(buf.getvalue()), bytes)
+        self.assertEqual(buf.getvalue(), b'test')
+        self.assertEqual(buf.tell(), 0)
+        buf.seek(0, os.SEEK_END)
+        self.assertEqual(buf.tell(), 4)
+
+        buf = BufferStringIO()
+        buf.write(b'test')
+        self.assertEqual(type(buf.getvalue()), bytes)
+        self.assertEqual(buf.getvalue(), b'test')
+        self.assertEqual(buf.tell(), 4)
+        buf.seek(0, os.SEEK_SET)
+        self.assertEqual(buf.tell(), 0)
+        self.assertEqual(buf.getvalue(), b'test')
 
 
 if __name__ == '__main__':

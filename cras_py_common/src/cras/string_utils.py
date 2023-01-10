@@ -19,6 +19,13 @@ except NameError:
     pass
 
 
+# A StringIO/BytesIO depending on Python version that can be used for serializing ROS messages
+try:
+    from cStringIO import StringIO as BufferStringIO #Python 2.x
+except ImportError:
+    from io import BytesIO as BufferStringIO #Python 3.x
+
+
 def __time_val_to_str(time):
     """
     Convert a time or duration to a sensible string.

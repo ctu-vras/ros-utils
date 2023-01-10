@@ -3,7 +3,7 @@
 
 """Utilities for working with the ctypes library."""
 
-from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8
+from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, string_at
 from ctypes.util import find_library
 import os
 import sys
@@ -107,11 +107,11 @@ class StringAllocator(Allocator):
         if sys.version_info[0] == 2:
             return self.allocated.value
         else:
-            return self.allocated.value.decode()
+            return self.allocated.value.decode('utf-8')
 
 
 class BytesAllocator(Allocator):
-    """ctypes allocator suitable for allocating byte arrays. The returned value is a Python list of ints (bytes)."""
+    """ctypes allocator suitable for allocating byte arrays. The returned value is a bytes object."""
     def _alloc(self, size):
         return (c_uint8 * size)()
 
@@ -119,5 +119,4 @@ class BytesAllocator(Allocator):
     def value(self):
         if self.allocated is None:
             return None
-        # self.allocated[i] accesses the values stored in the ctypes object and converts them to Python ints
-        return [self.allocated[i] for i in range(self.allocated_size)]
+        return string_at(self.allocated, self.allocated_size)

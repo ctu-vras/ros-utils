@@ -51,7 +51,7 @@ class CtypesUtils(unittest.TestCase):
         a.allocated[3] = 3
         self.assertEqual(len(a.value), 4)
         self.assertEqual(a.allocated_size, 4)
-        self.assertEqual(a.value, [0, 1, 2, 3])
+        self.assertEqual(a.value, b'\x00\x01\x02\x03')
 
 
 if __name__ == '__main__':
