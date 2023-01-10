@@ -3,7 +3,7 @@
 
 """Utilities for working with the ctypes library."""
 
-from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, string_at
+from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, POINTER, string_at
 from ctypes.util import find_library
 import os
 import sys
@@ -38,6 +38,23 @@ def load_library(library_name, mode=RTLD_LAZY):
         return None
 
     return CDLL(library, mode=mode)
+
+
+def get_ro_c_buffer(buf, buf_len=None):
+    """Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy. 
+    
+    :param [list|tuple|BufferStringIO|bytes] buf: The source buffer.
+    :param int buf_len: Length of the buffer (if `None`, `len(buf)` is used if it exists).
+    :return: The ctypes c_uint8 array.
+    """
+    if buf_len is None:
+        buf_len = len(buf)
+    if isinstance(buf, list) or isinstance(buf, tuple):
+        return (c_uint8 * buf_len).from_buffer(bytearray(buf))
+    elif hasattr(buf, "getvalue"):  # check for BufferStringIO instance cannot be done directly
+        return (c_uint8 * buf_len).from_buffer_copy(buf.getvalue())
+    else:
+        return cast(buf, POINTER(c_uint8))
 
 
 class Allocator(object):

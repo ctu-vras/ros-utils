@@ -5,11 +5,12 @@
 
 """Unit test for cras.ctypes_utils"""
 
-from ctypes import c_double
+from ctypes import c_double, string_at
 import math
 import unittest
 
-from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator
+from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, get_ro_c_buffer
+from cras.string_utils import BufferStringIO
 
 
 class CtypesUtils(unittest.TestCase):
@@ -52,6 +53,19 @@ class CtypesUtils(unittest.TestCase):
         self.assertEqual(len(a.value), 4)
         self.assertEqual(a.allocated_size, 4)
         self.assertEqual(a.value, b'\x00\x01\x02\x03')
+
+    def test_get_ro_c_buffer(self):
+        buf = get_ro_c_buffer([1, 2])
+        self.assertEqual(bytearray(buf), bytearray(b'\x01\x02'))
+
+        buf = get_ro_c_buffer((1, 2))
+        self.assertEqual(bytearray(buf), bytearray(b'\x01\x02'))
+
+        buf = get_ro_c_buffer(b'\x01\x02')
+        self.assertEqual(string_at(buf, 2), b'\x01\x02')
+
+        buf = get_ro_c_buffer(BufferStringIO(b'\x01\x02'), 2)
+        self.assertEqual(string_at(buf, 2), b'\x01\x02')
 
 
 if __name__ == '__main__':
