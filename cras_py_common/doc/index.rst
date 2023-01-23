@@ -1,15 +1,17 @@
-.. cras_py_common documentation master file
+.. documentation master file
 
-Welcome to cras_py_common documentation!
-========================================
+|project|
+===============================================================================
+
+|description|
+
+Python API
+----------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Modules:
 
-   cras
-
-
+   modules
 
 Indices and tables
 ==================

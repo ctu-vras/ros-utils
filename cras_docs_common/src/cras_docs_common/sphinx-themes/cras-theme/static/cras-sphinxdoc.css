@@ -1,0 +1,31 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/* SPDX-FileCopyrightText: Czech Technical University in Prague */
+
+@import url("sphinxdoc.css");
+
+body, div.related, div.related ul, div.sphinxsidebar h3, div.sphinxsidebar h4, div.footer {
+    background-color: #005bb6;
+}
+
+h1, h2, h3, h4, code.descname {
+    color: #005bb6;
+}
+
+code.descclassname {
+    color: #00458EFF;
+}
+
+div.related:first-of-type::before
+{
+    content: "Czech Technical University in Prague\A Faculty of Electrical Engineering\A Center for Robots and Autonomous Systems";
+    line-height: 1.75;
+    font-weight: bold;
+    font-size: large;
+    display: block;
+    background: #005bb6 url(ctu-fee.jpg) 1em 0 no-repeat;
+    -moz-background-size: 213px auto;
+    background-size: 213px auto;
+    height: 104px;
+    width: 100%;
+    white-space: break-spaces;
+}

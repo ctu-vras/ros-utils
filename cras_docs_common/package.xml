@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>cras_docs_common</name>
+  <version>1.0.0</version>
+  <description>Common configuration for CRAS packages documentation.</description>
+
+  <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
+  <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!--exec_depend>m2r</exec_depend-->
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-catkin-sphinx</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-sphinx</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-mistune</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mistune</exec_depend>
+  <exec_depend>rosdoc_lite</exec_depend>
+
+  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-catkin-lint</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-lint</test_depend>
+  <test_depend>roslint</test_depend>
+
+</package>
