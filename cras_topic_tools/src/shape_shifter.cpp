@@ -190,8 +190,8 @@ ShapeShifter::ShapeShifter(const topic_tools::ShapeShifter& other) :
 {
 }
 
-ShapeShifter::ShapeShifter(topic_tools::ShapeShifter&& other) noexcept :
-  ShapeShifter(reinterpret_cast<ShapeShifter&&>(other))
+ShapeShifter::ShapeShifter(topic_tools::ShapeShifter && other) noexcept :
+  ShapeShifter(reinterpret_cast<ShapeShifter &&>(other))
 {
 }
 
