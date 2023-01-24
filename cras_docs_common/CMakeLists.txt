@@ -25,7 +25,6 @@ if (CATKIN_ENABLE_TESTING)
   #catkin_lint: ignore_once env_var
   if(DEFINED ENV{ROS_ROOT} AND EXISTS "${ROS_HOME}/rosdep/sources.cache")
     roslint_custom(catkin_lint "-W2" .)
+    roslint_add_test()  # Move this outside the if() block when more roslint tests are added
   endif()
-
-  roslint_add_test()
 endif()
