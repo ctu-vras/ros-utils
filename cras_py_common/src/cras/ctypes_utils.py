@@ -41,8 +41,8 @@ def load_library(library_name, mode=RTLD_LAZY):
 
 
 def get_ro_c_buffer(buf, buf_len=None):
-    """Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy. 
-    
+    """Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy.
+
     :param [list|tuple|BufferStringIO|bytes] buf: The source buffer.
     :param int buf_len: Length of the buffer (if `None`, `len(buf)` is used if it exists, or stream length).
     :return: The ctypes c_uint8 array.
