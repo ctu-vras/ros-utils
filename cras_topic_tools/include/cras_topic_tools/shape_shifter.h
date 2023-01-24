@@ -97,6 +97,30 @@ void copyShapeShifter(const ::topic_tools::ShapeShifter& in, ::topic_tools::Shap
 template<typename T, typename EnableT = ::std::enable_if_t<::ros::message_traits::IsMessage<::std::decay_t<T>>::value>>
 void msgToShapeShifter(const T& msg, ::topic_tools::ShapeShifter& shifter);
 
+#if ROS_VERSION_MINIMUM(1, 15, 0)
+using ::topic_tools::ShapeShifter;
+#else
+
+/**
+ * \brief `ShapeShifter` class with fixed behavior on copy/move on Melodic. Use this class everywhere possible to
+ *        prevent memory corruption. It seamlessly converts to `topic_tools::ShapeShifter`;
+ */
+class ShapeShifter : public ::topic_tools::ShapeShifter
+{
+public:
+  ShapeShifter();
+  ~ShapeShifter() override;
+  ShapeShifter(const ::topic_tools::ShapeShifter& other);
+  ShapeShifter(::topic_tools::ShapeShifter&& other) noexcept;
+  ShapeShifter& operator=(const ::topic_tools::ShapeShifter& other);
+  ShapeShifter& operator=(::topic_tools::ShapeShifter&& other) noexcept;
+  ShapeShifter(const ShapeShifter& other);
+  ShapeShifter(ShapeShifter&& other) noexcept;
+  ShapeShifter& operator=(const ShapeShifter& other);
+  ShapeShifter& operator=(ShapeShifter&& other) noexcept;
+};
+#endif
+
 }
 
 #include "impl/shape_shifter.hpp"

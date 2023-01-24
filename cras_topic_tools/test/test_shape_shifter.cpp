@@ -278,6 +278,36 @@ TEST(ShapeShifter, CopyShapeShifter)  // NOLINT
   EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter2));
 }
 
+TEST(ShapeShifter, CopyCrasShapeShifter)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+  const auto origMsg = msg;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  cras::msgToShapeShifter(msg, shifter);
+
+  cras::ShapeShifter shifter2;
+  // With normal ShapeShifter, we'd get a segfault in Melodic when this function ends
+  shifter2 = shifter;
+
+  EXPECT_EQ(*shifter.instantiate<geometry_msgs::PointStamped>(), *shifter2.instantiate<geometry_msgs::PointStamped>());
+  EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter2));
+
+  cras::ShapeShifter shifter3;
+  shifter3 = std::move(shifter2);
+
+  EXPECT_EQ(*shifter.instantiate<geometry_msgs::PointStamped>(), *shifter3.instantiate<geometry_msgs::PointStamped>());
+  EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter3));
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

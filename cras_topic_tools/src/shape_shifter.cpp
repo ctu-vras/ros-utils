@@ -175,4 +175,109 @@ bool setHeader(topic_tools::ShapeShifter& msg, std_msgs::Header& header)
   }
 }
 
+#if ROS_VERSION_MINIMUM(1, 15, 0)
+#else
+
+ShapeShifter::ShapeShifter() = default;
+ShapeShifter::~ShapeShifter() = default;
+
+ShapeShifter::ShapeShifter(const topic_tools::ShapeShifter& other) :
+  ShapeShifter(reinterpret_cast<const ShapeShifter&>(other))
+{
+}
+
+ShapeShifter::ShapeShifter(topic_tools::ShapeShifter&& other) noexcept :
+  ShapeShifter(reinterpret_cast<ShapeShifter&&>(other))
+{
+}
+
+ShapeShifter& ShapeShifter::operator=(const topic_tools::ShapeShifter& other)
+{
+  return operator=(reinterpret_cast<const ShapeShifter&>(other));
+}
+
+ShapeShifter& ShapeShifter::operator=(topic_tools::ShapeShifter&& other) noexcept
+{
+  return operator=(reinterpret_cast<ShapeShifter&&>(other));
+}
+
+ShapeShifter::ShapeShifter(const ShapeShifter& other)
+{
+  this->md5 = other.md5;
+  this->datatype = other.datatype;
+  this->msg_def = other.msg_def;
+  this->latching = other.latching;
+  this->typed = other.typed;
+  this->msgBufUsed = this->msgBufAlloc = other.msgBufUsed;
+  if (other.msgBuf != nullptr && other.msgBufUsed > 0)
+  {
+    this->msgBuf = new uint8_t[other.msgBufUsed];
+    memcpy(this->msgBuf, other.msgBuf, other.msgBufUsed);
+  }
+}
+
+ShapeShifter::ShapeShifter(ShapeShifter&& other) noexcept
+{
+  this->md5 = other.md5;
+  this->datatype = other.datatype;
+  this->msg_def = other.msg_def;
+  this->latching = other.latching;
+  this->typed = other.typed;
+  this->msgBufUsed = this->msgBufAlloc = other.msgBufUsed;
+  if (other.msgBuf != nullptr && other.msgBufUsed > 0)
+  {
+    this->msgBuf = std::exchange(other.msgBuf, nullptr);
+    other.msgBufAlloc = 0;
+    other.msgBufUsed = 0;
+  }
+}
+
+ShapeShifter& ShapeShifter::operator=(const ShapeShifter& other)
+{
+  if (this == &other)
+    return *this;
+
+  this->md5 = other.md5;
+  this->datatype = other.datatype;
+  this->msg_def = other.msg_def;
+  this->latching = other.latching;
+  this->typed = other.typed;
+  this->msgBufUsed = other.msgBufUsed;
+  if (other.msgBuf != nullptr && other.msgBufUsed > 0)
+  {
+    if (this->msgBufAlloc < other.msgBufUsed)
+    {
+      delete[] this->msgBuf;
+      this->msgBuf = new uint8_t[other.msgBufUsed];
+      this->msgBufAlloc = other.msgBufUsed;
+    }
+    memcpy(this->msgBuf, other.msgBuf, other.msgBufUsed);
+  }
+  else if (this->msgBuf != nullptr)
+  {
+    delete[] this->msgBuf;
+    this->msgBuf = nullptr;
+    this->msgBufAlloc = 0;
+  }
+  return *this;
+}
+
+ShapeShifter& ShapeShifter::operator=(ShapeShifter&& other) noexcept
+{
+  if (this == &other)
+    return *this;
+
+  this->md5 = other.md5;
+  this->datatype = other.datatype;
+  this->msg_def = other.msg_def;
+  this->latching = other.latching;
+  this->typed = other.typed;
+  std::swap(this->msgBufUsed, other.msgBufUsed);
+  std::swap(this->msgBufAlloc, other.msgBufAlloc);
+  std::swap(this->msgBuf, other.msgBuf);
+  return *this;
+}
+
+#endif
+
 }
