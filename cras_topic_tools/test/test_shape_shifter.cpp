@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <ros/serialization.h>
@@ -44,7 +45,7 @@ TEST(ShapeShifter, MsgToShapeShifter)  // NOLINT
   const auto msg3 = *shifter2.instantiate<geometry_msgs::PointStamped>();
 
   ASSERT_EQ(cras::getBufferLength(shifter), cras::getBufferLength(shifter2));
-  
+
   // Compare shifter buffers
   for (size_t i = 0; i < cras::getBufferLength(shifter); ++i)
     EXPECT_EQ(cras::getBuffer(shifter2)[i], cras::getBuffer(shifter)[i]);

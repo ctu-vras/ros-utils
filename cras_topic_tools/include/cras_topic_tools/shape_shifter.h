@@ -110,10 +110,10 @@ class ShapeShifter : public ::topic_tools::ShapeShifter
 public:
   ShapeShifter();
   ~ShapeShifter() override;
-  ShapeShifter(const ::topic_tools::ShapeShifter& other);
-  ShapeShifter(::topic_tools::ShapeShifter&& other) noexcept;
+  explicit ShapeShifter(const ::topic_tools::ShapeShifter& other);
+  explicit ShapeShifter(::topic_tools::ShapeShifter && other) noexcept;
   ShapeShifter& operator=(const ::topic_tools::ShapeShifter& other);
-  ShapeShifter& operator=(::topic_tools::ShapeShifter&& other) noexcept;
+  ShapeShifter& operator=(::topic_tools::ShapeShifter && other) noexcept;
   ShapeShifter(const ShapeShifter& other);
   ShapeShifter(ShapeShifter&& other) noexcept;
   ShapeShifter& operator=(const ShapeShifter& other);

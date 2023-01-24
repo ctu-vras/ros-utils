@@ -13,6 +13,8 @@
 #undef private
 // HACK end
 
+#include <utility>
+
 #include <boost/shared_ptr.hpp>
 
 #include <ros/common.h>
