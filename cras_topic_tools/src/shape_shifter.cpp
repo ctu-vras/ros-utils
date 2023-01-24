@@ -13,6 +13,8 @@
 #undef private
 // HACK end
 
+
+#include <algorithm>
 #include <utility>
 
 #include <boost/shared_ptr.hpp>
@@ -198,9 +200,9 @@ ShapeShifter& ShapeShifter::operator=(const topic_tools::ShapeShifter& other)
   return operator=(reinterpret_cast<const ShapeShifter&>(other));
 }
 
-ShapeShifter& ShapeShifter::operator=(topic_tools::ShapeShifter&& other) noexcept
+ShapeShifter& ShapeShifter::operator=(topic_tools::ShapeShifter && other) noexcept
 {
-  return operator=(reinterpret_cast<ShapeShifter&&>(other));
+  return operator=(reinterpret_cast<ShapeShifter &&>(other));
 }
 
 ShapeShifter::ShapeShifter(const ShapeShifter& other)
@@ -218,7 +220,7 @@ ShapeShifter::ShapeShifter(const ShapeShifter& other)
   }
 }
 
-ShapeShifter::ShapeShifter(ShapeShifter&& other) noexcept
+ShapeShifter::ShapeShifter(ShapeShifter && other) noexcept
 {
   this->md5 = other.md5;
   this->datatype = other.datatype;
@@ -264,7 +266,7 @@ ShapeShifter& ShapeShifter::operator=(const ShapeShifter& other)
   return *this;
 }
 
-ShapeShifter& ShapeShifter::operator=(ShapeShifter&& other) noexcept
+ShapeShifter& ShapeShifter::operator=(ShapeShifter && other) noexcept
 {
   if (this == &other)
     return *this;
