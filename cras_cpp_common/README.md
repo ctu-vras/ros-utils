@@ -36,6 +36,7 @@ Release jobs Noetic
 - `optional`: Provides forward compatibility for [`std::any`](https://en.cppreference.com/w/cpp/utility/any).
 - `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
 - `diag_utils`: Helpers for easy setup of a diagnosed publisher/subscriber that checks message rate or delay. Configuration of the expected rates/delays is via ROS parameters.
+- `expected`: Provides forward compatibility for [`std::expected`](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0323r3.pdf).
 - `filter_utils`:
   - `FilterBase` eases access to filter parameters via `param_utils`.
   - `FilterChain` class and nodelet improve upon [`filters::FilterChain`](https://github.com/ros/filters/blob/noetic-devel/include/filters/filter_chain.hpp) by adding support for dynamic disabling/enabling of individual filters, diagnostics of the individual filters and possibility to publish the intermediate filtering results.

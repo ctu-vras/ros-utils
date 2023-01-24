@@ -118,6 +118,10 @@ add_library(cras_any INTERFACE)
 target_sources(cras_any INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/any.hpp>)
 target_sources(cras_any INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/any-lite/any.hpp>)
 
+add_library(cras_expected INTERFACE)
+target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
+target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tl/expected.hpp>)
+
 add_library(cras_functional INTERFACE)
 target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/functional.hpp>)
 target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/invoke.hpp/invoke.hpp>)
@@ -325,6 +329,7 @@ install(TARGETS
   cras_cloud
   cras_diag_updater
   cras_diag_utils
+  cras_expected
   cras_filter_base
   cras_filter_chain
   cras_filter_chain_nodelet
