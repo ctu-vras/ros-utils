@@ -76,6 +76,7 @@ catkin_package(
     EIGEN3
     urdfdom_headers
   LIBRARIES
+    cras_c_api
     cras_cloud
     cras_diag_updater
     cras_diag_utils
@@ -129,6 +130,8 @@ target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/e
 add_library(cras_optional INTERFACE)
 target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/optional.hpp>)
 target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tl/optional.hpp>)
+
+add_library(cras_c_api src/c_api.cpp)
 
 add_library(cras_semaphore src/thread_utils/semaphore.cpp)
 
@@ -326,6 +329,7 @@ install(FILES cmake/node_from_nodelet.cpp.in
 
 install(TARGETS
   cras_any
+  cras_c_api
   cras_cloud
   cras_diag_updater
   cras_diag_utils
@@ -410,6 +414,9 @@ if (CATKIN_ENABLE_TESTING)
   roslint_add_test()
 
   # GTEST tests (no rosmaster required)
+  
+  catkin_add_gtest(test_c_api test/test_c_api.cpp)
+  target_link_libraries(test_c_api cras_c_api ${catkin_LIBRARIES})
   
   catkin_add_gtest(test_cras_cloud test/test_cloud.cpp)
   target_link_libraries(test_cras_cloud cras_cloud ${catkin_LIBRARIES})
