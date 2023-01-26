@@ -40,6 +40,7 @@ if (CATKIN_ENABLE_TESTING)
   add_rostest(test/test_static_transform_broadcaster.test)
   add_rostest(test/test_topic_utils.test)
 
+  catkin_add_nosetests(test/test_ctypes_utils.py)
   catkin_add_nosetests(test/test_geometry_utils.py)
   catkin_add_nosetests(test/test_message_utils.py)
   catkin_add_nosetests(test/test_string_utils.py)

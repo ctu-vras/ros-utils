@@ -120,7 +120,7 @@ class StringAllocator(Allocator):
     """ctypes allocator suitable for allocating strings. The returned value is of `str` type."""
 
     def _alloc(self, size):
-        return create_string_buffer(size + 1)
+        return create_string_buffer(size)
 
     @property
     def value(self):
