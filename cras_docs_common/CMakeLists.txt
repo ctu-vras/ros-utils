@@ -7,6 +7,8 @@ catkin_python_setup()
 
 catkin_package()
 
+install(DIRECTORY src/${PROJECT_NAME}/sphinx-themes DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
+
 if (CATKIN_ENABLE_TESTING)
   find_package(roslint REQUIRED)
 
