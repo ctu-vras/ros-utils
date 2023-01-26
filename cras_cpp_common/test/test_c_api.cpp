@@ -9,6 +9,9 @@
 
 #include "gtest/gtest.h"
 
+#include <string>
+#include <vector>
+
 #include <cras_cpp_common/c_api.h>
 
 using namespace cras;
