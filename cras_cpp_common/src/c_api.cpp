@@ -8,6 +8,8 @@
  */
 
 #include <cstring>
+#include <string>
+#include <vector>
 
 #include <cras_cpp_common/c_api.h>
 
