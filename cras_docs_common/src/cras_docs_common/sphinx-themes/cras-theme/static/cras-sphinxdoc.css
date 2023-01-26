@@ -15,6 +15,16 @@ code.descclassname {
     color: #00458EFF;
 }
 
+.document .body .section h2 {
+    background-color: #005bb6;
+    color: white;
+    padding: 4px;
+}
+
+.document .body .section h2 a, .document .body .section h2 a:visited, .document .body .section h2 a:hover {
+    color: white !important;
+}
+
 div.related:first-of-type::before
 {
     content: "Czech Technical University in Prague\A Faculty of Electrical Engineering\A Center for Robots and Autonomous Systems";
