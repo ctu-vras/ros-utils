@@ -7,7 +7,7 @@
     node which allows to send multiple (latched) static transforms from
     single node in single message.
   </description>
-  <maintainer email="tpetricek@gmail.com">Tomas Petricek</maintainer>
+  <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
   <license>BSD</license>
 
   <author email="tpetricek@gmail.com">Tomas Petricek</author>
