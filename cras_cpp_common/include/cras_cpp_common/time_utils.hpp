@@ -63,6 +63,12 @@ double frequency(const ::ros::WallRate& rate, bool maxCycleTimeMeansZero = false
  */
 ::ros::WallRate safeWallRate(double frequency);
 
+/**
+ * \brief Return current ROS time if it has already been initialized, or current wall time.
+ * \return Current time.
+ */
+::ros::Time nowFallbackToWall();
+
 }
 
 namespace ros

@@ -55,6 +55,7 @@ Release jobs Noetic
 - `rate_limiter`: Library for intelligent rate-limiting of events (mainly messages). So far it implements the algorithm from `topic_tools throttle` (not very good), and token bucket algorithm (pretty good for most cases).
 - `set_utils`: Provides `isSetIntersectionEmpty()` working on a pair of `std::set`s.
 - `string_utils`: Provides many string manipulation helpers you've always dreamed of. Universal `to_string()` that converts almost anything to a sensible string. `startsWith()`/`endsWith()`, `replace()`, `contains()`, `split()`/`join()`, `format()` (like `sprintf()` but without hassle and on `std::string`), `stripLeading()`/`stripTrailing()`, `removePrefix()`/`removeSuffix()`, `parseFloat()`/`parseDouble()` (convert string to double independent of locale!), `parseInt32()` and friends (parse many textual representations to an integer).
+- `suppress_warnings`: Unified macros that suppress various compiler warnings for a piece of code.
 - `test_utils`: Provide a hack that allows loading a locally-defined nodelet without the need to register it via package.xml.
 - `tf2_utils`: `getRoll()`, `getPitch()`, `getYaw()`, `getRPY()` from a `tf2::Quaternion` or `geometry_msgs::Quaternion`!
   - Also provides `InterruptibleTFBuffer` that can cooperate with `cras::Nodelet` and stop a TF lookup if the nodelet is being unloaded (normally, the lookup freezes when you pause simulation time).

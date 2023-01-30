@@ -216,10 +216,9 @@ add_library(cras_thread_utils src/thread_utils.cpp)
 target_link_libraries(cras_thread_utils
   PRIVATE cras_string_utils Threads::Threads)
 
-add_library(cras_log_utils src/log_utils/nodelet.cpp)
-target_sources(cras_log_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/log_utils/node.h>)
+add_library(cras_log_utils src/log_utils.cpp src/log_utils/node.cpp src/log_utils/nodelet.cpp)
 target_link_libraries(cras_log_utils
-  PUBLIC cras_string_utils ${catkin_LIBRARIES})
+  PUBLIC cras_string_utils ${catkin_LIBRARIES} PRIVATE cras_time_utils)
 
 add_library(cras_tf2_sensor_msgs src/tf2_sensor_msgs.cpp)
 add_dependencies(cras_tf2_sensor_msgs ${catkin_EXPORTED_TARGETS})
@@ -426,6 +425,7 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_cras_log_utils test/test_log_utils.cpp)
   target_link_libraries(test_cras_log_utils cras_log_utils ${catkin_LIBRARIES})
+  target_compile_options(test_cras_log_utils PRIVATE -save-temps)
 
   catkin_add_gtest(test_cras_math_utils test/test_math_utils.cpp)
   target_link_libraries(test_cras_math_utils cras_math_utils ${catkin_LIBRARIES})

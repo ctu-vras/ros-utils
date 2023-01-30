@@ -28,14 +28,14 @@ namespace cras
  * verbosity level, defaulted parameters with WARN level. There are also lots of template specializations for builtin
  * ROS types or unsigned values which ease the process of reading the parameters correctly.
  */
-class ParamHelper
+class ParamHelper : public ::cras::HasLogger
 {
 public:
   /**
    * Create the param helper using the given log helper for logging messages.
    * @param log The log helper to use for logging.
    */
-  explicit ParamHelper(::cras::LogHelperPtr log) : log(::std::move(log)) {}
+  explicit ParamHelper(const ::cras::LogHelperPtr& log) : ::cras::HasLogger(log) {}
   virtual ~ParamHelper() = default;
 
   /**
@@ -261,10 +261,6 @@ public:
   {
     this->log = logger;
   }
-
-protected:
-  //! \brief The log helper to use for logging parameter read messages.
-  ::cras::LogHelperPtr log;
 };
 
 typedef ::std::shared_ptr<::cras::ParamHelper> ParamHelperPtr;

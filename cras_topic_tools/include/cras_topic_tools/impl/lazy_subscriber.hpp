@@ -59,9 +59,9 @@ void ::cras::LazySubscriberBase<SubscriberType>::setLazy(const bool lazy)
   this->lazy = lazy;
 
   if (lazy)
-    this->logHelper->logDebug("Switching to lazy subscription mode");
+    CRAS_LOG_DEBUG(this->logHelper, "Switching to lazy subscription mode");
   else
-    this->logHelper->logDebug("Switching to non-lazy subscription mode");
+    CRAS_LOG_DEBUG(this->logHelper, "Switching to non-lazy subscription mode");
 
   this->updateSubscriptionNoLock();
 }

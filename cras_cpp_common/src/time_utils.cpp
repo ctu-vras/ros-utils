@@ -79,6 +79,19 @@ ros::WallRate safeWallRate(double frequency)
   }
 }
 
+ros::Time nowFallbackToWall()
+{
+  try
+  {
+    return ros::Time::now();
+  }
+  catch (const ros::TimeNotInitializedException& ex)
+  {
+    const auto wall = ros::WallTime::now();
+    return {wall.sec, wall.nsec};
+  }
+}
+
 };
 
 namespace ros

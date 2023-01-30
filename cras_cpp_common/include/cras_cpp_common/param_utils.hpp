@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief This file provides helper methods easing access to parameters passed to nodes, nodelets and filters.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <functional>
@@ -163,8 +164,8 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
       const auto parts = ::cras::split(name, "/", 1);
       if (parts.size() == 2 && !parts[0].empty() && !parts[1].empty())
       {
-        const auto head = parts[0];
-        const auto tail = parts[1];
+        const auto& head = parts[0];
+        const auto& tail = parts[1];
         try
         {
           auto nsParams = param.getNamespaced(head);
@@ -208,7 +209,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
   if (shouldThrow)
   {
     if (logger != nullptr && options.printMessages)
-      logger->print(info.messageLevel, info.message);
+      CRAS_LOG(logger, info.messageLevel, ROSCONSOLE_DEFAULT_NAME, info.message);
     throw GetParamException(info);
   }
 
@@ -272,7 +273,7 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
   }
 
   if (logger != nullptr && options.printMessages)
-    logger->print(info.messageLevel, info.message);
+    CRAS_LOG(logger, info.messageLevel, ROSCONSOLE_DEFAULT_NAME, info.message);
 
   if (shouldThrow)
     throw GetParamException(info);

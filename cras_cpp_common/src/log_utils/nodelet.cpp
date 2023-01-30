@@ -1,39 +1,44 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Log helper redirecting the logging calls to NODELET_ macros.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <string>
 
-#include <nodelet/nodelet.h>
-
 #include <cras_cpp_common/log_utils/nodelet.h>
+#include <cras_cpp_common/string_utils.hpp>
 
 namespace cras
 {
 
-const std::string NOT_SET {"getNameFn is not set!"};  // NOLINT
+const static std::string NOT_SET {"getNameFn is not set!"};  // NOLINT
 
 NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNameFn)
 {
+  if (!this->getNameFn)
+    this->getNameFn = [](){ return NOT_SET; };
 }
 
-NodeletLogHelper::~NodeletLogHelper() = default;
-
-const std::string& NodeletLogHelper::getName() const
+void NodeletLogHelper::initializeLogLocation(
+  ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const
 {
-  if (this->getNameFn)
-    return this->getNameFn();
-  else
-    return NOT_SET;
-}
+  // We need to put getNameFn() in between the base name and the added suffix
 
-std::string NodeletLogHelper::getSuffixedName(const std::string& suffix) const
-{
-  return this->getNameFn() + "." + suffix;
+  auto newName = name;
+  const auto prefix = std::string(ROSCONSOLE_NAME_PREFIX) + ".";
+  if (cras::startsWith(name, prefix))
+  {
+    const auto nodeletPrefix = prefix + this->getNameFn() + ".";
+    if (!cras::startsWith(name, nodeletPrefix))
+      newName = nodeletPrefix + cras::removePrefix(name, prefix);
+  }
+  else if (name == ROSCONSOLE_NAME_PREFIX)
+    newName = name + "." + this->getNameFn();
+  ros::console::initializeLogLocation(loc, newName, level);
 }
 
 }

@@ -21,9 +21,26 @@
 using namespace cras;
 using namespace ros;
 
-TEST(TimeUtils, TimeNotInitialized)  // NOLINT
+// The following testcase has to be the first one because it tests what happens when time is not initialized!
+TEST(TimeUtils, NowFallbackToWall)  // NOLINT
 {
+  // Before time is initialized, nowFallbackToWall() should return wall time
+  auto t = cras::nowFallbackToWall();
+  const auto wall = ros::WallTime::now();
+  const auto wallTime = ros::Time(wall.sec, wall.nsec);
+  EXPECT_LT((wallTime > t) ? (wallTime - t) : (t - wallTime), ros::Duration(0.1));
+
+  // This is an unrelated testcase, but we need to test both before time is initialized
   EXPECT_THROW(remainingTime({99, 0}, {2, 0}), ros::TimeNotInitializedException);
+
+  // After time initialization, it should return ROS time
+  Time::init();
+  Time::setNow({100, 0});
+
+  t = cras::nowFallbackToWall();
+  EXPECT_EQ(ros::Time::now(), t);
+
+  Time::shutdown();
 }
 
 TEST(TimeUtils, RemainingTimeDuration)  // NOLINT

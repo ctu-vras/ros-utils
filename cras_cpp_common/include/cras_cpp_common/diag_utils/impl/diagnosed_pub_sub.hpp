@@ -1,12 +1,13 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief ROS message publisher and subscriber with automatic rate and delay diagnostics (implementation details, do not
  * include directly).
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <functional>
@@ -208,7 +209,7 @@ namespace impl
  * \tparam Message Type of the message.
  */
 template <typename Message>
-class AddTickSubscriptionCallbackHelper : public ::ros::SubscriptionCallbackHelper
+class AddTickSubscriptionCallbackHelper : public ::ros::SubscriptionCallbackHelper, public ::cras::HasLogger
 {
 public:
   /**
@@ -220,7 +221,7 @@ public:
    */
   AddTickSubscriptionCallbackHelper(const ::ros::SubscriptionCallbackHelperPtr& orig,
     const ::cras::LogHelperPtr& log, const ::cras::TopicStatusPtr<Message>& diag, const ::std::string& topic) :
-      orig(orig), log(log), diag(diag), topic(topic)
+      ::cras::HasLogger(log), orig(orig), diag(diag), topic(topic)
   {
   }
 
@@ -238,7 +239,7 @@ public:
     if (msg != nullptr)
       this->diag->tick(msg);
     else
-      this->log->logError("Could not read header of %s from publisher %s on topic %s",
+      CRAS_ERROR("Could not read header of %s from publisher %s on topic %s",
         ::cras::getTypeName(this->getTypeInfo()).c_str(), params.event.getPublisherName().c_str(),
         this->topic.c_str());
 
@@ -263,9 +264,6 @@ public:
 private:
   //! \brief The original subscription callback helper. Most methods are just relayed on it.
   ::ros::SubscriptionCallbackHelperPtr orig;
-
-  //! \brief Log helper.
-  ::cras::LogHelperPtr log;
 
   //! \brief The topic diagnostic task which should receive the added tick() call.
   ::cras::TopicStatusPtr<Message> diag;
