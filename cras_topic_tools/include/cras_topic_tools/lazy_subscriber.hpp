@@ -29,7 +29,7 @@ namespace cras
  *                        are provided (and it has to provide a `getTopic()` function).
  */
 template<typename SubscriberType = ::ros::Subscriber>
-class LazySubscriberBase
+class LazySubscriberBase : public ::cras::HasLogger
 {
 public:
   //! \brief Type of the function that connects the subscriber.
@@ -128,9 +128,6 @@ protected:
 
   //! \brief Mutex protecting `sub` and `subscribed`.
   mutable ::std::mutex connectMutex;
-
-  //! \brief Logging helper.
-  ::cras::LogHelperPtr logHelper;
 };
 
 /**

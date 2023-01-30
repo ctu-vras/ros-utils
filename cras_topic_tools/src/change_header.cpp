@@ -94,7 +94,7 @@ void ChangeHeaderNodelet::onInit()
   if (!lazy)
     this->pubSub->setLazy(false);
 
-  this->log->logInfo("Created%s header changer subscribing to %s and publishing to %s.",
+  CRAS_INFO("Created%s header changer subscribing to %s and publishing to %s.",
     (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str());
 }
 

@@ -122,14 +122,14 @@ protected:
         stamp = header->stamp;
         if (this->params.maxAge.has_value() && (stamp.value() + this->params.maxAge.value()) < ::ros::Time::now())
         {
-          this->logHelper->logInfoThrottle(5.0, "Received message too old (%.3g s > %.3g s) will be discarded.",
+          CRAS_INFO_THROTTLE(5.0, "Received message too old (%.3g s > %.3g s) will be discarded.",
             (::ros::Time::now() - stamp.value()).toSec(), this->params.maxAge.value().toSec());
           return;
         }
         if (this->params.discardOlderMessages && this->lastMsgStamp.has_value()
           && stamp.value() < this->lastMsgStamp.value())
         {
-          this->logHelper->logInfoThrottle(
+          CRAS_INFO_THROTTLE(
             5.0, "Received message is %.3g s older than current message, it will be discarded.",
             (this->lastMsgStamp.value() - stamp.value()).toSec());
           return;
@@ -166,14 +166,14 @@ protected:
 
     if (this->params.maxRepeats.has_value() && this->numRepeats > this->params.maxRepeats.value())
     {
-      this->logHelper->logWarnThrottle(5.0, "Message already republished %i times.", this->numRepeats);
+      CRAS_WARN_THROTTLE(5.0, "Message already republished %zu times.", this->numRepeats);
       return;
     }
 
     if (this->inspectStamps() && this->params.maxAge.has_value() && this->lastMsgStamp.has_value() &&
         (this->lastMsgStamp.value() + this->params.maxAge.value()) < ::ros::Time::now())
     {
-      this->logHelper->logWarnThrottle(5.0, "Message too old (%.3g s > %.3g s) will not be republished.",
+      CRAS_WARN_THROTTLE(5.0, "Message too old (%.3g s > %.3g s) will not be republished.",
         (::ros::Time::now() - this->lastMsgStamp.value()).toSec(), this->params.maxAge.value().toSec());
       return;
     }

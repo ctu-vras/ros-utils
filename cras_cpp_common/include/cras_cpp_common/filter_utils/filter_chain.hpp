@@ -39,7 +39,7 @@ namespace cras
  * @tparam F Type of the filtered data.
  */
 template<typename F>
-class FilterChain : public ::filters::FilterChain<F>
+class FilterChain : public ::filters::FilterChain<F>, ::cras::HasLogger
 {
 public:
   /**
@@ -180,9 +180,6 @@ protected:
 
   //! \brief Mutex protecting activeFilters access.
   mutable ::std::mutex activeFiltersMutex;
-
-  //! \brief The log helper used for printing console messages.
-  ::cras::LogHelperPtr logHelper;
 
   //! \brief Whether this filter chain has been initialized (gets set by first `update()` and cleared by `clear()`).
   bool initialized {false};

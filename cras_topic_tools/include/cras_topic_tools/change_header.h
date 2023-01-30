@@ -102,7 +102,7 @@ protected:
   {
     if (!this->advertiseOptions->has_header)
     {
-      this->logHelper->logErrorOnce("Running change_header on message type %s which does not have a header! "
+      CRAS_ERROR_ONCE("Running change_header on message type %s which does not have a header! "
         "Ignoring the message.", this->advertiseOptions->datatype.c_str());
       return;
     }
@@ -111,7 +111,7 @@ protected:
     auto header = ::cras::getHeader(*msg);
     if (!header.has_value())
     {
-      this->logHelper->logError("Change_header failed to extract a header from the message of type %s! "
+      CRAS_ERROR("Change_header failed to extract a header from the message of type %s! "
         "Ignoring the message.", this->advertiseOptions->datatype.c_str());
       return;
     }
@@ -181,7 +181,7 @@ protected:
     ::cras::copyShapeShifter(*msg, newMsg);
     if (!::cras::setHeader(newMsg, header.value()))
     {
-      this->logHelper->logError("Change_header failed to modify the header of the message of type %s! "
+      CRAS_ERROR("Change_header failed to modify the header of the message of type %s! "
         "Ignoring the message.", this->advertiseOptions->datatype.c_str());
       return;
     }

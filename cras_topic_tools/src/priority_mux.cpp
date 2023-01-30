@@ -39,7 +39,7 @@ void PriorityMuxNodelet::onInit()
   }
   catch (const cras::GetParamException& e)
   {
-    this->log->logError("Parameter ~topics is empty, priority mux will not do anything!");
+    CRAS_ERROR("Parameter ~topics is empty, priority mux will not do anything!");
     return;
   }
 
@@ -55,7 +55,7 @@ void PriorityMuxNodelet::onInit()
         topicItems.emplace_back("/" + item.first, item.second);
       break;
     default:
-      this->log->logError("Parameter ~topics has to be either a list or a dict. Priority mux will not do anything!");
+      CRAS_ERROR("Parameter ~topics has to be either a list or a dict. Priority mux will not do anything!");
       return;
   }
 
@@ -65,7 +65,7 @@ void PriorityMuxNodelet::onInit()
     const auto& xmlConfig = item.second;
     if (xmlConfig.getType() != XmlRpc::XmlRpcValue::TypeStruct)
     {
-      this->log->logError("Item %s of ~topics has to be a dict, but %s was given.",
+      CRAS_ERROR("Item %s of ~topics has to be a dict, but %s was given.",
         key.c_str(), cras::to_string(xmlConfig.getType()).c_str());
       continue;
     }
@@ -81,7 +81,7 @@ void PriorityMuxNodelet::onInit()
     }
     catch (const cras::GetParamException& e)
     {
-      this->log->logError("Item %s of ~topics has to contain key 'topic'. Skipping the item.", key.c_str());
+      CRAS_ERROR("Item %s of ~topics has to contain key 'topic'. Skipping the item.", key.c_str());
       continue;
     }
 
@@ -110,12 +110,12 @@ void PriorityMuxNodelet::onInit()
         lockItems.emplace_back("/" + item.first, item.second);
       break;
     default:
-      this->log->logError("Parameter ~locks has to be either a list or a dict. No locks will be set.");
+      CRAS_ERROR("Parameter ~locks has to be either a list or a dict. No locks will be set.");
       return;
   }
 
   if (lockItems.empty())
-    this->log->logInfo("No locks were specified.");
+    CRAS_INFO("No locks were specified.");
 
   for (const auto& item : lockItems)
   {
@@ -123,7 +123,7 @@ void PriorityMuxNodelet::onInit()
     const auto& xmlConfig = item.second;
     if (xmlConfig.getType() != XmlRpc::XmlRpcValue::TypeStruct)
     {
-      this->log->logError("Item %s of ~locks has to be a dict, but %s was given.",
+      CRAS_ERROR("Item %s of ~locks has to be a dict, but %s was given.",
         key.c_str(), cras::to_string(xmlConfig.getType()).c_str());
       continue;
     }
@@ -139,7 +139,7 @@ void PriorityMuxNodelet::onInit()
     }
     catch (const cras::GetParamException& e)
     {
-      this->log->logError("Item %s of ~locks has to contain key 'topic'. Skipping the item.", key.c_str());
+      CRAS_ERROR("Item %s of ~locks has to contain key 'topic'. Skipping the item.", key.c_str());
       continue;
     }
 
@@ -158,7 +158,7 @@ void PriorityMuxNodelet::onInit()
   std_msgs::Int32 msg;
   msg.data = this->priorityNone;
   this->activePriorityPub.publish(msg);
-  this->log->logInfo("No priority active now.");
+  CRAS_INFO("No priority active now.");
 
   for (const auto& config : this->topicConfigs)
   {
@@ -174,7 +174,7 @@ void PriorityMuxNodelet::onInit()
       std_msgs::String selectedMsg;
       selectedMsg.data = priority_mux::NONE_TOPIC;
       this->selectedPublishers[topicConfig.outTopic].publish(selectedMsg);
-      this->log->logInfo("No topic is now selected for output topic %s.", topicConfig.outTopic.c_str());
+      CRAS_INFO("No topic is now selected for output topic %s.", topicConfig.outTopic.c_str());
     }
 
     const auto cb = boost::bind(&PriorityMuxNodelet::cb, this, boost::placeholders::_1, topicConfig.inTopic);
@@ -198,7 +198,7 @@ void PriorityMuxNodelet::onInit()
     std_msgs::Bool lockedMsg;
     lockedMsg.data = false;
     this->lockedPublishers[lockConfig.topic].publish(lockedMsg);
-    this->log->logInfo("Lock %s is not locked.", lockConfig.name.c_str());
+    CRAS_INFO("Lock %s is not locked.", lockConfig.name.c_str());
 
     const auto cb = cras::bind_front(&PriorityMuxNodelet::lockCb, this, lockConfig.topic);
     const auto sub = this->getNodeHandle().subscribe<std_msgs::Bool>(lockConfig.topic, lockConfig.queueSize, cb);
@@ -238,7 +238,7 @@ void PriorityMuxNodelet::cb(
 
     if (itPriority < highestLockedPriority)
     {
-      this->log->logDebug("Priority %i not active, as a lock with priority %i is locked.",
+      CRAS_DEBUG("Priority %i not active, as a lock with priority %i is locked.",
         priority, highestLockedPriority);
       return;
     }
@@ -248,7 +248,7 @@ void PriorityMuxNodelet::cb(
     const auto& itStamp = it->second;
     if ((ros::Time::now() - itStamp) < itConfig.timeout)
     {
-      this->log->logDebug("Priority %i not active. Found higher active priority %i.", priority, itPriority);
+      CRAS_DEBUG("Priority %i not active. Found higher active priority %i.", priority, itPriority);
       return;
     }
   }
@@ -284,7 +284,7 @@ void PriorityMuxNodelet::lockCb(const std::string& topic, const std_msgs::BoolCo
     std_msgs::Bool lockedMsg;
     lockedMsg.data = false;
     this->lockedPublishers[topic].publish(lockedMsg);
-    this->log->logInfo("Lock %s is unlocked now.", lockConfig.name.c_str());
+    CRAS_INFO("Lock %s is unlocked now.", lockConfig.name.c_str());
   }
 
   auto time = ros::Time::now();
@@ -319,14 +319,14 @@ void PriorityMuxNodelet::updatePriorities(const int newPriority, const ::std::st
 
   if (newPriority != this->lastActivePriority)
   {
-    this->log->logInfo("Priority %i is now active.", newPriority);
+    CRAS_INFO("Priority %i is now active.", newPriority);
     this->lastActivePriority = newPriority;
     this->publishPriorityChange(newPriority, config.timeout);
   }
 
   if (newTopic != this->lastSelectedTopics[config.outTopic])
   {
-    this->log->logInfo("Source topic '%s' is now selected for output topic '%s'.",
+    CRAS_INFO("Source topic '%s' is now selected for output topic '%s'.",
       newTopic.c_str(), config.outTopic.c_str());
     this->lastSelectedTopics[config.outTopic] = newTopic;
     this->publishSelectedTopicChange(config.outTopic, newTopic, config.timeout);
@@ -376,7 +376,7 @@ void PriorityMuxNodelet::onPriorityTimeout(const ros::TimerEvent&)
   msg.data = this->priorityNone;
   this->activePriorityPub.publish(msg);
   this->lastActivePriority = this->priorityNone;
-  this->log->logInfo("No priority is now active.");
+  CRAS_INFO("No priority is now active.");
 }
 
 void PriorityMuxNodelet::onSelectedTopicTimeout(const ::std::string& outTopic, const ros::TimerEvent&)
@@ -385,7 +385,7 @@ void PriorityMuxNodelet::onSelectedTopicTimeout(const ::std::string& outTopic, c
   msg.data = priority_mux::NONE_TOPIC;
   this->selectedPublishers[outTopic].publish(msg);
   this->lastSelectedTopics[outTopic] = priority_mux::NONE_TOPIC;
-  this->log->logInfo("No topic is now selected for output topic %s.", outTopic.c_str());
+  CRAS_INFO("No topic is now selected for output topic %s.", outTopic.c_str());
 }
 
 void PriorityMuxNodelet::onLockTimeout(const std::string& topic, const ros::TimerEvent&)
@@ -393,7 +393,7 @@ void PriorityMuxNodelet::onLockTimeout(const std::string& topic, const ros::Time
   std_msgs::Bool msg;
   msg.data = true;
   this->lockedPublishers[topic].publish(msg);
-  this->log->logInfo("Lock %s is locked now.", this->lockConfigs[topic].name.c_str());
+  CRAS_INFO("Lock %s is locked now.", this->lockConfigs[topic].name.c_str());
 }
 
 }

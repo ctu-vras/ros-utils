@@ -30,7 +30,7 @@
 template<typename SubscriberType>
 ::cras::LazySubscriberBase<SubscriberType>::LazySubscriberBase(
   const ConnectFn& connectFn, const DisconnectFn& disconnectFn, ::cras::LogHelperPtr logHelper) :
-    connectFn(connectFn), disconnectFn(disconnectFn), logHelper(::std::move(logHelper))
+    ::cras::HasLogger(::std::move(logHelper)), connectFn(connectFn), disconnectFn(disconnectFn)
 {
 }
 
@@ -59,9 +59,9 @@ void ::cras::LazySubscriberBase<SubscriberType>::setLazy(const bool lazy)
   this->lazy = lazy;
 
   if (lazy)
-    CRAS_LOG_DEBUG(this->logHelper, "Switching to lazy subscription mode");
+    CRAS_DEBUG("Switching to lazy subscription mode");
   else
-    CRAS_LOG_DEBUG(this->logHelper, "Switching to non-lazy subscription mode");
+    CRAS_DEBUG("Switching to non-lazy subscription mode");
 
   this->updateSubscriptionNoLock();
 }
@@ -99,13 +99,13 @@ void ::cras::LazySubscriberBase<SubscriberType>::connectNoLock()
 {
   this->connectFn(this->sub);
   this->subscribed = true;
-  this->logHelper->logDebug("Connected to topic " + this->sub.getTopic());
+  CRAS_DEBUG("Connected to topic " + this->sub.getTopic());
 }
 
 template<typename SubscriberType>
 void ::cras::LazySubscriberBase<SubscriberType>::disconnectNoLock()
 {
-  this->logHelper->logDebug("Disconnecting from topic " + this->sub.getTopic());
+  CRAS_DEBUG("Disconnecting from topic " + this->sub.getTopic());
   this->disconnectFn(this->sub);
   this->subscribed = false;
 }

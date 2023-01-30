@@ -85,7 +85,7 @@ void ::cras::GenericLazyPubSub<SubscriberType>::cb(const ::ros::MessageEvent<::t
     if (!this->pub)  // the first check is outside mutex, this one is inside
     {
       this->advertiseOptions = this->createAdvertiseOptions(event);  // cannot be const - advertise requires non-const
-      this->logHelper->logInfo("Creating%s publisher on %s with type %s.",
+      CRAS_INFO("Creating%s publisher on %s with type %s.",
         (this->advertiseOptions->latch ? " latched" : ""),
         ::ros::names::resolve(this->nh.getNamespace(), this->topicOut).c_str(),
         msg->getDataType().c_str());

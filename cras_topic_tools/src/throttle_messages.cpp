@@ -52,7 +52,7 @@ void ThrottleMessagesNodelet::onInit()
     }
     catch (const std::invalid_argument& e)
     {
-      this->log->logWarn("Could not parse the given throttling rate: %s", e.what());
+      CRAS_WARN("Could not parse the given throttling rate: %s", e.what());
     }
   }
 
@@ -72,7 +72,7 @@ void ThrottleMessagesNodelet::onInit()
   else  // TOKEN_BUCKET and other
   {
     if (method != "TOKEN_BUCKET")
-      this->log->logWarn("Unknown rate-limitation method %s. Using TOKEN_BUCKET instead.", method.c_str());
+      CRAS_WARN("Unknown rate-limitation method %s. Using TOKEN_BUCKET instead.", method.c_str());
     const auto bucketCapacity = params->getParam("bucket_capacity", 2_sz, "tokens");
     const auto initialTokens = params->getParam("initial_tokens", 1_sz, "tokens");
     limiter = std::make_unique<cras::TokenBucketLimiter>(rate, bucketCapacity, initialTokens);
@@ -89,7 +89,7 @@ void ThrottleMessagesNodelet::onInit()
   opts.initByFullCallbackType<const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&>("reset", 1, cb);
   this->resetSub = this->getMTPrivateNodeHandle().subscribe(opts);
 
-  this->log->logInfo("Created%s throttle from %s to %s at rate %s Hz.",
+  CRAS_INFO("Created%s throttle from %s to %s at rate %s Hz.",
     (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str(),
     cras::to_string(rate).c_str());
 }

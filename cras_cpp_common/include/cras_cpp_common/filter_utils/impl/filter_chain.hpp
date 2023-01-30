@@ -39,8 +39,8 @@ template<typename F>
 FilterChain<F>::FilterChain(
   const ::std::string& dataType, const FilterChain::FilterFinishedCallback& filterFinishedCallback,
   const FilterChain::FilterStartCallback& filterStartCallback, const ::cras::LogHelperPtr& logHelper) :
-    ::filters::FilterChain<F>(dataType), filterStartCallback(filterStartCallback),
-    filterFinishedCallback(filterFinishedCallback), logHelper(logHelper)
+    ::filters::FilterChain<F>(dataType), ::cras::HasLogger(logHelper), filterStartCallback(filterStartCallback),
+    filterFinishedCallback(filterFinishedCallback)
 {
 }
 
@@ -167,7 +167,7 @@ template<typename F>
 void FilterChain<F>::disableFilter(const ::std::string& name)
 {
   this->disabledFilters.insert(name);
-  this->logHelper->logDebug("Disabled filter %s", name.c_str());
+  CRAS_DEBUG("Disabled filter %s", name.c_str());
   this->updateActiveFilters();
 }
 
@@ -175,7 +175,7 @@ template<typename F>
 void FilterChain<F>::enableFilter(const ::std::string& name)
 {
   this->disabledFilters.erase(name);
-  this->logHelper->logDebug("Enabled filter %s", name.c_str());
+  CRAS_DEBUG("Enabled filter %s", name.c_str());
   this->updateActiveFilters();
 }
 
@@ -196,7 +196,7 @@ template<typename F>
 void FilterChain<F>::setDisabledFilters(::std::unordered_set<::std::string> filters)
 {
   this->disabledFilters = ::std::move(filters);
-  this->logHelper->logDebug("Disabled filters updated. Currently disabled are: %s",
+  CRAS_DEBUG("Disabled filters updated. Currently disabled are: %s",
     this->disabledFilters.size() > 0 ? ::cras::join(this->disabledFilters, ", ").c_str() : "none");
   this->updateActiveFilters();
 }
@@ -224,7 +224,7 @@ bool FilterChain<F>::clear()
     this->activeFilters.clear();
   }
   this->initialized = false;
-  this->logHelper->logDebug("Filters cleared");
+  CRAS_DEBUG("Filters cleared");
   return result;
 }
 

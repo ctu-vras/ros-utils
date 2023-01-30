@@ -44,7 +44,7 @@ void RelayNodelet::onInit()
   if (!lazy)
     this->pubSub->setLazy(false);
 
-  this->log->logInfo("Created%s relay from %s to %s.",
+  CRAS_INFO("Created%s relay from %s to %s.",
     (lazy ? " lazy" : ""), nh.resolveName(inTopic).c_str(), nh.resolveName(outTopic).c_str());
 }
 
