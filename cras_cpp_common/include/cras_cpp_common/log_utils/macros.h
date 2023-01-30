@@ -108,6 +108,7 @@
  * \param[in] level One of the levels specified in `::ros::console::levels::Level`
  * \param[in] name Name of the logger.  Note that this is the fully qualified name, and does NOT include
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM_COND(logger, cond, level, name, args) \
   do \
@@ -149,6 +150,7 @@
  * \param[in] level One of the levels specified in `::ros::console::levels::Level`
  * \param[in] name Name of the logger.  Note that this is the fully qualified name, and does NOT include
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM_ONCE(logger, level, name, args) \
   do \
@@ -198,6 +200,7 @@
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
  * \param[in] period The period it should actually trigger at most. If ROS time has moved backwards, it will trigger
  *                   regardless.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM_THROTTLE(logger, period, level, name, args) \
   do \
@@ -249,6 +252,7 @@
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
  * \param[in] period The period it should actually trigger at most, and the delay before which no message will be shown.
  *                   If ROS time has moved backwards, it will trigger regardless.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM_DELAYED_THROTTLE(logger, period, level, name, args) \
   do \
@@ -290,10 +294,11 @@
  *        formatting
  *
  * \param[in] logger The logger to use.
- * \param[in] cond Boolean condition to be evaluated
+ * \param[in] filter pointer to the filter to be used
  * \param[in] level One of the levels specified in `::ros::console::levels::Level`
  * \param[in] name Name of the logger.  Note that this is the fully qualified name, and does NOT include
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM_FILTER(logger, filter, level, name, args) \
   do \
@@ -322,6 +327,7 @@
  * \param[in] level One of the levels specified in `::ros::console::levels::Level`
  * \param[in] name Name of the logger.  Note that this is the fully qualified name, and does NOT include
  *                 "ros.<package_name>".  Use `ROSCONSOLE_DEFAULT_NAME` if you would like to use the default name.
+ * \param[in] args The string to print, possibly containing streaming operators `<<`.
  */
 #define CRAS_LOG_STREAM(logger, level, name, args) CRAS_LOG_STREAM_COND((logger), true, (level), (name), args)
 

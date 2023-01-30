@@ -70,7 +70,7 @@ public:
   /**
    * \brief Set level of a log location. This is only called when global logging level changes.
    * \param[in,out] loc The location to update.
-   * \param[in level The new level.
+   * \param[in] level The new level.
    */
   virtual void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const = 0;
 
