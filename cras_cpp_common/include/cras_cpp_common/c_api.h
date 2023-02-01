@@ -12,6 +12,11 @@
 #include <string>
 #include <vector>
 
+#include <ros/message_traits.h>
+#include <ros/serialization.h>
+
+#include <cras_cpp_common/message_utils.hpp>
+
 namespace cras
 {
 
@@ -65,5 +70,26 @@ uint8_t* outputByteBuffer(allocator_t allocator, const uint8_t* bytes, size_t le
  * \return Pointer to the allocated buffer.
  */
 uint8_t* outputByteBuffer(allocator_t allocator, const std::vector<uint8_t>& bytes);
+
+/**
+ * \brief Allocate enough bytes using the given allocator and serialize the given message into it.
+ * \param[in] allocator The allocator to use.
+ * \param[in] msg The message to serialize.
+ * \return Pointer to the allocated buffer.
+ */
+template<typename Message, typename Enable = ::std::enable_if_t<::ros::message_traits::IsMessage<Message>::value>>
+uint8_t* outputRosMessage(allocator_t allocator, const Message& msg)
+{
+  // This code does almost the same as ros::serialization::serializeMessage(), but it directly uses the allocated
+  // buffer instead of creating its own one and then copying.
+
+  const auto len = static_cast<uint32_t>(::ros::serialization::serializationLength(msg));
+  const auto buf = static_cast<uint8_t*>(allocator(len));
+
+  ::ros::serialization::OStream s(buf, len);
+  ::ros::serialization::serialize(s, msg);
+
+  return buf;
+}
 
 }

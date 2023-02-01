@@ -12,11 +12,13 @@
 #include <string>
 #include <vector>
 
+#include <std_msgs/Header.h>
+
 #include <cras_cpp_common/c_api.h>
 
 using namespace cras;
 
-static size_t lastAllocSize {0u};
+size_t lastAllocSize {0u};
 
 void* alloc(const size_t size)
 {
@@ -79,6 +81,21 @@ TEST(CApi, outputByteArray)  // NOLINT
     const auto o = outputByteBuffer(&alloc, b.data(), 3);
     EXPECT_EQ(0, memcmp(b.data(), o, 3));
     EXPECT_EQ(3u, lastAllocSize);
+    delete o;
+  }
+}
+
+TEST(CApi, outputRosMessage)  // NOLINT
+{
+  std_msgs::Header h;
+  {
+    h.stamp = {1, 2};
+    h.frame_id = "cras";
+    h.seq = 3;
+    const auto o = outputRosMessage(&alloc, h);
+    const auto serialized = ros::serialization::serializeMessage(h);
+    EXPECT_EQ(serialized.num_bytes - 4, lastAllocSize);
+    EXPECT_EQ(0, memcmp(serialized.message_start, o, lastAllocSize));
     delete o;
   }
 }
