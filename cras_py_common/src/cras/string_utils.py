@@ -38,7 +38,9 @@ def __time_val_to_str(time):
 
 __to_str_functions = {
     rospy.Time: __time_val_to_str,
+    genpy.rostime.Time: __time_val_to_str,
     rospy.Duration: __time_val_to_str,
+    genpy.rostime.Duration: __time_val_to_str,
     rospy.Rate: lambda r: str(frequency(r)),
     WallTime: __time_val_to_str,
     SteadyTime: __time_val_to_str,
