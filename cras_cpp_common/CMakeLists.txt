@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   rosconsole
   roscpp
+  rosgraph_msgs
   sensor_msgs
   std_msgs
   tf2
@@ -216,7 +217,7 @@ add_library(cras_thread_utils src/thread_utils.cpp)
 target_link_libraries(cras_thread_utils
   PRIVATE cras_string_utils Threads::Threads)
 
-add_library(cras_log_utils src/log_utils.cpp src/log_utils/node.cpp src/log_utils/nodelet.cpp)
+add_library(cras_log_utils src/log_utils.cpp src/log_utils/memory.cpp src/log_utils/node.cpp src/log_utils/nodelet.cpp)
 target_link_libraries(cras_log_utils
   PUBLIC cras_string_utils ${catkin_LIBRARIES} PRIVATE cras_time_utils)
 

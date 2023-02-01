@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/log_utils/memory.h>
 #include <cras_cpp_common/log_utils/node.h>
 #include <cras_cpp_common/log_utils/nodelet.h>
 #include <cras_cpp_common/suppress_warnings.h>
@@ -23,45 +24,22 @@
 class TestLogger : public cras::LogHelper
 {
 public:
-  void initialize() const override
+  void initializeImpl() const override
   {
-    this->initialized = true;
   }
 
-  void initializeLogLocation(
+  void initializeLogLocationImpl(
     ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const override
   {
-    if (loc->initialized_)
-      return;
-
-    this->logLocationsNames.push_back(name);
-
-    const auto goodLevel = (level < ros::console::Level::Count) ? level : ros::console::Level::Error;
-
+    this->logLocationsNames.emplace_back(name);
     loc->logger_ = &this->logLocationsNames.back();
-    loc->level_ = goodLevel;
-    loc->initialized_ = true;
     loc->logger_enabled_ = true;
-
-    if (level != goodLevel)
-    {
-      const auto str = cras::format("Invalid log level %i. Printing as error level.", level);
-      this->logString(nullptr, loc->logger_, ros::console::Level::Error, str, __FILE__, __LINE__,
-                      __ROSCONSOLE_FUNCTION__);
-    }
+    loc->level_ = level;
+    loc->initialized_ = true;
   };
 
-  void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const override
-  {
-    loc->level_ = (level < ros::console::Level::Count) ? level : ros::console::Level::Error;
-  }
-
-  void checkLogLocationEnabled(::ros::console::LogLocation*) const override
-  {
-  }
-
-  void logString(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level,
-    const ::std::string& str, const char* file, int line, const char* function) const override
+  void logString(void* logger, ros::console::Level level, const std::string& str, const char* file, uint32_t line,
+    const char* function) const override
   {
     switch (level)
     {
@@ -82,7 +60,6 @@ public:
         this->fatalMsg = str;
         break;
     }
-    this->filter = filter;
     this->name = cras::removePrefix(*reinterpret_cast<std::string*>(logger), ROSCONSOLE_DEFAULT_NAME ".");
     this->name = cras::removePrefix(this->name, ROSCONSOLE_DEFAULT_NAME);
   }
@@ -91,7 +68,6 @@ public:
   void reset()
   {
     this->debugMsg = this->infoMsg = this->warnMsg = this->errorMsg = this->fatalMsg = this->name = "";
-    this->filter = nullptr;
     this->errors.clear();
   }
 
@@ -102,7 +78,6 @@ public:
   mutable std::string fatalMsg {};
 
   mutable std::string name {};
-  mutable ::ros::console::FilterBase* filter {};
 
   mutable std::vector<std::string> errors;
   mutable std::list<std::string> logLocationsNames;
@@ -195,37 +170,37 @@ TEST(LogUtils, ExtendedDebug)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_DEBUG_NAMED("test", "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_COND(true, "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_COND_NAMED(true, "test", "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_ONCE("a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_ONCE_NAMED("test", "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_THROTTLE(1.0, "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_DELAYED_THROTTLE(1.0, "a");
-  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_DELAYED_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_FILTER(&f, "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_FILTER_NAMED(&f, "test", "a");
-  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->debugMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -238,37 +213,37 @@ TEST(LogUtils, ExtendedDebugStream)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_DEBUG_STREAM_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_COND(true, "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_COND_NAMED(true, "test", "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_ONCE("a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_ONCE_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_DELAYED_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_DELAYED_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_FILTER(&f, "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_DEBUG_STREAM_FILTER_NAMED(&f, "test", "a" << "b");
-  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->debugMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -281,37 +256,37 @@ TEST(LogUtils, ExtendedInfo)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_INFO_NAMED("test", "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_COND(true, "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_COND_NAMED(true, "test", "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_ONCE("a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_ONCE_NAMED("test", "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_THROTTLE(1.0, "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_DELAYED_THROTTLE(1.0, "a");
-  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_DELAYED_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_FILTER(&f, "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_FILTER_NAMED(&f, "test", "a");
-  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->infoMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -324,37 +299,37 @@ TEST(LogUtils, ExtendedInfoStream)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_INFO_STREAM_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_STREAM_COND(true, "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_COND_NAMED(true, "test", "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_STREAM_ONCE("a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_ONCE_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_STREAM_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_INFO_STREAM_DELAYED_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_DELAYED_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_FILTER(&f, "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_INFO_STREAM_FILTER_NAMED(&f, "test", "a" << "b");
-  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->infoMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -367,37 +342,37 @@ TEST(LogUtils, ExtendedWarn)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_WARN_NAMED("test", "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_COND(true, "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_COND_NAMED(true, "test", "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_ONCE("a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_ONCE_NAMED("test", "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_THROTTLE(1.0, "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_DELAYED_THROTTLE(1.0, "a");
-  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_DELAYED_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_FILTER(&f, "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_FILTER_NAMED(&f, "test", "a");
-  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->warnMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -410,37 +385,37 @@ TEST(LogUtils, ExtendedWarnStream)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_WARN_STREAM_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_STREAM_COND(true, "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_COND_NAMED(true, "test", "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_STREAM_ONCE("a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_ONCE_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_STREAM_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_WARN_STREAM_DELAYED_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_DELAYED_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_FILTER(&f, "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_WARN_STREAM_FILTER_NAMED(&f, "test", "a" << "b");
-  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->warnMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -453,37 +428,37 @@ TEST(LogUtils, ExtendedError)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_ERROR_NAMED("test", "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_COND(true, "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_COND_NAMED(true, "test", "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_ONCE("a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_ONCE_NAMED("test", "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_THROTTLE(1.0, "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_DELAYED_THROTTLE(1.0, "a");
-  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_DELAYED_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_FILTER(&f, "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_FILTER_NAMED(&f, "test", "a");
-  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->errorMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -496,37 +471,37 @@ TEST(LogUtils, ExtendedErrorStream)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_ERROR_STREAM_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_COND(true, "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_COND_NAMED(true, "test", "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_ONCE("a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_ONCE_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_DELAYED_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_DELAYED_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_FILTER(&f, "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_ERROR_STREAM_FILTER_NAMED(&f, "test", "a" << "b");
-  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->errorMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -539,37 +514,37 @@ TEST(LogUtils, ExtendedFatal)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_FATAL_NAMED("test", "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_COND(true, "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_COND_NAMED(true, "test", "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_ONCE("a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_ONCE_NAMED("test", "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_THROTTLE(1.0, "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_DELAYED_THROTTLE(1.0, "a");
-  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_DELAYED_THROTTLE_NAMED(1.0, "test", "a");
-  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_FILTER(&f, "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_FILTER_NAMED(&f, "test", "a");
-  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("a", log->fatalMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -582,37 +557,37 @@ TEST(LogUtils, ExtendedFatalStream)  // NOLINT
   ros::console::FilterBase f;
 
   log->reset(); CRAS_FATAL_STREAM_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_COND(true, "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_COND_NAMED(true, "test", "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_ONCE("a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_ONCE_NAMED("test", "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_DELAYED_THROTTLE(1.0, "a" << "b");
-  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_DELAYED_THROTTLE_NAMED(1.0, "test", "a" << "b");
-  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(nullptr, log->filter);
+  EXPECT_EQ("", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_FILTER(&f, "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("", log->name);
 
   log->reset(); CRAS_FATAL_STREAM_FILTER_NAMED(&f, "test", "a" << "b");
-  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name); EXPECT_EQ(&f, log->filter);
+  EXPECT_EQ("ab", log->fatalMsg); EXPECT_EQ("test", log->name);
 }
 
 /**
@@ -2186,6 +2161,56 @@ TEST(NodeLogUtils, RestoreRosconsole)  // NOLINT
   logger.reset(); ROS_FATAL("cras");
   EXPECT_EQ("", log->fatalMsg);
   EXPECT_EQ("cras", logger.str); EXPECT_EQ(ros::console::Level::Fatal, logger.level); EXPECT_EQ(1u, logger.num);
+}
+
+/**
+ * \brief Test that the logger logs using the correct logging severity.
+ */
+TEST(MemoryLogUtils, Basic)  // NOLINT
+{
+  auto log = std::make_shared<cras::MemoryLogHelper>();
+  auto getCrasLogger = [log](){return log;};
+  rosgraph_msgs::Log msg;
+  const std::string fnName {"virtual void MemoryLogUtils_Basic_Test::TestBody()"};
+
+  t(2);
+
+  log->clear(); CRAS_DEBUG("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
+  EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Debug, msg.level);
+  EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
+  EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
+
+  log->clear(); CRAS_INFO("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
+  EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Info, msg.level);
+  EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
+  EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
+
+  log->clear(); CRAS_WARN("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
+  EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Warn, msg.level);
+  EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
+  EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
+
+  log->clear(); CRAS_ERROR("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
+  EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Error, msg.level);
+  EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
+  EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
+
+  log->clear(); CRAS_FATAL("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
+  EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Fatal, msg.level);
+  EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
+  EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
+
+  log->clear(); CRAS_INFO_ONCE("a"); CRAS_INFO_ONCE("b"); ASSERT_EQ(2u, log->getMessages().size());
+  const auto& msg1 = log->getMessages().front(); const auto& msg2 = log->getMessages().back();
+  EXPECT_EQ("a", msg1.msg); EXPECT_EQ("b", msg2.msg);
+
+  log->clear(); for (size_t i = 0; i < 3; ++i) CRAS_INFO_ONCE("%zu", i); ASSERT_EQ(1u, log->getMessages().size());
+  msg = log->getMessages().front(); EXPECT_EQ("0", msg.msg);
 }
 
 int main(int argc, char **argv)

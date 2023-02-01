@@ -23,7 +23,7 @@ NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNa
     this->getNameFn = [](){ return NOT_SET; };
 }
 
-void NodeletLogHelper::initializeLogLocation(
+void NodeletLogHelper::initializeLogLocationImpl(
   ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const
 {
   // We need to put getNameFn() in between the base name and the added suffix
@@ -38,7 +38,8 @@ void NodeletLogHelper::initializeLogLocation(
   }
   else if (name == ROSCONSOLE_NAME_PREFIX)
     newName = name + "." + this->getNameFn();
-  ros::console::initializeLogLocation(loc, newName, level);
+
+  RosconsoleLogHelper::initializeLogLocationImpl(loc, newName, level);
 }
 
 }

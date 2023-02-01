@@ -31,6 +31,20 @@ namespace cras
 {
 
 /**
+ * \brief Convert the given rosconsole logging level to `rosgraph_msgs::Log` level constant.
+ * \param[in] rosLevel The rosconsole logging level.
+ * \return The `rosgraph_msgs::Log` level constant.
+ */
+int8_t logLevelToRosgraphMsgLevel(::ros::console::Level rosLevel);
+
+/**
+ * \brief Convert the given `rosgraph_msgs::Log` level constant to rosconsole logging level.
+ * \param[in] msgLevel A `rosgraph_msgs::Log` level constant.
+ * \return The rosconsole logging level.
+ */
+::ros::console::Level rosgraphMsgLevelToLogLevel(uint8_t msgLevel);
+
+/**
  * \brief This class (reps. its descendants) provides unified access to ROS logging functions, be it ROS_* or NODELET_*.
  *
  * Subclasses only need to implement the print* functions that print a pre-formatted string.
@@ -54,35 +68,57 @@ public:
   mutable bool initialized {false};
 
   /**
-   * \brief Initialize the logger. This function has to set `initialized` to true.
+   * \brief Initialize the logger. This function does what it needs and then calls `initializeImpl()`.
    */
-  virtual void initialize() const = 0;
+  void initialize() const;
 
+protected:
   /**
-   * \brief Initialize the given log location ith proper data for later use.
+   * \brief Initialize the logger. It is not needed to check `initialized` as this function is only called when it was
+   *        false.
+   */
+  virtual void initializeImpl() const = 0;
+
+public:
+  /**
+   * \brief Initialize the given log location with proper data for later use. This is the function called from macros.
+   *        This function checks whether log level is within bounds, corrects it if needed, calls
+   *        `initializeLogLocaionImpl()`, and, if the passed log level was wrong, logs an additional error (after the
+   *        log location has been initialized by the impl function).
    * \param[out] loc The location to fill.
    * \param[in] name Name of the logger.
    * \param[in] level Logging level of the message at this location.
    */
-  virtual void initializeLogLocation(
+  void initializeLogLocation(
+    ::ros::console::LogLocation* loc, const std::string& name, ::ros::console::Level level) const;
+
+protected:
+  /**
+   * \brief Initialize the given log location with proper data for later use. This function is only called if the log
+   *        location was not already initialized.
+   * \param[out] loc The location to fill.
+   * \param[in] name Name of the logger.
+   * \param[in] level Logging level of the message at this location. The level is already checked to be valid.
+   */
+  virtual void initializeLogLocationImpl(
     ::ros::console::LogLocation* loc, const std::string& name, ::ros::console::Level level) const = 0;
 
+public:
   /**
    * \brief Set level of a log location. This is only called when global logging level changes.
    * \param[in,out] loc The location to update.
    * \param[in] level The new level.
    */
-  virtual void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const = 0;
+  virtual void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const;
 
   /**
    * \brief Check whether the log location is enabled.
    * \param[in] loc The location to check.
    */
-  virtual void checkLogLocationEnabled(::ros::console::LogLocation* loc) const = 0;
+  virtual void checkLogLocationEnabled(::ros::console::LogLocation* loc) const;
 
   /**
    * \brief Write the given string to the log.
-   * \param[in] filter Filter that should be applied to the message.
    * \param[in] logger Private logger data read from the relevant log location (set by `initializeLogLocation()`).
    * \param[in] level Level of the logged message.
    * \param[in] str Logged message.
@@ -90,8 +126,8 @@ public:
    * \param[in] line Line on which the logging macro has been called.
    * \param[in] function Name of function from which the logging macro has been called.
    */
-  virtual void logString(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level,
-    const ::std::string& str, const char* file, int line, const char* function) const = 0;
+  virtual void logString(void* logger, ::ros::console::Level level, const ::std::string& str, const char* file,
+    uint32_t line, const char* function) const = 0;
 
   /**
    * \brief Get current time (used for throttling messages). By default, ROS time is returned, with fallback to wall
@@ -125,6 +161,12 @@ public:
   void print(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level,
     const ::std::stringstream& ss, const char* file, int line, const char* function) const;
 
+  /**
+   * \brief Print function used by the macros. It basically just relays its work to `logString()`.
+   */
+  void print(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level, const ::std::string& str,
+    const char* file, int line, const char* function) const;
+
   [[deprecated("This function will be removed in a future release.")]]
   void setGlobalLogger() const;
 
@@ -153,6 +195,8 @@ public:
    */
   [[deprecated("Use CRAS_* logging macros instead.")]]
   void print(::ros::console::Level level, const ::std::string& text) const;
+
+  friend class WrapperLogHelper;
 };
 
 typedef ::cras::LogHelper::Ptr LogHelperPtr;  //!< \brief Pointer to `LogHelper`.
@@ -164,17 +208,18 @@ typedef ::cras::LogHelper::ConstPtr LogHelperConstPtr;  //!< \brief Const pointe
 class RosconsoleLogHelper : public ::cras::LogHelper
 {
 public:
-  void initialize() const override;
-
-  void initializeLogLocation(
-    ::ros::console::LogLocation* loc, const ::std::string& name, ::ros::console::Level level) const override;
-
   void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const override;
 
   void checkLogLocationEnabled(::ros::console::LogLocation* loc) const override;
 
-  void logString(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level,
-                 const ::std::string& str, const char* file, int line, const char* function) const override;
+  void logString(void* logger, ::ros::console::Level level, const ::std::string& str, const char* file, uint32_t line,
+    const char* function) const override;
+
+protected:
+  void initializeImpl() const override;
+
+  void initializeLogLocationImpl(
+    ::ros::console::LogLocation* loc, const ::std::string& name, ::ros::console::Level level) const override;
 };
 
 /**
@@ -207,21 +252,22 @@ class [[deprecated("This wrapper should only be used to provide backward compati
 public:
   explicit WrapperLogHelper(const ::cras::LogHelper* wrapped);
 
-  void initialize() const override;
-
-  void initializeLogLocation(
-    ::ros::console::LogLocation* loc, const ::std::string& name, ::ros::console::Level level) const override;
-
   void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const override;
 
   void checkLogLocationEnabled(::ros::console::LogLocation* loc) const override;
 
-  void logString(::ros::console::FilterBase* filter, void* logger, ::ros::console::Level level,
-                 const ::std::string& str, const char* file, int line, const char* function) const override;
+  void logString(void* logger, ::ros::console::Level level, const ::std::string& str, const char* file, uint32_t line,
+    const char* function) const override;
 
   ::ros::Time getTimeNow() const override;
 
   const void* getId() const override;
+
+protected:
+  void initializeImpl() const override;
+
+  void initializeLogLocationImpl(
+    ::ros::console::LogLocation* loc, const ::std::string& name, ::ros::console::Level level) const override;
 
 private:
   const ::cras::LogHelper* wrapped;

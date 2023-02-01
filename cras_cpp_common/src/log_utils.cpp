@@ -11,6 +11,7 @@
 #include <string>
 
 #include <nodelet/nodelet.h>
+#include <rosgraph_msgs/Log.h>
 
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/node.h>
@@ -27,7 +28,7 @@ void LogHelper::print(ros::console::FilterBase* filter, void* logger, ros::conso
   va_start(args, fmt);
   const auto str = cras::format(fmt, args);
   va_end(args);
-  this->logString(filter, logger, level, str, file, line, function);
+  this->print(filter, logger, level, str, file, line, function);
 }
 
 void LogHelper::print(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
@@ -37,13 +38,71 @@ void LogHelper::print(ros::console::FilterBase* filter, void* logger, ros::conso
   va_start(args, fmt);
   const auto str = cras::format(fmt, args);
   va_end(args);
-  this->logString(filter, logger, level, str, file, line, function);
+  this->print(filter, logger, level, str, file, line, function);
 }
 
 void LogHelper::print(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
   const std::stringstream& ss, const char* file, int line, const char* function) const
 {
-  this->logString(filter, logger, level, ss.str(), file, line, function);
+  this->print(filter, logger, level, ss.str(), file, line, function);
+}
+
+void LogHelper::print(ros::console::FilterBase* filter, void* logger, const ros::console::Level level,
+  const std::string& str, const char* file, int line, const char* function) const
+{
+  auto outMessage = str;
+  auto outLevel = level;
+
+  if (filter)
+  {
+    ros::console::FilterParams params{file, line, function, outMessage.c_str(), logger, level, {}};
+    if (!filter->isEnabled(params))
+      return;
+
+    outLevel = params.level;
+
+    if (!params.out_message.empty())
+      outMessage = params.out_message;
+  }
+
+  // line comes as int type from rosconsole.h, but in reality, it is created by the __LINE__ macro, which by definition
+  // cannot be negative and cannot be larger than 2^31-1. uint32_t is also the type used in rosgraph_msgs/Log.
+  this->logString(logger, outLevel, outMessage, file, static_cast<uint32_t>(line >= 0 ? line : 0), function);
+}
+
+
+void LogHelper::initialize() const
+{
+  if (ROS_LIKELY(this->initialized))
+    return;
+  this->initialized = true;
+  this->initializeImpl();
+}
+
+void LogHelper::initializeLogLocation(ros::console::LogLocation* loc, const std::string& name,
+  ros::console::Level level) const
+{
+  if (ROS_LIKELY(loc->initialized_))
+    return;
+
+  const auto goodLevel = ROS_LIKELY(level < ros::console::Level::Count) ? level : ros::console::Level::Error;
+  this->initializeLogLocationImpl(loc, name, goodLevel);
+
+  if (ROS_UNLIKELY(goodLevel != level))
+  {
+    const auto str = cras::format("Invalid log level %i. Printing as error level.", level);
+    this->logString(loc->logger_, ros::console::Level::Error, str, __FILE__, __LINE__, __ROSCONSOLE_FUNCTION__);
+  }
+}
+
+void LogHelper::setLogLocationLevel(ros::console::LogLocation* loc, ::ros::console::Level level) const
+{
+  loc->level_ = (level < ros::console::Level::Count) ? level : ros::console::Level::Error;
+}
+
+void LogHelper::checkLogLocationEnabled(ros::console::LogLocation* loc) const
+{
+  loc->logger_enabled_ = true;
 }
 
 ros::Time LogHelper::getTimeNow() const
@@ -122,29 +181,22 @@ void LogHelper::log(ros::console::Level level, const char* format, ...) const
   CRAS_IGNORE_DEPRECATED_WARNING_END
 }
 
-void RosconsoleLogHelper::initialize() const
+void RosconsoleLogHelper::initializeImpl() const
 {
-  this->initialized = true;
   if (ROS_UNLIKELY(!ros::console::g_initialized))
     ros::console::initialize();
 }
 
-void RosconsoleLogHelper::initializeLogLocation(
+void RosconsoleLogHelper::initializeLogLocationImpl(
   ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const
 {
-  const auto goodLevel = (level < ros::console::Level::Count) ? level : ros::console::Level::Error;
-  ros::console::initializeLogLocation(loc, name, goodLevel);
-  if (level != goodLevel)
-  {
-    const auto str = cras::format("Invalid log level %i. Printing as error level.", level);
-    this->logString(nullptr, loc->logger_, ros::console::Level::Error, str, __FILE__, __LINE__,
-      __ROSCONSOLE_FUNCTION__);
-  }
+  ros::console::initializeLogLocation(loc, name, level);
 }
 
 void RosconsoleLogHelper::setLogLocationLevel(ros::console::LogLocation* loc, ros::console::Level level) const
 {
-  ros::console::setLogLocationLevel(loc, (level < ros::console::Level::Count) ? level : ros::console::Level::Error);
+  ros::console::setLogLocationLevel(
+    loc, ROS_LIKELY(level < ros::console::Level::Count) ? level : ros::console::Level::Error);
 }
 
 void RosconsoleLogHelper::checkLogLocationEnabled(ros::console::LogLocation* loc) const
@@ -152,10 +204,10 @@ void RosconsoleLogHelper::checkLogLocationEnabled(ros::console::LogLocation* loc
   ros::console::checkLogLocationEnabled(loc);
 }
 
-void RosconsoleLogHelper::logString(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
-  const std::string& str, const char* file, int line, const char* function) const
+void RosconsoleLogHelper::logString(void* logger, ros::console::Level level, const std::string& str, const char* file,
+  uint32_t line, const char* function) const
 {
-  ros::console::print(filter, logger, level, file, line, function, "%s", str.c_str());
+  ros::console::print(nullptr, logger, level, file, static_cast<int>(line), function, "%s", str.c_str());
 }
 
 WrapperLogHelper::WrapperLogHelper(const ::cras::LogHelper* wrapped) : wrapped(wrapped)
@@ -163,16 +215,15 @@ WrapperLogHelper::WrapperLogHelper(const ::cras::LogHelper* wrapped) : wrapped(w
   this->initialized = this->wrapped->initialized;
 }
 
-void WrapperLogHelper::initialize() const
+void WrapperLogHelper::initializeImpl() const
 {
-  this->initialized = true;
   this->wrapped->initialize();
 }
 
-void WrapperLogHelper::initializeLogLocation(
+void WrapperLogHelper::initializeLogLocationImpl(
   ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const
 {
-  this->wrapped->initializeLogLocation(loc, name, level);
+  this->wrapped->initializeLogLocationImpl(loc, name, level);
 }
 
 void WrapperLogHelper::setLogLocationLevel(ros::console::LogLocation* loc, ros::console::Level level) const
@@ -185,10 +236,10 @@ void WrapperLogHelper::checkLogLocationEnabled(ros::console::LogLocation* loc) c
   this->wrapped->checkLogLocationEnabled(loc);
 }
 
-void WrapperLogHelper::logString(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
-  const std::string& str, const char* file, int line, const char* function) const
+void WrapperLogHelper::logString(void* logger, ros::console::Level level, const std::string& str, const char* file,
+  uint32_t line, const char* function) const
 {
-  this->wrapped->logString(filter, logger, level, str, file, line, function);
+  this->wrapped->logString(logger, level, str, file, line, function);
 }
 
 ros::Time WrapperLogHelper::getTimeNow() const
@@ -212,6 +263,44 @@ cras::LogHelperConstPtr HasLogger::getCrasLogger() const
 
 static cras::LogHelperConstPtr g_cras_logger;
 static cras::LogHelperConstPtr g_prev_cras_logger;
+
+int8_t logLevelToRosgraphMsgLevel(ros::console::Level rosLevel)
+{
+  switch (rosLevel)
+  {
+    case ros::console::Level::Debug:
+      return rosgraph_msgs::Log::DEBUG;
+    case ros::console::Level::Info:
+      return rosgraph_msgs::Log::INFO;
+    case ros::console::Level::Warn:
+      return rosgraph_msgs::Log::WARN;
+    case ros::console::Level::Error:
+      return rosgraph_msgs::Log::ERROR;
+    case ros::console::Level::Fatal:
+      return rosgraph_msgs::Log::FATAL;
+    default:
+      return rosgraph_msgs::Log::FATAL;
+  }
+}
+
+ros::console::Level rosgraphMsgLevelToLogLevel(uint8_t msgLevel)
+{
+  switch (msgLevel)
+  {
+    case rosgraph_msgs::Log::DEBUG:
+      return ros::console::Level::Debug;
+    case rosgraph_msgs::Log::INFO:
+      return ros::console::Level::Info;
+    case rosgraph_msgs::Log::WARN:
+      return ros::console::Level::Warn;
+    case rosgraph_msgs::Log::ERROR:
+      return ros::console::Level::Error;
+    case rosgraph_msgs::Log::FATAL:
+      return ros::console::Level::Fatal;
+    default:
+      return ros::console::Level::Fatal;
+  }
+}
 
 }
 

@@ -33,7 +33,7 @@ public:
    */
   explicit NodeletLogHelper(const GetNameFn& getNameFn);
 
-  void initializeLogLocation(::ros::console::LogLocation* loc, const ::std::string& name,
+  void initializeLogLocationImpl(::ros::console::LogLocation* loc, const ::std::string& name,
     ::ros::console::Level level) const override;
 
 protected:
