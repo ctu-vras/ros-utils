@@ -32,33 +32,20 @@ using namespace cras;
 class TestLogHelper : public cras::LogHelper
 {
 public:
-  void initialize() const override
+  void initializeImpl() const override
   {
-    this->initialized = true;
   }
 
-  void initializeLogLocation(
+  void initializeLogLocationImpl(
     ros::console::LogLocation* loc, const std::string& name, ros::console::Level level) const override
   {
-    if (loc->initialized_)
-      return;
-
     loc->level_ = level;
     loc->initialized_ = true;
     loc->logger_enabled_ = true;
   };
 
-  void setLogLocationLevel(ros::console::LogLocation* loc, ros::console::Level level) const override
-  {
-    loc->level_ = level;
-  }
-
-  void checkLogLocationEnabled(ros::console::LogLocation*) const override
-  {
-  }
-
-  void logString(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
-    const std::string& str, const char* file, int line, const char* function) const override
+  void logString(void* logger, ros::console::Level level, const std::string& str, const char* file, uint32_t line,
+    const char* function) const override
   {
     this->str = str;
     this->level = level;

@@ -2177,31 +2177,31 @@ TEST(MemoryLogUtils, Basic)  // NOLINT
 
   log->clear(); CRAS_DEBUG("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
   EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
-  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Debug, msg.level);
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(rosgraph_msgs::Log::DEBUG, msg.level);
   EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
   EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
 
   log->clear(); CRAS_INFO("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
   EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
-  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Info, msg.level);
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(rosgraph_msgs::Log::INFO, msg.level);
   EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
   EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
 
   log->clear(); CRAS_WARN("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
   EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
-  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Warn, msg.level);
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(rosgraph_msgs::Log::WARN, msg.level);
   EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
   EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
 
   log->clear(); CRAS_ERROR("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
   EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
-  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Error, msg.level);
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(rosgraph_msgs::Log::ERROR, msg.level);
   EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
   EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
 
   log->clear(); CRAS_FATAL("a"); ASSERT_EQ(1u, log->getMessages().size()); msg = log->getMessages().front();
   EXPECT_EQ(__FILE__, msg.file); EXPECT_EQ(__LINE__ - 1, msg.line);  // This line has to be right after the log call
-  EXPECT_EQ("a", msg.msg); EXPECT_EQ(ros::console::Level::Fatal, msg.level);
+  EXPECT_EQ("a", msg.msg); EXPECT_EQ(rosgraph_msgs::Log::FATAL, msg.level);
   EXPECT_EQ(ros::Time(2, 0), msg.header.stamp); EXPECT_EQ(ROSCONSOLE_DEFAULT_NAME, msg.name);
   EXPECT_EQ(__ROSCONSOLE_FUNCTION__, msg.function);
 
