@@ -20,10 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       # This step will fetch/store the directory used by ccache before/after the ci run
-      - uses: actions/cache@v3
+      - name: Cache ccache
+        uses: rhaschke/cache@main
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
+          restore-keys: |
+            ccache-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}
+            ccache-${{ matrix.env.ROS_DISTRO }}
+        env:
+          GHA_CACHE_SAVE: always
       # Run industrial_ci
       - uses: 'ros-industrial/industrial_ci@master'
         env: ${{ matrix.env }}
