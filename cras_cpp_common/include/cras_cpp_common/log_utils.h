@@ -241,6 +241,12 @@ public:
    */
   ::cras::LogHelperConstPtr getCrasLogger() const;
 
+  /**
+   * \brief Set the logger to be used for logging.
+   * \param[in] log The logger to be used.
+   */
+  void setCrasLogger(const ::cras::LogHelperPtr& log);
+
 protected:
   //! \brief Log helper.
   ::cras::LogHelperPtr log;

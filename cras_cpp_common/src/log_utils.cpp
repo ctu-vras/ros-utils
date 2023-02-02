@@ -261,6 +261,11 @@ cras::LogHelperConstPtr HasLogger::getCrasLogger() const
   return this->log;
 }
 
+void HasLogger::setCrasLogger(const ::cras::LogHelperPtr& log)
+{
+  this->log = log;
+}
+
 static cras::LogHelperConstPtr g_cras_logger;
 static cras::LogHelperConstPtr g_prev_cras_logger;
 
