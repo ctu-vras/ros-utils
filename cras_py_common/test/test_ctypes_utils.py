@@ -113,7 +113,8 @@ class CtypesUtils(unittest.TestCase):
         size = len(buf.getvalue())
         a(size)
         for i in range(size):
-            a.allocated[0][i] = ord(buf.getvalue()[i])
+            val = buf.getvalue()[i]
+            a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
         self.assertEqual(len(a.allocated), 1)
         self.assertEqual(len(a.allocated_sizes), 1)
         self.assertEqual(len(list(a.messages)), 1)
@@ -127,7 +128,8 @@ class CtypesUtils(unittest.TestCase):
         size2 = len(buf2.getvalue())
         a(size2)
         for i in range(size2):
-            a.allocated[1][i] = ord(buf2.getvalue()[i])
+            val = buf2.getvalue()[i]
+            a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
         self.assertEqual(len(a.allocated), 2)
         self.assertEqual(len(a.allocated_sizes), 2)
         self.assertEqual(len(list(a.messages)), 2)
@@ -152,7 +154,8 @@ class CtypesUtils(unittest.TestCase):
         size = len(buf.getvalue())
         a(size)
         for i in range(size):
-            a.allocated[0][i] = ord(buf.getvalue()[i])
+            val = buf.getvalue()[i]
+            a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
         self.assertEqual(len(a.allocated), 1)
         self.assertEqual(len(a.allocated_sizes), 1)
         self.assertEqual(len(list(a.messages)), 1)
@@ -171,7 +174,8 @@ class CtypesUtils(unittest.TestCase):
         size2 = len(buf2.getvalue())
         a(size2)
         for i in range(size2):
-            a.allocated[1][i] = ord(buf2.getvalue()[i])
+            val = buf2.getvalue()[i]
+            a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
         self.assertEqual(len(a.allocated), 2)
         self.assertEqual(len(a.allocated_sizes), 2)
         self.assertEqual(len(list(a.messages)), 2)
