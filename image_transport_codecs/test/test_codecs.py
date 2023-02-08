@@ -8,6 +8,7 @@
 import os
 import struct
 import unittest
+import sys
 
 from compressed_image_transport.cfg.CompressedPublisherConfig import CompressedPublisher_jpeg, CompressedPublisher_png
 from rosbag import Bag
@@ -16,6 +17,12 @@ from sensor_msgs.msg import CompressedImage, Image
 from image_transport_codecs import compressed_codec
 from image_transport_codecs import compressed_depth_codec
 from image_transport_codecs import decode, encode
+
+
+def _byte(b):
+    if sys.version_info[0] == 2:
+        return ord(b)
+    return b
 
 
 def bytes_to_float(b):
@@ -75,7 +82,7 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(raw2.is_bigendian, raw.is_bigendian)
         # the color changes a bit after compression and decompression
         for i in range(len(raw.data)):
-            self.assertLess(abs(ord(raw2.data[i]) - ord(raw.data[i])), 20)
+            self.assertLess(abs(_byte(raw2.data[i]) - _byte(raw.data[i])), 20)
 
         compressed2, err = encode("compressed", raw, {"jpeg_quality": 50})
         self.assertEqual(err, "")
@@ -403,7 +410,7 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(raw2.is_bigendian, body_mono_raw.is_bigendian)
         # the color changes a bit after compression and decompression
         for i in range(len(body_mono_raw.data)):
-            self.assertLess(abs(ord(raw2.data[i]) - ord(body_mono_raw.data[i])), 20)
+            self.assertLess(abs(_byte(raw2.data[i]) - _byte(body_mono_raw.data[i])), 20)
 
         # Body depth compressed
 
@@ -488,7 +495,7 @@ class CodecsTest(unittest.TestCase):
             err80 = 0
             err = 0
             for i in range(len(hand_color_raw.data)):
-                e = abs(ord(raw2.data[i]) - ord(hand_color_raw.data[i]))
+                e = abs(_byte(raw2.data[i]) - _byte(hand_color_raw.data[i]))
                 if e < 20:
                     err20 += 1
                 elif e < 30:
@@ -531,7 +538,7 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(raw2.is_bigendian, hand_mono_raw.is_bigendian)
         # the color changes a bit after compression and decompression
         for i in range(len(hand_mono_raw.data)):
-            self.assertLess(abs(ord(raw2.data[i]) - ord(hand_mono_raw.data[i])), 30)
+            self.assertLess(abs(_byte(raw2.data[i]) - _byte(hand_mono_raw.data[i])), 30)
 
 
 if __name__ == '__main__':
