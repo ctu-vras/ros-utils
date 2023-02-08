@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <compressed_depth_image_transport/CompressedDepthPublisherConfig.h>
 #include <compressed_image_transport/CompressedPublisherConfig.h>
 #include <compressed_image_transport/compressed_publisher.h>
 #include <sensor_msgs/image_encodings.h>

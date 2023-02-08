@@ -6,6 +6,10 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
+// This file is heavily based on the BSD-3-licensed compressed_depth_image_transport package:
+// https://github.com/ros-perception/image_transport_plugins/tree/noetic-devel/compressed_depth_image_transport/src
+// The basic algorithms from upstream are unchanged, although the code has undergone cosmetic and API-design changes.
+
 #include <limits>
 #include <memory>
 #include <string>
