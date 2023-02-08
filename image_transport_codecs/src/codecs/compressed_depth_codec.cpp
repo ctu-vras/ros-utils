@@ -148,6 +148,9 @@ CompressedDepthCodec::getCompressionConfig(const sensor_msgs::CompressedImage& c
 ImageTransportCodec::DecodeResult CompressedDepthCodec::decodeCompressedDepthImage(
   const sensor_msgs::CompressedImage& compressed) const
 {
+  if (compressed.data.size() <= sizeof(compressed_depth_image_transport::ConfigHeader))
+    return cras::make_unexpected("The data passed to compressedDepth decoder are too small to represent an image.");
+
   // Parse format field
   const auto format = parseCompressedDepthTransportFormat(compressed.format);
   if (!format)
