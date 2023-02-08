@@ -2,6 +2,9 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.1.0 (2023-02-08)
 ------------------
 * Move merge_bag higher in readme.

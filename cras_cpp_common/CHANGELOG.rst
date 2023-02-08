@@ -2,6 +2,9 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.1.0 (2023-02-08)
 ------------------
 * log_utils: Added a method to set logger to HasLogger class.

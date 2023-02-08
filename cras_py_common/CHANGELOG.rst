@@ -2,6 +2,9 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.1.0 (2023-02-08)
 ------------------
 * ctypes_utils: Added specialized allocators for ROS messages and for rosconsole logs.
