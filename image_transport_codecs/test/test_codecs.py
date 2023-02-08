@@ -438,7 +438,9 @@ class CodecsTest(unittest.TestCase):
         self.assertIsInstance(compressed, CompressedImage)
         self.assertEqual(compressed.header.stamp, body_depth_compressed_depth.header.stamp)
         self.assertEqual(compressed.header.frame_id, body_depth_compressed_depth.header.frame_id)
-        self.assertEqual(compressed.format, body_depth_compressed_depth.format)
+        import re
+        # account for the mismatch between Melodic and Noetic
+        self.assertEqual(re.sub(' png$', '', compressed.format), body_depth_compressed_depth.format)
         self.assertEqual(bytes(compressed.data), body_depth_compressed_depth.data)
 
         raw2, err = decode("compressedDepth", compressed)

@@ -26,6 +26,7 @@
 #include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/Image.h>
 
+#include <cras_cpp_common/string_utils.hpp>
 #include <image_transport_codecs/image_transport_codecs.h>
 #include <image_transport_codecs/parse_compressed_format.h>
 
@@ -551,6 +552,8 @@ TEST(ImageTransportCodecs, Bag)
     ASSERT_TRUE(compressedShifter);
     ASSERT_NO_THROW(compressedShifter->instantiate<sensor_msgs::CompressedImage>());
     compressed = compressedShifter->instantiate<sensor_msgs::CompressedImage>();
+    // account for the mismatch between Melodic and Noetic
+    compressed.format = cras::removeSuffix(compressed.format, " png");
     EXPECT_EQ(bodyDepthCompressedDepth, *compressed);
 
     rawImg = codecs.decodeTyped(bodyDepthCompressedDepth, "compressedDepth");
