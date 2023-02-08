@@ -553,7 +553,7 @@ TEST(ImageTransportCodecs, Bag)
     ASSERT_NO_THROW(compressedShifter->instantiate<sensor_msgs::CompressedImage>());
     compressed = compressedShifter->instantiate<sensor_msgs::CompressedImage>();
     // account for the mismatch between Melodic and Noetic
-    compressed.format = cras::removeSuffix(compressed.format, " png");
+    compressed->format = cras::removeSuffix(compressed->format, " png");
     EXPECT_EQ(bodyDepthCompressedDepth, *compressed);
 
     rawImg = codecs.decodeTyped(bodyDepthCompressedDepth, "compressedDepth");
