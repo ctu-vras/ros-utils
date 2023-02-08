@@ -2,6 +2,25 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* log_utils: Added a method to set logger to HasLogger class.
+* c_api: Added outputRosMessage() method that directly serializes ROS messages into allocated buffers.
+* log_utils: Added MemoryLogHelper, reworked the interface of LogHelper a bit.
+* Completely reworked log_utils to use macros instead of functions.
+  This was needed because of the static log_location variables inside ROS\_ macros - e.g. _ONCE was only triggered once regardless of where was it called from. There were also not so helpful file:line data in the logged messages.
+  Backwards compatibility was kept 99%, but there are subtle cases where it will fail - e.g. if there was `this->log->logError()` right after an `if` or `else` without braces.
+* Added c_api.h.
+* Added cras::expected.
+* Fixed doxygen configuration and a few documentation errors.
+  To get a clean rosdoc_lite run, set
+  `INPUT_FILTER = "sed 's/\([ <]\)::/\1/g'"`
+  in doxy.template in rosdoc_lite .
+* xmlrpc_value_utils: Added conversion to dynamic_reconfigure/Config message.
+* string_utils: Added cras::strip().
+* Added std::any shim.
+* Contributors: Martin Pecka
+
 2.0.10 (2022-11-24)
 -------------------
 

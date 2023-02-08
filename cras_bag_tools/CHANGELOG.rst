@@ -2,6 +2,13 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Move merge_bag higher in readme.
+* Added size_per_topic.
+* Improved structure, added merge_bag.
+* Contributors: Martin Pecka
+
 2.0.10 (2022-11-24)
 -------------------
 

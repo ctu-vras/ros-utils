@@ -2,6 +2,11 @@
 Changelog for package tf_static_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Change maintainer.
+* Contributors: Martin Pecka
+
 2.0.10 (2022-11-24)
 -------------------
 

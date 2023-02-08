@@ -2,6 +2,12 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added cras::ShapeShifter as a memory-safe option for Melodic.
+* Added a method to convert a message instance to ShapeShifter.
+* Contributors: Martin Pecka
+
 2.0.10 (2022-11-24)
 -------------------
 

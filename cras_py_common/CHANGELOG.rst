@@ -2,6 +2,19 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ctypes_utils: Added specialized allocators for ROS messages and for rosconsole logs.
+* string_utils: Register genpy Time and Duration for to_str() conversion, too.
+* ctypes_utils: Do not add one byte to StringAlloc allocated size. The caller has to do it now.
+* ctypes_utils: Autodetection of length of a BufferStringIO stream.
+* ctypes_utils: Added get_ro_c_buffer.
+* Added utilities for working with ctypes.
+* Allow resetting nodes by topic.
+* Added support for enums in to_str() and param utils.
+* Hide tf2_ros includes in geometry_utils.py inside function calls.
+* Contributors: Martin Pecka
+
 2.0.10 (2022-11-24)
 -------------------
 * Fix test bug.
