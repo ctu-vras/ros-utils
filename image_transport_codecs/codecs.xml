@@ -1,0 +1,15 @@
+<library path="lib/libraw_codec_plugin">
+    <class name="image_transport_codecs/raw" type="image_transport_codecs::RawCodecPlugin" base_class_type="image_transport_codecs::ImageTransportCodecPlugin">
+        <description>Raw image transport codec.</description>
+    </class>
+</library>
+<library path="lib/libcompressed_codec_plugin">
+    <class name="image_transport_codecs/compressed" type="image_transport_codecs::CompressedImageTransportCodecPlugin" base_class_type="image_transport_codecs::ImageTransportCodecPlugin">
+        <description>Compressed image transport codec.</description>
+    </class>
+</library>
+<library path="lib/libcompressed_depth_codec_plugin">
+    <class name="image_transport_codecs/compressedDepth" type="image_transport_codecs::CompressedDepthImageTransportCodecPlugin" base_class_type="image_transport_codecs::ImageTransportCodecPlugin">
+        <description>Compressed depth image transport codec.</description>
+    </class>
+</library>
