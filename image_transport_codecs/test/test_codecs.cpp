@@ -398,39 +398,23 @@ TEST(ImageTransportCodecs, CompressedWrongType2)
   ASSERT_FALSE(raw2);
   EXPECT_NE("", raw2.error());
 
-#if COMPRESSED_DEPTH_HAS_RVL == 1
   compressed->format = "32FC1; compressedDepth png";
-#else
-  compressed->format = "32FC1; compressedDepth";
-#endif
-  raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
+  raw2 = codecs.decodeTyped(*compressed, "compressedDepth");
   ASSERT_FALSE(raw2);
   EXPECT_NE("", raw2.error());
 
-#if COMPRESSED_DEPTH_HAS_RVL == 1
   compressed->format = "16UC1; compressedDepth png";
-#else
-  compressed->format = "16UC1; compressedDepth";
-#endif
-  raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
+  raw2 = codecs.decodeTyped(*compressed, "compressedDepth");
   ASSERT_FALSE(raw2);
   EXPECT_NE("", raw2.error());
 
-#if COMPRESSED_DEPTH_HAS_RVL == 1
   compressed->format = "32FC1; compressedDepth rvl";
-#else
-  compressed->format = "32FC1; compressedDepth";
-#endif
-  raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
+  raw2 = codecs.decodeTyped(*compressed, "compressedDepth");
   ASSERT_FALSE(raw2);
   EXPECT_NE("", raw2.error());
 
-#if COMPRESSED_DEPTH_HAS_RVL == 1
   compressed->format = "16UC1; compressedDepth rvl";
-#else
-  compressed->format = "16UC1; compressedDepth";
-#endif
-  raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
+  raw2 = codecs.decodeTyped(*compressed, "compressedDepth");
   ASSERT_FALSE(raw2);
   EXPECT_NE("", raw2.error());
 }

@@ -318,22 +318,22 @@ class CodecsTest(unittest.TestCase):
         self.assertNotEqual(err, "")
         self.assertIsNone(raw2)
 
-        compressed.format = "32FC1; compressedDepth" + (" png" if compressed_depth_codec.has_rvl() else "")
+        compressed.format = "32FC1; compressedDepth png"
         raw2, err = decode("compressedDepth", compressed)
         self.assertNotEqual(err, "")
         self.assertIsNone(raw2)
 
-        compressed.format = "16UC1; compressedDepth" + (" png" if compressed_depth_codec.has_rvl() else "")
+        compressed.format = "16UC1; compressedDepth png"
         raw2, err = decode("compressedDepth", compressed)
         self.assertNotEqual(err, "")
         self.assertIsNone(raw2)
 
-        compressed.format = "32FC1; compressedDepth" + (" rvl" if compressed_depth_codec.has_rvl() else "")
+        compressed.format = "32FC1; compressedDepth rvl"
         raw2, err = decode("compressedDepth", compressed)
         self.assertNotEqual(err, "")
         self.assertIsNone(raw2)
 
-        compressed.format = "16UC1; compressedDepth" + (" rvl" if compressed_depth_codec.has_rvl() else "")
+        compressed.format = "16UC1; compressedDepth rvl"
         raw2, err = decode("compressedDepth", compressed)
         self.assertNotEqual(err, "")
         self.assertIsNone(raw2)

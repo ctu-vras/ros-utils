@@ -376,8 +376,16 @@ cv::Mat CompressedDepthCodec::decodeRVL(const std::vector<uint8_t>& compressed) 
   uint32_t cols, rows;
   RvlCodec rvl;
   rvl.ReadSize(buffer, rows, cols);
+  const auto numPixels = rows * cols;
+  // Sanity check - the best compression ratio is 4x; we leave some buffer, so we check whether the output image would
+  // not be more than 10x larger than the compressed one. If it is, we probably received corrupted data.
+  if (numPixels * 2 * 10 > compressed.size())
+  {
+    CRAS_ERROR_THROTTLE(1.0, "Received malformed RVL-encoded image. It pretends to have size %ux%u.", cols, rows);
+    return {0, 0, CV_16UC1};
+  }
   cv::Mat decompressed(rows, cols, CV_16UC1);
-  rvl.DecompressRVL(&buffer[8], decompressed.ptr<unsigned short>(), cols * rows);  // NOLINT(runtime/int)
+  rvl.DecompressRVL(&buffer[8], decompressed.ptr<unsigned short>(), numPixels);  // NOLINT(runtime/int)
   return decompressed;
 }
 
