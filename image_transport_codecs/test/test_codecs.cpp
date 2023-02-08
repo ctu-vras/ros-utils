@@ -544,6 +544,8 @@ TEST(ImageTransportCodecs, Bag)
     ASSERT_TRUE(rawImg);
     EXPECT_EQ(bodyDepthRaw, *rawImg);
 
+    config.strs.clear();
+    config.ints[0].value = 9;  // Enforce PNG compression 9 which was also used on the image
     compressedShifter = codecs.encode(bodyDepthRaw, "compressedDepth");
     ASSERT_TRUE(compressedShifter);
     ASSERT_NO_THROW(compressedShifter->instantiate<sensor_msgs::CompressedImage>());

@@ -30,7 +30,7 @@ def float_to_bytes(f):
     return bytes(struct.pack('<%if' % (len(f),), *f))
 
 
-class ParseCompressedFormat(unittest.TestCase):
+class CodecsTest(unittest.TestCase):
 
     def test_raw(self):
         raw = Image()
@@ -431,7 +431,8 @@ class ParseCompressedFormat(unittest.TestCase):
 
         # Body depth compressedDepth
 
-        compressed, err = encode("compressedDepth", body_depth_raw)
+        # Enforce PNG compression 9 which was also used on the image
+        compressed, err = encode("compressedDepth", body_depth_raw, {"png_level": 9})
         self.assertEqual(err, "")
         self.assertIsNotNone(compressed)
         self.assertIsInstance(compressed, CompressedImage)
