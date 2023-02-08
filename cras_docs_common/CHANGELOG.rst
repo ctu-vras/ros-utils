@@ -2,8 +2,8 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.1 (2023-02-08)
+------------------
 * Revert adding python3-catkin-sphinx dependency until it is released for noetic/buster.
 * Contributors: Martin Pecka
 
