@@ -75,14 +75,6 @@ public:
                       const compressed_image_transport::CompressedPublisherConfig& config) const;
 
   /**
-   * \brief Encode the given raw image using the default publisher config.
-   * \param[in] raw The raw image to encode.
-   * \return The encoded image, or an error.
-   * \sa Corresponding C API function: `compressedCodecEncode()`.
-   */
-  EncodeResult encode(const sensor_msgs::Image& raw) const;
-
-  /**
    * \brief Decode the given compressed image using the given subscriber config.
    * \param[in] compressed The image to decode.
    * \param[in] config Configuration of the decoder (corresponds to the dynamic_reconfigure parameters of subscriber).

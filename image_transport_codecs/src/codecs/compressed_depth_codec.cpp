@@ -76,11 +76,6 @@ CompressedDepthCodec::CompressedDepthCodec(const cras::LogHelperPtr& logHelper) 
 
 CompressedDepthCodec::~CompressedDepthCodec() = default;
 
-CompressedDepthCodec::EncodeResult CompressedDepthCodec::encode(const sensor_msgs::Image& raw) const
-{
-  return this->encode(raw, compressed_depth_image_transport::CompressedDepthPublisherConfig::__getDefault__());
-}
-
 CompressedDepthCodec::EncodeResult CompressedDepthCodec::encode(const sensor_msgs::Image& raw,
   const compressed_depth_image_transport::CompressedDepthPublisherConfig& config) const
 {

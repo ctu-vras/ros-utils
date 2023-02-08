@@ -78,14 +78,6 @@ public:
                       const compressed_depth_image_transport::CompressedDepthPublisherConfig& config) const;
 
   /**
-   * \brief Encode the given raw image using the default publisher config.
-   * \param[in] raw The raw image to encode.
-   * \return The encoded image, or an error.
-   * \sa Corresponding C API function: `compressedDepthCodecEncode()`.
-   */
-  EncodeResult encode(const sensor_msgs::Image& raw) const;
-
-  /**
    * \brief Decode the given compressed image.
    * \param[in] compressed The image to decode.
    * \return The decoded raw image, or an error.

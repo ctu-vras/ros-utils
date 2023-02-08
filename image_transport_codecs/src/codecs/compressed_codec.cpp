@@ -61,11 +61,6 @@ CompressedCodec::~CompressedCodec()
   }
 }
 
-CompressedCodec::EncodeResult CompressedCodec::encode(const sensor_msgs::Image& raw) const
-{
-  return this->encode(raw, compressed_image_transport::CompressedPublisherConfig::__getDefault__());
-}
-
 CompressedCodec::EncodeResult CompressedCodec::encode(const sensor_msgs::Image& raw,
   const compressed_image_transport::CompressedPublisherConfig& config) const
 {
