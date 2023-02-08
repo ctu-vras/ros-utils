@@ -295,7 +295,6 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
   raw.data.resize(8);
   memcpy(&raw.data[0], bytes, 8);
 
-  compressed_depth_image_transport::CompressedDepthPublisherConfig config;
   auto config = compressed_depth_image_transport::CompressedDepthPublisherConfig::__getDefault__();
   const auto compressedShifter = codecs.encode(raw, "compressedDepth", config);
   ASSERT_TRUE(compressedShifter);
