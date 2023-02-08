@@ -551,9 +551,12 @@ TEST(ImageTransportCodecs, Bag)
     ASSERT_TRUE(compressedShifter);
     ASSERT_NO_THROW(compressedShifter->instantiate<sensor_msgs::CompressedImage>());
     const auto compressed = compressedShifter->instantiate<sensor_msgs::CompressedImage>();
-    EXPECT_EQ(handColorCompressed, *compressed);
+    EXPECT_EQ(handColorCompressed.header, compressed->header);
+    EXPECT_EQ(handColorCompressed.format, compressed->format);
+    // The binary representation of the JPEG might differ a bit, but the binary size should roughly match
+    EXPECT_NEAR(handColorCompressed.data.size(), compressed->data.size(), 0.01 * compressed->data.size());
 
-    const auto rawImg = codecs.decodeTyped(handColorCompressed, "compressed");
+    const auto rawImg = codecs.decodeTyped(*compressed, "compressed");
     ASSERT_TRUE(rawImg);
     EXPECT_EQ(handColorRaw.header, rawImg->header);
     EXPECT_EQ(handColorRaw.step, rawImg->step);
