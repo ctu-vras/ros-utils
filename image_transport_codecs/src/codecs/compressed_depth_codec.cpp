@@ -375,17 +375,28 @@ cv::Mat CompressedDepthCodec::decodeRVL(const std::vector<uint8_t>& compressed) 
   const unsigned char *buffer = compressed.data();
   uint32_t cols, rows;
   RvlCodec rvl;
+
   rvl.ReadSize(buffer, rows, cols);
-  const auto numPixels = rows * cols;
-  // Sanity check - the best compression ratio is 4x; we leave some buffer, so we check whether the output image would
-  // not be more than 10x larger than the compressed one. If it is, we probably received corrupted data.
-  if (numPixels > 64 * 64 && numPixels * 2 * 10 > compressed.size())
+  if (rows == 0 || cols == 0)
   {
-    CRAS_ERROR_THROTTLE(1.0, "Received malformed RVL-encoded image. It pretends to have size %ux%u.", cols, rows);
+    CRAS_ERROR_THROTTLE(1.0, "Received malformed RVL-encoded image. Size %ix%i contains zero.", cols, rows);
     return {0, 0, CV_16UC1};
   }
+
+  // Sanity check - the best compression ratio is 4x; we leave some buffer, so we check whether the output image would
+  // not be more than 10x larger than the compressed one. If it is, we probably received corrupted data.
+  // The condition should be "numPixels * 2 > compressed.size() * 10" (because each pixel is 2 bytes), but to prevent
+  // overflow, we have canceled out the *2 from both sides of the inequality.
+  const auto numPixels = static_cast<uint64_t>(rows) * cols;
+  if (numPixels > std::numeric_limits<int>::max() || numPixels > static_cast<uint64_t>(compressed.size()) * 5)
+  {
+    CRAS_ERROR_THROTTLE(1.0, "Received malformed RVL-encoded image. It reports size %ux%u.", cols, rows);
+    return {0, 0, CV_16UC1};
+  }
+
   cv::Mat decompressed(rows, cols, CV_16UC1);
-  rvl.DecompressRVL(&buffer[8], decompressed.ptr<unsigned short>(), numPixels);  // NOLINT(runtime/int)
+  rvl.DecompressRVL(
+    &buffer[8], decompressed.ptr<unsigned short>(), static_cast<int>(numPixels));  // NOLINT(runtime/int)
   return decompressed;
 }
 
