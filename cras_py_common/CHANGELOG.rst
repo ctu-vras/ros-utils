@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2023-02-08)
+------------------
 * ctypes_utils: Added specialized allocators for ROS messages and for rosconsole logs.
 * string_utils: Register genpy Time and Duration for to_str() conversion, too.
 * ctypes_utils: Do not add one byte to StringAlloc allocated size. The caller has to do it now.

@@ -2,8 +2,8 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2023-02-08)
+------------------
 * Add python3-catkin-sphinx dependency as it has been added to rosdep.
 * Install the Spinx theme files.
 * Improved Sphinx CSS.
