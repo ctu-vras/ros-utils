@@ -101,7 +101,7 @@ TEST(ImageTransportCodecs, CompressedJPEG)
   ASSERT_TRUE(compressedShifter3);
   ASSERT_NE("", compressedShifter3->getDataType());
   ASSERT_NO_THROW(compressedShifter3->instantiate<sensor_msgs::CompressedImage>());
-  const auto& compressed3 = compressedShifter2->instantiate<sensor_msgs::CompressedImage>();
+  const auto& compressed3 = compressedShifter3->instantiate<sensor_msgs::CompressedImage>();
   EXPECT_EQ(compressed3->header, raw.header);
   EXPECT_EQ("bgr8; jpeg compressed bgr8", compressed3->format);
   EXPECT_NE(compressed->data, compressed3->data);
@@ -296,6 +296,7 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
   memcpy(&raw.data[0], bytes, 8);
 
   auto config = compressed_depth_image_transport::CompressedDepthPublisherConfig::__getDefault__();
+  config.format = compressed_depth_image_transport::CompressedDepthPublisher_rvl;
   const auto compressedShifter = codecs.encode(raw, "compressedDepth", config);
   ASSERT_TRUE(compressedShifter);
   ASSERT_NE("", compressedShifter->getDataType());
@@ -546,7 +547,7 @@ TEST(ImageTransportCodecs, Bag)
 
     config.strs.clear();
     config.ints[0].value = 9;  // Enforce PNG compression 9 which was also used on the image
-    compressedShifter = codecs.encode(bodyDepthRaw, "compressedDepth");
+    compressedShifter = codecs.encode(bodyDepthRaw, "compressedDepth", config);
     ASSERT_TRUE(compressedShifter);
     ASSERT_NO_THROW(compressedShifter->instantiate<sensor_msgs::CompressedImage>());
     compressed = compressedShifter->instantiate<sensor_msgs::CompressedImage>();

@@ -152,7 +152,7 @@ def parse_compressed_transport_format(format):
     is_color = c_bool()
 
     args = [
-        format,
+        format.encode("utf-8"),
         compression_format_allocator.get_cfunc(), raw_encoding_allocator.get_cfunc(),
         compressed_encoding_allocator.get_cfunc(), byref(num_channels), byref(bit_depth), byref(is_color),
         error_allocator.get_cfunc(),
@@ -184,7 +184,8 @@ def make_compressed_transport_format(format):
     error_allocator = StringAllocator()
 
     args = [
-        format.format_string, format.raw_encoding, format.compressed_encoding, format.num_channels, format.bit_depth,
+        format.format_string.encode("utf-8"), format.raw_encoding.encode("utf-8"),
+        format.compressed_encoding.encode("utf-8"), format.num_channels, format.bit_depth,
         format.is_color,
         format_allocator.get_cfunc(),
         error_allocator.get_cfunc(),
@@ -223,7 +224,7 @@ def extract_compressed_transport_format(image_encoding, compression_format):
     is_color = c_bool()
 
     args = [
-        image_encoding, compression_format.value,
+        image_encoding.encode("utf-8"), compression_format.value.encode("utf-8"),
         compressed_encoding_allocator.get_cfunc(), byref(num_channels), byref(bit_depth), byref(is_color),
         error_allocator.get_cfunc(),
     ]
@@ -261,7 +262,7 @@ def parse_compressed_depth_transport_format(format):
     bit_depth = c_uint32()
 
     args = [
-        format,
+        format.encode("utf-8"),
         compression_format_allocator.get_cfunc(), raw_encoding_allocator.get_cfunc(), byref(bit_depth),
         error_allocator.get_cfunc(),
     ]
@@ -291,7 +292,7 @@ def make_compressed_depth_transport_format(format):
     error_allocator = StringAllocator()
 
     args = [
-        format.format_string, format.raw_encoding, format.bit_depth,
+        format.format_string.encode("utf-8"), format.raw_encoding.encode("utf-8"), format.bit_depth,
         format_allocator.get_cfunc(),
         error_allocator.get_cfunc(),
     ]
@@ -326,7 +327,7 @@ def extract_compressed_depth_transport_format(image_encoding, compression_format
     bit_depth = c_uint32()
 
     args = [
-        image_encoding, compression_format.value,
+        image_encoding.encode("utf-8"), compression_format.value.encode("utf-8"),
         byref(bit_depth),
         error_allocator.get_cfunc(),
     ]

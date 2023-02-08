@@ -131,9 +131,9 @@ def encode(topic_or_codec, raw, config=None):
     log_allocator = LogMessagesAllocator()
 
     args = [
-        topic_or_codec,
-        raw.height, raw.width, raw.encoding, raw.is_bigendian, raw.step, len(raw.data), get_ro_c_buffer(raw.data),
-        type_allocator.get_cfunc(), md5sum_allocator.get_cfunc(), data_allocator.get_cfunc(),
+        topic_or_codec.encode("utf-8"),
+        raw.height, raw.width, raw.encoding.encode("utf-8"), raw.is_bigendian, raw.step, len(raw.data),
+        get_ro_c_buffer(raw.data), type_allocator.get_cfunc(), md5sum_allocator.get_cfunc(), data_allocator.get_cfunc(),
         c_size_t(config_buf_len), get_ro_c_buffer(config_buf),
         error_allocator.get_cfunc(), log_allocator.get_cfunc(),
     ]
@@ -189,8 +189,9 @@ def decode(topic_or_codec, compressed, config=None):
     config_buf.seek(0)
 
     args = [
-        topic_or_codec,
-        compressed._type, compressed._md5sum, compressed_buf_len, get_ro_c_buffer(compressed_buf),
+        topic_or_codec.encode("utf-8"),
+        compressed._type.encode("utf-8"), compressed._md5sum.encode("utf-8"), compressed_buf_len,
+        get_ro_c_buffer(compressed_buf),
         byref(raw_height), byref(raw_width), encoding_allocator.get_cfunc(), byref(raw_is_big_endian),
         byref(raw_step), data_allocator.get_cfunc(),
         c_size_t(config_buf_len), get_ro_c_buffer(config_buf),

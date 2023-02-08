@@ -78,11 +78,12 @@ def encode(raw, config=None):
     log_allocator = LogMessagesAllocator()
 
     args = [
-        raw.height, raw.width, raw.encoding, raw.is_bigendian, raw.step, len(raw.data), get_ro_c_buffer(raw.data),
+        raw.height, raw.width, raw.encoding.encode("utf-8"), raw.is_bigendian, raw.step, len(raw.data),
+        get_ro_c_buffer(raw.data),
         format_allocator.get_cfunc(), data_allocator.get_cfunc(),
     ]
     if codec.compressed_depth_codec_has_rvl():
-        args += [config_format]
+        args += [config_format.encode("utf-8")]
     args += [config_depth_max, config_depth_quantization, config_png_level]
     args += [error_allocator.get_cfunc(), log_allocator.get_cfunc()]
 
@@ -121,7 +122,7 @@ def decode(compressed, config=None):
     raw_step = c_uint32()
 
     args = [
-        compressed.format, len(compressed.data), get_ro_c_buffer(compressed.data),
+        compressed.format.encode("utf-8"), len(compressed.data), get_ro_c_buffer(compressed.data),
         byref(raw_height), byref(raw_width), encoding_allocator.get_cfunc(), byref(raw_is_big_endian), byref(raw_step),
         data_allocator.get_cfunc(),
         error_allocator.get_cfunc(), log_allocator.get_cfunc(),
