@@ -2,8 +2,8 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.2 (2023-02-10)
+------------------
 * python3-catkin-sphinx has been released in buster, let's define the dependency for good now.
 * Contributors: Martin Pecka
 
