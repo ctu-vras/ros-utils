@@ -473,6 +473,21 @@ cv::Mat CompressedDepthCodec::toInvDepth(const cv::Mat& depthImg, double depth_m
   return invDepthImg;
 }
 
+cras::expected<cras::optional<cras::span<const uint8_t>>, std::string> CompressedDepthCodec::getCompressedImageContent(
+  const sensor_msgs::CompressedImage& compressed) const
+{
+  const auto format = parseCompressedDepthTransportFormat(compressed.format);
+  if (!format)
+    return cras::make_unexpected("Invalid compressedDepth format: " + format.error());
+
+  const auto headerLen = sizeof(compressed_depth_image_transport::ConfigHeader);
+
+  if (format->format != CompressedDepthTransportCompressionFormat::PNG || compressed.data.size() < headerLen)
+    return cras::nullopt;
+
+  return cras::span<const uint8_t>(compressed.data.data() + headerLen, compressed.data.size() - headerLen);
+}
+
 void CompressedDepthCodec::encodeRVL(const cv::Mat& depthImg16UC1, std::vector<uint8_t>& compressed) const
 {
   int numPixels = depthImg16UC1.rows * depthImg16UC1.cols;

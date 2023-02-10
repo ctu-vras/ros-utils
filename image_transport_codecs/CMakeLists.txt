@@ -118,7 +118,7 @@ if (CATKIN_ENABLE_TESTING)
   include_directories(${rosbag_INCLUDE_DIRS})
   
   catkin_add_gtest(test_codecs test/test_codecs.cpp)
-  target_link_libraries(test_codecs ${PROJECT_NAME} ${catkin_LIBRARIES} ${rosbag_LIBRARIES})
+  target_link_libraries(test_codecs ${PROJECT_NAME} compressed_depth_codec ${catkin_LIBRARIES} ${rosbag_LIBRARIES})
   add_dependencies(test_codecs raw_codec_plugin compressed_codec_plugin compressed_depth_codec_plugin)
   target_compile_definitions(test_codecs PRIVATE COMPRESSED_HAS_JPEG_OPTIONS=${compressed_has_jpeg_options})
   target_compile_definitions(test_codecs PRIVATE COMPRESSED_DEPTH_HAS_RVL=${compressed_depth_has_rvl})

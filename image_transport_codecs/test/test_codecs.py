@@ -148,6 +148,12 @@ class CodecsTest(unittest.TestCase):
         else:
             self.assertEqual(compressed.format, "32FC1; compressedDepth")
 
+        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
+        self.assertIsNotNone(content)
+        self.assertEqual(err, "")
+        self.assertEqual(12, len(compressed.data) - len(content))
+        self.assertEqual(content, compressed.data[12:])
+
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -181,6 +187,12 @@ class CodecsTest(unittest.TestCase):
             self.assertEqual(compressed.format, "16UC1; compressedDepth png")
         else:
             self.assertEqual(compressed.format, "16UC1; compressedDepth")
+
+        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
+        self.assertIsNotNone(content)
+        self.assertEqual(err, "")
+        self.assertEqual(12, len(compressed.data) - len(content))
+        self.assertEqual(content, compressed.data[12:])
 
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
@@ -216,6 +228,10 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(compressed.header, raw.header)
         self.assertEqual(compressed.format, "32FC1; compressedDepth rvl")
 
+        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
+        self.assertIsNone(content)
+        self.assertEqual(err, "")
+
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -249,6 +265,10 @@ class CodecsTest(unittest.TestCase):
         self.assertIsInstance(compressed, CompressedImage)
         self.assertEqual(compressed.header, raw.header)
         self.assertEqual(compressed.format, "16UC1; compressedDepth rvl")
+
+        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
+        self.assertIsNone(content)
+        self.assertEqual(err, "")
 
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")

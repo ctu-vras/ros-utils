@@ -29,6 +29,7 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <image_transport_codecs/image_transport_codecs.h>
 #include <image_transport_codecs/parse_compressed_format.h>
+#include <image_transport_codecs/codecs/compressed_depth_codec.h>
 
 using namespace image_transport_codecs;  // NOLINT(build/namespaces)
 
@@ -173,6 +174,12 @@ TEST(ImageTransportCodecs, CompressedDepthInv)
   EXPECT_EQ("32FC1; compressedDepth", compressed->format);
 #endif
 
+  image_transport_codecs::CompressedDepthCodec depthCodec;
+  auto content = depthCodec.getCompressedImageContent(*compressed);
+  ASSERT_TRUE(content.has_value());
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ(sizeof(compressed_depth_image_transport::ConfigHeader), compressed->data.size() - content.value()->size());
+
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);
 
@@ -217,6 +224,12 @@ TEST(ImageTransportCodecs, CompressedDepthUC)
 #else
   EXPECT_EQ("16UC1; compressedDepth", compressed->format);
 #endif
+
+  image_transport_codecs::CompressedDepthCodec depthCodec;
+  auto content = depthCodec.getCompressedImageContent(*compressed);
+  ASSERT_TRUE(content.has_value());
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ(sizeof(compressed_depth_image_transport::ConfigHeader), compressed->data.size() - content.value()->size());
 
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);
@@ -263,6 +276,11 @@ TEST(ImageTransportCodecs, CompressedDepthInvRvl)
   EXPECT_EQ(compressed->header, raw.header);
   EXPECT_EQ("32FC1; compressedDepth rvl", compressed->format);
 
+  image_transport_codecs::CompressedDepthCodec depthCodec;
+  auto content = depthCodec.getCompressedImageContent(*compressed);
+  ASSERT_TRUE(content.has_value());
+  EXPECT_FALSE(content->has_value());
+
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);
 
@@ -305,6 +323,11 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
   const auto& compressed = compressedShifter->instantiate<sensor_msgs::CompressedImage>();
   EXPECT_EQ(compressed->header, raw.header);
   EXPECT_EQ("16UC1; compressedDepth rvl", compressed->format);
+
+  image_transport_codecs::CompressedDepthCodec depthCodec;
+  auto content = depthCodec.getCompressedImageContent(*compressed);
+  ASSERT_TRUE(content.has_value());
+  EXPECT_FALSE(content->has_value());
 
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);

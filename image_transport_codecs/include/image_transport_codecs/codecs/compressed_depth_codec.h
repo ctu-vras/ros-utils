@@ -24,6 +24,8 @@
 #include <cras_cpp_common/c_api.h>
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/node.h>
+#include <cras_cpp_common/optional.hpp>
+#include <cras_cpp_common/span.hpp>
 #include <image_transport_codecs/image_transport_codec.h>
 
 namespace cv
@@ -92,6 +94,15 @@ public:
 
   ImageTransportCodec::DecodeResult decode(const topic_tools::ShapeShifter& compressed,
                                            const dynamic_reconfigure::Config& config) const override;
+
+  /**
+   * \brief If `compressed` is PNG-encoded, this function returns the bytes of the actual PNG image (skipping the
+   *        codec-specific header).
+   * \param[in] compressed The compressed image.
+   * \return If possible, the contained PNG image bytes. Otherwise, `cras::nullopt` is returned.
+   */
+  cras::expected<cras::optional<cras::span<const uint8_t>>, std::string> getCompressedImageContent(
+    const sensor_msgs::CompressedImage& compressed) const;
 
   /**
    * \brief Get the depth quantization parameters used by compression.
