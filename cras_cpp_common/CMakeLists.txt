@@ -132,6 +132,10 @@ add_library(cras_optional INTERFACE)
 target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/optional.hpp>)
 target_sources(cras_optional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tl/optional.hpp>)
 
+add_library(cras_span INTERFACE)
+target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/span.hpp>)
+target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tcb/span.hpp>)
+
 add_library(cras_c_api src/c_api.cpp)
 
 add_library(cras_semaphore src/thread_utils/semaphore.cpp)
