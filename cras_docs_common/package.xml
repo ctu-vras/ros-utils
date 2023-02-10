@@ -13,8 +13,7 @@
 
   <!--exec_depend>m2r</exec_depend-->
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-catkin-sphinx</exec_depend>
-  <!-- Not yet available on noetic/buster; however, noetic/focal has it, so we enable it in the release repo via a patch. -->
-  <!--exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-sphinx</exec_depend-->
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-sphinx</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-mistune</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-mistune</exec_depend>
   <exec_depend>rosdoc_lite</exec_depend>
