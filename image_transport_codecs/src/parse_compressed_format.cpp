@@ -8,6 +8,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include <compressed_depth_image_transport/CompressedDepthPublisherConfig.h>
 #include <compressed_image_transport/CompressedPublisherConfig.h>
@@ -16,11 +18,14 @@
 
 #include <cras_cpp_common/c_api.h>
 #include <cras_cpp_common/expected.hpp>
+#include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 #include <image_transport_codecs/parse_compressed_format.h>
 
 namespace image_transport_codecs
 {
+
+static const std::vector<uint8_t> pngHeader = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
 
 std::unordered_map<std::string, CompressedTransportCompressionFormat> compressedFormatTypes =
 {
@@ -303,6 +308,59 @@ cras::expected<CompressedDepthTransportFormat, std::string> extractCompressedDep
   return extractCompressedDepthTransportFormat(image.encoding, compressionFormat);
 }
 
+cras::expected<
+  std::pair<cras::optional<CompressedTransportFormat>, cras::optional<CompressedDepthTransportFormat>>, std::string>
+guessAnyCompressedImageTransportFormat(const sensor_msgs::CompressedImage& image)
+{
+  if (cras::strip(image.format) == "rvl" || cras::contains(image.format, "compressedDepth"))
+  {
+    const auto result = parseCompressedDepthTransportFormat(image.format);
+    if (result)
+      return std::make_pair(cras::nullopt, result.value());
+    else
+      return cras::make_unexpected(result.error());
+  }
+
+  if (cras::strip(image.format) == "jpeg" || cras::contains(image.format, "compressed"))
+  {
+    const auto result = parseCompressedTransportFormat(image.format);
+    if (result)
+      return std::make_pair(result.value(), cras::nullopt);
+    else
+      return cras::make_unexpected(result.error());
+  }
+
+  if (!cras::contains(image.format, "png"))
+    return cras::make_unexpected("Could not detect any known encoding of the image.");
+
+  // Now we need to tell the difference between compressed PNG and compressedDepth PNG. The compressedDepth one has
+  // the compression header in its first bytes, while the compressed contains directly the image data.
+
+  if (image.data.size() < pngHeader.size())
+    return cras::make_unexpected("The image data are too short.");
+
+  bool matchesPngHeader = true;
+  for (size_t i = 0; i < pngHeader.size(); ++i)
+    matchesPngHeader &= (pngHeader[i] == image.data[i]);
+
+  if (matchesPngHeader)
+  {
+    const auto result = parseCompressedTransportFormat(image.format);
+    if (result)
+      return std::make_pair(result.value(), cras::nullopt);
+    else
+      return cras::make_unexpected(result.error());
+  }
+  else
+  {
+    const auto result = parseCompressedDepthTransportFormat(image.format);
+    if (result)
+      return std::make_pair(cras::nullopt, result.value());
+    else
+      return cras::make_unexpected(result.error());
+  }
+}
+
 bool CompressedTransportFormat::operator==(const CompressedTransportFormat& other) const
 {
   return
@@ -454,5 +512,50 @@ bool extractCompressedDepthTransportFormat(
     return false;
   }
   bitDepth = format->bitDepth;
+  return true;
+}
+
+bool guessAnyCompressedImageTransportFormat(const char* format, const uint8_t imageHeader[64], bool& isCompressedDepth,
+  cras::allocator_t compressionFormatAllocator, cras::allocator_t rawEncodingAllocator,
+  cras::allocator_t compressedEncodingAllocator, int& numChannels, int& bitDepth, bool& isColor,
+  cras::allocator_t errorStringAllocator)
+{
+  namespace itc = image_transport_codecs;
+
+  sensor_msgs::CompressedImage image;
+  image.format = format;
+  if (imageHeader != nullptr)
+    image.data.assign(imageHeader, imageHeader + 64);
+
+  const auto result = itc::guessAnyCompressedImageTransportFormat(image);
+  if (!result)
+  {
+    cras::outputString(errorStringAllocator, result.error());
+    return false;
+  }
+
+  const auto& compressed = result->first;
+  const auto& compressedDepth = result->second;
+
+  isCompressedDepth = static_cast<bool>(compressedDepth);
+
+  if (compressed)
+  {
+    cras::outputString(compressionFormatAllocator, itc::compressedFormatNames[compressed->format]);
+    cras::outputString(rawEncodingAllocator, compressed->rawEncoding);
+    cras::outputString(compressedEncodingAllocator, compressed->compressedEncoding);
+    numChannels = compressed->numChannels;
+    bitDepth = compressed->bitDepth;
+    isColor = compressed->isColor;
+  }
+  else
+  {
+    cras::outputString(compressionFormatAllocator, itc::compressedDepthFormatNames[compressedDepth->format]);
+    cras::outputString(rawEncodingAllocator, compressedDepth->rawEncoding);
+    numChannels = 1;
+    bitDepth = compressedDepth->bitDepth;
+    isColor = false;
+  }
+
   return true;
 }

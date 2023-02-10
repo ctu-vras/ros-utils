@@ -11,11 +11,13 @@
  */
 
 #include <string>
+#include <utility>
 
 #include <sensor_msgs/Image.h>
 
 #include <cras_cpp_common/c_api.h>
 #include <cras_cpp_common/expected.hpp>
+#include <cras_cpp_common/optional.hpp>
 
 namespace image_transport_codecs
 {
@@ -180,6 +182,18 @@ cras::expected<CompressedDepthTransportFormat, std::string> extractCompressedDep
 cras::expected<CompressedDepthTransportFormat, std::string> extractCompressedDepthTransportFormat(
   const sensor_msgs::Image& image, const std::string& compressionFormat);
 
+/**
+ * \brief Parse the string from field `sensor_msgs::CompressedImage::format` using either `compressed` or
+ *        `compressedDepth` transport. Selection between the two formats is done automatically and it might peek into
+ *        the first 64 bytes of the compressed byte stream in the image.
+ * \param[in] image The image whose transport format should be parsed.
+ * \return The parsed `CompressedTransportFormat` or `CompressedDepthTransportFormat` (exactly one of these two will
+ *         be valid on success) or error string.
+ */
+cras::expected<
+  std::pair<cras::optional<CompressedTransportFormat>, cras::optional<CompressedDepthTransportFormat>>, std::string>
+guessAnyCompressedImageTransportFormat(const sensor_msgs::CompressedImage& image);
+
 }
 
 /////////////
@@ -311,5 +325,42 @@ extern "C" bool extractCompressedDepthTransportFormat(
   const char* imageEncoding,
   const char* compressionFormat,
   int& bitDepth,
+  cras::allocator_t errorStringAllocator
+);
+
+/**
+ *
+ * \param[in] image The image whose transport format should be parsed.
+ * \return The parsed `CompressedTransportFormat` or `CompressedDepthTransportFormat` (exactly one of these two will
+ *         be valid on success) or error string.
+ */
+/**
+ * \brief Parse the string from field `sensor_msgs::CompressedImage::format` using either `compressed` or
+ *        `compressedDepth` transport. Selection between the two formats is done automatically and it might peek into
+ *        the first 64 bytes of the compressed byte stream in the image.
+ * \param[in] format The `format` field text.
+ * \param[in] imageHeader First 64 bytes of the image's `data` field.
+ * \param[out] isCompressedDepth True if the image should be decoded using `compressedDepth` transport.
+ * \param[in,out] compressionFormatAllocator Allocator for the compression format ("jpeg", "png" or "rvl").
+ * \param[in,out] rawEncodingAllocator Allocator for encoding of the raw image (before compression).
+ * \param[in,out] compressedEncodingAllocator Allocator for encoding of the compressed image if the format is from
+ *                                            `compressed` codec (i.e. `bgr8` for JPEG).
+ * \param[out] numChannels Number of channels of the raw image data (1 for mono/depth images, 3-4 for color).
+ * \param[out] bitDepth Number of bits used for encoding one raw channel value.
+ * \param[out] isColor Whether the image is a color image or not.
+ * \param[in,out] errorStringAllocator Allocator for explanation why the parsing failed (used only in case of failure).
+ * \return Whether the parsing succeeded. If not, the output parameters are not valid, and the buffer created using
+ *         `errorStringAllocator` contains the explanation why the parsing failed.
+ */
+extern "C" bool guessAnyCompressedImageTransportFormat(
+  const char* format,
+  const uint8_t imageHeader[64],
+  bool& isCompressedDepth,
+  cras::allocator_t compressionFormatAllocator,
+  cras::allocator_t rawEncodingAllocator,
+  cras::allocator_t compressedEncodingAllocator,
+  int& numChannels,
+  int& bitDepth,
+  bool& isColor,
   cras::allocator_t errorStringAllocator
 );

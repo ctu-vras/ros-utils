@@ -125,8 +125,9 @@ if (CATKIN_ENABLE_TESTING)
   target_compile_definitions(test_codecs PRIVATE TEST_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test/data\")
 
   catkin_add_gtest(test_parse_compressed_format test/test_parse_compressed_format.cpp)
-  target_link_libraries(test_parse_compressed_format ${PROJECT_NAME})
+  target_link_libraries(test_parse_compressed_format ${PROJECT_NAME} ${rosbag_LIBRARIES})
   target_compile_definitions(test_parse_compressed_format PRIVATE COMPRESSED_DEPTH_HAS_RVL=${compressed_depth_has_rvl})
+  target_compile_definitions(test_parse_compressed_format PRIVATE TEST_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test/data\")
   add_dependencies(test_parse_compressed_format ${catkin_EXPORTED_TARGETS})
 
   catkin_add_nosetests(test/test_codecs.py DEPENDENCIES compressed_codec_plugin compressed_depth_codec_plugin ${PROJECT_NAME} raw_codec_plugin ${catkin_EXPORTED_TARGETS})

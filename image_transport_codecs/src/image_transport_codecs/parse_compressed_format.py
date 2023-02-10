@@ -5,14 +5,14 @@
 `compressedDepth` codecs."""
 
 from collections import namedtuple
-from ctypes import RTLD_GLOBAL, c_bool, c_uint32, c_char_p, POINTER, byref
+from ctypes import RTLD_GLOBAL, c_bool, c_uint32, c_uint8, c_char_p, POINTER, byref
 from enum import Enum
 
 from compressed_image_transport.cfg import CompressedPublisherConfig
 from compressed_depth_image_transport.cfg import CompressedDepthPublisherConfig
 from sensor_msgs.msg import CompressedImage, Image
 
-from cras.ctypes_utils import load_library, Allocator, StringAllocator
+from cras.ctypes_utils import get_ro_c_buffer, load_library, Allocator, StringAllocator
 
 
 class CompressedTransportCompressionFormat(Enum):
@@ -119,6 +119,14 @@ def __get_library():
         __codec.extractCompressedDepthTransportFormat.argtypes = [
             c_char_p, c_char_p,
             POINTER(c_uint32),
+            Allocator.ALLOCATOR,
+        ]
+
+        __codec.guessAnyCompressedImageTransportFormat.restype = c_bool
+        __codec.guessAnyCompressedImageTransportFormat.argtypes = [
+            c_char_p, POINTER(c_uint8),
+            POINTER(c_bool), Allocator.ALLOCATOR, Allocator.ALLOCATOR, Allocator.ALLOCATOR,
+            POINTER(c_uint32), POINTER(c_uint32), POINTER(c_bool),
             Allocator.ALLOCATOR,
         ]
 
@@ -340,6 +348,58 @@ def extract_compressed_depth_transport_format(image_encoding, compression_format
     return None, error_allocator.value
 
 
+def guess_any_compressed_image_transport_format(image):
+    """Parse the string from field :sensor_msgs:`CompressedImage`.format using either `compressed` or `compressedDepth`
+    transport. Selection between the two formats is done automatically and it might peek into the first 64 bytes of the
+    compressed byte stream in the image.
+
+    :param sensor_msgs.msg.CompressedImage image: The image whose transport format should be parsed.
+    :return: Tuple of the parsed formats or error string. If the format belongs to `compressed` codec, the first tuple
+             item will contain the format structure and the second item will be `None. If the format belongs to
+             `compressedDepth` codec, the first tuple item will be `None` and the second item will be the format
+             structure. If the parsing fails, first two items are `None` and error string is filled in the third item.
+    :rtype: (CompressedTransportFormat or None, CompressedDepthTransportFormat or None, str)
+    """
+    codec = __get_library()
+    if codec is None:
+        return None, None, "Could not load the codec library."
+
+    compression_format_allocator = StringAllocator()
+    raw_encoding_allocator = StringAllocator()
+    compressed_encoding_allocator = StringAllocator()
+    error_allocator = StringAllocator()
+
+    is_compressed_depth = c_bool()
+    num_channels = c_uint32()
+    bit_depth = c_uint32()
+    is_color = c_bool()
+
+    args = [
+        image.format.encode("utf-8"), get_ro_c_buffer(image.data) if len(image.data) >= 64 else None,
+        byref(is_compressed_depth), compression_format_allocator.get_cfunc(), raw_encoding_allocator.get_cfunc(),
+        compressed_encoding_allocator.get_cfunc(), byref(num_channels), byref(bit_depth), byref(is_color),
+        error_allocator.get_cfunc(),
+    ]
+
+    ret = codec.guessAnyCompressedImageTransportFormat(*args)
+
+    if ret:
+        compressed = None
+        compressed_depth = None
+
+        if is_compressed_depth.value:
+            compressed_depth = CompressedDepthTransportFormat(
+                CompressedDepthTransportCompressionFormat(compression_format_allocator.value),
+                compression_format_allocator.value, raw_encoding_allocator.value, int(bit_depth.value))
+        else:
+            compressed = CompressedTransportFormat(
+                CompressedTransportCompressionFormat(compression_format_allocator.value),
+                compression_format_allocator.value, raw_encoding_allocator.value, compressed_encoding_allocator.value,
+                int(num_channels.value), int(bit_depth.value), is_color.value)
+        return compressed, compressed_depth, ""
+    return None, None, error_allocator.value
+
+
 if __name__ == '__main__':
     def main():
         print(parse_compressed_transport_format("bgr8; jpeg compressed bgr8"))
@@ -377,6 +437,21 @@ if __name__ == '__main__':
         print(make_compressed_depth_transport_format(CompressedDepthTransportFormat(
             CompressedDepthTransportCompressionFormat.RVL, "rvl", "16UC1", 16)))
         print(parse_compressed_depth_transport_format("invalid"))
+
+        image = CompressedImage()
+        image.format = "jpeg"
+        print(guess_any_compressed_image_transport_format(image))
+        image.format = "rvl"
+        print(guess_any_compressed_image_transport_format(image))
+        image.format = "png"
+        print(guess_any_compressed_image_transport_format(image))
+        image.format = "png"
+        image.data = [0] * 64
+        print(guess_any_compressed_image_transport_format(image))
+        image.format = "png"
+        image.data = [0] * 64
+        image.data[:8] = (0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+        print(guess_any_compressed_image_transport_format(image))
 
 
     main()
