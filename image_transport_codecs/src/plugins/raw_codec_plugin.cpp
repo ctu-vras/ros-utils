@@ -53,6 +53,22 @@ public:
       return cras::make_unexpected(cras::format("Invalid shapeshifter passed to raw codec decoder: %s.", e.what()));
     }
   }
+
+  ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const override
+  {
+    if (!matchFormat.empty() && cras::toLower(matchFormat) != "raw")
+      return cras::nullopt;
+
+    try
+    {
+      return CompressedImageContent{"raw", compressed.instantiate<sensor_msgs::Image>()->data};
+    }
+    catch (const ros::Exception& e)
+    {
+      return cras::make_unexpected(cras::format("Invalid shapeshifter passed to raw codec decoder: %s.", e.what()));
+    }
+  }
 };
 
 }

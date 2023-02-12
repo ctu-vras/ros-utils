@@ -16,7 +16,7 @@ from sensor_msgs.msg import CompressedImage, Image
 
 from image_transport_codecs import compressed_codec
 from image_transport_codecs import compressed_depth_codec
-from image_transport_codecs import decode, encode
+from image_transport_codecs import decode, encode, get_compressed_image_content, CompressedImageContent
 
 
 def _byte(b):
@@ -41,7 +41,14 @@ class CodecsTest(unittest.TestCase):
 
     def test_raw(self):
         raw = Image()
+        raw.header.frame_id = "test"
         raw.header.stamp.secs = 10
+        raw.width = 2
+        raw.height = 2
+        raw.step = 2
+        raw.encoding = "mono8"
+        raw.is_bigendian = False
+        raw.data = b'\x01\x02\x03\x04'
 
         compressed, err = encode("raw", raw)
         self.assertEqual(err, "")
@@ -54,6 +61,24 @@ class CodecsTest(unittest.TestCase):
         self.assertIsNotNone(raw2)
         self.assertIsInstance(raw2, Image)
         self.assertEqual(raw2, raw)
+
+        content, err = get_compressed_image_content(compressed, "raw")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "raw")
+        self.assertEqual(content.data, raw.data)
+
+        content, err = get_compressed_image_content(compressed, "raw", "raw")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "raw")
+        self.assertEqual(content.data, raw.data)
+
+        content, err = get_compressed_image_content(compressed, "raw", "jpg")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
 
     def test_compressed_jpeg(self):
         raw = Image()
@@ -102,6 +127,24 @@ class CodecsTest(unittest.TestCase):
             self.assertNotEqual(compressed3.data, compressed.data)
             self.assertNotEqual(compressed3.data, compressed2.data)
 
+        content, err = get_compressed_image_content(compressed, "compressed")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "jpeg")
+        self.assertEqual(content.data, compressed.data)
+
+        content, err = get_compressed_image_content(compressed, "compressed", "jpeg")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "jpeg")
+        self.assertEqual(content.data, compressed.data)
+
+        content, err = get_compressed_image_content(compressed, "compressed", "jp2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
+
     def test_compressed_png(self):
         raw = Image()
         raw.header.stamp.secs = 10
@@ -130,6 +173,24 @@ class CodecsTest(unittest.TestCase):
         for i in range(len(raw.data)):
             self.assertEqual(raw2.data[i], raw.data[i])
 
+        content, err = get_compressed_image_content(compressed, "compressed")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data)
+
+        content, err = get_compressed_image_content(compressed, "compressed", "png")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data)
+
+        content, err = get_compressed_image_content(compressed, "compressed", "pn2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
+
     def test_compressed_depth_inv(self):
         raw = Image()
         raw.header.stamp.secs = 10
@@ -148,12 +209,6 @@ class CodecsTest(unittest.TestCase):
         else:
             self.assertEqual(compressed.format, "32FC1; compressedDepth")
 
-        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
-        self.assertIsNotNone(content)
-        self.assertEqual(err, "")
-        self.assertEqual(12, len(compressed.data) - len(content))
-        self.assertEqual(content, compressed.data[12:])
-
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -169,6 +224,24 @@ class CodecsTest(unittest.TestCase):
             val1 = bytes_to_float(raw.data[i:(i + 4)])
             val2 = bytes_to_float(raw2.data[i:(i + 4)])
             self.assertAlmostEqual(val2, val1, delta=1e-3)
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "png")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "pn2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
 
     def test_compressed_depth_uc(self):
         raw = Image()
@@ -188,12 +261,6 @@ class CodecsTest(unittest.TestCase):
         else:
             self.assertEqual(compressed.format, "16UC1; compressedDepth")
 
-        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
-        self.assertIsNotNone(content)
-        self.assertEqual(err, "")
-        self.assertEqual(12, len(compressed.data) - len(content))
-        self.assertEqual(content, compressed.data[12:])
-
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -209,6 +276,24 @@ class CodecsTest(unittest.TestCase):
             val2 = bytes_to_float(raw2.data[i:(i + 4)])
             # 16UC1 compression is lossless
             self.assertEqual(val2, val1)
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "png")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "png")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "pn2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
 
     def test_compressed_depth_inv_rvl(self):
         if not compressed_depth_codec.has_rvl():
@@ -228,10 +313,6 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(compressed.header, raw.header)
         self.assertEqual(compressed.format, "32FC1; compressedDepth rvl")
 
-        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
-        self.assertIsNone(content)
-        self.assertEqual(err, "")
-
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -247,6 +328,24 @@ class CodecsTest(unittest.TestCase):
             val1 = bytes_to_float(raw.data[i:(i + 4)])
             val2 = bytes_to_float(raw2.data[i:(i + 4)])
             self.assertAlmostEqual(val2, val1, delta=1e-3)
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "rvl")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "rvl")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "rvl")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "rv2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
 
     def test_compressed_depth_uc_rvl(self):
         if not compressed_depth_codec.has_rvl():
@@ -266,10 +365,6 @@ class CodecsTest(unittest.TestCase):
         self.assertEqual(compressed.header, raw.header)
         self.assertEqual(compressed.format, "16UC1; compressedDepth rvl")
 
-        content, err = compressed_depth_codec.get_compressed_image_content(compressed)
-        self.assertIsNone(content)
-        self.assertEqual(err, "")
-
         raw2, err = decode("compressedDepth", compressed)
         self.assertEqual(err, "")
         self.assertIsNotNone(raw2)
@@ -285,6 +380,24 @@ class CodecsTest(unittest.TestCase):
             val2 = bytes_to_float(raw2.data[i:(i + 4)])
             # 16UC1 compression is lossless
             self.assertEqual(val2, val1)
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "rvl")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "rvl")
+        self.assertEqual(err, "")
+        self.assertIsNotNone(content)
+        self.assertIsInstance(content, CompressedImageContent)
+        self.assertEqual(content.format, "rvl")
+        self.assertEqual(content.data, compressed.data[12:])
+
+        content, err = get_compressed_image_content(compressed, "compressedDepth", "rv2")
+        self.assertEqual(err, "")
+        self.assertIsNone(content)
 
     def test_compressed_wrong_type(self):
         raw = Image()

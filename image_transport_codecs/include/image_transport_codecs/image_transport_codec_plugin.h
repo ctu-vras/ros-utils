@@ -96,6 +96,19 @@ public:
    */
   virtual ImageTransportCodec::DecodeResult decode(const topic_tools::ShapeShifter& compressed,
                                                    const dynamic_reconfigure::Config& config) const = 0;
+
+  /**
+   * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+   *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+   *        is returned.
+   * \param[in] compressed The compressed image.
+   * \param[in] matchFormat If nonempty, the image data is only returned if their `format` field would match the given
+   *                        one. The matching should be case-insensitive.
+   * \return If it makes sense, the contained image bytes. If not, empty result. If an error occurred, it is reported
+   *         as the unexpected result.
+   */
+  virtual ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const = 0;
 };
 
 /**
@@ -145,6 +158,12 @@ public:
                                            const dynamic_reconfigure::Config& config) const override
   {
     return this->codec.decode(compressed, config);
+  }
+
+  ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const override
+  {
+    return this->codec.getCompressedImageContent(compressed, matchFormat);
   }
 
 private:

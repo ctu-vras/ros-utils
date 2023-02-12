@@ -10,6 +10,7 @@
 // https://github.com/ros-perception/image_transport_plugins/tree/noetic-devel/compressed_image_transport/src
 // The basic algorithms from upstream are unchanged, although the code has undergone cosmetic and API-design changes.
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -399,6 +400,34 @@ ImageTransportCodec::DecodeResult CompressedCodec::decode(
   }
 
   return this->decode(*compressedImage, codecConfig);
+}
+
+ImageTransportCodec::GetCompressedContentResult CompressedCodec::getCompressedImageContent(
+  const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const
+{
+  sensor_msgs::CompressedImageConstPtr compressedImage;
+  try
+  {
+    compressedImage = compressed.instantiate<sensor_msgs::CompressedImage>();
+  }
+  catch (const ros::Exception& e)
+  {
+    return cras::make_unexpected(cras::format("Invalid shapeshifter passed to compressed decoder: %s.", e.what()));
+  }
+  return this->getCompressedImageContent(*compressedImage, matchFormat);
+}
+
+ImageTransportCodec::GetCompressedContentResult CompressedCodec::getCompressedImageContent(
+  const sensor_msgs::CompressedImage& compressed, const std::string& matchFormat) const
+{
+  const auto format = parseCompressedTransportFormat(compressed.format);
+  if (!format)
+    return cras::make_unexpected("Invalid compressed format: " + format.error());
+
+  if (!matchFormat.empty() && cras::toLower(format->formatString) != cras::toLower(matchFormat))
+    return cras::nullopt;
+
+  return CompressedImageContent{format->formatString, compressed.data};
 }
 
 thread_local auto globalLogger = std::make_shared<cras::MemoryLogHelper>();

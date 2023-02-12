@@ -10,6 +10,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include <dynamic_reconfigure/Config.h>
 #include <ros/node_handle.h>
@@ -19,10 +20,27 @@
 
 #include <cras_cpp_common/expected.hpp>
 #include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/optional.hpp>
 #include <cras_topic_tools/shape_shifter.h>
 
 namespace image_transport_codecs
 {
+
+/**
+ * \brief The part of a compressed message that represents the actual image data (i.e. data that can be passed to an
+ *        external decoder).
+ *
+ * \note It is not guaranteed for every codec that its encoded messages carry some standalone meaning. If there is no
+ *       meaning, it will just produce empty content messages.
+ */
+struct CompressedImageContent
+{
+  //! \brief Format of the image. This should be a string recognized by OpenCV, ffmpeg or similar tools.
+  std::string format;
+
+  //! \brief The image content.
+  std::vector<uint8_t> data;
+};
 
 /**
  * \brief %Base for all image transport codecs. All codecs have to extend class `ImageTransportCodec` and implement the
@@ -76,6 +94,9 @@ public:
   //! \brief Result of image decoding. Either a `sensor_msgs::Image` holding the raw message, or error message.
   typedef cras::expected<sensor_msgs::Image, std::string> DecodeResult;
 
+  //! \brief Result of getting the actual compressed image data.
+  typedef cras::expected<cras::optional<CompressedImageContent>, std::string> GetCompressedContentResult;
+
   /**
    * \brief Create an instance of the codec.
    * \param[in] logHelper The logger to use for error messages not directly related to the currently processed image.
@@ -107,6 +128,29 @@ public:
    */
   virtual DecodeResult decode(const topic_tools::ShapeShifter& compressed,
                               const dynamic_reconfigure::Config& config) const = 0;
+
+  /**
+   * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+   *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+   *        is returned.
+   * \param[in] compressed The compressed image.
+   * \param[in] matchFormat If nonempty, the image data is only returned if their `format` field would match the given
+   *                        one. The matching should be case-insensitive.
+   * \return If it makes sense, the contained image bytes. If not, empty result. If an error occurred, it is reported
+   *         as the unexpected result.
+   */
+  virtual GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const = 0;
+
+  /**
+   * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+   *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+   *        is returned.
+   * \param[in] compressed The compressed image.
+   * \return If it makes sense, the contained image bytes. If not, empty result. If an error occurred, it is reported
+   *         as the unexpected result.
+   */
+  GetCompressedContentResult getCompressedImageContent(const topic_tools::ShapeShifter& compressed) const;
 
   /**
    * \brief Encode the given raw image into the given shapeshifter object using the default compression parameters.

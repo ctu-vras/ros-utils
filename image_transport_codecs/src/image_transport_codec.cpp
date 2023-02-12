@@ -66,4 +66,10 @@ ImageTransportCodec::DecodeResult ImageTransportCodec::decode(const topic_tools:
   return this->decode(compressed, nh.param(param, XmlRpc::XmlRpcValue()));
 }
 
+ImageTransportCodec::GetCompressedContentResult ImageTransportCodec::getCompressedImageContent(
+  const topic_tools::ShapeShifter& compressed) const
+{
+  return this->getCompressedImageContent(compressed, "");
+}
+
 }

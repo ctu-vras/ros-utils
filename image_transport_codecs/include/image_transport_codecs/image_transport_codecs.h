@@ -89,6 +89,38 @@ public:
     const std::string& topicOrCodec, const dynamic_reconfigure::Config& config);
 
   /**
+   * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+   *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+   *        is returned.
+   * \param[in] compressed The compressed image.
+   * \param[in] topicOrCodec Either the output of a codec's `getTransportName()`, or name of a topic from which the
+   *                         compressed message was received (so that it is possible to parse the codec from the
+   *                         topic). Do not pass the raw image topic - that would result in using `RawCodecPlugin` which
+   *                         you probably do not want.
+   * \param[in] matchFormat If nonempty, the image data is only returned if their `format` field would match the given
+   *                        one. The matching should be case-insensitive.
+   * \return If it makes sense, the contained image bytes. If not, empty result. If an error occurred, it is reported
+   *         as the unexpected result.
+   */
+  virtual ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& topicOrCodec, const std::string& matchFormat) const;
+
+  /**
+   * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+   *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+   *        is returned.
+   * \param[in] compressed The compressed image.
+   * \param[in] topicOrCodec Either the output of a codec's `getTransportName()`, or name of a topic from which the
+   *                         compressed message was received (so that it is possible to parse the codec from the
+   *                         topic). Do not pass the raw image topic - that would result in using `RawCodecPlugin` which
+   *                         you probably do not want.
+   * \return If it makes sense, the contained image bytes. If not, empty result. If an error occurred, it is reported
+   *         as the unexpected result.
+   */
+  ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& topicOrCodec) const;
+
+  /**
    * \brief Encode the given raw image into a  compressed image shapeshifter using the default compression parameters.
    * \param[in] raw The input raw image.
    * \param[in] topicOrCodec Either the output of a codec's `getTransportName()`, or name of a topic where the
@@ -430,7 +462,7 @@ protected:
    * \param[in] topicOrCodec Either the output of a codec's `getTransportName()`, or name of an image topic.
    * \return Name of the codec, or empty string if not found.
    */
-  std::string parseTransport(const std::string& topicOrCodec);
+  std::string parseTransport(const std::string& topicOrCodec) const;
 
   std::unique_ptr<pluginlib::ClassLoader<ImageTransportCodecPlugin>> loader;  //!< \brief Pluginlib loader of codecs.
   std::unordered_map<std::string, ImageTransportCodecPlugin::ConstPtr> codecs;  //!< \brief Loaded codecs.
@@ -500,7 +532,7 @@ extern "C" bool imageTransportCodecsEncode(
  *                         topic). Do not pass the raw image topic - that would result in using `RawCodecPlugin` which
  *                         you probably do not want.
  * \param[in] compressedType The string version of the type of the compressed message.
- * \param[in] md5sum The MD5 sum of the compressed message.
+ * \param[in] compressedMd5sum The MD5 sum of the compressed message.
  * \param[in] compressedDataLength Length of the compressed image data in bytes.
  * \param[in] compressedData Bytes of the compressed image.
  * \param[out] rawHeight Raw image height, that is, number of rows.
@@ -518,12 +550,12 @@ extern "C" bool imageTransportCodecsEncode(
  * \return Whether the encoding has succeeded. If yes, output parameters are set, `rawEncodingAllocator` and
  *         `rawDataAllocator` allocate their buffers and write the output to them. If not, `errorStringAllocator`
  *         allocates its buffer and stores the error string in it.
- * \sa Corresponding C++ API function: `image_transport_codecs::CompressedCodec::decode()`.
+ * \sa Corresponding C++ API function: `image_transport_codecs::ImageTransportCodecs::decode()`.
  */
 extern "C" bool imageTransportCodecsDecode(
   const char* topicOrCodec,
   const char* compressedType,
-  const char* md5sum,
+  const char* compressedMd5sum,
   size_t compressedDataLength,
   const uint8_t compressedData[],
   sensor_msgs::Image::_height_type& rawHeight,
@@ -534,6 +566,49 @@ extern "C" bool imageTransportCodecsDecode(
   cras::allocator_t rawDataAllocator,
   size_t serializedConfigLength,
   const uint8_t serializedConfig[],
+  cras::allocator_t errorStringAllocator,
+  cras::allocator_t logMessagesAllocator
+);
+
+/**
+ * \brief Return the part of the encoded message that represents the actual image data (i.e. the part that can be
+ *        passed to external decoders or saved to a file). If the codec messages have no such meaning, empty result
+ *        is returned.
+ *
+ * This is a *C API* to allow interfacing this library from other programming languages. Do not use it in C++.
+ *
+ * \param[in] topicOrCodec Either the output of a codec's `getTransportName()`, or name of a topic from which the
+ *                         compressed message was received (so that it is possible to parse the codec from the
+ *                         topic). Do not pass the raw image topic - that would result in using `RawCodecPlugin` which
+ *                         you probably do not want.
+ * \param[in] compressedType The string version of the type of the compressed message.
+ * \param[in] compressedMd5sum The MD5 sum of the compressed message.
+ * \param[in] compressedDataLength Length of the compressed image data in bytes.
+ * \param[in] compressedData Bytes of the compressed image.
+ * \param[in] matchFormat If nonempty, the image data is only returned if their `format` field would match the given
+ *                        one. The matching should be case-insensitive.
+ * \param[out] hasData Whether some content data were found in the image.
+ * \param[in,out] formatAllocator Allocator for content format string.
+ * \param[in,out] dataAllocator Allocator for the content bytes.
+ * \param[in,out] errorStringAllocator Allocator for error string in case the encoding fails.
+ * \param[in,out] logMessagesAllocator Allocator for log messages to be passed to the calling code. Each allocated
+ *                                     message should be properly reported by the native logging mechanism after this
+ *                                     call finishes. The messages are serialized `rosgraph_msgs::Log` messages.
+ * \return Whether the function has succeeded. If yes, output parameters are set, `formatAllocator` and
+ *         `dataAllocator` allocate their buffers and write the output to them. If not, `errorStringAllocator`
+ *         allocates its buffer and stores the error string in it.
+ * \sa Corresponding C++ API function: `image_transport_codecs::ImageTransportCodecs::getCompressedImageContent()`.
+ */
+extern "C" bool getCompressedImageContents(
+  const char* topicOrCodec,
+  const char* compressedType,
+  const char* compressedMd5sum,
+  size_t compressedDataLength,
+  const uint8_t compressedData[],
+  const char* matchFormat,
+  bool& hasData,
+  cras::allocator_t formatAllocator,
+  cras::allocator_t dataAllocator,
   cras::allocator_t errorStringAllocator,
   cras::allocator_t logMessagesAllocator
 );

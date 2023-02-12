@@ -10,6 +10,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgcodecs.hpp>
@@ -38,7 +39,14 @@ TEST(ImageTransportCodecs, Raw)
   ImageTransportCodecs codecs;
 
   sensor_msgs::Image raw;
+  raw.header.frame_id = "test";
   raw.header.stamp.sec = 10;
+  raw.data = {1, 2, 3, 4};
+  raw.width = 2;
+  raw.height = 2;
+  raw.encoding = "mono8";
+  raw.step = 2;
+  raw.is_bigendian = false;
 
   const auto compressedShifter = codecs.encode(raw, "raw");
   ASSERT_TRUE(compressedShifter);
@@ -50,6 +58,16 @@ TEST(ImageTransportCodecs, Raw)
   const auto raw2 = codecs.decode(compressedShifter.value(), "raw");
   ASSERT_TRUE(raw2);
   EXPECT_EQ(raw2.value(), raw);
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "raw");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("raw", (*content)->format);
+  EXPECT_EQ(raw.data, (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "raw", "jpg");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 TEST(ImageTransportCodecs, CompressedJPEG)
@@ -109,6 +127,22 @@ TEST(ImageTransportCodecs, CompressedJPEG)
   EXPECT_NE(compressed->data, compressed3->data);
   EXPECT_NE(compressed2->data, compressed3->data);
 #endif
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("jpeg", (*content)->format);
+  EXPECT_EQ(compressed->data, (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed", "jpeg");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("jpeg", (*content)->format);
+  EXPECT_EQ(compressed->data, (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed", "jp2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 TEST(ImageTransportCodecs, CompressedPNG)
@@ -146,6 +180,22 @@ TEST(ImageTransportCodecs, CompressedPNG)
     // PNG compression is lossless
     EXPECT_EQ(raw2->data[i], raw.data[i]);
   }
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(compressed->data, (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed", "png");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(compressed->data, (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressed", "pn2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 TEST(ImageTransportCodecs, CompressedDepthInv)
@@ -174,12 +224,6 @@ TEST(ImageTransportCodecs, CompressedDepthInv)
   EXPECT_EQ("32FC1; compressedDepth", compressed->format);
 #endif
 
-  image_transport_codecs::CompressedDepthCodec depthCodec;
-  auto content = depthCodec.getCompressedImageContent(*compressed);
-  ASSERT_TRUE(content.has_value());
-  ASSERT_TRUE(content->has_value());
-  EXPECT_EQ(sizeof(compressed_depth_image_transport::ConfigHeader), compressed->data.size() - content.value()->size());
-
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);
 
@@ -197,6 +241,30 @@ TEST(ImageTransportCodecs, CompressedDepthInv)
     const auto val2 = *reinterpret_cast<float*>(&raw2->data[i]);
     EXPECT_LT(fabs(val2 - val), 1e-3);
   }
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "png");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "pn2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 TEST(ImageTransportCodecs, CompressedDepthUC)
@@ -225,12 +293,6 @@ TEST(ImageTransportCodecs, CompressedDepthUC)
   EXPECT_EQ("16UC1; compressedDepth", compressed->format);
 #endif
 
-  image_transport_codecs::CompressedDepthCodec depthCodec;
-  auto content = depthCodec.getCompressedImageContent(*compressed);
-  ASSERT_TRUE(content.has_value());
-  ASSERT_TRUE(content->has_value());
-  EXPECT_EQ(sizeof(compressed_depth_image_transport::ConfigHeader), compressed->data.size() - content.value()->size());
-
   auto raw2 = codecs.decode(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(raw2);
 
@@ -248,6 +310,30 @@ TEST(ImageTransportCodecs, CompressedDepthUC)
     const auto val2 = *reinterpret_cast<uint16_t*>(&raw2->data[i]);
     EXPECT_EQ(val2, val);
   }
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "png");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("png", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "pn2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 #if COMPRESSED_DEPTH_HAS_RVL == 1
@@ -298,6 +384,30 @@ TEST(ImageTransportCodecs, CompressedDepthInvRvl)
     const auto val2 = *reinterpret_cast<float*>(&raw2->data[i]);
     EXPECT_LT(fabs(val2 - val), 1e-3);
   }
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("rvl", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "rvl");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("rvl", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "rv2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 TEST(ImageTransportCodecs, CompressedDepthUCRvl)
@@ -346,6 +456,30 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
     const auto val2 = *reinterpret_cast<uint16_t*>(&raw2->data[i]);
     EXPECT_EQ(val2, val);
   }
+
+  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("rvl", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "rvl");
+  ASSERT_TRUE(content);
+  ASSERT_TRUE(content->has_value());
+  EXPECT_EQ("rvl", (*content)->format);
+  EXPECT_EQ(
+    (std::vector<uint8_t>{
+      compressed->data.begin() + sizeof(compressed_depth_image_transport::ConfigHeader),
+      compressed->data.end()}),
+    (*content)->data);
+
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth", "rv2");
+  ASSERT_TRUE(content);
+  EXPECT_FALSE(content->has_value());
 }
 
 #endif

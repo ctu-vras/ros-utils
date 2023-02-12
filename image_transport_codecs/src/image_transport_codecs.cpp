@@ -67,7 +67,7 @@ void ImageTransportCodecs::addCodec(const ImageTransportCodecPlugin::ConstPtr& c
   this->codecs[transportName] = codec;
 }
 
-std::string ImageTransportCodecs::parseTransport(const std::string& topicOrCodec)
+std::string ImageTransportCodecs::parseTransport(const std::string& topicOrCodec) const
 {
   const auto& splits = cras::split(topicOrCodec, "/");
 
@@ -148,6 +148,23 @@ ImageTransportCodec::DecodeResult ImageTransportCodecs::decode(const topic_tools
   const std::string& topicOrCodec, const ros::NodeHandle& nh, const std::string& param)
 {
   return this->decode(compressed, topicOrCodec, nh.param(param, XmlRpc::XmlRpcValue()));
+}
+
+ImageTransportCodec::GetCompressedContentResult ImageTransportCodecs::getCompressedImageContent(
+  const topic_tools::ShapeShifter& compressed, const std::string& topicOrCodec) const
+{
+  return this->getCompressedImageContent(compressed, topicOrCodec, "");
+}
+
+ImageTransportCodec::GetCompressedContentResult ImageTransportCodecs::getCompressedImageContent(
+  const topic_tools::ShapeShifter& compressed, const std::string& topicOrCodec, const std::string& matchFormat) const
+{
+  const auto& transport = this->parseTransport(topicOrCodec);
+  if (this->codecs.find(transport) == this->codecs.end())
+    return cras::make_unexpected("Could not find any codec for " + topicOrCodec + ".");
+
+  const auto& codec = this->codecs.at(transport);
+  return codec->getCompressedImageContent(compressed, matchFormat);
 }
 
 thread_local auto globalLogger = std::make_shared<cras::MemoryLogHelper>();
@@ -276,6 +293,41 @@ bool imageTransportCodecsDecode(
   rawStep = raw->step;
   cras::outputString(rawEncodingAllocator, raw->encoding);
   cras::outputByteBuffer(rawDataAllocator, raw->data);
+
+  return true;
+}
+
+bool getCompressedImageContents(const char* topicOrCodec, const char* compressedType, const char* compressedMd5sum,
+  size_t compressedDataLength, const uint8_t* compressedData, const char* matchFormat, bool& hasData,
+  cras::allocator_t formatAllocator, cras::allocator_t dataAllocator, cras::allocator_t errorStringAllocator,
+  cras::allocator_t logMessagesAllocator)
+{
+  topic_tools::ShapeShifter compressed;
+  compressed.morph(compressedMd5sum, compressedType, "", "");
+  cras::resizeBuffer(compressed, compressedDataLength);
+  memcpy(cras::getBuffer(compressed), compressedData, compressedDataLength);
+
+  image_transport_codecs::globalLogger->clear();
+
+  const auto content = image_transport_codecs::image_transport_codecs_instance.getCompressedImageContent(
+    compressed, topicOrCodec, matchFormat);
+
+  for (const auto& msg : image_transport_codecs::globalLogger->getMessages())
+    cras::outputRosMessage(logMessagesAllocator, msg);
+  image_transport_codecs::globalLogger->clear();
+
+  if (!content)
+  {
+    cras::outputString(errorStringAllocator, content.error());
+    return false;
+  }
+
+  hasData = content->has_value();
+  if (hasData)
+  {
+    cras::outputString(formatAllocator, (*content)->format);
+    cras::outputByteBuffer(dataAllocator, (*content)->data);
+  }
 
   return true;
 }

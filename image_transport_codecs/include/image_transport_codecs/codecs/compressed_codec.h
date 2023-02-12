@@ -100,6 +100,19 @@ public:
   ImageTransportCodec::DecodeResult decode(const topic_tools::ShapeShifter& compressed,
                                            const dynamic_reconfigure::Config& config) const override;
 
+  ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const override;
+
+  /**
+   * \brief This function returns the bytes of the actual PNG/RVL image (skipping the codec-specific header).
+   * \param[in] compressed The compressed image.
+   * \param[in] matchFormat If nonempty, the image data is only returned if their `format` field would match the given
+   *                        one. The matching should be case-insensitive.
+   * \return The contained image bytes.
+   */
+  ImageTransportCodec::GetCompressedContentResult getCompressedImageContent(
+    const sensor_msgs::CompressedImage& compressed, const std::string& matchFormat) const;
+
   /**
    * \brief Fast method to decompress a JPEG image. It does not support PNG images (use `decode()` if you are not sure).
    * \param[in] data The bytes of the JPEG image.

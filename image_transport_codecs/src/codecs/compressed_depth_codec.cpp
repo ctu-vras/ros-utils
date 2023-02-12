@@ -473,19 +473,37 @@ cv::Mat CompressedDepthCodec::toInvDepth(const cv::Mat& depthImg, double depth_m
   return invDepthImg;
 }
 
-cras::expected<cras::optional<cras::span<const uint8_t>>, std::string> CompressedDepthCodec::getCompressedImageContent(
-  const sensor_msgs::CompressedImage& compressed) const
+ImageTransportCodec::GetCompressedContentResult CompressedDepthCodec::getCompressedImageContent(
+  const topic_tools::ShapeShifter& compressed, const std::string& matchFormat) const
+{
+  sensor_msgs::CompressedImageConstPtr compressedImage;
+  try
+  {
+    compressedImage = compressed.instantiate<sensor_msgs::CompressedImage>();
+  }
+  catch (const ros::Exception& e)
+  {
+    return cras::make_unexpected(cras::format("Invalid shapeshifter passed to compressedDepth decoder: %s.", e.what()));
+  }
+  return this->getCompressedImageContent(*compressedImage, matchFormat);
+}
+
+ImageTransportCodec::GetCompressedContentResult CompressedDepthCodec::getCompressedImageContent(
+  const sensor_msgs::CompressedImage& compressed, const std::string& matchFormat) const
 {
   const auto format = parseCompressedDepthTransportFormat(compressed.format);
   if (!format)
     return cras::make_unexpected("Invalid compressedDepth format: " + format.error());
 
-  const auto headerLen = sizeof(compressed_depth_image_transport::ConfigHeader);
-
-  if (format->format != CompressedDepthTransportCompressionFormat::PNG || compressed.data.size() < headerLen)
+  if (!matchFormat.empty() && cras::toLower(format->formatString) != cras::toLower(matchFormat))
     return cras::nullopt;
 
-  return cras::span<const uint8_t>(compressed.data.data() + headerLen, compressed.data.size() - headerLen);
+  const auto headerLen = sizeof(compressed_depth_image_transport::ConfigHeader);
+
+  if (compressed.data.size() < headerLen)
+    return cras::nullopt;
+
+  return CompressedImageContent{format->formatString, {compressed.data.begin() + headerLen, compressed.data.end()}};
 }
 
 void CompressedDepthCodec::encodeRVL(const cv::Mat& depthImg16UC1, std::vector<uint8_t>& compressed) const

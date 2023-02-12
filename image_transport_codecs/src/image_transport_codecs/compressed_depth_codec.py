@@ -11,8 +11,6 @@ from sensor_msgs.msg import CompressedImage, Image
 
 from cras.ctypes_utils import load_library, Allocator, StringAllocator, BytesAllocator, LogMessagesAllocator,\
     get_ro_c_buffer
-from image_transport_codecs.parse_compressed_format import parse_compressed_depth_transport_format, \
-    CompressedDepthTransportCompressionFormat
 
 
 __codec = None
@@ -157,26 +155,6 @@ def has_rvl():
         return False
 
     return codec.compressed_depth_codec_has_rvl()
-
-
-def get_compressed_image_content(compressed):
-    """If `compressed` is PNG-encoded, this function returns the bytes of the actual PNG image (skipping the
-    codec-specific header).
-
-    :param sensor_msgs.msg.CompressedImage compressed: The compressed image.
-    :return: If possible, the contained PNG image bytes. Otherwise, `None` is returned. If a failure occurs, the first
-             element of the returned tuple will be `None` and the second element contains an error string.
-    :rtype: (list or bytearray or None, str)
-    """
-    format, err = parse_compressed_depth_transport_format(compressed)
-    if format is None:
-        return None, err
-
-    header_length = 12
-    if format.format != CompressedDepthTransportCompressionFormat.PNG or len(compressed.data) < header_length:
-        return None, ""
-
-    return compressed.data[header_length:], ""
 
 
 if __name__ == '__main__':

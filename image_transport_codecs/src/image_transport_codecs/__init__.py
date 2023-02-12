@@ -43,6 +43,23 @@ from cras.ctypes_utils import load_library, Allocator, StringAllocator, BytesAll
 from cras.string_utils import STRING_TYPE, BufferStringIO
 
 
+class CompressedImageContent(object):
+    """The part of a compressed message that represents the actual image data (i.e. data that can be passed to an
+    external decoder).
+
+    It is not guaranteed for every codec that its encoded messages carry some standalone meaning. If there is no
+    meaning, it will just produce empty content messages.
+
+    :ivar format: Format of the image. This should be a string recognized by OpenCV, ffmpeg or similar tools.
+    :type format: str
+    :ivar data: The image content.
+    :type data: list or bytearray or None
+    """
+    def __init__(self, format, data):
+        self.format = format
+        self.data = data
+
+
 def dict_to_config(d):
     """Convert configuration dict to :class:`dynamic_reconfigure.msg.Config`.
 
@@ -96,6 +113,14 @@ def __get_library():
             POINTER(c_uint32), POINTER(c_uint32), Allocator.ALLOCATOR, POINTER(c_uint8), POINTER(c_uint32),
             Allocator.ALLOCATOR,
             c_size_t, POINTER(c_uint8),
+            Allocator.ALLOCATOR, Allocator.ALLOCATOR,
+        ]
+
+        __codec.getCompressedImageContents.restype = c_bool
+        __codec.getCompressedImageContents.argtypes = [
+            c_char_p,
+            c_char_p, c_char_p, c_size_t, POINTER(c_uint8), c_char_p,
+            POINTER(c_bool), Allocator.ALLOCATOR, Allocator.ALLOCATOR,
             Allocator.ALLOCATOR, Allocator.ALLOCATOR,
         ]
 
@@ -210,6 +235,51 @@ def decode(topic_or_codec, compressed, config=None):
         raw.step = raw_step.value
         raw.data = data_allocator.value
         return raw, ""
+    return None, error_allocator.value
+
+
+def get_compressed_image_content(compressed, topic_or_codec, match_format=""):
+    """Return the part of the encoded message that represents the actual image data (i.e. the part that can be passed
+    to external decoders or saved to a file). If the codec messages have no such meaning, empty result is returned.
+
+    :param genpy.Message compressed: The compressed image.
+    :param str topic_or_codec: Name of the topic this image comes from or explicit name of the codec.
+    :param str match_format: If nonempty, the image data is only returned if their `format` field would match the given
+                             one. The matching should be case-insensitive.
+    :return: If it makes sense, the contained image bytes as first tuple member. If not, empty result. If an error
+             occurred, it is reported in the second tuple member.
+    :rtype: (CompressedImageContent or None, str)
+    """
+    codec = __get_library()
+    if codec is None:
+        return None, "Could not load the codec library."
+
+    format_allocator = StringAllocator()
+    data_allocator = BytesAllocator()
+    error_allocator = StringAllocator()
+    log_allocator = LogMessagesAllocator()
+
+    has_data = c_bool()
+
+    compressed_buf = BufferStringIO()
+    compressed.serialize(compressed_buf)
+    compressed_buf_len = compressed_buf.tell()
+    compressed_buf.seek(0)
+
+    args = [
+        topic_or_codec.encode("utf-8"),
+        compressed._type.encode("utf-8"), compressed._md5sum.encode("utf-8"), compressed_buf_len,
+        get_ro_c_buffer(compressed_buf), match_format.encode("utf-8"),
+        byref(has_data), format_allocator.get_cfunc(), data_allocator.get_cfunc(),
+        error_allocator.get_cfunc(), log_allocator.get_cfunc(),
+    ]
+    ret = codec.getCompressedImageContents(*args)
+
+    log_allocator.print_log_messages()
+    if ret:
+        if not has_data.value:
+            return None, ""
+        return CompressedImageContent(format_allocator.value, data_allocator.value), ""
     return None, error_allocator.value
 
 
