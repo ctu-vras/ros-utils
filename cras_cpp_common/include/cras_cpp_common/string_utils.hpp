@@ -199,6 +199,22 @@ bool contains(const ::std::string& str, const ::std::string& needle);
 ::std::vector<::std::string> split(const ::std::string& str, const ::std::string& delimiter, int maxSplits = -1);
 
 /**
+ * \brief Convert all characters in the given string to upper case.
+ * \param[in] str The input string.
+ * \return A copy of the input string with all characters upper case. The string does not necessarily be of the same
+ *         length as the input string (but it will be 99% of the cases).
+ */
+::std::string toUpper(const ::std::string& str);
+
+/**
+ * \brief Convert all characters in the given string to lower case.
+ * \param[in] str The input string.
+ * \return A copy of the input string with all characters lower case. The string does not necessarily be of the same
+ *         length as the input string (but it will be 99% of the cases).
+ */
+::std::string toLower(const ::std::string& str);
+
+/**
  * printf-like support working with std::string and automatically managing memory.
  * \param[in] format The printf-like format string.
  * \param[in] args Arguments of the format string.

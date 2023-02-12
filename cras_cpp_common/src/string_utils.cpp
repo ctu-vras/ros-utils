@@ -16,6 +16,8 @@
 #endif
 
 
+#include <algorithm>
+#include <cctype>
 #include <limits>
 #include <string>
 #include <sstream>
@@ -188,6 +190,22 @@ std::vector<std::string> split(const std::string& str, const std::string& delimi
   }
 
   result.push_back(str.substr(start));
+  return result;
+}
+
+std::string toUpper(const std::string& str)
+{
+  // TODO rewrite using libicu-dev
+  auto result = str;
+  std::transform(str.begin(), str.end(), result.begin(), [](unsigned char c) {return std::toupper(c);});
+  return result;
+}
+
+std::string toLower(const std::string& str)
+{
+  // TODO rewrite using libicu-dev
+  auto result = str;
+  std::transform(str.begin(), str.end(), result.begin(), [](unsigned char c) {return std::tolower(c);});
   return result;
 }
 

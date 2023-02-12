@@ -558,6 +558,28 @@ TEST(StringUtils, Split)  // NOLINT
   EXPECT_EQ(v({"", "home", "cras", "file", "path"}), split("/home/cras/file/path", "/"));
 }
 
+TEST(StringUtils, ToUpper)  // NOLINT
+{
+  EXPECT_EQ("TEST", cras::toUpper("test"));
+  EXPECT_EQ("TEST", cras::toUpper("Test"));
+  EXPECT_EQ("TEST", cras::toUpper("TEST"));
+  EXPECT_EQ("TEST", cras::toUpper("TeST"));
+  EXPECT_EQ("", cras::toUpper(""));
+  EXPECT_EQ("1234567890", cras::toUpper("1234567890"));
+//  EXPECT_EQ("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ", cras::toUpper("ěščřžýáíéďťňúů"));  // not yet working
+}
+
+TEST(StringUtils, ToLower)  // NOLINT
+{
+  EXPECT_EQ("test", cras::toLower("test"));
+  EXPECT_EQ("test", cras::toLower("Test"));
+  EXPECT_EQ("test", cras::toLower("TEST"));
+  EXPECT_EQ("test", cras::toLower("TeST"));
+  EXPECT_EQ("", cras::toUpper(""));
+  EXPECT_EQ("1234567890", cras::toUpper("1234567890"));
+//  EXPECT_EQ("ěščřžýáíéďťňúů", cras::toLower("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ"));  // not yet working
+}
+
 void test_va_format(const std::string& res, const char* format, ...)
 {
   va_list(args);
