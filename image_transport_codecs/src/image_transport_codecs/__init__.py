@@ -127,11 +127,11 @@ def __get_library():
     return __codec
 
 
-def encode(topic_or_codec, raw, config=None):
+def encode(raw, topic_or_codec, config=None):
     """Encode the given raw image into a compressed image with a suitable codec.
 
-    :param str topic_or_codec: Name of the topic where this image should be published or explicit name of the codec.
     :param sensor_msgs.msg.Image raw: The raw image.
+    :param str topic_or_codec: Name of the topic where this image should be published or explicit name of the codec.
     :param config: Configuration of the encoding process. You can use the same values as those offered by dynamic
                    reconfigure of the corresponding :roswiki:`image_transport` publisher.
     :type config: dict or dynamic_reconfigure.msg.Config or None
@@ -178,11 +178,11 @@ def encode(topic_or_codec, raw, config=None):
     return None, error_allocator.value
 
 
-def decode(topic_or_codec, compressed, config=None):
+def decode(compressed, topic_or_codec, config=None):
     """Decode the given compressed image encoded with any codec into a raw image.
 
-    :param str topic_or_codec: Name of the topic this image comes from or explicit name of the codec.
     :param genpy.Message compressed: The compressed image.
+    :param str topic_or_codec: Name of the topic this image comes from or explicit name of the codec.
     :param config: Configuration of the decoding process.
     :type config: dict or dynamic_reconfigure.msg.Config or None
     :return: Tuple of raw image and error string. If the decoding fails, image is `None` and error string is filled.
@@ -325,13 +325,13 @@ if __name__ == '__main__':
         start = time.time()
         for i in range(100):
             # compressed = encode(pub.name, raw, {"depth_max": 10.0})
-            compressed, err = encode(pub.name, raw)
+            compressed, err = encode(raw, pub.name)
     
             # print(bool(compressed))
             # if compressed is not None:
             #     pub.publish(compressed)
     
-            raw2, err = decode(pub.name, compressed)
+            raw2, err = decode(compressed, pub.name)
 
         end = time.time()
         print(end - start)
