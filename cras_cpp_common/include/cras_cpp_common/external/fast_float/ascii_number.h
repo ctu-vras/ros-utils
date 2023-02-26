@@ -93,7 +93,11 @@ parsed_number_string parse_number_string(const char *p, const char *pend, parse_
   answer.valid = false;
   answer.too_many_digits = false;
   answer.negative = (*p == '-');
+#if FASTFLOAT_ALLOWS_LEADING_PLUS // disabled by default
+  if ((*p == '-') || (*p == '+')) {
+#else
   if (*p == '-') { // C++17 20.19.3.(7.1) explicitly forbids '+' sign here
+#endif
     ++p;
     if (p == pend) {
       return answer;
@@ -106,10 +110,6 @@ parsed_number_string parse_number_string(const char *p, const char *pend, parse_
 
   uint64_t i = 0; // an unsigned int avoids signed overflows (which are bad)
 
-  while ((std::distance(p, pend) >= 8) && is_made_of_eight_digits_fast(p)) {
-    i = i * 100000000 + parse_eight_digits_unrolled(p); // in rare cases, this will overflow, but that's ok
-    p += 8;
-  }
   while ((p != pend) && is_integer(*p)) {
     // a multiplication by 10 is cheaper than an arbitrary integer
     // multiplication
