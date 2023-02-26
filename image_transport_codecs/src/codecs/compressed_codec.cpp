@@ -424,7 +424,8 @@ ImageTransportCodec::GetCompressedContentResult CompressedCodec::getCompressedIm
   if (!format)
     return cras::make_unexpected("Invalid compressed format: " + format.error());
 
-  if (!matchFormat.empty() && cras::toLower(format->formatString) != cras::toLower(matchFormat))
+  const auto targetFormat = (cras::toLower(matchFormat) == "jpg") ? "jpeg" : cras::toLower(matchFormat);
+  if (!targetFormat.empty() && cras::toLower(format->formatString) != targetFormat)
     return cras::nullopt;
 
   return CompressedImageContent{format->formatString, compressed.data};
