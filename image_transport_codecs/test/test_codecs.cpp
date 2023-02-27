@@ -385,7 +385,7 @@ TEST(ImageTransportCodecs, CompressedDepthInvRvl)
     EXPECT_LT(fabs(val2 - val), 1e-3);
   }
 
-  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(content);
   ASSERT_TRUE(content->has_value());
   EXPECT_EQ("rvl", (*content)->format);
@@ -457,7 +457,7 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
     EXPECT_EQ(val2, val);
   }
 
-  auto content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
+  content = codecs.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(content);
   ASSERT_TRUE(content->has_value());
   EXPECT_EQ("rvl", (*content)->format);
