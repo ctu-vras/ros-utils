@@ -363,7 +363,7 @@ TEST(ImageTransportCodecs, CompressedDepthInvRvl)
   EXPECT_EQ("32FC1; compressedDepth rvl", compressed->format);
 
   image_transport_codecs::CompressedDepthCodec depthCodec;
-  auto content = depthCodec.getCompressedImageContent(*compressed);
+  auto content = depthCodec.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(content.has_value());
   EXPECT_FALSE(content->has_value());
 
@@ -435,7 +435,7 @@ TEST(ImageTransportCodecs, CompressedDepthUCRvl)
   EXPECT_EQ("16UC1; compressedDepth rvl", compressed->format);
 
   image_transport_codecs::CompressedDepthCodec depthCodec;
-  auto content = depthCodec.getCompressedImageContent(*compressed);
+  auto content = depthCodec.getCompressedImageContent(compressedShifter.value(), "compressedDepth");
   ASSERT_TRUE(content.has_value());
   EXPECT_FALSE(content->has_value());
 
