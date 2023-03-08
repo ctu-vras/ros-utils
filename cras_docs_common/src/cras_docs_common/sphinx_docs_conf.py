@@ -129,6 +129,9 @@ def ros_msg_reference(app, env, node, contnode):
     ref_node += text_node
     return ref_node
 
+# Backport of fix for issue https://github.com/sphinx-doc/sphinx/issues/2549. Without it, :ivar: fields wrongly resolve cross-references.
+from sphinx.domains.python import PyObject
+PyObject.doc_field_types[map(lambda f: f.name == 'variable', PyObject.doc_field_types).index(True)].rolename = None
 
 def setup(app):
     app.connect("missing-reference", ros_msg_reference)
