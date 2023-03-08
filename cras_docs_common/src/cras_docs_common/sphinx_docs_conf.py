@@ -57,13 +57,18 @@ except ImportError:
 master_doc = 'index'
 autoclass_content = 'both'
 
+
 this_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 theme_path = os.path.join(this_dir, 'sphinx-themes')
 
 html_theme_path = [theme_path, catkin_sphinx.get_theme_path()]
 
+custom_theme_path = os.getenv('CRAS_DOCS_COMMON_SPHINX_THEME_PATH', None)
+if custom_theme_path is not None:
+    html_theme_path.insert(0, custom_theme_path)
+
 # Use ROS theme
-html_theme = 'cras-theme'
+html_theme = os.getenv('CRAS_DOCS_COMMON_SPHINX_HTML_THEME', 'cras-theme')
 
 ros_distro = os.getenv('ROS_DISTRO', 'latest')
 ros_api_base = 'https://docs.ros.org/en/%s/api/'
