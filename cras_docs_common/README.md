@@ -2,6 +2,10 @@
 
 Common configuration for CRAS packages documentation.
 
+For Python code, it can generate nice documentation using a custom Sphinx template looking like this:
+
+<img src="doc/screenshot.png" alt="Example screenshot of the generated documentation" />
+
 ## Sphinx
 
 To document your Python package with Sphinx, add this to your `package.xml`:
