@@ -20,8 +20,9 @@ namespace detail {
  * strings a null-free and fixed.
  **/
 template <typename T>
-from_chars_result parse_infnan(const char *first, const char *last, T &value)  noexcept  {
-  from_chars_result answer;
+from_chars_result FASTFLOAT_CONSTEXPR14
+parse_infnan(const char *first, const char *last, T &value)  noexcept  {
+  from_chars_result answer{};
   answer.ptr = first;
   answer.ec = std::errc(); // be optimistic
   bool minusSign = false;
@@ -29,6 +30,11 @@ from_chars_result parse_infnan(const char *first, const char *last, T &value)  n
       minusSign = true;
       ++first;
   }
+#ifdef FASTFLOAT_ALLOWS_LEADING_PLUS // disabled by default
+  if (*first == '+') {
+      ++first;
+  }
+#endif
   if (last - first >= 3) {
     if (fastfloat_strncasecmp(first, "nan", 3)) {
       answer.ptr = (first += 3);
@@ -103,7 +109,7 @@ fastfloat_really_inline bool rounds_to_nearest() noexcept {
   //
   // Note: This may fail to be accurate if fast-math has been
   // enabled, as rounding conventions may not apply.
-  #if FASTFLOAT_VISUAL_STUDIO
+  #ifdef FASTFLOAT_VISUAL_STUDIO
   #   pragma warning(push)
   //  todo: is there a VS warning?
   //  see https://stackoverflow.com/questions/46079446/is-there-a-warning-for-floating-point-equality-checking-in-visual-studio-2013
@@ -115,7 +121,7 @@ fastfloat_really_inline bool rounds_to_nearest() noexcept {
   #   pragma GCC diagnostic ignored "-Wfloat-equal"
   #endif
   return (fmini + 1.0f == 1.0f - fmini);
-  #if FASTFLOAT_VISUAL_STUDIO
+  #ifdef FASTFLOAT_VISUAL_STUDIO
   #   pragma warning(pop)
   #elif defined(__clang__)
   #   pragma clang diagnostic pop
@@ -127,12 +133,14 @@ fastfloat_really_inline bool rounds_to_nearest() noexcept {
 } // namespace detail
 
 template<typename T>
+FASTFLOAT_CONSTEXPR20
 from_chars_result from_chars(const char *first, const char *last,
                              T &value, chars_format fmt /*= chars_format::general*/)  noexcept  {
   return from_chars_advanced(first, last, value, parse_options{fmt});
 }
 
 template<typename T>
+FASTFLOAT_CONSTEXPR20
 from_chars_result from_chars_advanced(const char *first, const char *last,
                                       T &value, parse_options options)  noexcept  {
 
@@ -140,7 +148,7 @@ from_chars_result from_chars_advanced(const char *first, const char *last,
 
 
   from_chars_result answer;
-#if FASTFLOAT_SKIP_WHITE_SPACE  // disabled by default
+#ifdef FASTFLOAT_SKIP_WHITE_SPACE  // disabled by default
   while ((first != last) && fast_float::is_space(uint8_t(*first))) {
     first++;
   }
@@ -169,7 +177,7 @@ from_chars_result from_chars_advanced(const char *first, const char *last,
     // We could check it first (before the previous branch), but
     // there might be performance advantages at having the check
     // be last.
-    if(detail::rounds_to_nearest())  {
+    if(!cpp20_and_in_constexpr() && detail::rounds_to_nearest())  {
       // We have that fegetround() == FE_TONEAREST.
       // Next is Clinger's fast path.
       if (pns.mantissa <=binary_format<T>::max_mantissa_fast_path()) {
@@ -186,7 +194,7 @@ from_chars_result from_chars_advanced(const char *first, const char *last,
 #if defined(__clang__)
         // Clang may map 0 to -0.0 when fegetround() == FE_DOWNWARD
         if(pns.mantissa == 0) {
-          value = 0;
+          value = pns.negative ? -0. : 0.;
           return answer;
         }
 #endif
@@ -206,6 +214,10 @@ from_chars_result from_chars_advanced(const char *first, const char *last,
   // then we need to go the long way around again. This is very uncommon.
   if(am.power2 < 0) { am = digit_comp<T>(pns, am); }
   to_float(pns.negative, am, value);
+  // Test for over/underflow.
+  if ((pns.mantissa != 0 && am.mantissa == 0 && am.power2 == 0) || am.power2 == binary_format<T>::infinite_power()) {
+    answer.ec = std::errc::result_out_of_range;
+  }
   return answer;
 }
 
