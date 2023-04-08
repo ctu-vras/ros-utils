@@ -2,6 +2,15 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed sphinx docs build on Noetic.
+* Added support for custom themes.
+* Improved readme
+* Fixed wrong cross-references created for :ivar: fields by Sphinx.
+* Fix providing the custom sphinx theme to packages from this stack on ROS buildfarm.
+* Contributors: Martin Pecka
+
 2.1.2 (2023-02-10)
 ------------------
 * python3-catkin-sphinx has been released in buster, let's define the dependency for good now.

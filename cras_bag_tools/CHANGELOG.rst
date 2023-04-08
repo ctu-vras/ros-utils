@@ -2,6 +2,11 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated build files
+* Contributors: Martin Pecka
+
 2.1.2 (2023-02-10)
 ------------------
 

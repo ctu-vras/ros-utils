@@ -2,6 +2,15 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed getCompressedImageContent() for JPEGs in CompressedCodec.
+* Swap the order of image and topic arguments in encode/decode to make the Python and C++ APIs consistent.
+* Generalized getCompressedImageContent() to all codecs.
+* Added getCompressedImageContent() to compressedDepth codec.
+* Added guessAnyCompressedImageTransportFormat().
+* Contributors: Martin Pecka
+
 2.1.2 (2023-02-10)
 ------------------
 

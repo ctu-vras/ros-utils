@@ -2,6 +2,17 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed parseFloat()/parseDouble() tests to reflect the behavior change in fast_float library.
+* Update fast_float to v4.0.
+* Update fast_float to v3.10.0.
+* Update tl/expected.
+* Update tl/optional to v1.1.0.
+* string_utils: Added toLower/toUpper.
+* Added std::span shim.
+* Contributors: Martin Pecka
+
 2.1.2 (2023-02-10)
 ------------------
 

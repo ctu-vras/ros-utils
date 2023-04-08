@@ -2,6 +2,17 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added heartbeat.
+* Simplified lazy subscriber classes and nodelet code. Added ~tcp_no_delay param to most nodelets. API breaks included, but hopefully nothing will be affected.
+  API breaks:
+  - LazySubscriberBase->ConditionalSubscriber
+  - LazySubscriber: callback is now passed as parameter instead of being a virtual member function
+  - GenericLazyPubSub: callback is now passed as parameter instead of being a virtual member function
+  - the nodelets no longer have a dedicated PubSub object that would be reusable elsewhere (the minimum probability of reuse does not outweigh the code complications it brings)
+* Contributors: Martin Pecka
+
 2.1.2 (2023-02-10)
 ------------------
 
