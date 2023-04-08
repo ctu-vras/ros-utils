@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2023-04-09)
+------------------
 * Added heartbeat.
 * Simplified lazy subscriber classes and nodelet code. Added ~tcp_no_delay param to most nodelets. API breaks included, but hopefully nothing will be affected.
   API breaks:
