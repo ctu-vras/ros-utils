@@ -3,6 +3,7 @@ project(cras_topic_tools)
 
 find_package(catkin REQUIRED COMPONENTS
   cras_cpp_common
+  cras_msgs
   nodelet
   roscpp
   topic_tools
@@ -61,13 +62,18 @@ add_dependencies(cras_priority_mux_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} $
 target_link_libraries(cras_priority_mux_nodelet ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_priority_mux_nodelet ${PROJECT_NAME}/priority_mux.h cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
 
+add_library(cras_heartbeat_nodelet src/heartbeat.cpp)
+add_dependencies(cras_heartbeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_heartbeat_nodelet cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES})
+cras_node_from_nodelet(cras_heartbeat_nodelet ${PROJECT_NAME}/heartbeat.h cras::HeartbeatNodelet OUTPUT_NAME heartbeat ANONYMOUS)
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING REGEX ".*\\.hp?p?$"
 )
 
 install(TARGETS
-  cras_change_header_nodelet cras_count_messages_nodelet cras_generic_lazy_pubsub cras_lazy_subscriber
+  cras_change_header_nodelet cras_count_messages_nodelet cras_generic_lazy_pubsub cras_heartbeat_nodelet cras_lazy_subscriber
   cras_priority_mux_nodelet cras_relay_nodelet cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -162,6 +168,11 @@ if (CATKIN_ENABLE_TESTING)
   roslaunch_add_file_check(test/test_mux_replay.test USE_TEST_DEPENDENCIES)
   add_rostest(test/test_mux_replay_loop.test)
   roslaunch_add_file_check(test/test_mux_replay_loop.test USE_TEST_DEPENDENCIES)
+
+  add_rostest(test/test_heartbeat.test DEPENDENCIES cras_heartbeat_nodelet_node)
+  roslaunch_add_file_check(test/test_heartbeat.test USE_TEST_DEPENDENCIES)
+  add_rostest(test/test_heartbeat_nodelet.test DEPENDENCIES cras_heartbeat_nodelet)
+  roslaunch_add_file_check(test/test_heartbeat_nodelet.test USE_TEST_DEPENDENCIES)
 
   add_rostest(test/test_filter.test)
   roslaunch_add_file_check(test/test_filter.test USE_TEST_DEPENDENCIES)

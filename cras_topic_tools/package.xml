@@ -18,12 +18,14 @@
   <depend>cras_cpp_common</depend>
   
   <build_depend>boost</build_depend>
+  <build_depend>cras_msgs</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>topic_tools</build_depend>
 
   <build_export_depend>boost</build_export_depend>
 
+  <exec_depend>cras_msgs</exec_depend>
   <exec_depend>cras_py_common</exec_depend>
   <exec_depend>nodelet</exec_depend>
   <exec_depend>roscpp</exec_depend>

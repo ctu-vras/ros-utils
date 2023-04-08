@@ -57,8 +57,14 @@
 <class name="cras_nodelet_topic_tools/relay" type="cras::RelayNodelet" base_class_type="nodelet::Nodelet">
   <description>
     DEPRECATED: Use cras_topic_tools/relay instead.
-    This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
-    allowing for maximum throughput.
+    This is a simple implementation of a relay nodelet.
+  </description>
+</class>
+</library>
+<library path="lib/libcras_heartbeat_nodelet">
+<class name="cras_topic_tools/heartbeat" type="cras::HeartbeatNodelet" base_class_type="nodelet::Nodelet">
+  <description>
+    This is a nodelet that republishes heartbeat of a topic with header.
   </description>
 </class>
 </library>

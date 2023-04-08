@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Test helper for testing heartbeat
+
+import rospy
+import rostest
+import unittest
+import sys
+
+from geometry_msgs.msg import TwistStamped
+
+from cras_msgs.msg import Heartbeat
+
+NAME = "test_heartbeat"
+
+
+orig_msg = TwistStamped()
+orig_msg.header.frame_id = "chatter"
+orig_msg.header.stamp = rospy.Time(2, 0)
+orig_msg.twist.linear.x = 1.0
+orig_msg.twist.angular.z = -1.0
+
+
+class HeartbeatTest(unittest.TestCase):
+    def __init__(self, *args):
+        super(HeartbeatTest, self).__init__(*args)
+        rospy.init_node(NAME)
+
+        self.timeout = float(rospy.get_param("~timeout", 5))
+
+    def test_input(self):
+        msg = rospy.wait_for_message("heartbeat_input/heartbeat", Heartbeat, self.timeout)
+        msg.header.seq = 0
+        self.assertEqual(msg.header, orig_msg.header)
+
+    def test_relay(self):
+        msg = rospy.wait_for_message("node_in/heartbeat", Heartbeat, self.timeout)
+        msg.header.seq = 0
+        self.assertEqual(msg.header, orig_msg.header)
+
+    def test_increasing(self):
+        msg1 = rospy.wait_for_message("increasing/heartbeat", Heartbeat, self.timeout)
+        msg2 = rospy.wait_for_message("increasing/heartbeat", Heartbeat, self.timeout)
+        msg3 = rospy.wait_for_message("increasing/heartbeat", Heartbeat, self.timeout)
+        self.assertEqual(msg1.header.frame_id, msg2.header.frame_id)
+        self.assertEqual(msg2.header.frame_id, msg3.header.frame_id)
+        self.assertLess(msg1.header.stamp, msg2.header.stamp)
+        self.assertLess(msg2.header.stamp, msg3.header.stamp)
+
+    def test_input_lazy(self):
+        msg = rospy.wait_for_message("heartbeat_input_lazy/heartbeat", Heartbeat, self.timeout)
+        msg.header.seq = 0
+        self.assertEqual(msg.header, orig_msg.header)
+
+    def test_relay_lazy(self):
+        msg = rospy.wait_for_message("node_in_lazy/heartbeat", Heartbeat, self.timeout)
+        msg.header.seq = 0
+        self.assertEqual(msg.header, orig_msg.header)
+
+    def test_increasing_lazy(self):
+        msg1 = rospy.wait_for_message("increasing_lazy/heartbeat", Heartbeat, self.timeout)
+        msg2 = rospy.wait_for_message("increasing_lazy/heartbeat", Heartbeat, self.timeout)
+        msg3 = rospy.wait_for_message("increasing_lazy/heartbeat", Heartbeat, self.timeout)
+        self.assertEqual(msg1.header.frame_id, msg2.header.frame_id)
+        self.assertEqual(msg2.header.frame_id, msg3.header.frame_id)
+        self.assertLess(msg1.header.stamp, msg2.header.stamp)
+        self.assertLess(msg2.header.stamp, msg3.header.stamp)
+
+
+if __name__ == "__main__":
+    try:
+        rostest.run('rostest', NAME, HeartbeatTest, sys.argv)
+    except KeyboardInterrupt:
+        pass
+    print("exiting")

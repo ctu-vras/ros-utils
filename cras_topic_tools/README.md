@@ -31,6 +31,7 @@ Most of these nodes/nodelets are message-type-agnostic, but they may differ betw
 - `change_header`: Allows modifying headers of messages (frame ID, timestamp).
 - `count_messages`: Count the number of received messages and make it available as a ROS parameter.
 - `filter`: (only node, no nodelet) Filter messages on a topic based on a Python expression.
+- `heartbeat`: Publish `cras_msgs/Heartbeat` heartbeat of a topic.
 - `mux_replay`: (only node, no nodelet) Control a `mux` with a recording of its `~selected` topic as if it were live.
 - `priority_mux`: Inspired by `twist_mux`, provides a hierarchical way of switching output topics. Works for all message types and for multiple output topics.
 - `relay`: Simple relay with the possibility of lazy subscription.

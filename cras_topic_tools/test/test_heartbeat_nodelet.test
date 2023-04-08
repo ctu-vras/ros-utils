@@ -1,0 +1,49 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="/use_sim_time" value="false" />
+    
+    <arg name="twist_params" value="twist: {linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}" />
+
+    <arg name="pub_params" value="geometry_msgs/TwistStamped '{header: {frame_id: chatter, stamp: {secs: 2, nsecs: 0}, seq: 0}, $(arg twist_params)}'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub1" args="pub -r 10 heartbeat_input $(arg pub_params)" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub2" args="pub -r 10 node_in $(arg pub_params)" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub3" args="pub -r 10 heartbeat_input_lazy $(arg pub_params)" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub4" args="pub -r 10 node_in_lazy $(arg pub_params)" />
+
+    <arg name="increasing_params" value="geometry_msgs/TwistStamped '{header: {frame_id: chatter, stamp: now, seq: 0}, $(arg twist_params)}'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub5" args="pub -r 10 -s increasing $(arg increasing_params)" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub6" args="pub -r 10 -s increasing_lazy $(arg increasing_params)" />
+
+    <node name="manager" pkg="nodelet" type="nodelet" args="manager" />
+    
+    <!-- Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat_input" args="load cras_topic_tools/heartbeat manager">
+        <remap from="~input" to="heartbeat_input" />
+    </node>
+
+    <!-- Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat" args="load cras_topic_tools/heartbeat manager node_in" />
+
+    <!-- Increasing values -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat_increasing" args="load cras_topic_tools/heartbeat manager increasing" />
+
+    <!-- Lazy + Automatic input name -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat_input_lazy" args="load cras_topic_tools/heartbeat manager">
+        <remap from="~input" to="heartbeat_input_lazy" />
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Lazy + Automatic output name -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat_lazy" args="load cras_topic_tools/heartbeat manager node_in_lazy">
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Lazy + Increasing values -->
+    <node pkg="nodelet" type="nodelet" name="heartbeat_increasing_lazy" args="load cras_topic_tools/heartbeat manager increasing_lazy">
+        <param name="lazy" value="true" />
+    </node>
+
+    <!-- Run the test suite -->
+    <test test-name="heartbeat_test_nodelet" pkg="cras_topic_tools" type="test_heartbeat" />
+</launch>
