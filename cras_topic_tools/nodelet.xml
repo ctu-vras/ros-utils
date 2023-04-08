@@ -8,8 +8,7 @@
 <library path="lib/libcras_throttle_messages_nodelet">
   <class name="cras_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
-      This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
-      parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
+      This is a simple implementation of a throttle nodelet. It allows using the more precise token bucket rate-limiting
       algorithm.
     </description>
   </class>
@@ -17,8 +16,7 @@
 <library path="lib/libcras_relay_nodelet">
 <class name="cras_topic_tools/relay" type="cras::RelayNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    This is a simple implementation of a relay nodelet. It can process the messages on a single topic in parallel
-    allowing for maximum throughput.
+    This is a simple implementation of a relay nodelet.
   </description>
 </class>
 </library>
@@ -32,7 +30,7 @@
 <library path="lib/libcras_change_header_nodelet">
 <class name="cras_topic_tools/change_header" type="cras::ChangeHeaderNodelet" base_class_type="nodelet::Nodelet">
   <description>
-    This is a relay nodelet that can modify headers. It can process the messages on a single topic in parallel
+    This is a relay nodelet that can modify headers.
     allowing for maximum throughput.
   </description>
 </class>
@@ -50,8 +48,7 @@
   <class name="cras_nodelet_topic_tools/throttle_messages" type="cras::ThrottleMessagesNodelet" base_class_type="nodelet::Nodelet">
     <description>
       DEPRECATED: Use cras_topic_tools/throttle_messages instead.
-      This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
-      parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
+      This is a simple implementation of a throttle nodelet. It allows using the more precise token bucket rate-limiting
       algorithm.
     </description>
   </class>

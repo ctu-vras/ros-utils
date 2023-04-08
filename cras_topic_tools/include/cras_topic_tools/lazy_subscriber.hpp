@@ -1,17 +1,22 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Lazy subscriber that subscribes only when a paired publisher has subscribers.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <string>
 
+#include <boost/functional.hpp>
+
+#include <ros/node_handle.h>
 #include <ros/publisher.h>
 #include <ros/single_subscriber_publisher.h>
 #include <ros/subscriber.h>
@@ -23,25 +28,21 @@ namespace cras
 {
 
 /**
- * \brief Base for a lazy subscriber that subscribes only when a condition holds true.
- * \tparam SubscriberType Type of the subscriber created when this object should subscribe. Normally, this would be
- *                        ros::Subscriber, but actually anything can be here if suitable connectFn and disconnectFn
- *                        are provided (and it has to provide a `getTopic()` function).
+ * \brief A lazy subscriber that subscribes only when a condition is met.
  */
-template<typename SubscriberType = ::ros::Subscriber>
-class LazySubscriberBase : public ::cras::HasLogger
+class ConditionalSubscriber : public ::cras::HasLogger
 {
 public:
   //! \brief Type of the function that connects the subscriber.
   //! \param[out] sub Reference to the subscriber object to be created.
-  typedef ::std::function<void(SubscriberType& sub)> ConnectFn;
+  typedef ::std::function<void(::ros::Subscriber& sub)> ConnectFn;
 
   //! \brief Type of the function that disconnects the subscriber.
   //! \param [in,out] Reference to the subscriber object to be disconnected.
-  typedef ::std::function<void(SubscriberType& sub)> DisconnectFn;
+  typedef ::std::function<void(::ros::Subscriber& sub)> DisconnectFn;
 
   /**
-   * \brief Create the lazy subscriber base.
+   * \brief Create the conditional subscriber.
    * \param[in] connectFn The function that connects the subscriber. It should store the subscriber in the passed
    *                      `sub` object.
    * \param[in] disconnectFn The function that disconnects the subscriber. The `sub` object passed to the function is
@@ -50,14 +51,24 @@ public:
    * \note The base class itself does not regularly check the connect/disconnect condition. Subclasses are responsible
    *       for calling `updateSubscription()` when it is possible that the subscription condition changed.
    */
-  explicit LazySubscriberBase(const ConnectFn& connectFn,
-    const DisconnectFn& disconnectFn = [](SubscriberType& sub) { sub.shutdown(); },
-    ::cras::LogHelperPtr logHelper = ::std::make_shared<::cras::NodeLogHelper>());
+  ConditionalSubscriber(ConnectFn connectFn, DisconnectFn disconnectFn,
+    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
+
+  /**
+   * \brief Create the conditional subscriber.
+   * \param[in] connectFn The function that connects the subscriber. It should store the subscriber in the passed
+   *                      `sub` object. Disconnection is done by simply calling `sub.shutdown()`.
+   * \param[in] logHelper Logging helper.
+   * \note The base class itself does not regularly check the connect/disconnect condition. Subclasses are responsible
+   *       for calling `updateSubscription()` when it is possible that the subscription condition changed.
+   */
+  explicit ConditionalSubscriber(ConnectFn connectFn,
+    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
 
   /**
    * \brief Destroy this object and unsubscribe the subscriber if it was subscribed.
    */
-  virtual ~LazySubscriberBase();
+  virtual ~ConditionalSubscriber();
 
   /**
    * \brief Tell whether this subscriber has the lazy behavior enabled.
@@ -88,13 +99,13 @@ protected:
   virtual bool shouldBeSubscribed() const = 0;
 
   /**
-   * \brief The callback called when a new subscriber appears or disappears.
+   * \brief The callback called when the condition might have changed.
    * \note This function locks `connectMutex`.
    */
   void updateSubscription();
 
   /**
-   * \brief The callback called when a new subscriber appears or disappears.
+   * \brief The callback called when the condition might have changed.
    * \note You have to lock this->connectMutex prior to calling this method.
    */
   void updateSubscriptionNoLock();
@@ -103,16 +114,16 @@ protected:
    * \brief Connect the subscriber to its input.
    * \note You have to lock this->connectMutex prior to calling this method.
    */
-  virtual void connectNoLock();
+  void connectNoLock();
 
   /**
    * \brief Disconnect the subscriber from its input.
    * \note You have to lock this->connectMutex prior to calling this method.
    */
-  virtual void disconnectNoLock();
+  void disconnectNoLock();
 
   //! \brief The underlying subscriber (valid only when `subscribed` is true).
-  SubscriberType sub;
+  ::ros::Subscriber sub;
 
   //! \brief Whether the lazy behavior is enabled (if false, the subscriber is always subscribed).
   bool lazy {true};
@@ -131,30 +142,39 @@ protected:
 };
 
 /**
- * \brief Lazy subscriber that subscribes only when a paired publisher has subscribers.
- * \tparam M Type of the publisher messages.
- * \tparam SubscriberType Type of the subscriber created when this object should subscribe. Normally, this would be
- *                        ros::Subscriber, but actually anything can be here if suitable connectFn and disconnectFn
- *                        are provided (and it has to provide a `getTopic()` function).
+ * \brief Base for lazy subscribers that subscribes only when a paired publisher has subscribers.
+ * \tparam PublisherMsgType Type of the publisher messages.
  */
-template<typename M, typename SubscriberType = ::ros::Subscriber>
-class LazySubscriber : public ::cras::LazySubscriberBase<SubscriberType>
+template<typename PublisherMsgType>
+class LazySubscriberBase : public ::cras::ConditionalSubscriber
 {
 public:
   /**
-   * \brief Create the lazy subscriber that subscribes only when `pub` has subscribers.
-   * \param[in] pub The publisher whose number of subscribers decides whether to connect or not.
+   * \brief Create the lazy subscriber that subscribes only when `publisherTopic` has subscribers.
+   * \param[in] publisherNh Node handle used for publisher topic.
+   * \param[in] publisherTopic The topic whose number of subscribers decides whether to connect or not.
    * \param[in] connectFn The function that connects the subscriber. It should store the subscriber in the passed
    *                      `sub` object.
    * \param[in] disconnectFn The function that disconnects the subscriber. The `sub` object passed to the function is
    *                         the one created previously by `connectFn`. The passed subscriber should be invalidated.
    * \param[in] logHelper Logging helper.
    */
-  LazySubscriber(const ::ros::Publisher& pub,
-    const typename ::cras::LazySubscriberBase<SubscriberType>::ConnectFn& connectFn,
-    const typename ::cras::LazySubscriberBase<SubscriberType>::DisconnectFn& disconnectFn =
-      [](SubscriberType& sub) { sub.shutdown(); },
-    ::cras::LogHelperPtr logHelper = ::std::make_shared<::cras::NodeLogHelper>());
+  LazySubscriberBase(::ros::NodeHandle publisherNh, const ::std::string& publisherTopic,
+    typename ::cras::ConditionalSubscriber::ConnectFn connectFn,
+    typename ::cras::ConditionalSubscriber::DisconnectFn disconnectFn,
+    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
+
+  /**
+   * \brief Create the lazy subscriber that subscribes only when `publisherTopic` has subscribers.
+   * \param[in] publisherNh Node handle used for publisher topic.
+   * \param[in] publisherTopic The topic whose number of subscribers decides whether to connect or not.
+   * \param[in] connectFn The function that connects the subscriber. It should store the subscriber in the passed
+   *                      `sub` object. Disconnection of the subscriber is done by simply calling `sub.shutdown()`.
+   * \param[in] logHelper Logging helper.
+   */
+  LazySubscriberBase(::ros::NodeHandle publisherNh, const ::std::string& publisherTopic,
+    typename ::cras::ConditionalSubscriber::ConnectFn connectFn,
+    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
 
 protected:
   /**
@@ -164,8 +184,50 @@ protected:
 
   bool shouldBeSubscribed() const override;
 
-  //! \brief The publisher whose number of subscribers decides whether to connect or not.
+  //! \brief The publisher whose number of subscribers decides whether to connect or not. It is not used to publish any
+  //!        actual messages.
   ::ros::Publisher pub;
+};
+
+/**
+ * \brief Lazy subscriber that subscribes only when a paired publisher has subscribers.
+ * \tparam PublisherMsgType Type of the publisher messages.
+ */
+template<typename PublisherMsgType, typename CallbackType = const PublisherMsgType&>
+class LazySubscriber : public ::cras::LazySubscriberBase<PublisherMsgType>
+{
+public:
+  /**
+   * \brief Create the lazy subscriber that subscribes to `subscriberTopic` when `publisherTopic` has subscribers.
+   * \param[in] publisherNh Node handle used for publisher topic.
+   * \param[in] publisherTopic The topic whose number of subscribers decides whether to connect or not.
+   * \param[in] subscriberNh Node handle used for subscriber topic.
+   * \param[in] subscriberTopic The topic to subscribe.
+   * \param[in] subscriberQueueSize Queue size for the subscriber.
+   * \param[in] subscriberCallback The callback called by the subscriber when a new message is received.
+   * \param[in] subscribeOptions Options used when creating the subscriber. Only `allow_concurrent_callbacks` and
+   *                             `transport_hints` fields from this object are used.
+   * \param[in] logHelper Logging helper.
+   */
+  LazySubscriber(::ros::NodeHandle publisherNh, const ::std::string& publisherTopic,
+                 ::ros::NodeHandle subscriberNh, const ::std::string& subscriberTopic, size_t subscriberQueueSize,
+                 ::boost::function<void(CallbackType)> subscriberCallback, ::ros::SubscribeOptions subscribeOptions,
+                 const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
+
+  /**
+   * \brief Create the lazy subscriber that subscribes to `subscriberTopic` when `publisherTopic` has subscribers.
+   * \param[in] publisherNh Node handle used for publisher topic.
+   * \param[in] publisherTopic The topic whose number of subscribers decides whether to connect or not.
+   * \param[in] subscriberNh Node handle used for subscriber topic.
+   * \param[in] subscriberTopic The topic to subscribe.
+   * \param[in] subscriberQueueSize Queue size for the subscriber.
+   * \param[in] subscriberCallback The callback called by the subscriber when a new message is received.
+   * \param[in] logHelper Logging helper.
+   */
+  LazySubscriber(::ros::NodeHandle publisherNh, const ::std::string& publisherTopic,
+                 ::ros::NodeHandle subscriberNh, const ::std::string& subscriberTopic, size_t subscriberQueueSize,
+                 ::boost::function<void(CallbackType)> subscriberCallback,
+                 const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>());
 };
 
 }

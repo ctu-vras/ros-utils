@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Tools for more convenient working with ShapeShifter objects.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <type_traits>
@@ -44,13 +45,22 @@ const uint8_t* getBuffer(const ::topic_tools::ShapeShifter& msg);
 size_t getBufferLength(const ::topic_tools::ShapeShifter& msg);
 
 /**
+ * \brief Tell whether the given message has `header` field.
+ * \param[in] msg The shape shifter object.
+ * \return Whether there is a `header` field in the message.
+ * \note This function might be slow. Do not call it on receipt of every message on high-frequency topics.
+ * \note This function is not (yet) 100% accurate. It might have false negatives or positives in some cases.
+ */
+bool hasHeader(const ::topic_tools::ShapeShifter& msg);
+
+/**
  * \brief Get the `header` field of the given message, if it has any.
  * \param[in] msg The shape shifter object.
  * \return The `header` of the represented message. If there is no header, `nullopt` is returned.
  * \note This function can have some "false positives", as it doesn't actually know whether the message has a header or
  *       not. There is a high chance that if the message does not have a header, the reading of Header data will fail,
  *       but there are corner cases when the message data will be interpretable as a Header. It is advised to check
- *       whether the message has a header via introspection or some other kind of information.
+ *       whether the message type has a header via introspection, `hasHeader()` or some other kind of information.
  */
 ::cras::optional<::std_msgs::Header> getHeader(const ::topic_tools::ShapeShifter& msg);
 

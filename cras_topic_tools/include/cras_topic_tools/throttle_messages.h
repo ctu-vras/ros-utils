@@ -1,28 +1,24 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
- * \brief This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
- *        parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
- *        algorithm.
+ * \brief This is a simple implementation of a throttle nodelet. It also allows using the more precise token bucket
+ *        rate-limiting algorithm.
+ * \note It can process the messages on a single topic in parallel allowing for maximum throughput.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <memory>
 #include <mutex>
-#include <string>
-#include <utility>
 
 #include <ros/message_event.h>
-#include <ros/node_handle.h>
+#include <ros/publisher.h>
 #include <ros/subscriber.h>
-#include <ros/time.h>
 #include <topic_tools/shape_shifter.h>
 
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/log_utils/node.h>
 #include <cras_cpp_common/nodelet_utils.hpp>
 #include <cras_cpp_common/rate_limiter.h>
 
@@ -30,70 +26,6 @@
 
 namespace cras
 {
-
-/**
- * \brief (Possibly lazy) publisher and subscriber pair that throttles published messages to the given rate. If the
- *        input rate is lower than the desired, the messages are published on the input rate.
- * \tparam SubscriberType Type of the lazy-created subscriber.
- */
-template <typename SubscriberType = ::ros::Subscriber>
-class ThrottleMessagesPubSub : public ::cras::GenericLazyPubSub<SubscriberType>
-{
-public:
-  /**
-   * \brief Create the lazy pub-sub object.
-   * \param[in] limiter The rate limiter to use on output.
-   * \param[in] topicIn Input topic.
-   * \param[in] topicOut Output topic
-   * \param[in] nh Nodehandle used for subscriber and publisher creation.
-   * \param[in] inQueueSize Queue size for the subscriber.
-   * \param[in] outQueueSize Queue size for the publisher.
-   * \param[in] logHelper Log helper.
-   */
-  ThrottleMessagesPubSub(::std::unique_ptr<::cras::RateLimiter> limiter,
-    const ::std::string& topicIn, const ::std::string& topicOut, const ::ros::NodeHandle& nh = {},
-    size_t inQueueSize = 10, size_t outQueueSize = 10,
-    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>()) :
-      GenericLazyPubSub<SubscriberType>(topicIn, topicOut, nh, inQueueSize, outQueueSize, logHelper),
-        limiter(::std::move(limiter))
-  {
-  }
-
-  ~ThrottleMessagesPubSub() override = default;
-
-  /**
-   * \brief Reset the rate limiter, e.g. after a time jump.
-   */
-  void reset()
-  {
-    ::std::lock_guard<::std::mutex> lock(this->limiterMutex);
-    this->limiter->reset();
-  }
-
-protected:
-  /**
-   * \brief Publish the incoming message if the rate limiter allows.
-   * \param[in] event The incoming message event.
-   * \note It is safe to call this function from multiple threads (access to the rate limiter is mutex-protected).
-   */
-  void processMessage(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event) override
-  {
-    bool shouldPublish;
-    {
-      ::std::lock_guard<::std::mutex> lock(this->limiterMutex);
-      shouldPublish = this->limiter->shouldPublish(::ros::Time::now());
-    }
-
-    if (shouldPublish)
-      this->pub.template publish(event.getConstMessage());
-  }
-
-  //! \brief The rate limiter used for limiting output rate.
-  ::std::unique_ptr<::cras::RateLimiter> limiter;
-
-  //! \brief Mutex for working with the limiter.
-  ::std::mutex limiterMutex;
-};
 
 /**
  * \brief Nodelet for throttling messages on a topic.
@@ -106,6 +38,9 @@ protected:
  *                                  The `~input` topic will be subscribed in the beginning, and will unsubscribe
  *                                  automatically after the first message is received (this is needed to determine the
  *                                  full type of the topic to publish).
+ * - `~tcp_no_delay` (bool, default False): If True, the `TCP_NODELAY` flag is set for the subscriber. This should
+ *                                         decrease the latency of small messages, but might give suboptimal
+ *                                         transmission speed for large messages.
  * - `~method` (enum, default TOKEN_BUCKET): The rate-limiting method.
  *   - `TOKEN_BUCKET`: more precise algorithm.
  *     - `~bucket_capacity` (uint, default 2): Maximum burst size in case the incoming messages stop for a while and
@@ -144,7 +79,7 @@ class ThrottleMessagesNodelet : public ::cras::Nodelet
 {
 protected:
   //! \brief The lazy pair of subscriber and publisher.
-  ::std::unique_ptr<::cras::ThrottleMessagesPubSub<>> pubSub;
+  ::std::unique_ptr<::cras::GenericLazyPubSub> pubSub;
 
   //! \brief Subscriber to the reset topic.
   ::ros::Subscriber resetSub;
@@ -156,6 +91,24 @@ protected:
    *        examined.
    */
   virtual void onReset(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&);
+
+  /**
+   * \brief Reset the rate limiter, e.g. after a time jump.
+   */
+  void reset();
+
+  /**
+   * \brief Publish the incoming message if the rate limiter allows.
+   * \param[in] event The incoming message event.
+   * \note It is safe to call this function from multiple threads (access to the rate limiter is mutex-protected).
+   */
+  void processMessage(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event, ::ros::Publisher& pub);
+
+  //! \brief The rate limiter used for limiting output rate.
+  ::std::unique_ptr<::cras::RateLimiter> limiter;
+
+  //! \brief Mutex for working with the limiter.
+  ::std::mutex limiterMutex;
 };
 
 }

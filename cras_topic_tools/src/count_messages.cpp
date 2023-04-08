@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Count messages on a topic.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <mutex>
@@ -35,6 +36,7 @@ void CountMessagesNodelet::onInit()
 {
   auto pnh = this->getMTPrivateNodeHandle();
   const auto inQueueSize = pnh.param("in_queue_size", 1000);
+  const auto tcpNoDelay = pnh.param("tcp_no_delay", false);
 
   this->getMTPrivateNodeHandle().setParam("bytes", 0);
   this->getMTPrivateNodeHandle().setParam("count", 0);
@@ -42,16 +44,20 @@ void CountMessagesNodelet::onInit()
   // we cannot use the simple one-liner pnh.subscribe() - otherwise there's double free from
   // https://github.com/ros/ros_comm/pull/1722
   ros::SubscribeOptions ops;
+  ops.allow_concurrent_callbacks = true;
+  ops.transport_hints.tcpNoDelay(tcpNoDelay);
   ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
     "input", inQueueSize, boost::bind(&CountMessagesNodelet::cb, this, boost::placeholders::_1));
   this->sub = pnh.subscribe(ops);
 
+  ops.allow_concurrent_callbacks = false;
+  ops.transport_hints.tcpNoDelay(true);
   ops.template initByFullCallbackType<const ros::MessageEvent<topic_tools::ShapeShifter const>&>(
     "reset", inQueueSize, boost::bind(&CountMessagesNodelet::resetCb, this, boost::placeholders::_1));
   this->resetSub = pnh.subscribe(ops);
 }
 
-void CountMessagesNodelet::resetCb(const ::ros::MessageEvent<::topic_tools::ShapeShifter const>&)
+void CountMessagesNodelet::resetCb(const ros::MessageEvent<topic_tools::ShapeShifter const>&)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
   this->count = this->bytes = 0;

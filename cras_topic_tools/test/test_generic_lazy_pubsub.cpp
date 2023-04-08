@@ -20,6 +20,7 @@
 #include <ros/subscription.h>
 #include <std_msgs/Header.h>
 
+#include <cras_cpp_common/functional.hpp>
 #include <cras_topic_tools/generic_lazy_pubsub.hpp>
 
 void spin(double duration, double wait)
@@ -52,12 +53,13 @@ size_t getNumSubscriptions(const std::string& topic)
   return num;
 }
 
-class TestLazyPubSub : public cras::GenericLazyPubSub<>
+class TestLazyPubSub : public cras::GenericLazyPubSub
 {
 public:
   TestLazyPubSub(const ::std::string& topicIn, const ::std::string& topicOut, const ::ros::NodeHandle& nh = {},
     const size_t inQueueSize = 10, const size_t outQueueSize = 10) :
-      cras::GenericLazyPubSub<>(topicIn, topicOut, nh, inQueueSize, outQueueSize)
+      cras::GenericLazyPubSub(
+        nh, topicIn, topicOut, inQueueSize, outQueueSize, cras::bind_front(&TestLazyPubSub::processMessage, this))
   {
   }
 
@@ -72,14 +74,14 @@ public:
   }
 
 protected:
-  void processMessage(const ros::MessageEvent<topic_tools::ShapeShifter const>& event) override
+  void processMessage(const ros::MessageEvent<topic_tools::ShapeShifter const>& event, ros::Publisher& pub)
   {
-    GenericLazyPubSub::processMessage(event);
+    pub.publish(event.getConstMessage());
     this->numProcessed++;
   }
 
 public:
-  using cras::LazySubscriberBase<>::updateSubscription;
+  using cras::ConditionalSubscriber::updateSubscription;
   size_t numProcessed {0};
 };
 

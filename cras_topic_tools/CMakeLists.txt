@@ -23,13 +23,13 @@ add_library(cras_shape_shifter src/shape_shifter.cpp)
 add_dependencies(cras_shape_shifter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_shape_shifter ${catkin_LIBRARIES})
 
-add_library(cras_lazy_subscriber INTERFACE)
-target_sources(cras_lazy_subscriber INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/lazy_subscriber.hpp>)
-target_link_libraries(cras_lazy_subscriber INTERFACE ${catkin_LIBRARIES} Boost::boost)
+add_library(cras_lazy_subscriber src/lazy_subscriber.cpp)
+add_dependencies(cras_lazy_subscriber ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_lazy_subscriber ${catkin_LIBRARIES} Boost::boost)
 
-add_library(cras_generic_lazy_pubsub INTERFACE)
-target_sources(cras_generic_lazy_pubsub INTERFACE $<BUILD_INTERFACE:${INCLUDE_BASE}/generic_lazy_pubsub.hpp>)
-target_link_libraries(cras_generic_lazy_pubsub INTERFACE ${catkin_LIBRARIES} Boost::boost)
+add_library(cras_generic_lazy_pubsub src/generic_lazy_pubsub.cpp)
+add_dependencies(cras_generic_lazy_pubsub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_generic_lazy_pubsub cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_count_messages_nodelet src/count_messages.cpp)
 add_dependencies(cras_count_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -38,22 +38,22 @@ cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_message
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_throttle_messages_nodelet ${catkin_LIBRARIES})
+target_link_libraries(cras_throttle_messages_nodelet cras_generic_lazy_pubsub ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle ANONYMOUS)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_relay_nodelet ${catkin_LIBRARIES})
+target_link_libraries(cras_relay_nodelet cras_generic_lazy_pubsub ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet OUTPUT_NAME relay ANONYMOUS)
 
 add_library(cras_repeat_nodelet src/repeat.cpp)
 add_dependencies(cras_repeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_repeat_nodelet cras_shape_shifter ${catkin_LIBRARIES})
+target_link_libraries(cras_repeat_nodelet cras_generic_lazy_pubsub cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_repeat_nodelet ${PROJECT_NAME}/repeat.h cras::RepeatMessagesNodelet OUTPUT_NAME repeat ANONYMOUS)
 
 add_library(cras_change_header_nodelet src/change_header.cpp)
 add_dependencies(cras_change_header_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_change_header_nodelet cras_shape_shifter ${catkin_LIBRARIES})
+target_link_libraries(cras_change_header_nodelet cras_generic_lazy_pubsub cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_change_header_nodelet ${PROJECT_NAME}/change_header.h cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
 
 add_library(cras_priority_mux_nodelet src/priority_mux.cpp)
@@ -67,8 +67,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 install(TARGETS
-  cras_change_header_nodelet cras_count_messages_nodelet cras_priority_mux_nodelet cras_relay_nodelet
-  cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
+  cras_change_header_nodelet cras_count_messages_nodelet cras_generic_lazy_pubsub cras_lazy_subscriber
+  cras_priority_mux_nodelet cras_relay_nodelet cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

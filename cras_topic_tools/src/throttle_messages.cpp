@@ -1,27 +1,34 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
- * \brief This is a simple implementation of a throttle nodelet. It can process the messages on a single topic in
- *        parallel allowing for maximum throughput. It also allows using the more precise token bucket rate-limiting
- *        algorithm.
+ * \brief This is a simple implementation of a throttle nodelet. It also allows using the more precise token bucket
+ *        rate-limiting algorithm.
+ * \note It can process the messages on a single topic in parallel allowing for maximum throughput.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
-#include <utility>
+
+#include <boost/bind.hpp>
+#include <boost/bind/placeholders.hpp>
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
 #include <ros/message_event.h>
 #include <ros/rate.h>
+#include <ros/subscribe_options.h>
 #include <topic_tools/shape_shifter.h>
 
+#include <cras_cpp_common/functional.hpp>
 #include <cras_cpp_common/rate_limiter.h>
 #include <cras_cpp_common/string_utils.hpp>
 
+#include <cras_topic_tools/generic_lazy_pubsub.hpp>
 #include <cras_topic_tools/throttle_messages.h>
 
 namespace cras
@@ -61,13 +68,12 @@ void ThrottleMessagesNodelet::onInit()
   const auto outQueueSize = params->getParam("out_queue_size", inQueueSize, "messages");
   const auto rate = params->getParam("frequency", defaultRate, "Hz");
   const auto lazy = params->getParam("lazy", false);
+  const auto tcpNoDelay = params->getParam("tcp_no_delay", false);
 
   const auto method = params->getParam("method", "TOKEN_BUCKET");  // TOKEN_BUCKET / THROTTLE
-  std::unique_ptr<cras::RateLimiter> limiter;
-
   if (method == "THROTTLE")
   {
-    limiter = std::make_unique<cras::ThrottleLimiter>(rate);
+    this->limiter = std::make_unique<cras::ThrottleLimiter>(rate);
   }
   else  // TOKEN_BUCKET and other
   {
@@ -75,18 +81,21 @@ void ThrottleMessagesNodelet::onInit()
       CRAS_WARN("Unknown rate-limitation method %s. Using TOKEN_BUCKET instead.", method.c_str());
     const auto bucketCapacity = params->getParam("bucket_capacity", 2_sz, "tokens");
     const auto initialTokens = params->getParam("initial_tokens", 1_sz, "tokens");
-    limiter = std::make_unique<cras::TokenBucketLimiter>(rate, bucketCapacity, initialTokens);
+    this->limiter = std::make_unique<cras::TokenBucketLimiter>(rate, bucketCapacity, initialTokens);
   }
 
-  this->pubSub = std::make_unique<cras::ThrottleMessagesPubSub<>>(
-    std::move(limiter), inTopic, outTopic, nh, inQueueSize, outQueueSize, this->log);
+  ros::SubscribeOptions opts;
+  opts.transport_hints.tcpNoDelay(tcpNoDelay);
+  this->pubSub = std::make_unique<cras::GenericLazyPubSub>(
+    nh, inTopic, outTopic, inQueueSize, outQueueSize, cras::bind_front(&ThrottleMessagesNodelet::processMessage, this),
+    opts, this->log);
 
   if (!lazy)
     this->pubSub->setLazy(false);
 
-  ros::SubscribeOptions opts;
+  opts.transport_hints.tcpNoDelay(true);
   auto cb = boost::bind(&ThrottleMessagesNodelet::onReset, this, boost::placeholders::_1);
-  opts.initByFullCallbackType<const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&>("reset", 1, cb);
+  opts.initByFullCallbackType<const ros::MessageEvent<const topic_tools::ShapeShifter>&>("reset", 1, cb);
   this->resetSub = this->getMTPrivateNodeHandle().subscribe(opts);
 
   CRAS_INFO("Created%s throttle from %s to %s at rate %s Hz.",
@@ -94,9 +103,28 @@ void ThrottleMessagesNodelet::onInit()
     cras::to_string(rate).c_str());
 }
 
-void ThrottleMessagesNodelet::onReset(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>&)
+void ThrottleMessagesNodelet::onReset(const ros::MessageEvent<const topic_tools::ShapeShifter>&)
 {
-  this->pubSub->reset();
+  this->reset();
+}
+
+void ThrottleMessagesNodelet::reset()
+{
+  std::lock_guard<std::mutex> lock(this->limiterMutex);
+  this->limiter->reset();
+}
+
+void ThrottleMessagesNodelet::processMessage(
+  const ros::MessageEvent<const topic_tools::ShapeShifter>& event, ros::Publisher& pub)
+{
+  bool shouldPublish;
+  {
+    std::lock_guard<std::mutex> lock(this->limiterMutex);
+    shouldPublish = this->limiter->shouldPublish(ros::Time::now());
+  }
+
+  if (shouldPublish)
+    pub.publish(event.getConstMessage());
 }
 
 }

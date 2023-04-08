@@ -1,15 +1,16 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Tools for more convenient working with ShapeShifter objects.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-// HACK begin
+// HACK begin  we need to access many private fields of topic_tools::ShapeShifter
 #include <sstream>
 #define private public
-#include <cras_topic_tools/shape_shifter.h>
+#include <topic_tools/shape_shifter.h>
 #undef private
 // HACK end
 
@@ -24,6 +25,9 @@
 #include <std_msgs/Header.h>
 
 #include <cras_cpp_common/optional.hpp>
+#include <cras_cpp_common/string_utils.hpp>
+
+#include <cras_topic_tools/shape_shifter.h>
 
 namespace cras
 {
@@ -99,6 +103,14 @@ void copyShapeShifter(const topic_tools::ShapeShifter& in, topic_tools::ShapeShi
 size_t getBufferLength(const topic_tools::ShapeShifter& msg)
 {
   return msg.size();
+}
+
+bool hasHeader(const topic_tools::ShapeShifter& msg)
+{
+  // This is a bit simplified but there is no really good way to detect it (cannot use rosmsg_cpp as the embedded
+  // Python cannot be run in multiple nodelets; cannot use ros_msg_parser as it has not yet been released).
+  // TODO: Consider using ros_msg_parser when it is released
+  return cras::contains(msg.getMessageDefinition(), "Header header");
 }
 
 cras::optional<std_msgs::Header> getHeader(const topic_tools::ShapeShifter& msg)

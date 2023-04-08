@@ -1,12 +1,13 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
- * \brief This is a relay nodelet that can modify headers. It can process the messages on a single topic in parallel
- *        allowing for maximum throughput.
+ * \brief This is a relay nodelet that can modify headers.
+ * \note It can process the messages on a single topic in parallel allowing for maximum throughput.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <memory>
@@ -15,183 +16,17 @@
 
 #include <ros/duration.h>
 #include <ros/message_event.h>
-#include <ros/node_handle.h>
-#include <ros/subscriber.h>
+#include <ros/publisher.h>
 #include <ros/time.h>
 #include <topic_tools/shape_shifter.h>
 
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/log_utils/node.h>
 #include <cras_cpp_common/nodelet_utils.hpp>
 #include <cras_cpp_common/optional.hpp>
-#include <cras_cpp_common/string_utils.hpp>
 
 #include <cras_topic_tools/generic_lazy_pubsub.hpp>
-#include <cras_topic_tools/shape_shifter.h>
 
 namespace cras
 {
-
-/**
- * \brief Parameters for header-changing nodelet.
- */
-struct ChangeHeaderParams
-{
-  //! \brief Replace the whole frame_id with this value.
-  ::cras::optional<::std::string> newFrameId;
-
-  //! \brief Prefix frame_id with this value.
-  ::cras::optional<::std::string> newFrameIdPrefix;
-
-  //! \brief Suffix frame_id with this value.
-  ::cras::optional<::std::string> newFrameIdSuffix;
-
-  //! \brief Replace all occurences of first string with the second one in frame_id.
-  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplace;
-
-  //! \brief If frame_id starts with the first string, replace it with the second one.
-  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplaceStart;
-
-  //! \brief If frame_id ends with the first string, replace it with the second one.
-  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplaceEnd;
-
-  //! \brief Replace stamp with the given value.
-  ::cras::optional<::ros::Time> newStampAbs;
-
-  //! \brief Add this value to stamp. In case of under/overflow, TIME_MIN or TIME_MAX are set.
-  ::cras::optional<::ros::Duration> newStampRel;
-
-  //! \brief Change stamp to current ROS time.
-  bool newStampRosTime {false};
-
-  //! \brief Change stamp to current wall time.
-  bool newStampWallTime {false};
-};
-
-/**
- * \brief (Possibly lazy) publisher and subscriber pair that changes header of the received messages.
- * \tparam SubscriberType Type of the lazy-created subscriber.
- */
-template <typename SubscriberType = ::ros::Subscriber>
-class ChangeHeaderPubSub : public ::cras::GenericLazyPubSub<SubscriberType>
-{
-public:
-  /**
-   * \brief Create the lazy pub-sub object.
-   * \param[in] params Parameters of the header changer.
-   * \param[in] topicIn Input topic.
-   * \param[in] topicOut Output topic
-   * \param[in] nh Nodehandle used for subscriber and publisher creation.
-   * \param[in] inQueueSize Queue size for the subscriber.
-   * \param[in] outQueueSize Queue size for the publisher.
-   * \param[in] logHelper Log helper.
-   */
-  ChangeHeaderPubSub(::cras::ChangeHeaderParams params,
-    const ::std::string& topicIn, const ::std::string& topicOut, const ::ros::NodeHandle& nh = {},
-    size_t inQueueSize = 10, size_t outQueueSize = 10,
-    const ::cras::LogHelperPtr& logHelper = ::std::make_shared<::cras::NodeLogHelper>()) :
-      GenericLazyPubSub<SubscriberType>(topicIn, topicOut, nh, inQueueSize, outQueueSize, logHelper),
-        params(::std::move(params))
-  {
-  }
-
-  ~ChangeHeaderPubSub() = default;
-
-protected:
-  virtual void processMessage(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event)
-  {
-    if (!this->advertiseOptions->has_header)
-    {
-      CRAS_ERROR_ONCE("Running change_header on message type %s which does not have a header! "
-        "Ignoring the message.", this->advertiseOptions->datatype.c_str());
-      return;
-    }
-
-    const auto& msg = event.getConstMessage();
-    auto header = ::cras::getHeader(*msg);
-    if (!header.has_value())
-    {
-      CRAS_ERROR("Change_header failed to extract a header from the message of type %s! "
-        "Ignoring the message.", this->advertiseOptions->datatype.c_str());
-      return;
-    }
-    const auto origHeader = header.value();
-
-    if (this->params.newFrameIdReplaceStart.has_value())
-    {
-      const auto fromTo = this->params.newFrameIdReplaceStart.value();
-      ::cras::replace(header->frame_id, fromTo.first, fromTo.second, ::cras::ReplacePosition::START);
-    }
-
-    if (this->params.newFrameIdReplaceEnd.has_value())
-    {
-      const auto fromTo = this->params.newFrameIdReplaceEnd.value();
-      ::cras::replace(header->frame_id, fromTo.first, fromTo.second, ::cras::ReplacePosition::END);
-    }
-
-    if (this->params.newFrameIdReplace.has_value())
-    {
-      const auto fromTo = this->params.newFrameIdReplace.value();
-      ::cras::replace(header->frame_id, fromTo.first, fromTo.second);
-    }
-
-    if (this->params.newFrameIdPrefix.has_value())
-      header->frame_id = this->params.newFrameIdPrefix.value() + header->frame_id;
-
-    if (this->params.newFrameIdSuffix.has_value())
-      header->frame_id += this->params.newFrameIdSuffix.value();
-
-    if (this->params.newFrameId.has_value())
-      header->frame_id = this->params.newFrameId.value();
-
-    if (this->params.newStampRosTime)
-    {
-      header->stamp = ros::Time::now();
-    }
-    else if (this->params.newStampWallTime)
-    {
-      const auto now = ros::WallTime::now();
-      header->stamp = {now.sec, now.nsec};
-    }
-
-    if (this->params.newStampRel.has_value())
-    {
-      // Correctly handle overflow cases
-      try
-      {
-        header->stamp += this->params.newStampRel.value();
-      }
-      catch (const ::std::runtime_error&)
-      {
-        header->stamp = this->params.newStampRel.value().toSec() > 0 ? ::ros::TIME_MAX : ::ros::TIME_MIN;
-      }
-    }
-
-    if (this->params.newStampAbs.has_value())
-      header->stamp = this->params.newStampAbs.value();
-
-    if (header.value() == origHeader)
-    {
-      this->pub.template publish(msg);
-      return;
-    }
-
-    ::topic_tools::ShapeShifter newMsg;
-    // cannot use newMsg = *msg in Melodic, that would segfault
-    ::cras::copyShapeShifter(*msg, newMsg);
-    if (!::cras::setHeader(newMsg, header.value()))
-    {
-      CRAS_ERROR("Change_header failed to modify the header of the message of type %s! "
-        "Ignoring the message.", this->advertiseOptions->datatype.c_str());
-      return;
-    }
-
-    this->pub.template publish(newMsg);
-  }
-
-  //! \brief Parameters.
-  ::cras::ChangeHeaderParams params;
-};
 
 /**
  * \brief Nodelet for relaying messages and changing their header.
@@ -203,6 +38,9 @@ protected:
  *                                  The `~input` topic will be subscribed in the beginning, and will unsubscribe
  *                                  automatically after the first message is received (this is needed to determine the
  *                                  full type of the topic to publish).
+ * - `~tcp_no_delay` (bool, default False): If True, the `TCP_NODELAY` flag is set for the subscriber. This should
+ *                                         decrease the latency of small messages, but might give suboptimal
+ *                                         transmission speed for large messages.
  * - `~frame_id_prefix` (string, no default): If set, frame_id will be prefixed with this string.
  * - `~frame_id_suffix` (string, no default): If set, frame_id will be suffixed with this string.
  * - `~frame_id` (string, no default): If set, frame_id will be replaced by this string.
@@ -210,7 +48,7 @@ protected:
  *                                                             replaced with `to`.
  * - `~frame_id_replace_end` (string "from|to", no default): If set and frame_id ends with `from`, it will be replaced
  *                                                           with `to`.
- * - `~frame_id_replace` (string "from|to", no default): If set, all occurences of `from` in frame_id will be replaced
+ * - `~frame_id_replace` (string "from|to", no default): If set, all occurrences of `from` in frame_id will be replaced
  *                                                       with `to`.
  * - `~stamp_relative` (double, no default): If set, the given duration will be added to the message's stamp. If the
  *                                           stamp would under/overflow, ros::TIME_MIN or ros::TIME_MAX will be set.
@@ -247,9 +85,50 @@ class ChangeHeaderNodelet : public ::cras::Nodelet
 {
 protected:
   //! \brief The lazy pair of subscriber and publisher.
-  ::std::unique_ptr<::cras::ChangeHeaderPubSub<>> pubSub;
+  ::std::unique_ptr<::cras::GenericLazyPubSub> pubSub;
 
   void onInit() override;
+
+  /**
+   * \brief Change the header of the incoming message and publish the result.
+   * \param [in] event Event containing the received message.
+   * \param [in] pub The publisher to use for publishing.
+   */
+  virtual void processMessage(
+    const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event, ::ros::Publisher& pub);
+
+  //! \brief Replace the whole frame_id with this value.
+  ::cras::optional<::std::string> newFrameId;
+
+  //! \brief Prefix frame_id with this value.
+  ::cras::optional<::std::string> newFrameIdPrefix;
+
+  //! \brief Suffix frame_id with this value.
+  ::cras::optional<::std::string> newFrameIdSuffix;
+
+  //! \brief Replace all occurrences of first string with the second one in frame_id.
+  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplace;
+
+  //! \brief If frame_id starts with the first string, replace it with the second one.
+  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplaceStart;
+
+  //! \brief If frame_id ends with the first string, replace it with the second one.
+  ::cras::optional<::std::pair<::std::string, ::std::string>> newFrameIdReplaceEnd;
+
+  //! \brief Replace stamp with the given value.
+  ::cras::optional<::ros::Time> newStampAbs;
+
+  //! \brief Add this value to stamp. In case of under/overflow, TIME_MIN or TIME_MAX are set.
+  ::cras::optional<::ros::Duration> newStampRel;
+
+  //! \brief Change stamp to current ROS time.
+  bool newStampRosTime {false};
+
+  //! \brief Change stamp to current wall time.
+  bool newStampWallTime {false};
+
+  //! \brief Whether the subscribed topic has a header field. This is filled on receipt of the first message.
+  ::cras::optional<bool> hasHeader {::cras::nullopt};
 };
 
 }

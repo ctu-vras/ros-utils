@@ -15,10 +15,12 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <ros/ros.h>
 #include <ros/subscription.h>
 #include <std_msgs/Header.h>
+#include <topic_tools/shape_shifter.h>
 
 #include <cras_topic_tools/lazy_subscriber.hpp>
 
@@ -53,19 +55,21 @@ size_t getNumSubscriptions(const std::string& topic)
 }
 
 template<typename M>
-class TestLazySubscriber : public cras::LazySubscriber<M>
+class TestLazySubscriber : public cras::LazySubscriberBase<M>
 {
 public:
-  TestLazySubscriber(const ros::Publisher& pub, const typename cras::LazySubscriber<M>::ConnectFn& connectFn,
-    const typename cras::LazySubscriber<M>::DisconnectFn& disconnectFn = [](ros::Subscriber& sub) { sub.shutdown(); },
-    cras::LogHelperPtr logHelper = std::make_shared<cras::NodeLogHelper>()) :
-      cras::LazySubscriber<M>(pub, connectFn, disconnectFn, logHelper)
+  TestLazySubscriber(ros::NodeHandle publisherNh, const std::string& publisherTopic,
+    typename cras::ConditionalSubscriber::ConnectFn connectFn,
+    typename cras::ConditionalSubscriber::DisconnectFn disconnectFn = [](ros::Subscriber& sub) { sub.shutdown(); },
+    const cras::LogHelperPtr& logHelper = std::make_shared<cras::NodeLogHelper>()) :
+      cras::LazySubscriberBase<M>(
+        std::move(publisherNh), publisherTopic, std::move(connectFn), std::move(disconnectFn), logHelper)
   {
   }
-  using cras::LazySubscriber<M>::connectCb;
+  using cras::LazySubscriberBase<M>::connectCb;
 };
 
-TEST(LazySubscriber, Test)  // NOLINT
+TEST(LazySubscriberBase, Test)  // NOLINT
 {
   ros::NodeHandle nh;
   ros::NodeHandle pnh({"tmp"}, "my");
@@ -85,7 +89,8 @@ TEST(LazySubscriber, Test)  // NOLINT
       ++numOutReceived;
     };
 
-  auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(outPub, [&](ros::Subscriber& sub)
+  auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(
+    pnh, outPub.getTopic(), [&](ros::Subscriber& sub)
     {
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("in", 10, relayCb);
@@ -240,7 +245,7 @@ TEST(LazySubscriber, Test)  // NOLINT
   }
 }
 
-TEST(LazySubscriber, SetLazy)  // NOLINT
+TEST(LazySubscriberBase, SetLazy)  // NOLINT
 {
   ros::NodeHandle nh;
   ros::NodeHandle pnh({"tmp"}, "my");
@@ -260,7 +265,8 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
       ++numOutReceived;
     };
 
-  auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(outPub, [&](ros::Subscriber& sub)
+  auto lazySub = std::make_unique<TestLazySubscriber<std_msgs::Header>>(
+    pnh, outPub.getTopic(), [&](ros::Subscriber& sub)
     {
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("in", 10, relayCb);
@@ -395,7 +401,7 @@ TEST(LazySubscriber, SetLazy)  // NOLINT
   EXPECT_EQ(true, lazySub->isLazy());
 }
 
-TEST(LazySubscriber, Chain)  // NOLINT
+TEST(LazySubscriberBase, Chain)  // NOLINT
 {
   ros::NodeHandle nh;
   ros::NodeHandle pnh({"tmp"}, "my");
@@ -430,17 +436,17 @@ TEST(LazySubscriber, Chain)  // NOLINT
     {
       ++numOutReceived;
     };
-  TestLazySubscriber<std_msgs::Header> lazySub1(inter1Pub, [&](ros::Subscriber& sub)
+  TestLazySubscriber<std_msgs::Header> lazySub1(nh, inter1Pub.getTopic(), [&](ros::Subscriber& sub)
     {
       ++numInter1Subscribes;
       sub = nh.subscribe<std_msgs::Header>("in", 10, relayToInter1Cb);
     });
-  TestLazySubscriber<std_msgs::Header> lazySub2(inter2Pub, [&](ros::Subscriber& sub)
+  TestLazySubscriber<std_msgs::Header> lazySub2(nh, inter2Pub.getTopic(), [&](ros::Subscriber& sub)
     {
       ++numInter2Subscribes;
       sub = nh.subscribe<std_msgs::Header>("inter1", 10, relayToInter2Cb);
     });
-  TestLazySubscriber<std_msgs::Header> lazySub3(outPub, [&](ros::Subscriber& sub)
+  TestLazySubscriber<std_msgs::Header> lazySub3(nh, outPub.getTopic(), [&](ros::Subscriber& sub)
     {
       ++numOutSubscribes;
       sub = nh.subscribe<std_msgs::Header>("inter2", 10, relayToOutCb);
@@ -551,6 +557,300 @@ TEST(LazySubscriber, Chain)  // NOLINT
   EXPECT_EQ(false, lazySub1.isSubscribed());
   EXPECT_EQ(false, lazySub2.isSubscribed());
   EXPECT_EQ(false, lazySub3.isSubscribed());
+}
+
+TEST(LazySubscriber, Test)  // NOLINT
+{
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh({"tmp"}, "my");
+  auto outPub = pnh.advertise<std_msgs::Header>("out", 10);
+  auto inPub = nh.advertise<std_msgs::Header>("in", 10);
+
+  size_t numInReceived = 0;
+  size_t numOutReceived = 0;
+  boost::function<void(const std_msgs::Header&)> relayCb = [&](const std_msgs::Header& h)
+    {
+      ++numInReceived;
+      outPub.publish(h);
+    };
+  boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
+    {
+      ++numOutReceived;
+    };
+
+  auto lazySub = std::make_unique<cras::LazySubscriber<std_msgs::Header>>(
+    pnh, outPub.getTopic(), nh, "in", 10, relayCb);
+
+  spin(0.1);
+  EXPECT_EQ(0, numInReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(0, numInReceived);
+    EXPECT_EQ(0, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    inPub.publish(std_msgs::Header());
+
+    spin(0.1);
+    EXPECT_EQ(1, numInReceived);
+    EXPECT_EQ(1, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+  }
+
+  spin(0.1);
+  EXPECT_EQ(1, numInReceived);
+  EXPECT_EQ(1, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  inPub.publish(std_msgs::Header());
+
+  spin(0.1);
+  EXPECT_EQ(1, numInReceived);
+  EXPECT_EQ(1, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+    auto outSub2 = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(1, numInReceived);
+    EXPECT_EQ(1, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(2, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    inPub.publish(std_msgs::Header());
+    inPub.publish(std_msgs::Header());
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(2, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+  }
+
+  spin(0.1);
+  EXPECT_EQ(3, numInReceived);
+  EXPECT_EQ(5, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  inPub.publish(std_msgs::Header());
+  inPub.publish(std_msgs::Header());
+  inPub.publish(std_msgs::Header());
+
+  spin(0.1);
+  EXPECT_EQ(3, numInReceived);
+  EXPECT_EQ(5, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    // Delete the pubsub object - it should disconnect the subscriber.
+    lazySub.reset();
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(0, inPub.getNumSubscribers());
+    EXPECT_EQ(0, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+  }
+}
+
+TEST(LazySubscriber, MessageEvent)  // NOLINT
+{
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh({"tmp"}, "my");
+  auto outPub = pnh.advertise<std_msgs::Header>("out", 10);
+  auto inPub = nh.advertise<std_msgs::Header>("in", 10);
+
+  size_t numInReceived = 0;
+  size_t numOutReceived = 0;
+  boost::function<void(const ros::MessageEvent<const topic_tools::ShapeShifter>&)> relayCb =
+    [&](const ros::MessageEvent<const topic_tools::ShapeShifter>& h)
+    {
+      ++numInReceived;
+      outPub.publish(*h.getConstMessage());
+    };
+  boost::function<void(const std_msgs::Header&)> outCb = [&](const std_msgs::Header& h)
+    {
+      ++numOutReceived;
+    };
+
+  auto lazySub = std::make_unique<
+    cras::LazySubscriber<std_msgs::Header, const ros::MessageEvent<const topic_tools::ShapeShifter>&>>(
+      pnh, outPub.getTopic(), nh, "in", 10, relayCb);
+
+  spin(0.1);
+  EXPECT_EQ(0, numInReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(0, numInReceived);
+    EXPECT_EQ(0, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    inPub.publish(std_msgs::Header());
+
+    spin(0.1);
+    EXPECT_EQ(1, numInReceived);
+    EXPECT_EQ(1, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+  }
+
+  spin(0.1);
+  EXPECT_EQ(1, numInReceived);
+  EXPECT_EQ(1, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  inPub.publish(std_msgs::Header());
+
+  spin(0.1);
+  EXPECT_EQ(1, numInReceived);
+  EXPECT_EQ(1, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+    auto outSub2 = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(1, numInReceived);
+    EXPECT_EQ(1, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(2, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    inPub.publish(std_msgs::Header());
+    inPub.publish(std_msgs::Header());
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(2, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+  }
+
+  spin(0.1);
+  EXPECT_EQ(3, numInReceived);
+  EXPECT_EQ(5, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  inPub.publish(std_msgs::Header());
+  inPub.publish(std_msgs::Header());
+  inPub.publish(std_msgs::Header());
+
+  spin(0.1);
+  EXPECT_EQ(3, numInReceived);
+  EXPECT_EQ(5, numOutReceived);
+  EXPECT_EQ(0, outPub.getNumSubscribers());
+  EXPECT_EQ(0, inPub.getNumSubscribers());
+  EXPECT_EQ(0, getNumSubscriptions("/in"));
+  EXPECT_EQ(0, getNumSubscriptions("/tmp/my/out"));
+  EXPECT_EQ(false, lazySub->isSubscribed());
+
+  {
+    auto outSub = pnh.subscribe<std_msgs::Header>("out", 10, outCb);
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(1, inPub.getNumSubscribers());
+    EXPECT_EQ(1, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+    EXPECT_EQ(true, lazySub->isSubscribed());
+
+    // Delete the pubsub object - it should disconnect the subscriber.
+    lazySub.reset();
+
+    spin(0.1);
+    EXPECT_EQ(3, numInReceived);
+    EXPECT_EQ(5, numOutReceived);
+    EXPECT_EQ(1, outPub.getNumSubscribers());
+    EXPECT_EQ(0, inPub.getNumSubscribers());
+    EXPECT_EQ(0, getNumSubscriptions("/in"));
+    EXPECT_EQ(1, getNumSubscriptions("/tmp/my/out"));
+  }
 }
 
 int main(int argc, char **argv)
