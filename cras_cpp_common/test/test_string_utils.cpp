@@ -1168,8 +1168,8 @@ TEST(StringUtils, ParseFloat)  // NOLINT
   EXPECT_EQ(-3.141592f, cras::parseFloat("-3.141592"));
   EXPECT_EQ(3.402823466e+38f, cras::parseFloat("3.402823466e+38"));
   EXPECT_EQ(-3.402823466e+38f, cras::parseFloat("-3.402823466e+38"));
-  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::parseFloat("3.5e+38"));
-  EXPECT_EQ(-std::numeric_limits<float>::infinity(), cras::parseFloat("-3.5e+38"));
+  EXPECT_THROW(cras::parseFloat("3.5e+38"), std::invalid_argument);
+  EXPECT_THROW(cras::parseFloat("-3.5e+38"), std::invalid_argument);
   EXPECT_THROW(cras::parseFloat(" 1.0  "), std::invalid_argument);
   EXPECT_THROW(cras::parseFloat("1 .0"), std::invalid_argument);
   EXPECT_THROW(cras::parseFloat("1. 0"), std::invalid_argument);
@@ -1202,8 +1202,8 @@ TEST(StringUtils, ParseDouble)  // NOLINT
   EXPECT_EQ(-3.141592, cras::parseDouble("-3.141592"));
   EXPECT_EQ(1.79769e+308, cras::parseDouble("1.79769e+308"));
   EXPECT_EQ(-1.79769e+308, cras::parseDouble("-1.79769e+308"));
-  EXPECT_EQ(std::numeric_limits<double>::infinity(), cras::parseDouble("1.8e+308"));
-  EXPECT_EQ(-std::numeric_limits<double>::infinity(), cras::parseDouble("-1.8e+308"));
+  EXPECT_THROW(cras::parseDouble("1.8e+308"), std::invalid_argument);
+  EXPECT_THROW(cras::parseDouble("-1.8e+308"), std::invalid_argument);
   EXPECT_THROW(cras::parseDouble(" 1.0  "), std::invalid_argument);
   EXPECT_THROW(cras::parseDouble("1 .0"), std::invalid_argument);
   EXPECT_THROW(cras::parseDouble("1. 0"), std::invalid_argument);
