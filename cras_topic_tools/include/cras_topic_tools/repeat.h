@@ -116,6 +116,7 @@ protected:
   /**
    * \brief Record the incoming message if it passes validations, and publish it if `publishOnlyOnTimer` is false.
    * \param[in] event The incoming message event.
+   * \param[in] pub The publisher to be used for publishing the repeated messages.
    * \note It is safe to call this function from multiple threads (access to the stored message is mutex-protected).
    */
   void processMessage(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event, ::ros::Publisher& pub);

@@ -100,6 +100,7 @@ protected:
   /**
    * \brief Publish the incoming message if the rate limiter allows.
    * \param[in] event The incoming message event.
+   * \param[in] pub The publisher to be used for publishing the throttled messages.
    * \note It is safe to call this function from multiple threads (access to the rate limiter is mutex-protected).
    */
   void processMessage(const ::ros::MessageEvent<const ::topic_tools::ShapeShifter>& event, ::ros::Publisher& pub);
