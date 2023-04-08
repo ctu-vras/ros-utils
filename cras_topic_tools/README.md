@@ -28,15 +28,15 @@ Release jobs Noetic
 Here is an overview of the provided nodes and nodelets. See their [API docs](https://docs.ros.org/en/api/cras_topic_tools/html/) for details.
 Most of these nodes/nodelets are message-type-agnostic, but they may differ between messages that have or do not have a `std_msgs/Header header` field.
 
-- `change_header`: Allows modifying headers of messages (frame ID, timestamp).
-- `count_messages`: Count the number of received messages and make it available as a ROS parameter.
-- `filter`: (only node, no nodelet) Filter messages on a topic based on a Python expression.
-- `heartbeat`: Publish `cras_msgs/Heartbeat` heartbeat of a topic.
-- `mux_replay`: (only node, no nodelet) Control a `mux` with a recording of its `~selected` topic as if it were live.
+- `change_header`: Allows modifying headers of messages (frame ID, timestamp). [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1ChangeHeaderNodelet.html#details).
+- `count_messages`: Count the number of received messages and make it available as a ROS parameter. [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1CountMessagesNodelet.html#details).
+- `filter`: (only node, no nodelet) Filter messages on a topic based on a Python expression. [Usage](https://github.com/ctu-vras/ros-utils/blob/master/cras_topic_tools/nodes/filter).
+- `heartbeat`: Publish `cras_msgs/Heartbeat` heartbeat of a topic. [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1HeartbeatNodelet.html#details).
+- `mux_replay`: (only node, no nodelet) Control a `mux` with a recording of its `~selected` topic as if it were live. [Usage](https://github.com/ctu-vras/ros-utils/blob/master/cras_topic_tools/nodes/mux_replay).
 - `priority_mux`: Inspired by `twist_mux`, provides a hierarchical way of switching output topics. Works for all message types and for multiple output topics.
-- `relay`: Simple relay with the possibility of lazy subscription.
-- `repeat`: Increase the frequency of a topic (with various trigger modes etc.).
-- `throttle_messages`: Throttle down frequency of a topic - to an exact value, not using the imprecise algorithm from `topic_tools throttle`.
+- `relay`: Simple relay with the possibility of lazy subscription. [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1RelayNodelet.html#details).
+- `repeat`: Increase the frequency of a topic (with various trigger modes etc.). [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1RepeatMessagesNodelet.html#details).
+- `throttle_messages`: Throttle down frequency of a topic - to an exact value, not using the imprecise algorithm from `topic_tools throttle`. [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1ThrottleMessagesNodelet.html#details).
 
 A few convenience libraries for working with generic topics are also provided:
 
