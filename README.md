@@ -7,8 +7,10 @@ Various ROS utilities and building blocks developed by [Center for Robotics and 
 Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean Challenge](https://robotics.fel.cvut.cz/cras/darpa-subt/).
 
 * `cras_cpp_common`: convenience utilities for ROS programming in C++
+* `cras_docs_common`: utilities for setting up documentation generators
 * `cras_py_common`: convenience utilities for ROS programming in Python
 * `cras_topic_tools`: nodes and nodeletes for safe and efficient manipulation with topics
+* `image_transport_codecs`: image\_transport converted to C++ and Python libraries directly usable even without a running ROS system
 
 ## Support and Build Status
 
