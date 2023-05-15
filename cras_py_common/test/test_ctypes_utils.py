@@ -14,7 +14,7 @@ from std_msgs.msg import Header
 from rosgraph_msgs.msg import Log
 
 from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, RosMessagesAllocator, \
-    LogMessagesAllocator, get_ro_c_buffer, c_array
+    LogMessagesAllocator, ScalarAllocator, get_ro_c_buffer, c_array
 from cras.string_utils import BufferStringIO
 from cras.test_utils import RosconsoleCapture
 
@@ -100,6 +100,33 @@ class CtypesUtils(unittest.TestCase):
         self.assertEqual(a.allocated_sizes[1], 5)
         self.assertEqual(a.value, b'\x00\x01\x02\x03')
         self.assertEqual(a.values, [b'\x00\x01\x02\x03', b'\x04\x05\x06\x07\x08'])
+
+    def test_scalar_allocator(self):
+        a = ScalarAllocator(c_double)
+        self.assertEqual(0, len(a.allocated))
+        self.assertEqual(0, len(a.allocated_sizes))
+        self.assertIsNone(a.value)
+        self.assertEqual(0, len(a.values))
+        a(8)
+        self.assertEqual(len(a.allocated), 1)
+        a.allocated[0][0] = 4.0
+        self.assertEqual(len(a.allocated_sizes), 1)
+        self.assertEqual(a.value, 4.0)
+        self.assertEqual(a.values[0], 4.0)
+        self.assertEqual(a.allocated_sizes[0], 8)
+        a(8)
+        self.assertEqual(len(a.allocated), 2)
+        a.allocated[1][0] = 5.0
+        self.assertEqual(len(a.allocated_sizes), 2)
+        self.assertEqual(a.value, 4.0)
+        self.assertEqual(a.values[0], 4.0)
+        self.assertEqual(a.values[1], 5.0)
+        self.assertEqual(a.allocated_sizes[0], 8)
+        self.assertEqual(a.allocated_sizes[1], 8)
+
+        self.assertRaises(RuntimeError, a, 7)
+        self.assertRaises(RuntimeError, a, 4)
+        self.assertRaises(RuntimeError, a, 16)
 
     def test_ros_messages_allocator(self):
         a = RosMessagesAllocator(Header)

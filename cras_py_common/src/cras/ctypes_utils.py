@@ -3,7 +3,7 @@
 
 """Utilities for working with the ctypes library."""
 
-from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, POINTER, string_at
+from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, POINTER, string_at, sizeof
 from ctypes.util import find_library
 from logging import LogRecord
 import os
@@ -11,8 +11,6 @@ import sys
 
 from rosgraph.roslogging import RosStreamHandler
 import rospy
-
-import cras
 
 
 RTLD_LAZY = 1
@@ -174,6 +172,33 @@ class BytesAllocator(Allocator):
     @property
     def values(self):
         return[string_at(a, s) for a, s in zip(self.allocated, self.allocated_sizes)]
+
+
+class ScalarAllocator(Allocator):
+    """ctypes allocator suitable for allocating scalar values (e.g. numbers). The returned value is a scalar value.
+
+    This means the size of each allocation needs to exactly match the number of bytes the given `c_type` has. If other
+    sizes are requested, :class:`RuntimeError` is thrown.
+    """
+
+    def __init__(self, c_type):
+        super(ScalarAllocator, self).__init__()
+        self._c_type = c_type
+
+    def _alloc(self, size):
+        if size != sizeof(self._c_type):
+            raise RuntimeError("ScalarAllocator can only handle size 1 allocations.")
+        return (self._c_type * 1)()
+
+    @property
+    def value(self):
+        if len(self.allocated) == 0:
+            return None
+        return self.allocated[0][0]
+
+    @property
+    def values(self):
+        return [a[0] for a in self.allocated]
 
 
 class RosMessagesAllocator(BytesAllocator):
