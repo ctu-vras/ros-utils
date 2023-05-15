@@ -68,7 +68,7 @@ def get_ro_c_buffer(buf, buf_len=None):
 
 def c_array(data, c_type):
     """Convert the given Python iterable to a C array with zero element after the last one.
-    
+
     :param list data: The data to convert.
     :param type c_type: The ctypes type of the individual elements.
     :return: The ctypes array (it is one element longer than the input).
