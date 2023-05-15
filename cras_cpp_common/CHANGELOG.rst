@@ -2,6 +2,9 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.2.0 (2023-04-09)
 ------------------
 * Fixed parseFloat()/parseDouble() tests to reflect the behavior change in fast_float library.

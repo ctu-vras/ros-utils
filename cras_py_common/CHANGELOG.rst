@@ -2,6 +2,13 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* message_utils: Added dict_to_dynamic_config_msg().
+* ctypes_utils: Added c_array() method.
+* message_utils: Added get_srv_types() and get_cfg_module().
+* Contributors: Martin Pecka
+
 2.2.0 (2023-04-09)
 ------------------
 
