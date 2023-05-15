@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.2 (2023-05-15)
+------------------
 * ctypes_utils: Added ScalarAllocator.
 * Contributors: Martin Pecka
 
