@@ -66,6 +66,19 @@ def get_ro_c_buffer(buf, buf_len=None):
         return cast(buf, POINTER(c_uint8))
 
 
+def c_array(data, c_type):
+    """Convert the given Python iterable to a C array with zero element after the last one.
+    
+    :param list data: The data to convert.
+    :param type c_type: The ctypes type of the individual elements.
+    :return: The ctypes array (it is one element longer than the input).
+    """
+    c_data = (c_type * (len(data) + 1))()
+    c_data[:-1] = data
+    c_data[-1] = 0
+    return c_data
+
+
 class Allocator(object):
     """An allocator that can be passed as a callback to a C function that should return dynamically allocated data.
 

@@ -5,7 +5,7 @@
 
 """Unit test for cras.ctypes_utils"""
 
-from ctypes import c_double, string_at
+from ctypes import c_double, string_at, Array
 import math
 import unittest
 
@@ -14,7 +14,7 @@ from std_msgs.msg import Header
 from rosgraph_msgs.msg import Log
 
 from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, RosMessagesAllocator, \
-    LogMessagesAllocator, get_ro_c_buffer
+    LogMessagesAllocator, get_ro_c_buffer, c_array
 from cras.string_utils import BufferStringIO
 from cras.test_utils import RosconsoleCapture
 
@@ -202,6 +202,13 @@ class CtypesUtils(unittest.TestCase):
 
         buf = get_ro_c_buffer(BufferStringIO(b'\x01\x02'))
         self.assertEqual(string_at(buf, 2), b'\x01\x02')
+
+    def test_c_array(self):
+        py_arr = [1, 2]
+        c_arr = c_array(py_arr, c_double)
+        self.assertTrue(isinstance(c_arr, Array))
+        self.assertEqual(len(c_arr), len(py_arr) + 1)
+        self.assertEqual(c_arr[-1], 0)
 
 
 if __name__ == '__main__':
