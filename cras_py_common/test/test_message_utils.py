@@ -7,7 +7,7 @@
 
 import unittest
 
-from cras import get_msg_field, get_msg_type
+from cras import get_msg_field, get_msg_type, get_srv_types, get_cfg_module
 
 
 class MessageUtils(unittest.TestCase):
@@ -41,6 +41,28 @@ class MessageUtils(unittest.TestCase):
         msg = cls()
         from std_msgs.msg import String
         self.assertIsInstance(msg, String)
+
+    def test_get_srv_types(self):
+        cls, cls_req, cls_resp = get_srv_types("std_srvs/SetBool")
+        self.assertEqual(cls._type, "std_srvs/SetBool")
+        self.assertEqual(cls_req._type, "std_srvs/SetBoolRequest")
+        self.assertEqual(cls_resp._type, "std_srvs/SetBoolResponse")
+        self.assertTrue(hasattr(cls_req, "data"))
+        self.assertTrue(hasattr(cls_resp, "success"))
+
+        from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
+        self.assertIsInstance(cls(), SetBool)
+        self.assertIsInstance(cls_req(), SetBoolRequest)
+        self.assertIsInstance(cls_resp(), SetBoolResponse)
+
+    def test_get_cfg_type(self):
+        module = get_cfg_module("cras_cpp_common/FilterChain")
+        self.assertEqual(module.__name__, "cras_cpp_common.cfg.FilterChainConfig")
+        self.assertTrue(hasattr(module, "defaults"))
+        self.assertTrue(hasattr(module, "min"))
+
+        from cras_cpp_common.cfg import FilterChainConfig
+        self.assertEqual(getattr(module, "defaults"), FilterChainConfig.defaults)
 
 
 if __name__ == '__main__':

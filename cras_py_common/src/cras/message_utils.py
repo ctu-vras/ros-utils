@@ -25,6 +25,37 @@ def get_msg_type(msg_type_str):
     return getattr(pkg_module, msg)
 
 
+def get_srv_types(srv_type_str):
+    """Load and return a Python types corresponding to the given ROS service type.
+
+    :param str srv_type_str: Type of the service in textual form (e.g. `std_srvs/SetBool`).
+    :return: A tuple of the main service Python type, the request type and the response type.
+    :rtype: tuple
+    """
+    pkg, msg = srv_type_str.split('/')
+    pkg = pkg + '.srv'
+    if pkg not in __pkg_modules:
+        __pkg_modules[pkg] = importlib.import_module(pkg)
+    pkg_module = __pkg_modules[pkg]
+    return getattr(pkg_module, msg), getattr(pkg_module, msg + "Request"), getattr(pkg_module, msg + "Response")
+
+
+def get_cfg_module(cfg_type_str):
+    """Load and return a Python module corresponding to the given ROS dynamic reconfigure type.
+
+    :param str cfg_type_str: Type of the config in textual form (e.g. `compressed_image_transport/CompressedPublisher`).
+    :return: The Python module.
+    """
+    if len(cfg_type_str) == 0:
+        return None
+    pkg, cfg = cfg_type_str.split('/')
+    cfg += 'Config'
+    cfg_module = pkg + '.cfg.' + cfg
+    if cfg_module not in __pkg_modules:
+        __pkg_modules[cfg_module] = importlib.import_module(cfg_module)
+    return __pkg_modules[cfg_module]
+
+
 def get_msg_field(msg, field, sep="/"):
     """Parse a data field from a ROS message using a textual field address description.
 
