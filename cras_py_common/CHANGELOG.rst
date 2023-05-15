@@ -2,6 +2,11 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ctypes_utils: Added ScalarAllocator.
+* Contributors: Martin Pecka
+
 2.2.1 (2023-05-15)
 ------------------
 * message_utils: Added dict_to_dynamic_config_msg().
