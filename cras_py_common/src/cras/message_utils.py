@@ -6,6 +6,10 @@
 
 import importlib
 
+from dynamic_reconfigure.msg import Config, BoolParameter, DoubleParameter, IntParameter, StrParameter
+
+from .string_utils import STRING_TYPE
+
 
 __pkg_modules = dict()
 
@@ -79,3 +83,28 @@ def get_msg_field(msg, field, sep="/"):
             idx = int(idx)
             data = data[idx]
     return data
+
+
+def dict_to_dynamic_config_msg(d):
+    """Convert configuration dict to :class:`dynamic_reconfigure.msg.Config`.
+
+    :param d: Configuration dict (or already the message, in which case it is just returned).
+    :type d: dict or dynamic_reconfigure.msg.Config or None
+    :return: The config message.
+    :rtype: dynamic_reconfigure.msg.Config
+    """
+    if d is None:
+        return Config()
+    if isinstance(d, Config):
+        return d
+    c = Config()
+    for key, value in d.items():
+        if isinstance(value, bool):
+            c.bools.append(BoolParameter(key, value))
+        elif isinstance(value, float):
+            c.doubles.append(DoubleParameter(key, value))
+        elif isinstance(value, int):
+            c.ints.append(IntParameter(key, value))
+        elif isinstance(value, STRING_TYPE):
+            c.strs.append(StrParameter(key, value))
+    return c

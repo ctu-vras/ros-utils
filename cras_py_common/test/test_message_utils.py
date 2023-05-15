@@ -7,7 +7,7 @@
 
 import unittest
 
-from cras import get_msg_field, get_msg_type, get_srv_types, get_cfg_module
+from cras import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module
 
 
 class MessageUtils(unittest.TestCase):
@@ -63,6 +63,41 @@ class MessageUtils(unittest.TestCase):
 
         from cras_cpp_common.cfg import FilterChainConfig
         self.assertEqual(getattr(module, "defaults"), FilterChainConfig.defaults)
+
+    def test_dict_to_dynamic_config(self):
+        d = {
+            "a": False,
+            "b": True,
+            "c": 1,
+            "d": 2.0,
+            "e": "str",
+        }
+        config = dict_to_dynamic_config_msg(d)
+
+        self.assertEqual(len(config.bools), 2)
+        self.assertEqual(len(config.ints), 1)
+        self.assertEqual(len(config.doubles), 1)
+        self.assertEqual(len(config.strs), 1)
+
+        if config.bools[0].name == "a":
+            self.assertEqual(config.bools[0].name, "a")
+            self.assertEqual(config.bools[0].value, False)
+            self.assertEqual(config.bools[1].name, "b")
+            self.assertEqual(config.bools[1].value, True)
+        else:
+            self.assertEqual(config.bools[0].name, "a")
+            self.assertEqual(config.bools[0].value, True)
+            self.assertEqual(config.bools[1].name, "b")
+            self.assertEqual(config.bools[1].value, False)
+
+        self.assertEqual(config.ints[0].name, "c")
+        self.assertEqual(config.ints[0].value, 1)
+        self.assertEqual(config.doubles[0].name, "d")
+        self.assertEqual(config.doubles[0].value, 2.0)
+        self.assertEqual(config.strs[0].name, "e")
+        self.assertEqual(config.strs[0].value, "str")
+
+        self.assertEqual(dict_to_dynamic_config_msg(config), config)
 
 
 if __name__ == '__main__':
