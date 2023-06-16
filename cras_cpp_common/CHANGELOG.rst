@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.3 (2023-06-16)
+------------------
 * Install node_from_nodelet targets in PACKAGE_BIN and not GLOBAL_BIN
 * Contributors: Martin Pecka
 
