@@ -7,8 +7,10 @@
  * \author Martin Pecka
  */
 
+#include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include <nodelet/nodelet.h>
 #include <rosgraph_msgs/Log.h>
@@ -20,6 +22,16 @@
 
 namespace cras
 {
+
+static std::unordered_map<const void*, size_t> logHelperNumInstances;
+
+LogHelper::LogHelper()
+{
+  // The only way this number can get over 1 is that the memory manager recycles an address already given to a previous
+  // instance that got deleted in the meantime. This way, we know this number will stay equal for the whole lifetime
+  // of an instance, and will be different when the memory address is recycled.
+  logHelperNumInstances[this]++;
+}
 
 void LogHelper::print(ros::console::FilterBase* filter, void* logger, ros::console::Level level,
   const char* file, int line, const char* function, const std::string fmt, ...) const
@@ -112,7 +124,15 @@ ros::Time LogHelper::getTimeNow() const
 
 const void* LogHelper::getId() const
 {
-  return this;
+  // We want to get an ID that is unique. As a base, we use the memory address of this logger. However, the address
+  // might be a recycled address that belonged to some previous instance. logHelperNumInstances helps us differentiate
+  // such instances. The reason why the memory address is hashed first is so that it is not as easy to collide with
+  // other objects in the memory area of the process - in the worst case, when an array of loghelpers would be
+  // constructed, simply adding +1 to the current one's address might easily point to the address of the next one and
+  // their IDs might clash in case the first one has been constructed one times more than the following one.
+  // Here, we hope that hashing will uniformly distribute even sequential addresses into non-overlapping intervals
+  // (okay, unless somebody creates billions of instances).
+  return reinterpret_cast<const void*>(std::hash<const void*>{}(this) + logHelperNumInstances[this]);
 }
 
 void LogHelper::setGlobalLogger() const

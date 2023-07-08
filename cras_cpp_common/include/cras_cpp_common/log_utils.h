@@ -57,7 +57,7 @@ public:
 
   // The class is not copyable/movable to prevent slicing
 
-  LogHelper() = default;
+  LogHelper();
   virtual ~LogHelper() = default;
   LogHelper(const LogHelper&) = delete;
   LogHelper& operator=(const LogHelper&) = delete;
