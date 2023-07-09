@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   cras_msgs
   nodelet
   roscpp
+  std_msgs
   topic_tools
 )
 
@@ -13,7 +14,8 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cras_shape_shifter
+  CATKIN_DEPENDS cras_cpp_common roscpp
+  LIBRARIES cras_shape_shifter cras_priority_mux
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -57,9 +59,13 @@ add_dependencies(cras_change_header_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} 
 target_link_libraries(cras_change_header_nodelet cras_generic_lazy_pubsub cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_change_header_nodelet ${PROJECT_NAME}/change_header.h cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
 
+add_library(cras_priority_mux src/priority_mux_base.cpp)
+add_dependencies(cras_priority_mux ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_priority_mux ${catkin_LIBRARIES})
+
 add_library(cras_priority_mux_nodelet src/priority_mux.cpp)
 add_dependencies(cras_priority_mux_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_priority_mux_nodelet ${catkin_LIBRARIES})
+target_link_libraries(cras_priority_mux_nodelet cras_priority_mux ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_priority_mux_nodelet ${PROJECT_NAME}/priority_mux.h cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
 
 add_library(cras_heartbeat_nodelet src/heartbeat.cpp)
@@ -74,7 +80,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 install(TARGETS
   cras_change_header_nodelet cras_count_messages_nodelet cras_generic_lazy_pubsub cras_heartbeat_nodelet cras_lazy_subscriber
-  cras_priority_mux_nodelet cras_relay_nodelet cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
+  cras_priority_mux cras_priority_mux_nodelet cras_relay_nodelet cras_repeat_nodelet cras_shape_shifter cras_throttle_messages_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
@@ -131,6 +137,9 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_shape_shifter test/test_shape_shifter.cpp)
   target_link_libraries(test_shape_shifter cras_shape_shifter ${catkin_LIBRARIES} ${geometry_msgs_LIBRARIES})
+
+  catkin_add_gtest(test_priority_mux_base test/test_priority_mux_base.cpp)
+  target_link_libraries(test_priority_mux_base cras_priority_mux ${catkin_LIBRARIES})
 
   add_rostest_gtest(test_cras_lazy_subscriber test/test_lazy_subscriber.test test/test_lazy_subscriber.cpp)
   target_link_libraries(test_cras_lazy_subscriber cras_lazy_subscriber ${catkin_LIBRARIES})

@@ -1,33 +1,50 @@
-topics:
-  -
-    name    : joy_teleop/cmd_vel
-    topic   : joy_teleop/cmd_vel
-    timeout : 1.5
-    priority: 101
-  -
-    name    : maker
-    topic   : cmd
-    timeout : 10.0
-    priority: 10
-  -
-    name     : common
-    topic    : cmd_vel
-    timeout  : 0.5
-    priority : 1
-    out_topic: mux_out2
-  -
-    name    : command_line
-    topic   : cmd_vel_terminal
-    timeout : 0.5
-    priority: 90
-locks:
-  -
-    name    : darpa_estop
-    topic   : emergency_stop
-    timeout : 10000.0
-    priority: 100
-  -
-    name    : estop
-    topic   : estop
-    timeout : 1.0
-    priority: 101
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+mux:
+  default_out_topic: cmd_vel
+  topics:
+    - topic: nav/cmd_vel
+      timeout: 1.0
+      priority: 10
+    - topic: remote_joy/cmd_vel
+      timeout: 0.5
+      priority: 20
+    - topic: local_joy/cmd_vel
+      timeout: 0.5
+      priority: 30
+      disable_topic: local_joy/disable
+    - topic: safety/cmd_vel
+      timeout: 0.15
+      priority: 50
+    - topic: emergency_stop/cmd_vel
+      timeout: 1.0
+      priority: 255
+    - topic: nav/tracks_vel_cmd
+      timeout: 1.0
+      priority: 10
+      out_topic: tracks_vel_cmd
+    - topic: remote_joy/tracks_vel_cmd
+      timeout: 0.5
+      priority: 20
+      out_topic: tracks_vel_cmd
+    - topic: local_joy/tracks_vel_cmd
+      timeout: 0.5
+      priority: 30
+      out_topic: tracks_vel_cmd
+      disable_topic: local_joy/disable
+    - topic: safety/tracks_vel_cmd
+      timeout: 0.15
+      priority: 50
+      out_topic: tracks_vel_cmd
+    - topic: emergency_stop/tracks_vel_cmd
+      timeout: 1.0
+      priority: 255
+      out_topic: tracks_vel_cmd
+  locks:
+    - topic: emergency_stop
+      timeout: 1.0
+      priority: 255
+    - topic: stop_motion
+      timeout: 0.0
+      priority: 100
