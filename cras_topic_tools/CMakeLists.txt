@@ -185,4 +185,7 @@ if (CATKIN_ENABLE_TESTING)
 
   add_rostest(test/test_filter.test)
   roslaunch_add_file_check(test/test_filter.test USE_TEST_DEPENDENCIES)
+
+  add_rostest(test/test_priority_mux.test DEPENDENCIES cras_priority_mux_nodelet_node)
+  roslaunch_add_file_check(test/test_priority_mux.test USE_TEST_DEPENDENCIES)
 endif()

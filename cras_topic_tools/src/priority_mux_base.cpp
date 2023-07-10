@@ -20,12 +20,12 @@ namespace cras
 
 PriorityMux::PriorityMux(const std::unordered_map<std::string, cras::priority_mux::TopicConfig>& topicConfigs,
                          const std::unordered_map<std::string, cras::priority_mux::LockConfig>& lockConfigs,
-                         const cras::PriorityMux::SetTimerFn& setTimerFn, const cras::LogHelperPtr& log,
-                         const std::string& noneTopic, int nonePriority) :
+                         const cras::PriorityMux::SetTimerFn& setTimerFn, const ::ros::Time& now,
+                         const cras::LogHelperPtr& log, const std::string& noneTopic, int nonePriority) :
   cras::HasLogger(log), topicConfigs(topicConfigs), lockConfigs(lockConfigs), setTimer(setTimerFn),
   noneTopic(noneTopic), nonePriority(nonePriority)
 {
-  this->resetImpl();
+  this->resetImpl(now);
 
   CRAS_INFO("Starting with priority %i.", nonePriority);
   for (const auto& outAndSelectedTopic : this->lastSelectedTopics)
@@ -212,14 +212,15 @@ int PriorityMux::getActivePriority() const
   return this->lastActivePriority;
 }
 
-void PriorityMux::reset()
+void PriorityMux::reset(const ::ros::Time& now)
 {
-  this->resetImpl();
+  this->resetImpl(now);
 }
 
-void PriorityMux::resetImpl()
+void PriorityMux::resetImpl(const ::ros::Time& now)
 {
   this->lastActivePriority = this->nonePriority;
+  this->lastReceiveStamps.clear();
 
   for (const auto& topicAndConfig : this->topicConfigs)
     this->lastSelectedTopics[topicAndConfig.second.outTopic] = this->noneTopic;
@@ -227,11 +228,13 @@ void PriorityMux::resetImpl()
   for (const auto& topicAndLockConfig : this->lockConfigs)
   {
     const auto key = std::make_pair(topicAndLockConfig.second.priority, topicAndLockConfig.first);
-    this->lastLockStamps[key] = {0, 0};
+    this->lastLockStamps[key] = now;
     this->lockStates[key] = false;
   }
 
   this->disabledStamps.clear();
+  
+  this->update(now);
 }
 
 }

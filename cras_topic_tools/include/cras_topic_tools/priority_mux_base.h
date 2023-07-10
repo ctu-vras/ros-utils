@@ -76,14 +76,15 @@ public:
    * \param[in] topicConfigs Configurations of input topics.
    * \param[in] lockConfigs Configurations of lock topics.
    * \param[in] setTimerFn The function to call when the mux needs to schedule a call to `update()` after some time.
+   * \param[in] now Current time.
    * \param[in] log The CRAS logger to use for printing log messages.
    * \param[in] noneTopic Virtual name of a topic reported as selected when no priority is active.
    * \param[in] nonePriority Priority level signalling that no priority is active.
    */
   PriorityMux(const ::std::unordered_map<::std::string, ::cras::priority_mux::TopicConfig>& topicConfigs,
               const ::std::unordered_map<::std::string, ::cras::priority_mux::LockConfig>& lockConfigs,
-              const SetTimerFn& setTimerFn, const ::cras::LogHelperPtr& log, const ::std::string& noneTopic = "__none",
-              int nonePriority = 0);
+              const SetTimerFn& setTimerFn, const ::ros::Time& now, const ::cras::LogHelperPtr& log,
+              const ::std::string& noneTopic = "__none", int nonePriority = 0);
 
   /**
    * \brief Callback function run when input topic message is received.
@@ -124,8 +125,10 @@ public:
 
   /**
    * \brief Resets the mux to its initial state.
+   * 
+   * \param[in] now Current time.
    */
-  virtual void reset();
+  virtual void reset(const ::ros::Time& now);
 
   /**
    * \brief Return the last selected topic for each output topic.
@@ -192,8 +195,10 @@ protected:
 private:
   /**
    * \brief Reset the mux to its original state.
+   * 
+   * \param[in] now Current time.
    */
-  void resetImpl();
+  void resetImpl(const ::ros::Time& now);
 };
 
 }

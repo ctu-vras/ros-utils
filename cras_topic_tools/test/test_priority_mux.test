@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+<launch>
+    <param name="/use_sim_time" value="false" />
+
+    <rosparam command="load" file="$(dirname)/test_priority_mux.yaml" />
+
+    <node name="test_mux_1" pkg="cras_topic_tools" type="priority_mux" />
+    <node name="test_mux_2" pkg="cras_topic_tools" type="priority_mux" />
+
+    <test test-name="priority_mux" pkg="cras_topic_tools" type="test_priority_mux" retry="0" />
+</launch>

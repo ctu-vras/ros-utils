@@ -197,12 +197,16 @@ void PriorityMuxNodelet::onInit()
   }
 
   this->mux = std::make_unique<PriorityMux>(this->topicConfigs, this->lockConfigs,
-    cras::bind_front(&PriorityMuxNodelet::setTimer, this), this->getLogger(), noneTopic, nonePriority);
+    cras::bind_front(&PriorityMuxNodelet::setTimer, this), ros::Time::now(), this->getLogger(),
+    noneTopic, nonePriority);
 
   this->activePriorityPub = this->getPrivateNodeHandle().advertise<std_msgs::Int32>("active_priority", 1, true);
 
   ros::TransportHints transportHints;
   transportHints.tcpNoDelay(this->tcpNoDelay);
+
+  this->resetSub = this->getPrivateNodeHandle().subscribe(
+    "reset", this->queueSize, &PriorityMuxNodelet::resetCb, this, transportHints);
 
   for (const auto& config : this->topicConfigs)
   {
@@ -242,9 +246,8 @@ void PriorityMuxNodelet::onInit()
     this->subscribers.push_back(sub);
   }
 
-  this->resetSub = this->getPrivateNodeHandle().subscribe(
-    "reset", this->queueSize, &PriorityMuxNodelet::resetCb, this, transportHints);
-
+  ros::WallDuration(0.1).sleep();  // Give publishers and subscribers time to wire up
+  
   this->publishChanges();
 }
 
@@ -252,6 +255,9 @@ void PriorityMuxNodelet::cb(
   const std::string& inTopic, const ros::MessageEvent<const topic_tools::ShapeShifter>& event)
 {
   const auto& topicConfig = this->topicConfigs[inTopic];
+
+  CRAS_DEBUG("Received message on topic %s with priority %i. Current priority %i.",
+             inTopic.c_str(), topicConfig.priority, this->mux->getActivePriority());
 
   const auto shouldPublish = this->mux->cb(inTopic, event.getReceiptTime(), ros::Time::now());
 
@@ -264,12 +270,20 @@ void PriorityMuxNodelet::cb(
       if (event.getConnectionHeaderPtr() != nullptr)
         latch = event.getConnectionHeader()["latching"] == "1";
       pub = event.getConstMessage()->advertise(this->getNodeHandle(), topicConfig.outTopic, this->queueSize, latch);
+      CRAS_DEBUG("Created publisher %s with type %s.", topicConfig.outTopic.c_str(),
+                 event.getConstMessage()->getDataType().c_str());
+      // Give the publisher some time to wire up so that we don't lose the first message.
+      ros::WallDuration(0.1).sleep();
     }
 
+    CRAS_DEBUG("Publishing message on topic %s.", inTopic.c_str());
     pub.publish(event.getConstMessage());
   }
+  else
+  {
+    CRAS_DEBUG("Discarding message on topic %s.", inTopic.c_str());
+  }
 
-  ros::WallDuration(0.1).sleep();
   this->publishChanges();
 }
 
@@ -343,13 +357,15 @@ void PriorityMuxNodelet::setTimer(const std::string& name, const ros::Duration& 
 
 void PriorityMuxNodelet::reset()
 {
+  CRAS_WARN("Resetting mux.");
+
   for (auto& timer : this->timers)
     timer.second.stop();
   this->timers.clear();
 
   this->lastActivePriority.reset();
   this->lastSelectedTopics.clear();
-  this->mux->reset();
+  this->mux->reset(ros::Time::now());
 
   this->publishChanges();
 }

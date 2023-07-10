@@ -41,7 +41,7 @@ TEST(PriorityMuxBase, OneOutput)  // NOLINT
     timerCalled = true;
   };
 
-  PriorityMux mux(topicConfigs, {}, setTimer, log);
+  PriorityMux mux(topicConfigs, {}, setTimer, ros::Time(0), log);
 
   EXPECT_EQ(0, mux.getActivePriority());
   ASSERT_EQ(1u, mux.getLastSelectedTopics().size());
@@ -200,7 +200,7 @@ TEST(PriorityMuxBase, OneOutputLongTimeout)  // NOLINT
     timerCalled = true;
   };
 
-  PriorityMux mux(topicConfigs, {}, setTimer, log);
+  PriorityMux mux(topicConfigs, {}, setTimer, ros::Time(0), log);
 
   // prio 10, none is active => prio 10 selected
   EXPECT_TRUE(mux.cb("o1p10", ros::Time(1), ros::Time(1)));
@@ -312,7 +312,7 @@ TEST(PriorityMuxBase, DelayedMessages)  // NOLINT
     timerCalled = true;
   };
 
-  PriorityMux mux(topicConfigs, {}, setTimer, log);
+  PriorityMux mux(topicConfigs, {}, setTimer, ros::Time(0), log);
 
   const ros::Duration halfSec(0, 500000000);
 
@@ -364,7 +364,7 @@ TEST(PriorityMuxBase, OneOutputAndLock)  // NOLINT
     timerCalled = true;
   };
 
-  PriorityMux mux(topicConfigs, lockConfigs, setTimer, log);
+  PriorityMux mux(topicConfigs, lockConfigs, setTimer, ros::Time(0), log);
 
   // prio 10, lock 15 locked (because never published)
   EXPECT_FALSE(mux.cb("o1p10", ros::Time(2), ros::Time(2)));
@@ -483,8 +483,7 @@ TEST(PriorityMuxBase, MultiOutputs)  // NOLINT
     {"o3p30", {"o3p30", "o3p30", "o3", 30, {10, 0}}},
   };
 
-  PriorityMux mux(topicConfigs, {}, [](const std::string&, const ros::Duration&)
-  {}, log);
+  PriorityMux mux(topicConfigs, {}, [](const std::string&, const ros::Duration&) {}, ros::Time(0), log);
   ASSERT_EQ(3u, mux.getLastSelectedTopics().size());
   ASSERT_NE(mux.getLastSelectedTopics().end(), mux.getLastSelectedTopics().find("o1"));
   ASSERT_NE(mux.getLastSelectedTopics().end(), mux.getLastSelectedTopics().find("o2"));
@@ -554,8 +553,7 @@ TEST(PriorityMuxBase, MultiOutputsWithLocks)  // NOLINT
     {"l50", {"l50", "l50", 50, {0, 0}}},
   };
 
-  PriorityMux mux(topicConfigs, lockConfigs, [](const std::string&, const ros::Duration&)
-  {}, log);
+  PriorityMux mux(topicConfigs, lockConfigs, [](const std::string&, const ros::Duration&) {}, ros::Time(0), log);
   ASSERT_EQ(3u, mux.getLastSelectedTopics().size());
   ASSERT_NE(mux.getLastSelectedTopics().end(), mux.getLastSelectedTopics().find("o1"));
   ASSERT_NE(mux.getLastSelectedTopics().end(), mux.getLastSelectedTopics().find("o2"));

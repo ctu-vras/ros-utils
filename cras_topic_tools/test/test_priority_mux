@@ -1,0 +1,490 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Test helper for testing priority_mux.
+
+from __future__ import print_function
+
+from functools import partial
+import rospy
+import rostest
+import unittest
+import time
+import sys
+
+from std_msgs.msg import String, Int32, Bool
+
+NAME = "test_priority_mux"
+
+
+class PriorityMux(unittest.TestCase):
+    def __init__(self, *args):
+        super(PriorityMux, self).__init__(*args)
+        rospy.init_node(NAME, log_level=rospy.DEBUG)
+
+        self.cmdVelMsgs = list()
+        self.tracksMsgs = list()
+        self.priorityMsgs = list()
+        self.cmdVelSelectedMsgs = list()
+        self.tracksSelectedMsgs = list()
+
+    def reset(self):
+        time.sleep(0.25)
+        self.cmdVelMsgs = list()
+        self.tracksMsgs = list()
+        self.priorityMsgs = list()
+        self.cmdVelSelectedMsgs = list()
+        self.tracksSelectedMsgs = list()
+
+    def cmdVelCb(self, msg):
+        self.cmdVelMsgs.append(msg)
+
+    def tracksCb(self, msg):
+        self.tracksMsgs.append(msg)
+
+    def priorityCb(self, msg):
+        self.priorityMsgs.append(msg)
+
+    def cmdVelSelectedCb(self, msg):
+        self.cmdVelSelectedMsgs.append(msg)
+
+    def tracksSelectedCb(self, msg):
+        self.tracksSelectedMsgs.append(msg)
+
+    def waitForConnection(self, pub, timeout=10.0):
+        t = 0.0
+        while pub.get_num_connections() == 0 and t < timeout:
+            time.sleep(0.01)
+            t += 0.01
+            if t > 1.0:
+                rospy.logwarn_throttle(1.0, "Waiting for connection: " + pub.name)
+        if pub.get_num_connections() == 0:
+            self.fail("No connection for pubsliher " + pub.name)
+
+    def waitForMessages(self, msgs, numMsgs, sleep=0.01, maxIters=200, iterCb=None):
+        i = 0
+        while not rospy.is_shutdown() and len(msgs) < numMsgs:
+            rospy.loginfo_throttle(1.0, "Waiting")
+            time.sleep(sleep)
+            if iterCb is not None:
+                iterCb()
+            i += 1
+            if i > maxIters:
+                self.fail("Only %i messages received, but %i required." % (len(msgs), numMsgs))
+        if rospy.is_shutdown():
+            self.fail("Shutdown")
+
+    def test_mux_no_locks(self):
+        self.reset()
+
+        navCmdVelPub = rospy.Publisher("nav/cmd_vel", String, queue_size=1, latch=True)
+        joyCmdVelPub = rospy.Publisher("local_joy/cmd_vel", String, queue_size=1, latch=True)
+        navTracksPub = rospy.Publisher("nav/tracks_vel_cmd", Int32, queue_size=1, latch=True)
+        joyTracksPub = rospy.Publisher("local_joy/tracks_vel_cmd", Int32, queue_size=1, latch=True)
+        joyDisablePub = rospy.Publisher("local_joy/disable", Bool, queue_size=1)
+        resetPub = rospy.Publisher("test_mux_1/reset", Bool, queue_size=1)
+        cmdVelSub = rospy.Subscriber("cmd_vel", String, self.cmdVelCb, queue_size=1)
+        tracksSub = rospy.Subscriber("tracks_vel_cmd", Int32, self.tracksCb, queue_size=1)
+        activePrioritySub = rospy.Subscriber("test_mux_1/active_priority", Int32, self.priorityCb, queue_size=1)
+        cmdVelSelectedSub = rospy.Subscriber("test_mux_1/selected/cmd_vel", String, self.cmdVelSelectedCb, queue_size=1)
+        tracksSelectedSub = rospy.Subscriber("test_mux_1/selected/tracks_vel_cmd", String, self.tracksSelectedCb,
+                                             queue_size=1)
+
+        self.waitForConnection(resetPub)
+        self.waitForConnection(navCmdVelPub)
+        self.waitForConnection(joyCmdVelPub)
+        self.waitForConnection(navTracksPub)
+        self.waitForConnection(joyTracksPub)
+        self.waitForConnection(joyDisablePub)
+
+        # Wait for initial messages
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50, partial(rospy.logwarn_throttle, 1.0, "Waiting"))
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        self.reset()
+        navCmdVelPub.publish(String("in1"))
+        self.waitForConnection(cmdVelSub)  # first message on cmd_vel so try it once again in case the publisher is slow
+        time.sleep(0.1)
+        navCmdVelPub.publish(String("in1"))
+
+        # Wait until first message goes through
+        self.waitForMessages(self.cmdVelMsgs, 1, 0.1, 50, partial(rospy.logwarn_throttle, 1.0, "Waiting"))
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Try if increasing priority works
+        self.reset()
+        navCmdVelPub.publish(String("in1"))
+        time.sleep(0.1)
+        joyCmdVelPub.publish(String("in2"))
+
+        self.waitForMessages(self.cmdVelMsgs, 2)
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 30)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "local_joy/cmd_vel")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "local_joy/tracks_vel_cmd")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 2)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(self.cmdVelMsgs[1].data, "in2")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Now lower it again using the disable topic
+        self.reset()
+        joyDisablePub.publish(Bool(True))
+        time.sleep(0.1)
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Verify that sending on local_joy is now blocked and nav works
+        self.reset()
+        navCmdVelPub.publish(String("in1"))
+        time.sleep(0.1)
+        joyCmdVelPub.publish(String("in2"))
+
+        self.waitForMessages(self.cmdVelMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 0)
+        self.assertEqual(len(self.tracksSelectedMsgs), 0)
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Enable local_joy again
+        self.reset()
+        joyDisablePub.publish(Bool(False))
+        time.sleep(0.1)
+        joyTracksPub.publish(Int32(2))
+        self.waitForConnection(tracksSub)  # first message on tracks so try it once again in case the publisher is slow
+        time.sleep(0.1)
+        joyTracksPub.publish(Int32(2))
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.tracksMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 30)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "local_joy/cmd_vel")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "local_joy/tracks_vel_cmd")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertGreaterEqual(len(self.tracksMsgs), 1)
+        self.assertEqual(self.tracksMsgs[0].data, 2)
+
+        # Call reset of the mux
+        self.reset()
+        resetPub.publish(Bool())
+        time.sleep(0.1)
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Send nav to verify local_joy timeout is no longer active
+        self.reset()
+        navCmdVelPub.publish(String("in1"))
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+    def test_mux_locks(self):
+        self.reset()
+
+        navCmdVelPub = rospy.Publisher("nav/cmd_vel2", String, queue_size=1, latch=True)
+        joyCmdVelPub = rospy.Publisher("local_joy/cmd_vel2", String, queue_size=1, latch=True)
+        navTracksPub = rospy.Publisher("nav/tracks_vel_cmd2", Int32, queue_size=1, latch=True)
+        joyTracksPub = rospy.Publisher("local_joy/tracks_vel_cmd2", Int32, queue_size=1, latch=True)
+        joyDisablePub = rospy.Publisher("local_joy/disable2", Bool, queue_size=1)
+        resetPub = rospy.Publisher("test_mux_2/reset", Bool, queue_size=1, latch=True)
+        estopLockPub = rospy.Publisher("emergency_stop2", Bool, queue_size=1)
+        stopLockPub = rospy.Publisher("stop_motion2", Bool, queue_size=1)
+        cmdVelSub = rospy.Subscriber("cmd_vel2", String, self.cmdVelCb, queue_size=1)
+        tracksSub = rospy.Subscriber("tracks_vel_cmd2", Int32, self.tracksCb, queue_size=1)
+        activePrioritySub = rospy.Subscriber("test_mux_2/active_priority", Int32, self.priorityCb, queue_size=1)
+        cmdVelSelectedSub = rospy.Subscriber("test_mux_2/selected/cmd_vel2", String, self.cmdVelSelectedCb,
+                                             queue_size=1)
+        tracksSelectedSub = rospy.Subscriber("test_mux_2/selected/tracks_vel_cmd2", String, self.tracksSelectedCb,
+                                             queue_size=1)
+
+        self.waitForConnection(resetPub)
+        self.waitForConnection(navCmdVelPub)
+        self.waitForConnection(joyCmdVelPub)
+        self.waitForConnection(navTracksPub)
+        self.waitForConnection(joyTracksPub)
+        self.waitForConnection(joyDisablePub)
+        self.waitForConnection(estopLockPub)
+        self.waitForConnection(stopLockPub)
+
+        # Call reset of the mux because the locks may already be timed out
+        self.reset()
+        resetPub.publish(Bool(False))
+        estopLockPub.publish(Bool(False))  # keep the lock unlocked
+
+        def cb():
+            rospy.logwarn_throttle(1.0, "Waiting")
+            estopLockPub.publish(Bool(False))  # keep the lock unlocked
+
+        # Wait for initial messages
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 150, cb)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.tracksSelectedMsgs, 1, 0.1, 50, cb)
+
+        # There will either be 1 or 2 priority messages, depending on how slow is the priority publisher before reset
+        self.assertGreaterEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[-1].data, 0)
+        self.assertGreaterEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[-1].data, "__none")
+        self.assertGreaterEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[-1].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Send a first message on prio 10
+        self.reset()
+        estopLockPub.publish(Bool(False))  # keep the lock unlocked
+        time.sleep(0.1)
+        navCmdVelPub.publish(String("in1"))
+        self.waitForConnection(cmdVelSub)  # first message on cmd_vel so try it once again in case the publisher is slow
+        time.sleep(0.1)
+        navCmdVelPub.publish(String("in1"))
+
+        # Wait until first message goes through
+        self.waitForMessages(self.cmdVelMsgs, 1, 0.1, 150, cb)
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.tracksSelectedMsgs, 1, 0.1, 50, cb)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel2")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd2")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Priority 10 is active, lock the 20 lock
+        self.reset()
+        estopLockPub.publish(Bool(False))  # keep the lock unlocked
+        stopLockPub.publish(Bool(True))
+        time.sleep(0.1)
+        navCmdVelPub.publish(String("in1"))
+
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.tracksSelectedMsgs, 1, 0.1, 50, cb)
+
+        time.sleep(0.1)  # Give it more time in case some unwanted messages slipped through
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 20)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Publish on priority 30
+        self.reset()
+        estopLockPub.publish(Bool(False))  # keep the lock unlocked
+        joyTracksPub.publish(Int32(2))
+        self.waitForConnection(tracksSub)  # first message on tracks so try it once again in case the publisher is slow
+        time.sleep(0.1)
+        joyTracksPub.publish(Int32(2))
+
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.tracksSelectedMsgs, 1, 0.1, 50, cb)
+        self.waitForMessages(self.tracksMsgs, 1, 0.1, 50, cb)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 30)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "local_joy/cmd_vel2")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "local_joy/tracks_vel_cmd2")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertGreaterEqual(len(self.tracksMsgs), 1)
+        self.assertEqual(self.tracksMsgs[0].data, 2)
+
+        # Lock the 255 lock
+        self.reset()
+        estopLockPub.publish(Bool(True))  # keep the lock unlocked
+        time.sleep(0.1)
+        joyTracksPub.publish(Int32(2))
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        time.sleep(0.1)  # Give it more time in case some unwanted messages slipped through
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 255)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Unlock the 255 lock
+        self.reset()
+        estopLockPub.publish(Bool(False))  # keep the lock unlocked
+        time.sleep(0.1)
+        joyTracksPub.publish(Int32(2))
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+        self.waitForMessages(self.tracksMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 30)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "local_joy/cmd_vel2")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "local_joy/tracks_vel_cmd2")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 1)
+        self.assertEqual(self.tracksMsgs[0].data, 2)
+
+        # Wait for 255 lock timeout
+        self.reset()
+
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50)  # the timeout is 5 seconds
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 255)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Try publishing, but 255 is locked
+        self.reset()
+        joyTracksPub.publish(Int32(2))
+
+        time.sleep(0.4)
+
+        self.assertEqual(len(self.priorityMsgs), 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 0)
+        self.assertEqual(len(self.tracksSelectedMsgs), 0)
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Call reset of the mux
+        self.reset()
+        resetPub.publish(Bool())
+        time.sleep(0.1)
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+        # Send nav to verify 255 lock is unlocked and local_joy is not active
+        self.reset()
+        navCmdVelPub.publish(String("in1"))
+
+        self.waitForMessages(self.priorityMsgs, 1)
+        self.waitForMessages(self.cmdVelMsgs, 1)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1)
+        self.waitForMessages(self.tracksSelectedMsgs, 1)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel2")
+        self.assertEqual(len(self.tracksSelectedMsgs), 1)
+        self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd2")
+        self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].data, "in1")
+        self.assertEqual(len(self.tracksMsgs), 0)
+
+
+if __name__ == "__main__":
+    time.sleep(0.75)
+    try:
+        rostest.run('rostest', NAME, PriorityMux, sys.argv)
+    except KeyboardInterrupt:
+        pass
+    print("exiting")
