@@ -247,7 +247,7 @@ void PriorityMuxNodelet::onInit()
   }
 
   ros::WallDuration(0.1).sleep();  // Give publishers and subscribers time to wire up
-  
+
   this->publishChanges();
 }
 

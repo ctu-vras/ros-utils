@@ -233,7 +233,7 @@ void PriorityMux::resetImpl(const ::ros::Time& now)
   }
 
   this->disabledStamps.clear();
-  
+
   this->update(now);
 }
 
