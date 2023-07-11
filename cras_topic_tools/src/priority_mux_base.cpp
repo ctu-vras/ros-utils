@@ -51,7 +51,8 @@ bool PriorityMux::cb(const std::string& inTopic, const ros::Time& stamp, const r
 
   const auto& topicConfig = it->second;
   const auto& priority = topicConfig.priority;
-  this->lastReceiveStamps[std::make_pair(priority, inTopic)] = stamp;
+  const auto key = std::make_pair(priority, inTopic);
+  this->lastReceiveStamps[key] = stamp;
 
   this->update(now);
 
@@ -61,6 +62,15 @@ bool PriorityMux::cb(const std::string& inTopic, const ros::Time& stamp, const r
   // preceding update() call.
   if (remainingTimeout > ros::Duration(0, 0))
     this->setTimer(inTopic, remainingTimeout);
+
+  // If the topic is disabled, do not publish it
+  const auto disableIt = this->disabledStamps.find(key);
+  if (disableIt != this->disabledStamps.end())
+  {
+    const auto& disabledStamp = disableIt->second;
+    if (now < disabledStamp + topicConfig.timeout)
+      return false;
+  }
 
   return this->lastActivePriority <= priority;
 }

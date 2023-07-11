@@ -637,6 +637,13 @@ TEST(PriorityMuxBase, MultiOutputsWithLocks)  // NOLINT
   EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o2"));
   EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o3"));
 
+  // test that publishing to a disabled topic is blocked
+  EXPECT_FALSE(mux.cb("o1p10", ros::Time(5.55), ros::Time(5.55)));
+  EXPECT_EQ(0, mux.getActivePriority());
+  EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o1"));
+  EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o2"));
+  EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o3"));
+
   // enable o1p10 again, allowing prio 10 again
   mux.disableCb("o1p10", ros::Time(5.6), false, ros::Time(5.6));
   EXPECT_EQ(10, mux.getActivePriority());
@@ -652,7 +659,7 @@ TEST(PriorityMuxBase, MultiOutputsWithLocks)  // NOLINT
   EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o3"));
 
   // prio 10 times out, lock 15 unlocked
-  mux.lockCb("l15", ros::Time(12), false, ros::Time(12));
+  mux.lockCb("l15", ros::Time(16), false, ros::Time(16));
   EXPECT_EQ(0, mux.getActivePriority());
   EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o1"));
   EXPECT_EQ("__none", mux.getLastSelectedTopics().at("o2"));
