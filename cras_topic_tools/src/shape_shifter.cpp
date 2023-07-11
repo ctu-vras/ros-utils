@@ -107,10 +107,16 @@ size_t getBufferLength(const topic_tools::ShapeShifter& msg)
 
 bool hasHeader(const topic_tools::ShapeShifter& msg)
 {
-  // This is a bit simplified but there is no really good way to detect it (cannot use rosmsg_cpp as the embedded
-  // Python cannot be run in multiple nodelets; cannot use ros_msg_parser as it has not yet been released).
-  // TODO: Consider using ros_msg_parser when it is released
-  return cras::contains(msg.getMessageDefinition(), "Header header");
+  const auto lines = cras::split(msg.getMessageDefinition(), "\n");
+  for (const auto& line : lines)
+  {
+    const auto strippedLine = cras::stripLeading(line);
+    if (strippedLine.empty() || strippedLine[0] == '#')
+      continue;
+    // Header has to be the first non-comment line, so as soon as we find one, we return
+    return cras::startsWith(strippedLine, "Header header");
+  }
+  return false;
 }
 
 cras::optional<std_msgs::Header> getHeader(const topic_tools::ShapeShifter& msg)

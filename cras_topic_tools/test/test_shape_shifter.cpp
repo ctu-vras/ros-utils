@@ -18,6 +18,7 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/Header.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/Point.h>
 #include <geometry_msgs/PointStamped.h>
 
 TEST(ShapeShifter, MsgToShapeShifter)  // NOLINT
@@ -86,7 +87,7 @@ TEST(ShapeShifter, GetBuffer)  // NOLINT
   EXPECT_EQ(msg, *shifter.instantiate<geometry_msgs::PointStamped>());
 }
 
-TEST(ShapeShifter, GetHeaderOK)  // NOLINT
+TEST(ShapeShifter, GetHeaderPointStamped)  // NOLINT
 {
   // Create a message
   geometry_msgs::PointStamped msg;
@@ -101,9 +102,31 @@ TEST(ShapeShifter, GetHeaderOK)  // NOLINT
   topic_tools::ShapeShifter shifter;
   cras::msgToShapeShifter(msg, shifter);
 
+  EXPECT_TRUE(cras::hasHeader(shifter));
+
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());
   EXPECT_EQ(msg.header, header.value());
+}
+
+TEST(ShapeShifter, GetHeaderPoint)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::Point msg;
+  msg.x = 1;
+  msg.y = 2;
+  msg.z = 3;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  cras::msgToShapeShifter(msg, shifter);
+
+  EXPECT_FALSE(cras::hasHeader(shifter));
+
+  // Do not try to run this as it could segfault
+  // auto header = cras::getHeader(shifter);
+  // ASSERT_TRUE(header.has_value());
+  // EXPECT_EQ(msg, header.value());
 }
 
 TEST(ShapeShifter, GetHeaderFromHeader)  // NOLINT
@@ -117,6 +140,8 @@ TEST(ShapeShifter, GetHeaderFromHeader)  // NOLINT
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
   cras::msgToShapeShifter(msg, shifter);
+
+  EXPECT_FALSE(cras::hasHeader(shifter));
 
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());
@@ -133,6 +158,8 @@ TEST(ShapeShifter, GetHeaderFromBool)  // NOLINT
   topic_tools::ShapeShifter shifter;
   cras::msgToShapeShifter(msg, shifter);
 
+  EXPECT_FALSE(cras::hasHeader(shifter));
+
   auto header = cras::getHeader(shifter);
   EXPECT_FALSE(header.has_value());
 }
@@ -147,6 +174,8 @@ TEST(ShapeShifter, GetHeaderFromLongString)  // NOLINT
   topic_tools::ShapeShifter shifter;
   cras::msgToShapeShifter(msg, shifter);
 
+  EXPECT_FALSE(cras::hasHeader(shifter));
+
   auto header = cras::getHeader(shifter);
   EXPECT_FALSE(header.has_value());
 }
@@ -160,6 +189,8 @@ TEST(ShapeShifter, GetHeaderFromFakeString)  // NOLINT
   // Load the message into the shape shifter object
   topic_tools::ShapeShifter shifter;
   cras::msgToShapeShifter(msg, shifter);
+
+  EXPECT_FALSE(cras::hasHeader(shifter));
 
   auto header = cras::getHeader(shifter);
   ASSERT_TRUE(header.has_value());  // The string decodes as a Header with seq == length of msg.data

@@ -49,7 +49,6 @@ size_t getBufferLength(const ::topic_tools::ShapeShifter& msg);
  * \param[in] msg The shape shifter object.
  * \return Whether there is a `header` field in the message.
  * \note This function might be slow. Do not call it on receipt of every message on high-frequency topics.
- * \note This function is not (yet) 100% accurate. It might have false negatives or positives in some cases.
  */
 bool hasHeader(const ::topic_tools::ShapeShifter& msg);
 
@@ -70,11 +69,10 @@ bool hasHeader(const ::topic_tools::ShapeShifter& msg);
  * \param[in] header The header to set.
  * \return Whether setting the new header has succeeded. It will fail if either the message does not seem to have a
  *         `header` field, or if some serialization/deserialization error occurs. If the function returns false,
- *         the message has to be considered invalid and has to be discarded.
+ *         the message has to be considered invalid and has to be discarded. The caller should use `getHeader()` or
+ *         other information sources to make sure the message type actually does have a header.
  * \note This function does not (de)serialize the whole message, it only serializes its header part.
- * \note If the new header is shorter or same length as the old one, there is no memory allocation happenning.
- * \note If the message is the "false positive" of getHeader() (i.e. it does not really hold a `header` field although
- *       getHeader() thinks it does), data corruption is very probable.
+ * \note If the new header is shorter or same length as the old one, there is no memory allocation happening.
  */
 bool setHeader(::topic_tools::ShapeShifter& msg, ::std_msgs::Header& header);
 
