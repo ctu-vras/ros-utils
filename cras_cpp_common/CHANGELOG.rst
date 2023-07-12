@@ -2,6 +2,12 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Increased minimum CMake version to 3.10.2.
+* log_utils: Fixed a potential segfault when instances of MemoryLogHelper get recycled.
+* Contributors: Martin Pecka
+
 2.2.3 (2023-06-16)
 ------------------
 * Install node_from_nodelet targets in PACKAGE_BIN and not GLOBAL_BIN

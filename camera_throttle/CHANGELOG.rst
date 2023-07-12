@@ -2,6 +2,11 @@
 Changelog for package camera_throttle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Increased minimum CMake version to 3.10.2.
+* Contributors: Martin Pecka
+
 2.2.3 (2023-06-16)
 ------------------
 

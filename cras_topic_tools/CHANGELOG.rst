@@ -2,6 +2,14 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* priority_mux: Added possibility to send a message just before disabling a topic.
+* shape_shifter: Improved getHeader().
+* Increased minimum CMake version to 3.10.2.
+* priority_mux: Total rewrite, now it should really work.
+* Contributors: Martin Pecka
+
 2.2.3 (2023-06-16)
 ------------------
 
