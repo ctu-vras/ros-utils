@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2023-07-12)
+------------------
 * Increased minimum CMake version to 3.10.2.
 * log_utils: Fixed a potential segfault when instances of MemoryLogHelper get recycled.
 * Contributors: Martin Pecka

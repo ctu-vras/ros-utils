@@ -2,8 +2,8 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2023-07-12)
+------------------
 * Increased minimum CMake version to 3.10.2.
 * Contributors: Martin Pecka
 
