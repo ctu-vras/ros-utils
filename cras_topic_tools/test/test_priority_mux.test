@@ -3,10 +3,11 @@
 <launch>
     <param name="/use_sim_time" value="false" />
 
-    <rosparam command="load" file="$(dirname)/test_priority_mux.yaml" />
+    <rosparam command="load" file="$(dirname)/test_priority_mux.yaml" subst_value="true" />
 
-    <node name="test_mux_1" pkg="cras_topic_tools" type="priority_mux" />
-    <node name="test_mux_2" pkg="cras_topic_tools" type="priority_mux" />
+    <node name="test_mux_1" pkg="cras_topic_tools" type="priority_mux" required="true" />
+    <node name="test_mux_2" pkg="cras_topic_tools" type="priority_mux" required="true" />
+    <node name="test_mux_3" pkg="cras_topic_tools" type="priority_mux" required="true" />
 
     <test test-name="priority_mux" pkg="cras_topic_tools" type="test_priority_mux" retry="0" />
 </launch>

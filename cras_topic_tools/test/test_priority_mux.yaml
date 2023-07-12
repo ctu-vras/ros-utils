@@ -64,6 +64,7 @@ test_mux_1:
       timeout: 10.0
       priority: 30
       disable_topic: local_joy/disable
+      before_disable_message: $(find cras_topic_tools)/data/disable_string.bag
     - topic: nav/tracks_vel_cmd
       timeout: 10.0
       priority: 10
@@ -100,3 +101,13 @@ test_mux_2:
     - topic: stop_motion2
       timeout: 0.0
       priority: 20
+
+test_mux_3:
+  default_out_topic: cmd_vel3
+  topics:
+    - topic: local_joy/cmd_vel3
+      timeout: 10.0
+      priority: 10
+      disable_topic: local_joy/disable3
+      before_disable_message: $(find cras_topic_tools)/data/zero_twist_stamped.bag
+      before_disable_message_frame_id: "disable"

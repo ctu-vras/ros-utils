@@ -14,7 +14,8 @@ import unittest
 import time
 import sys
 
-from std_msgs.msg import String, Int32, Bool
+from geometry_msgs.msg import TwistStamped, Twist
+from std_msgs.msg import String, Int32, Bool, Header
 
 NAME = "test_priority_mux"
 
@@ -162,6 +163,7 @@ class PriorityMux(unittest.TestCase):
         joyDisablePub.publish(Bool(True))
         time.sleep(0.1)
 
+        self.waitForMessages(self.cmdVelMsgs, 1)  # the before disable message
         self.waitForMessages(self.priorityMsgs, 1)
         self.waitForMessages(self.cmdVelSelectedMsgs, 1)
         self.waitForMessages(self.tracksSelectedMsgs, 1)
@@ -172,7 +174,8 @@ class PriorityMux(unittest.TestCase):
         self.assertEqual(self.cmdVelSelectedMsgs[0].data, "nav/cmd_vel")
         self.assertEqual(len(self.tracksSelectedMsgs), 1)
         self.assertEqual(self.tracksSelectedMsgs[0].data, "nav/tracks_vel_cmd")
-        self.assertGreaterEqual(len(self.cmdVelMsgs), 0)
+        self.assertEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0], String("disable"))
         self.assertEqual(len(self.tracksMsgs), 0)
 
         # Verify that sending on local_joy is now blocked and nav works
@@ -250,6 +253,12 @@ class PriorityMux(unittest.TestCase):
         self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
         self.assertEqual(self.cmdVelMsgs[0].data, "in1")
         self.assertEqual(len(self.tracksMsgs), 0)
+
+        cmdVelSub.unregister()
+        tracksSub.unregister()
+        activePrioritySub.unregister()
+        cmdVelSelectedSub.unregister()
+        tracksSelectedSub.unregister()
 
     def test_mux_locks(self):
         self.reset()
@@ -479,6 +488,90 @@ class PriorityMux(unittest.TestCase):
         self.assertGreaterEqual(len(self.cmdVelMsgs), 1)
         self.assertEqual(self.cmdVelMsgs[0].data, "in1")
         self.assertEqual(len(self.tracksMsgs), 0)
+
+        cmdVelSub.unregister()
+        tracksSub.unregister()
+        activePrioritySub.unregister()
+        cmdVelSelectedSub.unregister()
+        tracksSelectedSub.unregister()
+
+    def test_mux_stamped_before_disable(self):
+        self.reset()
+
+        joyCmdVelPub = rospy.Publisher("local_joy/cmd_vel3", TwistStamped, queue_size=1, latch=True)
+        joyDisablePub = rospy.Publisher("local_joy/disable3", Bool, queue_size=1)
+        cmdVelSub = rospy.Subscriber("cmd_vel3", TwistStamped, self.cmdVelCb, queue_size=1)
+        activePrioritySub = rospy.Subscriber("test_mux_3/active_priority", Int32, self.priorityCb, queue_size=1)
+        cmdVelSelectedSub = rospy.Subscriber("test_mux_3/selected/cmd_vel3", String, self.cmdVelSelectedCb,
+                                             queue_size=1)
+
+        self.waitForConnection(joyCmdVelPub)
+        self.waitForConnection(joyDisablePub)
+
+        # Wait for initial messages
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 150)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[-1].data, 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[-1].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+        
+        # Disable the joy publisher to check if the before disabled message is sent even if it isn't active
+        self.reset()
+        joyDisablePub.publish(Bool(True))
+        time.sleep(0.1)
+
+        # Wait until first message goes through
+        self.waitForMessages(self.cmdVelMsgs, 1, 0.1, 150)
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50)
+        
+        time.sleep(0.2)
+
+        # There may be 1 or 2 priority msgs depending on how fast the publisher is
+        self.assertGreaterEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[-1].data, 0)
+        self.assertGreaterEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[-1].data, "__none")
+        self.assertEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].twist, Twist())
+        self.assertEqual(self.cmdVelMsgs[0].header.frame_id, "disable")
+        self.assertLess(rospy.Time.now() - self.cmdVelMsgs[0].header.stamp, rospy.Duration(10))
+
+        # Enable joy publisher
+        self.reset()
+        joyDisablePub.publish(Bool(False))
+        time.sleep(0.1)
+
+        self.waitForMessages(self.priorityMsgs, 1, 0.1, 50)
+        self.waitForMessages(self.cmdVelSelectedMsgs, 1, 0.1, 50)
+
+        self.assertEqual(len(self.priorityMsgs), 1)
+        self.assertEqual(self.priorityMsgs[0].data, 10)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 1)
+        self.assertEqual(self.cmdVelSelectedMsgs[0].data, "local_joy/cmd_vel3")
+        self.assertEqual(len(self.cmdVelMsgs), 0)
+
+        # Send a first message on prio 10
+        self.reset()
+        msg = Twist()
+        msg.linear.x = 1
+        joyCmdVelPub.publish(TwistStamped(header=Header(frame_id="test"), twist=msg))
+
+        self.waitForMessages(self.cmdVelMsgs, 1, 0.1, 50)
+
+        self.assertEqual(len(self.priorityMsgs), 0)
+        self.assertEqual(len(self.cmdVelSelectedMsgs), 0)
+        self.assertEqual(len(self.cmdVelMsgs), 1)
+        self.assertEqual(self.cmdVelMsgs[0].header.frame_id, "test")
+        self.assertEqual(self.cmdVelMsgs[0].header.stamp, rospy.Time())
+        self.assertEqual(self.cmdVelMsgs[0].twist.linear.x, 1)
+
+        cmdVelSub.unregister()
+        activePrioritySub.unregister()
+        cmdVelSelectedSub.unregister()
 
 
 if __name__ == "__main__":

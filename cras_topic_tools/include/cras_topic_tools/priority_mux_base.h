@@ -144,6 +144,14 @@ public:
    */
   int getActivePriority() const;
 
+  /**
+   * Whether the given topic is currently disabled.
+   * \param[in] inTopic The topic name.
+   * \param[in] now Current time.
+   * \return Whether the topic is disabled.
+   */
+  bool isDisabled(const ::std::string& inTopic, const ::ros::Time& now);
+
 protected:
   /**
    * \brief Gets the highest locked priority.

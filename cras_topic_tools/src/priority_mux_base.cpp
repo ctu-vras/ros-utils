@@ -247,4 +247,24 @@ void PriorityMux::resetImpl(const ::ros::Time& now)
   this->update(now);
 }
 
+bool PriorityMux::isDisabled(const std::string& inTopic, const ros::Time& now)
+{
+  const auto it = this->topicConfigs.find(inTopic);
+  if (it == this->topicConfigs.end())
+  {
+    CRAS_ERROR("Priority mux called with topic %s which is not configured.", inTopic.c_str());
+    return false;
+  }
+
+  const auto& config = it->second;
+
+  const auto disableIt = this->disabledStamps.find(std::make_pair(config.priority, it->first));
+  if (disableIt != this->disabledStamps.end())
+  {
+    const auto& disabledStamp = disableIt->second;
+    return now >= disabledStamp + config.timeout;
+  }
+  return false;
+}
+
 }

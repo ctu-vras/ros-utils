@@ -15,6 +15,8 @@
 
 #include <pluginlib/class_list_macros.hpp>
 #include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
@@ -23,6 +25,7 @@
 #include <cras_cpp_common/xmlrpc_value_utils.hpp>
 #include <cras_topic_tools/priority_mux.h>
 #include <cras_topic_tools/priority_mux_base.h>
+#include <cras_topic_tools/shape_shifter.h>
 
 namespace cras
 {
@@ -119,7 +122,58 @@ void PriorityMuxNodelet::onInit()
 
     const auto disableTopic = xmlParams.getParam("disable_topic", std::string());
     if (!disableTopic.empty())
+    {
       disableTopics[config.inTopic] = disableTopic;
+      // If there should be a message sent just before disabling this topic, read the message from a bag
+      const auto beforeDisableMessageBag = xmlParams.getParam("before_disable_message", std::string());
+      if (!beforeDisableMessageBag.empty())
+      {
+        try
+        {
+          rosbag::Bag bag(beforeDisableMessageBag);
+          rosbag::View view(bag);
+          if (view.size() == 0)
+          {
+            CRAS_ERROR("Bag file %s does not contain any messages.", beforeDisableMessageBag.c_str());
+          }
+          else
+          {
+            // Read the first message from the bag and copy it to a ShapeShifter
+            const auto msg = *view.begin();
+            auto shifter = boost::make_shared<cras::ShapeShifter>();
+            cras::resizeBuffer(*shifter, msg.size());
+            ros::serialization::OStream stream(cras::getBuffer(*shifter), msg.size());
+            msg.write(stream);
+            shifter->morph(msg.getMD5Sum(), msg.getDataType(), msg.getMessageDefinition(), msg.isLatching() ? "1" : "");
+            // If the message has Header, figure out if we need to overwrite frame_id
+            if (cras::hasHeader(*shifter))
+            {
+              // This set is read by disableCb().
+              this->beforeDisableMessagesWithHeader.insert(config.inTopic);
+              const auto frameId = xmlParams.getParam("before_disable_message_frame_id", std::string());
+              if (!frameId.empty())
+              {
+                auto header = cras::getHeader(*shifter);
+                if (header)
+                {
+                  header->frame_id = frameId;
+                  cras::setHeader(*shifter, *header);
+                }
+              }
+            }
+            // Create a fake message event. Time does not matter as the code in disableCb() ignores it.
+            ros::MessageEvent<const cras::ShapeShifter> event;
+            event.init(shifter, msg.getConnectionHeader(), ros::Time(0), true,
+                       ros::DefaultMessageCreator<cras::ShapeShifter>());
+            this->beforeDisableMessages[config.inTopic] = event;
+          }
+        }
+        catch (const rosbag::BagException& e)
+        {
+          CRAS_ERROR("%s", e.what());
+        }
+      }
+    }
 
     this->topicConfigs[config.inTopic] = config;
   }
@@ -200,7 +254,8 @@ void PriorityMuxNodelet::onInit()
     cras::bind_front(&PriorityMuxNodelet::setTimer, this), ros::Time::now(), this->getLogger(),
     noneTopic, nonePriority);
 
-  this->activePriorityPub = this->getPrivateNodeHandle().advertise<std_msgs::Int32>("active_priority", 1, true);
+  this->activePriorityPub = this->getPrivateNodeHandle().advertise<std_msgs::Int32>(
+    "active_priority", this->queueSize, true);
 
   ros::TransportHints transportHints;
   transportHints.tcpNoDelay(this->tcpNoDelay);
@@ -300,6 +355,39 @@ void PriorityMuxNodelet::disableCb(
   bool disable = true;
   if (event.getConstMessage()->getDataType() == ros::message_traits::DataType<std_msgs::Bool>::value())
     disable = event.getConstMessage()->instantiate<std_msgs::Bool>()->data;
+
+  // Publish the "before disabled" message if there is any and the topic gets disabled right now
+  if (disable && !this->mux->isDisabled(inTopic, event.getReceiptTime()))
+  {
+    const auto& it = this->beforeDisableMessages.find(inTopic);
+    if (it != this->beforeDisableMessages.end())
+    {
+      const auto& itEvent = it->second;
+      auto message = itEvent.getConstMessage();
+      auto nonconstWillCopy = itEvent.nonConstWillCopy();
+      // If the message type has header, update stamp to current time
+      if (this->beforeDisableMessagesWithHeader.find(inTopic) != this->beforeDisableMessagesWithHeader.end())
+      {
+        auto header = cras::getHeader(*message);
+        if (header)
+        {
+          header->stamp = ros::Time::now();
+          auto nonconstMessage = itEvent.getMessage();
+          cras::setHeader(*nonconstMessage, *header);
+          message = nonconstMessage;
+          nonconstWillCopy = false;  // We already made a copy and nobody else will use it
+        }
+      }
+
+      // Create a fake message event
+      ros::MessageEvent<const topic_tools::ShapeShifter> beforeEvent;
+      beforeEvent.init(message, itEvent.getConnectionHeaderPtr(), event.getReceiptTime(), nonconstWillCopy,
+                       itEvent.getMessageFactory());
+
+      // Inject the constructed message as if it were received on the inTopic.
+      this->cb(inTopic, beforeEvent);
+    }
+  }
 
   this->mux->disableCb(inTopic, event.getReceiptTime(), disable, ros::Time::now());
 

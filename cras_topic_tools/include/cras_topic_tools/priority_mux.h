@@ -23,6 +23,7 @@
 #include <cras_cpp_common/nodelet_utils.hpp>
 #include <cras_cpp_common/optional.hpp>
 #include <cras_topic_tools/priority_mux_base.h>
+#include <cras_topic_tools/shape_shifter.h>
 
 namespace cras
 {
@@ -182,6 +183,12 @@ protected:
 
   //! \brief The selected output topics after the last `publishChanges()` call.
   ::std::unordered_map<::std::string, ::std::string> lastSelectedTopics;
+
+  //! \brief The messages to be injected into the mux right before a topic is disabled.
+  ::std::unordered_map<::std::string, ::ros::MessageEvent<::cras::ShapeShifter>> beforeDisableMessages;
+
+  //! \brief Cached list of "before disable" messages that have a Header.
+  ::std::unordered_set<::std::string> beforeDisableMessagesWithHeader;
 
   //! \brief Queue size of all publishers and subscribers.
   size_t queueSize {10u};

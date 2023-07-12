@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   cras_cpp_common
   cras_msgs
   nodelet
+  rosbag
   roscpp
   std_msgs
   topic_tools
@@ -65,7 +66,7 @@ target_link_libraries(cras_priority_mux ${catkin_LIBRARIES})
 
 add_library(cras_priority_mux_nodelet src/priority_mux.cpp)
 add_dependencies(cras_priority_mux_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_priority_mux_nodelet cras_priority_mux ${catkin_LIBRARIES})
+target_link_libraries(cras_priority_mux_nodelet cras_priority_mux cras_shape_shifter ${catkin_LIBRARIES})
 cras_node_from_nodelet(cras_priority_mux_nodelet ${PROJECT_NAME}/priority_mux.h cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
 
 add_library(cras_heartbeat_nodelet src/heartbeat.cpp)
@@ -89,6 +90,10 @@ install(TARGETS
 install(FILES
   nodelet.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY data/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/data
 )
 
 catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
