@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.1 (2023-07-13)
+------------------
 * shape_shifter: Fixed detection of header in messages.
 * Contributors: Martin Pecka
 
