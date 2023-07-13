@@ -111,7 +111,7 @@ bool hasHeader(const topic_tools::ShapeShifter& msg)
   for (const auto& line : lines)
   {
     const auto strippedLine = cras::stripLeading(line);
-    if (strippedLine.empty() || strippedLine[0] == '#')
+    if (strippedLine.empty() || strippedLine[0] == '#' || /* constants */ cras::contains(strippedLine, '='))
       continue;
     // Header has to be the first non-comment line, so as soon as we find one, we return
     return cras::startsWith(strippedLine, "Header header");
