@@ -2,6 +2,11 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* shape_shifter: Fixed detection of header in messages.
+* Contributors: Martin Pecka
+
 2.3.0 (2023-07-12)
 ------------------
 * priority_mux: Added possibility to send a message just before disabling a topic.
