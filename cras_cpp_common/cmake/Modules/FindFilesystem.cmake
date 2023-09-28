@@ -131,7 +131,6 @@ cmake_policy(SET CMP0067 NEW)
 
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
-include(CheckCXXSourceCompiles)
 
 cmake_push_check_state()
 
@@ -235,32 +234,25 @@ if(CXX_FILESYSTEM_HAVE_FS)
     ]] code @ONLY)
 
   # Try to compile a simple filesystem program without any linker flags
-  check_cxx_source_compiles("${code}" CXX_FILESYSTEM_NO_LINK_NEEDED)
+  # CheckCXXFileCompiles() had some issues passing CXX_STANDARD, so we use try_compile directly
+  set(tmp_file "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.cxx")
+  file(WRITE "${tmp_file}" "${code}\n")
 
+  try_compile(CXX_FILESYSTEM_NO_LINK_NEEDED ${CMAKE_BINARY_DIR} ${tmp_file})
   set(can_link ${CXX_FILESYSTEM_NO_LINK_NEEDED})
 
   if(NOT can_link)
-    cmake_push_check_state()
     # Add the libstdc++ flag
-    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -lstdc++fs)
-    check_cxx_source_compiles("${code}" CXX_FILESYSTEM_STDCPPFS_NEEDED)
+    try_compile(CXX_FILESYSTEM_STDCPPFS_NEEDED ${CMAKE_BINARY_DIR} ${tmp_file} LINK_LIBRARIES -lstdc++fs)
     set(can_link ${CXX_FILESYSTEM_STDCPPFS_NEEDED})
-    cmake_pop_check_state()
     if(NOT can_link)
-      cmake_push_check_state()
       # Try the libc++ flag      
-      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} -lc++fs)
-      check_cxx_source_compiles("${code}" CXX_FILESYSTEM_CPPFS_NEEDED)
+      try_compile(CXX_FILESYSTEM_CPPFS_NEEDED ${CMAKE_BINARY_DIR} ${tmp_file} LINK_LIBRARIES -lc++fs)
       set(can_link ${CXX_FILESYSTEM_CPPFS_NEEDED})
-      cmake_pop_check_state()
       if(NOT can_link AND find_boost)
         # Try Boost
-	      cmake_push_check_state()
-	      set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} Boost::filesystem)
-	      set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${Boost_INCLUDE_DIRS})
-        check_cxx_source_compiles("${code}" CXX_FILESYSTEM_BOOST_NEEDED)
+	try_compile(CXX_FILESYSTEM_BOOST_NEEDED ${CMAKE_BINARY_DIR} ${tmp_file} LINK_LIBRARIES Boost::filesystem COMPILE_DEFINITIONS -DINCLUDE_DIRECTORIES=${Boost_INCLUDE_DIRS})
         set(can_link ${CXX_FILESYSTEM_BOOST_NEEDED})
-	      cmake_pop_check_state()
       endif()
     endif()
   endif()
