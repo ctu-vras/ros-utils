@@ -268,11 +268,10 @@ void PriorityMuxNodelet::onInit()
     this->subscribers.push_back(sub);
   }
 
-  XmlRpc::XmlRpcValue outTopicParams;
   std::list<std::pair<std::string, XmlRpc::XmlRpcValue>> outTopicItems;
-  try
+  if (params->hasParam("out_topics"))
   {
-    outTopicParams = params->getParam<XmlRpc::XmlRpcValue>("out_topics", cras::nullopt);
+    const auto outTopicParams = params->getParam<XmlRpc::XmlRpcValue>("out_topics", cras::nullopt);
     switch (outTopicParams.getType())
     {
       case XmlRpc::XmlRpcValue::TypeArray:
@@ -286,9 +285,6 @@ void PriorityMuxNodelet::onInit()
       default:
         CRAS_ERROR("Parameter ~out_topics has to be either a list or a dict. It will be ignored!");
     }
-  }
-  catch (const cras::GetParamException& e)
-  {
   }
 
   for (const auto& item : outTopicItems)
@@ -331,13 +327,8 @@ void PriorityMuxNodelet::onInit()
     config.queueSize = xmlParams.getParam("queue_size", config.queueSize);
     config.subscriberConnectDelay = xmlParams.getParam("subscriber_connect_delay", config.subscriberConnectDelay);
     config.numSubscribersToWait = xmlParams.getParam("num_subscribers_to_wait", config.numSubscribersToWait);
-    try
-    {
+    if (xmlParams.hasParam("force_latch"))
       config.forceLatch = xmlParams.getParam<bool>("force_latch", cras::nullopt);
-    }
-    catch (const cras::GetParamException&)
-    {
-    }
   }
 
   for (const auto& outTopic : this->outTopics)
