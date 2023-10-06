@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.3 (2023-10-06)
+------------------
 * priority_mux: Fixed parameters incorrectly reported as required.
 * Contributors: Martin Pecka
 
