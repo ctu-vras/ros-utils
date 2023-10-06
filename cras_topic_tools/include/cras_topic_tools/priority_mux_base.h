@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/log_utils.h>
 #include <ros/duration.h>
 #include <ros/time.h>
@@ -35,6 +36,7 @@ struct TopicConfig
   ::std::string outTopic;  //!< The output topic.
   int priority {0};  //!< The priority for the topic. Usually is a positive number.
   ::ros::Duration timeout;  //!< How long do messages on this topic keep the priority active.
+  size_t queueSize;  //!< Queue size for the subscriber.
 };
 
 /** 
@@ -48,6 +50,25 @@ struct LockConfig
   ::ros::Duration timeout;  //!< If zero, the lock only locks/unlocks based on the `locked` parameter of the lock
                             //!< callback. If non-zero, it is the time after which the lock will get locked, unless a
                             //!< message comes to the lock topic with `locked` set to `false`.
+};
+
+/**
+ * \brief Configuration of an output topic for the mux.
+ */
+struct OutputTopicConfig
+{
+  ::std::string topic;  //!< The output topic.
+  ::cras::optional<bool> forceLatch;  //!< If set, forces the topic's latching status to the value. Otherwise, latching
+                                      //!< is configured based on latching of the first received message.
+  ::ros::WallDuration subscriberConnectDelay;  //!< Time to wait before publishing the first message after the publisher
+                                               //!< is created. Only applies to non-latched topics.
+  size_t numSubscribersToWait {0u};  //!< If non-zero, when the publisher is created, it will wait until it has this
+                                     //!< number of subscribers before it publishes its first message. This is more
+                                     //!< reliable than setting the delay if you know the number of subscribers. The
+                                     //!< number is not the actual number of subscriber objects, but rather the number
+                                     //!< of subscribing separate nodes (so e.g. all subscriptions from a single nodelet
+                                     //!< manager count as one).
+  size_t queueSize;  //!< Queue size for the publisher.
 };
 }
 

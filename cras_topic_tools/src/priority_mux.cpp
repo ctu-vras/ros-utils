@@ -43,6 +43,7 @@ void PriorityMuxNodelet::onInit()
   const auto defaultOutTopic = params->getParam("default_out_topic", std::string(DEFAULT_OUT_TOPIC));
   const auto noneTopic = params->getParam("none_topic", std::string(DEFAULT_NONE_TOPIC));
   const auto nonePriority = params->getParam("none_priority", 0);
+  const auto defaultSubscriberConnectDelay = params->getParam("subscriber_connect_delay", ros::WallDuration(0.1));
 
   XmlRpc::XmlRpcValue topicParams;
   try
@@ -101,6 +102,7 @@ void PriorityMuxNodelet::onInit()
 
     config.name = xmlParams.getParam("name", config.inTopic);
     config.outTopic = xmlParams.getParam("out_topic", defaultOutTopic);
+    config.queueSize = xmlParams.getParam("queue_size", this->queueSize);
     try
     {
       config.priority = xmlParams.getParam<int>("priority", cras::nullopt);
@@ -250,28 +252,92 @@ void PriorityMuxNodelet::onInit()
     this->lockConfigs[config.topic] = config;
   }
 
-  this->mux = std::make_unique<PriorityMux>(this->topicConfigs, this->lockConfigs,
-    cras::bind_front(&PriorityMuxNodelet::setTimer, this), ros::Time::now(), this->getLogger(),
-    noneTopic, nonePriority);
-
-  this->activePriorityPub = this->getPrivateNodeHandle().advertise<std_msgs::Int32>(
-    "active_priority", this->queueSize, true);
-
   ros::TransportHints transportHints;
   transportHints.tcpNoDelay(this->tcpNoDelay);
-
-  this->resetSub = this->getPrivateNodeHandle().subscribe(
-    "reset", this->queueSize, &PriorityMuxNodelet::resetCb, this, transportHints);
 
   for (const auto& config : this->topicConfigs)
   {
     const auto& topicConfig = config.second;
     this->outTopics.insert(topicConfig.outTopic);
+    this->outTopicConfigs[topicConfig.outTopic].queueSize = this->queueSize;
+    this->outTopicConfigs[topicConfig.outTopic].subscriberConnectDelay = defaultSubscriberConnectDelay;
 
     const auto cb = cras::bind_front(&PriorityMuxNodelet::cb, this, topicConfig.inTopic);
     const auto sub = this->getNodeHandle().subscribe<topic_tools::ShapeShifter>(
-      topicConfig.inTopic, this->queueSize, cb, nullptr, transportHints);
+      topicConfig.inTopic, topicConfig.queueSize, cb, nullptr, transportHints);
     this->subscribers.push_back(sub);
+  }
+
+  XmlRpc::XmlRpcValue outTopicParams;
+  std::list<std::pair<std::string, XmlRpc::XmlRpcValue>> outTopicItems;
+  try
+  {
+    outTopicParams = params->getParam<XmlRpc::XmlRpcValue>("out_topics", cras::nullopt);
+    switch (outTopicParams.getType())
+    {
+      case XmlRpc::XmlRpcValue::TypeArray:
+        for (size_t i = 0; i < outTopicParams.size(); ++i)
+          outTopicItems.emplace_back("[" + cras::to_string(i) + "]", outTopicParams[i]);
+        break;
+      case XmlRpc::XmlRpcValue::TypeStruct:
+        for (const auto& item : outTopicParams)
+          outTopicItems.emplace_back("/" + item.first, item.second);
+        break;
+      default:
+        CRAS_ERROR("Parameter ~out_topics has to be either a list or a dict. It will be ignored!");
+    }
+  }
+  catch (const cras::GetParamException& e)
+  {
+  }
+
+  for (const auto& item : outTopicItems)
+  {
+    const auto& key = item.first;
+    const auto& xmlConfig = item.second;
+    if (xmlConfig.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+    {
+      CRAS_ERROR("Item %s of ~out_topics has to be a dict, but %s was given.",
+        key.c_str(), cras::to_string(xmlConfig.getType()).c_str());
+      continue;
+    }
+
+    auto itemNamespace = this->getPrivateNodeHandle().resolveName("out_topics") + key;
+    auto xmlParamAdapter = std::make_shared<cras::XmlRpcValueGetParamAdapter>(xmlConfig, itemNamespace);
+    cras::BoundParamHelper xmlParams(this->log, xmlParamAdapter);
+
+    std::string topic;
+    try
+    {
+      topic = xmlParams.getParam<std::string>("topic", cras::nullopt);
+      if (topic.empty())
+      {
+        CRAS_ERROR("Item %s of ~out_topics has to contain key 'topic'. Skipping the item.", key.c_str());
+        continue;
+      }
+      else
+      {
+        this->outTopicConfigs[topic].topic = topic;
+      }
+    }
+    catch (const cras::GetParamException& e)
+    {
+      CRAS_ERROR("Item %s of ~out_topics has to contain key 'topic'. Skipping the item.", key.c_str());
+      continue;
+    }
+
+    auto& config = this->outTopicConfigs[topic];
+
+    config.queueSize = xmlParams.getParam("queue_size", config.queueSize);
+    config.subscriberConnectDelay = xmlParams.getParam("subscriber_connect_delay", config.subscriberConnectDelay);
+    config.numSubscribersToWait = xmlParams.getParam("num_subscribers_to_wait", config.numSubscribersToWait);
+    try
+    {
+      config.forceLatch = xmlParams.getParam<bool>("force_latch", cras::nullopt);
+    }
+    catch (const cras::GetParamException&)
+    {
+    }
   }
 
   for (const auto& outTopic : this->outTopics)
@@ -280,6 +346,16 @@ void PriorityMuxNodelet::onInit()
     this->selectedPublishers[outTopic] =
       this->getPrivateNodeHandle().advertise<std_msgs::String>(selectedTopic, this->queueSize, true);
   }
+
+  this->mux = std::make_unique<PriorityMux>(this->topicConfigs, this->lockConfigs,
+    cras::bind_front(&PriorityMuxNodelet::setTimer, this), ros::Time::now(), this->getLogger(),
+    noneTopic, nonePriority);
+
+  this->activePriorityPub = this->getPrivateNodeHandle().advertise<std_msgs::Int32>(
+    "active_priority", this->queueSize, true);
+
+  this->resetSub = this->getPrivateNodeHandle().subscribe(
+    "reset", this->queueSize, &PriorityMuxNodelet::resetCb, this, transportHints);
 
   for (const auto& inTopicAndDisableTopic : disableTopics)
   {
@@ -321,14 +397,39 @@ void PriorityMuxNodelet::cb(
     auto& pub = this->publishers[topicConfig.outTopic];
     if (!pub)
     {
+      const auto& outTopicConfig = this->outTopicConfigs[topicConfig.outTopic];
+
+      // Figure out if the publisher should be latched
       auto latch = false;
       if (event.getConnectionHeaderPtr() != nullptr)
         latch = event.getConnectionHeader()["latching"] == "1";
-      pub = event.getConstMessage()->advertise(this->getNodeHandle(), topicConfig.outTopic, this->queueSize, latch);
+      if (outTopicConfig.forceLatch.has_value())
+        latch = *outTopicConfig.forceLatch;
+
+      // Create the publisher
+      pub = event.getConstMessage()->advertise(
+        this->getNodeHandle(), topicConfig.outTopic, outTopicConfig.queueSize, latch);
       CRAS_DEBUG("Created publisher %s with type %s.", topicConfig.outTopic.c_str(),
                  event.getConstMessage()->getDataType().c_str());
+
       // Give the publisher some time to wire up so that we don't lose the first message.
-      ros::WallDuration(0.1).sleep();
+      if (!latch)
+      {
+        const auto waitStart = ros::WallTime::now();
+        while (ros::ok() && pub.getNumSubscribers() < outTopicConfig.numSubscribersToWait)
+        {
+          ros::WallDuration(0.01).sleep();
+          if (ros::WallTime::now() - waitStart > ros::WallDuration(1, 0))
+          {
+            CRAS_WARN_THROTTLE(1.0, "Waiting for subscribers to topic %s (has %u/%zu).",
+                               topicConfig.outTopic.c_str(), pub.getNumSubscribers(),
+                               outTopicConfig.numSubscribersToWait);
+          }
+        }
+        if (ros::WallTime::now() < (waitStart + outTopicConfig.subscriberConnectDelay))
+          (outTopicConfig.subscriberConnectDelay - (ros::WallTime::now() - waitStart)).sleep();
+        CRAS_DEBUG("Waited %f seconds before publishing.", (ros::WallTime::now() - waitStart).toSec());
+      }
     }
 
     CRAS_DEBUG("Publishing message on topic %s.", inTopic.c_str());

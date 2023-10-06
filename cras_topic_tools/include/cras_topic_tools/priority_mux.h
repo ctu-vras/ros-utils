@@ -55,6 +55,8 @@ namespace cras
  *                                                  topic configuration.
  * - `~none_topic` (str, default "__none"): Virtual name of a topic reported as selected when no priority is active.
  * - `~none_priority` (int, default 0): Priority level signalling that no priority is active.
+ * - `~subscriber_connect_delay` (double, default 0.1 s): Time to wait before a newly created non-latched output topic
+ *                                                        publisher will publish its first message.
  * - `~topics` (list or dict): Definition of subscribed topics and their priorities. If dict, only values are used.
  *   - `topic` (str): The input topic to subscribe.
  *   - `priority` (int): Priority of the input topic.
@@ -63,6 +65,10 @@ namespace cras
  *   - `timeout` (double): How long does a message on this topic hold its priority.
  *   - `name` (str, default `topic`): Human-readable description of the input topic.
  *   - `disable_topic` (str, default ""): If nonempty, this topic will be subscribed to allow disabling the input topic.
+ *   - `before_disable_message` (str, optional): If set, this string should point to a bagfile containing a single
+ *                                               message. This message will be published on this topic just before the
+ *                                               topic becomes disabled.
+ *   - `queue_size` (uint, default `~queue_size`): Queue size for the subscriber.
  * - `~locks` (list or dict): Definition of lock topics and their priorities. If dict, only values are used.
  *   - `topic` (str): The lock topic to subscribe.
  *   - `priority` (int): Priority of the lock topic.
@@ -70,6 +76,22 @@ namespace cras
  *                         or not. If non-zero, the lock will get locked when the last message on the lock topic is
  *                         older than the timeout.
  *   - `name` (str, default `topic`): Human-readable description of the lock topic.
+ * - `~out_topics` (list or dict): Optional configuration of output topics. If dict, only values are used.
+ *   - `topic` (str): The output topic.
+ *   - `force_latch` (bool, optional): If set, forces the topic's latching status to the value. Otherwise, latching
+ *                                     is configured based on latching of the first received message.
+ *   - `subscriber_connect_delay` (double, default `~subscriber_connect_delay`): Time to wait before publishing the
+ *                                                                               first message after the publisher is
+ *                                                                               created. Only applies to non-latched
+ *                                                                               topics.
+ *   - `num_subscribers_to_wait` (uint, default 0): If non-zero, when the publisher is created, it will wait until it
+ *                                                  has this number of subscribers before it publishes its first
+ *                                                  message. This is more reliable than setting the delay if you know
+ *                                                  the number of subscribers. The number is not the actual number of
+ *                                                  subscriber objects, but rather the number of subscribing separate
+ *                                                  nodes (so e.g. all subscriptions from a single nodelet manager count
+ *                                                  as one).
+ *   - `queue_size` (uint, default `~queue_size`): Queue size for the publisher.
  *
  * Subscribed topics:
  * - Topics specified in `~topics/topic` (any type): Input messages.
@@ -174,6 +196,9 @@ protected:
 
   //! \brief Configurations of lock topics.
   ::std::unordered_map<::std::string, ::cras::priority_mux::LockConfig> lockConfigs;
+
+  //! \brief Configurations of output topics.
+  std::unordered_map<std::string, ::cras::priority_mux::OutputTopicConfig> outTopicConfigs;
 
   //! \brief All output topic names.
   ::std::unordered_set<::std::string> outTopics;
