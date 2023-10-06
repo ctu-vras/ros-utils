@@ -31,11 +31,6 @@ try:
             raise ValueError("Can only convert lists to ndarray, but %s was given." % (to_str(type(value)),))
         return target_type(value)
 
-    param_utils.register_param_conversion(np.bool, bool, np.bool)
-    param_utils.register_param_conversion(np.int, int, partial(__convert_np_int_with_bounds_check, np.int))
-    param_utils.register_param_conversion(np.long, int, partial(__convert_np_int_with_bounds_check, np.long))
-    param_utils.register_param_conversion(np.float, int, partial(__convert_np_float_with_bounds_check, np.float))
-    param_utils.register_param_conversion(np.float, float, partial(__convert_np_float_with_bounds_check, np.float))
     param_utils.register_param_conversion(np.double, int, partial(__convert_np_float_with_bounds_check, np.double))
     param_utils.register_param_conversion(np.double, float, partial(__convert_np_float_with_bounds_check, np.double))
     param_utils.register_param_conversion(np.uint8, int, partial(__convert_np_int_with_bounds_check, np.uint8))

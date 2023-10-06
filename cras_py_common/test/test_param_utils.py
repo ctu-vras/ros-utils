@@ -529,12 +529,7 @@ class NodeUtils(unittest.TestCase):
             self.assertRaises(GetParamException, get_param, "nonexistent")
 
     def test_get_param_convert_numpy(self):
-        self.assertEqual(get_param("test_dict_config/params/bool_True", result_type=np.bool), np.bool(True))
-        self.assertEqual(get_param("test_dict_config/params/int_1", result_type=np.int), np.int(1))
-        self.assertEqual(get_param("test_dict_config/params/int_1", result_type=np.long), np.long(1))
-        self.assertEqual(get_param("test_dict_config/params/int_1", result_type=np.float), np.float(1))
         self.assertEqual(get_param("test_dict_config/params/int_1", result_type=np.double), np.double(1))
-        self.assertEqual(get_param("test_dict_config/params/double_1", result_type=np.float), np.float(1))
         self.assertEqual(get_param("test_dict_config/params/double_1", result_type=np.double), np.double(1))
 
         self.assertEqual(get_param("test_dict_config/params/int_1", result_type=np.int8), np.int8(1))
