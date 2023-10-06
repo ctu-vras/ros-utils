@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.2 (2023-10-06)
+------------------
 * param_utils: Removed deprecated numpy aliases.
 * Contributors: Martin Pecka
 

@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.2 (2023-10-06)
+------------------
 * priority_mux: Duration of the wait before publishing the first message is now configurable.
 * Contributors: Martin Pecka
 
