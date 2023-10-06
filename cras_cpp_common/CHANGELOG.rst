@@ -2,6 +2,11 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix finding std::filesystem in CMake if a non-default launguage standard is used.
+* Contributors: Martin Pecka
+
 2.3.1 (2023-07-13)
 ------------------
 

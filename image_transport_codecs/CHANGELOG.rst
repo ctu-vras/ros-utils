@@ -2,6 +2,9 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.3.1 (2023-07-13)
 ------------------
 

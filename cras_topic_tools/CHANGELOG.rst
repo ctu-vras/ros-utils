@@ -2,6 +2,11 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* priority_mux: Duration of the wait before publishing the first message is now configurable.
+* Contributors: Martin Pecka
+
 2.3.1 (2023-07-13)
 ------------------
 * shape_shifter: Fixed detection of header in messages.

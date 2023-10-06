@@ -2,6 +2,9 @@
 Changelog for package tf_static_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.3.1 (2023-07-13)
 ------------------
 
