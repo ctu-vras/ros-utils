@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.4 (2023-10-25)
+------------------
 * Do not use -march=native optimizations for cras_tf2_sensor_msgs. More generic platform-specific optimizations are used.
 * Contributors: Martin Pecka
 
