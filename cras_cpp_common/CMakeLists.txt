@@ -88,6 +88,7 @@ catkin_package(
     cras_nodelet_utils
     cras_param_utils
     cras_rate_limiter
+    cras_resettable
     cras_semaphore
     cras_string_utils
     cras_tf2_sensor_msgs
@@ -348,6 +349,11 @@ add_dependencies(cras_nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGET
 target_link_libraries(cras_nodelet_manager_sharing_tf_buffer
   PUBLIC cras_nodelet_manager cras_nodelet_utils ${catkin_LIBRARIES} Boost::boost)
 
+add_library(cras_resettable src/resettable.cpp)
+add_dependencies(cras_resettable ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_resettable PUBLIC cras_log_utils ${catkin_LIBRARIES})
+target_link_libraries(cras_resettable PRIVATE cras_functional cras_param_utils cras_optional cras_time_utils)
+
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
 target_link_libraries(nodelet_manager_sharing_tf_buffer
@@ -387,6 +393,7 @@ install(TARGETS
   cras_param_utils
   cras_pool_allocator
   cras_rate_limiter
+  cras_resettable
   cras_semaphore
   cras_set_utils
   cras_string_utils
@@ -597,4 +604,8 @@ if (CATKIN_ENABLE_TESTING)
     test_cras_nodelet_with_shared_tf_buffer
     test_cras_stateful_nodelet)
   roslaunch_add_file_check(test/test_nodelet_utils.test USE_TEST_DEPENDENCIES)
+
+  add_rostest_gtest(test_resettable test/test_resettable.test test/test_resettable.cpp)
+  target_link_libraries(test_resettable cras_resettable cras_test_utils ${catkin_LIBRARIES})
+  roslaunch_add_file_check(test/test_resettable.test USE_TEST_DEPENDENCIES)
 endif()
