@@ -69,6 +69,30 @@ double frequency(const ::ros::WallRate& rate, bool maxCycleTimeMeansZero = false
  */
 ::ros::Time nowFallbackToWall();
 
+/**
+ * \brief Add the given duration to the given time, but saturate the result instead of throwing exception on overflow.
+ * \param[in] time The time to be added to.
+ * \param[in] duration The duration to add.
+ * \return The time plus the duration saturated between 0 and TIME_MAX.
+ */
+::ros::Time saturateAdd(const ::ros::Time& time, const ::ros::Duration& duration);
+
+/**
+ * \brief Add the given duration to the given time, but saturate the result instead of throwing exception on overflow.
+ * \param[in] time The time to be added to.
+ * \param[in] duration The duration to add.
+ * \return The time plus the duration saturated between 0 and TIME_MAX.
+ */
+::ros::WallTime saturateAdd(const ::ros::WallTime& time, const ::ros::WallDuration& duration);
+
+/**
+ * \brief Add the given duration to the given time, but saturate the result instead of throwing exception on overflow.
+ * \param[in] time The time to be added to.
+ * \param[in] duration The duration to add.
+ * \return The time plus the duration saturated between 0 and TIME_MAX.
+ */
+::ros::SteadyTime saturateAdd(const ::ros::SteadyTime& time, const ::ros::WallDuration& duration);
+
 }
 
 namespace ros
