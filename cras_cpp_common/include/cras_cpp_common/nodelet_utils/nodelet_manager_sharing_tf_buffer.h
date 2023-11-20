@@ -20,6 +20,7 @@
 
 #include <cras_cpp_common/nodelet_utils/nodelet_manager.h>
 #include <cras_cpp_common/nodelet_utils/nodelet_with_shared_tf_buffer.hpp>
+#include <cras_cpp_common/resettable.h>
 
 namespace cras
 {
@@ -27,7 +28,7 @@ namespace cras
 /**
  * \brief A nodelet manager that can share its TF buffer with cras::NodeletWithSharedTfBuffer nodelets.
  */
-class NodeletManagerSharingTfBuffer : public ::cras::NodeletManager
+class NodeletManagerSharingTfBuffer : public ::cras::NodeletManager, public ::cras::TimeJumpResettable
 {
 public:
   /**
@@ -37,6 +38,8 @@ public:
   explicit NodeletManagerSharingTfBuffer(::ros::NodeHandle nh = {"~"});
 
   void init() override;
+
+  void reset() override;
 
 protected:
   ::boost::shared_ptr<::nodelet::Nodelet> createInstance(const ::std::string& lookupName) override;

@@ -28,7 +28,7 @@ struct ResettablePrivate;
  *  - `/reset` (any type): When a message is received on this topic, reset() is called.
  *  - `~reset` (any type): When a message is received on this topic, reset() is called.
  */
-class Resettable : protected ::cras::HasLogger
+class Resettable
 {
 public:
   /**

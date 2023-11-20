@@ -17,6 +17,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <cras_cpp_common/nodelet_utils/nodelet_aware_tf_buffer.h>
+#include <cras_cpp_common/resettable.h>
 
 namespace cras
 {
@@ -55,6 +56,11 @@ public:
    * \return Whether the buffer set using `setBuffer()` is used or a standalone buffer has been automatically created.
    */
   virtual bool usesSharedBuffer() const = 0;
+
+  /**
+   * \brief Reset the TF buffer. If a shared buffer is used, it is not reset by this call and its owner is responsible.
+   */
+  virtual void reset() = 0;
 };
 
 /**
@@ -66,7 +72,8 @@ public:
  * \tparam NodeletType Type of the base nodelet.
  */
 template <typename NodeletType = ::nodelet::Nodelet>
-struct NodeletWithSharedTfBuffer : public virtual NodeletType, public ::cras::NodeletWithSharedTfBufferInterface
+struct NodeletWithSharedTfBuffer : public virtual NodeletType, public ::cras::NodeletWithSharedTfBufferInterface,
+  protected ::cras::TimeJumpResettable
 {
 public:
   NodeletWithSharedTfBuffer();
@@ -75,6 +82,10 @@ public:
   void setBuffer(const ::std::shared_ptr<::tf2_ros::Buffer>& buffer) override;
   ::cras::NodeletAwareTFBuffer& getBuffer() const override;
   bool usesSharedBuffer() const override;
+
+  virtual void onInit();
+
+  void reset() override;
 
 protected:
   using NodeletType::getName;

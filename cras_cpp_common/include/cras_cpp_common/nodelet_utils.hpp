@@ -98,6 +98,11 @@ public:
   ~NodeletBase() override = default;
 protected:
   using BaseNodelet::getName;  // for disambiguation because some mixins contain a "using getName()"
+
+  void onInit() override
+  {
+    ::cras::NodeletWithSharedTfBuffer<BaseNodelet>::onInit();
+  }
 };
 
 /**

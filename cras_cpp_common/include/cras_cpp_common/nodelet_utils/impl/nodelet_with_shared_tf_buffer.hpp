@@ -20,7 +20,9 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <cras_cpp_common/log_utils/nodelet.h>
 #include <cras_cpp_common/nodelet_utils/nodelet_aware_tf_buffer.h>
+#include <cras_cpp_common/resettable.h>
 
 namespace cras
 {
@@ -50,6 +52,8 @@ struct NodeletWithSharedTfBufferPrivate
 
 template <typename NodeletType>
 NodeletWithSharedTfBuffer<NodeletType>::NodeletWithSharedTfBuffer() :
+  cras::TimeJumpResettable(::std::make_shared<cras::NodeletLogHelper>(
+    ::std::bind(&NodeletWithSharedTfBuffer<NodeletType>::getName, this))),
   data(new ::cras::impl::NodeletWithSharedTfBufferPrivate)
 {
 }
@@ -91,6 +95,28 @@ template <typename NodeletType>
 bool NodeletWithSharedTfBuffer<NodeletType>::usesSharedBuffer() const
 {
   return this->data->usesSharedBuffer;
+}
+
+template<typename NodeletType>
+void NodeletWithSharedTfBuffer<NodeletType>::onInit()
+{
+  ::cras::TimeJumpResettable::initRos(this->getPrivateNodeHandle());
+  this->startAutoCheckTimeJump();
+}
+
+template<typename NodeletType>
+void NodeletWithSharedTfBuffer<NodeletType>::reset()
+{
+  if (this->data->buffer == nullptr)
+    return;
+  if (this->usesSharedBuffer())
+    return;  // handled by the shared buffer manager on time jumps
+
+  this->data->listener.reset();
+  this->data->buffer->clear();
+  // recreate the TF listener so that the buffer receives static transforms again
+  this->data->listener = ::std::make_unique<::tf2_ros::TransformListener>(
+    this->data->buffer->getRawBuffer(), this->getNodeHandle());
 }
 
 }

@@ -315,6 +315,11 @@ target_link_libraries(cras_diag_utils
   PUBLIC cras_diag_updater cras_log_utils cras_math_utils cras_message_utils cras_optional
     cras_param_utils cras_time_utils cras_type_utils ${catkin_LIBRARIES} Boost::boost)
 
+add_library(cras_resettable src/resettable.cpp)
+add_dependencies(cras_resettable ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cras_resettable PUBLIC cras_log_utils ${catkin_LIBRARIES})
+target_link_libraries(cras_resettable PRIVATE cras_functional cras_param_utils cras_optional cras_time_utils)
+
 add_library(cras_node_utils
   src/node_utils/node_handle_with_diagnostics.cpp
   src/node_utils/param_helper.cpp)
@@ -334,7 +339,7 @@ target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE
 target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/thread_name_updating_nodelet.hpp>)
 add_dependencies(cras_nodelet_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_nodelet_utils
-  PUBLIC cras_diag_updater cras_diag_utils cras_log_utils cras_message_utils cras_node_utils cras_param_utils
+  PUBLIC cras_diag_updater cras_diag_utils cras_log_utils cras_message_utils cras_node_utils cras_param_utils cras_resettable
     cras_string_utils cras_thread_utils cras_time_utils cras_tf2_utils ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_filter_chain_nodelet INTERFACE)
@@ -347,12 +352,7 @@ target_link_libraries(cras_filter_chain_nodelet
 add_library(cras_nodelet_manager_sharing_tf_buffer src/nodelet_utils/nodelet_manager_sharing_tf_buffer.cpp)
 add_dependencies(cras_nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_nodelet_manager_sharing_tf_buffer
-  PUBLIC cras_nodelet_manager cras_nodelet_utils ${catkin_LIBRARIES} Boost::boost)
-
-add_library(cras_resettable src/resettable.cpp)
-add_dependencies(cras_resettable ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cras_resettable PUBLIC cras_log_utils ${catkin_LIBRARIES})
-target_link_libraries(cras_resettable PRIVATE cras_functional cras_param_utils cras_optional cras_time_utils)
+  PUBLIC cras_nodelet_manager cras_nodelet_utils cras_resettable ${catkin_LIBRARIES} Boost::boost)
 
 add_executable(nodelet_manager_sharing_tf_buffer nodes/nodelet_manager_sharing_tf_buffer.cpp)
 add_dependencies(nodelet_manager_sharing_tf_buffer ${catkin_EXPORTED_TARGETS})

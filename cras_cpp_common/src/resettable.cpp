@@ -30,6 +30,7 @@ namespace cras
 struct ResettablePrivate
 {
   Resettable* resettable {nullptr};  //!< \brief Pointer to the public Resettable instance on which reset() is called.
+  cras::LogHelperPtr log {nullptr};  //!< \brief Logger instance.
   bool rosInitialized {false};  //!< \brief Whether rosInit() has been called.
   ros::NodeHandle nh;  //!< \brief The node handle for which rosInit() has been called.
   ros::Subscriber resetSub;  //!< \brief Subscriber to /reset topic.
@@ -45,6 +46,7 @@ struct TimeJumpResettablePrivate
 {
   TimeJumpResettable* resettable {nullptr};  //!< \brief Pointer to the public TimeJumpResettable instance on which
                                              //!<        reset() is called.
+  cras::LogHelperPtr log {nullptr};  //!< \brief Logger instance.
   bool rosInitialized {false};  //!< \brief Whether rosInit() has been called.
   ros::NodeHandle nh;  //!< \brief The node handle for which rosInit() has been called.
   cras::optional<ros::Time> lastTimeStamp;  //!< \brief Last known ROS time.
@@ -73,10 +75,10 @@ void ResettablePrivate::onResetMsg(const ros::MessageEvent<const topic_tools::Sh
   this->resettable->reset();
 }
 
-Resettable::Resettable(const cras::LogHelperPtr& log) : cras::HasLogger(log),
-  data(std::make_unique<ResettablePrivate>())
+Resettable::Resettable(const cras::LogHelperPtr& log) : data(std::make_unique<ResettablePrivate>())
 {
   this->data->resettable = this;
+  this->data->log = log;
 }
 
 Resettable::~Resettable() = default;
@@ -85,6 +87,7 @@ TimeJumpResettable::TimeJumpResettable(const cras::LogHelperPtr& log) : cras::Re
   data(std::make_unique<TimeJumpResettablePrivate>())
 {
   this->data->resettable = this;
+  this->data->log = log;
 }
 
 TimeJumpResettable::~TimeJumpResettable() = default;
@@ -112,7 +115,7 @@ void TimeJumpResettable::initRos(const ros::NodeHandle& pnh)
   this->data->nh = pnh;
 
   const auto isWallTime = ros::Time::isValid() ? ros::Time::isSystemTime() : true;
-  cras::BoundParamHelper params(this->log, std::make_shared<cras::NodeHandleGetParamAdapter>(this->data->nh));
+  cras::BoundParamHelper params(this->data->log, std::make_shared<cras::NodeHandleGetParamAdapter>(this->data->nh));
 
   auto backTolerance = ros::Duration(isWallTime ? 3 : 0, 0);
   backTolerance = params.getParam("/jump_back_tolerance", backTolerance, "s", {.printMessages = false});
@@ -145,6 +148,7 @@ void TimeJumpResettable::checkTimeJump(const ros::Time& now)
 
   if (this->data->lastTimeStamp.has_value())
   {
+    const auto getCrasLogger = [this]{return this->data->log;};
     // Do not invert the following comparisons so that they would contain subtraction - in such a case, the
     // resulting Time instance could go into negative numbers and that is not allowed.
     if (this->data->resetOnTimeJumpBack &&
@@ -173,6 +177,7 @@ void TimeJumpResettable::startAutoCheckTimeJump(const ros::WallRate& rate)
 {
   if (!this->data->rosInitialized)
   {
+    const auto getCrasLogger = [this]{return this->data->log;};
     CRAS_ERROR("Calling startAutoCheckTimeJump() before initRos()!");
     return;
   }
