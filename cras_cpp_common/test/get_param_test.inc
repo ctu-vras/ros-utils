@@ -12,6 +12,7 @@
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Vector3.h>
@@ -48,6 +49,11 @@ double distance(const geometry_msgs::Point32& v1, const geometry_msgs::Point32& 
 double distance(const geometry_msgs::Transform& t1, const geometry_msgs::Transform& t2)
 {
   return distance(t1.translation, t2.translation) + distance(t1.rotation, t2.rotation);
+}
+
+double distance(const geometry_msgs::Pose& t1, const geometry_msgs::Pose& t2)
+{
+  return distance(t1.position, t2.position) + distance(t1.orientation, t2.orientation);
 }
 
 double distance(const tf2::Quaternion& q1, const tf2::Quaternion& q2)
@@ -775,6 +781,15 @@ struct GetParamTest
     {TRACE ((T*)this)->test_near("tf6", t, t2, false);}
     {TRACE ((T*)this)->test_near("tf7", t, t2, false);}
     {TRACE ((T*)this)->test_near("tf16", t, t2, false);}
+
+    geometry_msgs::Pose po; po.position.x = v.x; po.position.y = v.y; po.position.z = v.z; po.orientation = q;
+    {TRACE ((T*)this)->test_defaults("nonexistent", po);}
+
+    geometry_msgs::Point v4; v4.x = 1; v4.y = 2; v4.z = 3;
+    geometry_msgs::Pose po2; po2.position = v4; po2.orientation = q2;
+    {TRACE ((T*)this)->test_near("tf6", po, po2, false);}
+    {TRACE ((T*)this)->test_near("tf7", po, po2, false);}
+    {TRACE ((T*)this)->test_near("tf16", po, po2, false);}
   }
 
   inline void testTF2()

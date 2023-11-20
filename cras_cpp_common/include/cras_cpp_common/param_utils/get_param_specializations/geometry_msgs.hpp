@@ -16,6 +16,7 @@
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Point32.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/Vector3.h>
@@ -77,6 +78,35 @@ DEFINE_CONVERTING_GET_PARAM(::geometry_msgs::Transform, ::std::vector<double>, "
     ::tf2::Quaternion q;
     r.getRotation(q);
     m.rotation.x = q.getX(); m.rotation.y = q.getY(); m.rotation.z = q.getZ(); m.rotation.w = q.getW();
+  }
+  return m;
+})
+
+DEFINE_CONVERTING_GET_PARAM(::geometry_msgs::Pose, ::std::vector<double>, "", [](const ::std::vector<double>& v) {
+  if (v.size() != 6 && v.size() != 7 && v.size() != 16)
+    throw ::std::runtime_error(::cras::format("Cannot load %s parameter from an array of length %lu",
+      "geometry_msgs::Pose", v.size()));
+  ::geometry_msgs::Pose m;
+  if (v.size() == 6 || v.size() == 7)
+  {
+    m.position.x = v[0]; m.position.y = v[1]; m.position.z = v[2];
+    if (v.size() == 6)
+    {
+      ::tf2::Quaternion q; q.setRPY(v[3], v[4], v[5]);
+      m.orientation.x = q.getX(); m.orientation.y = q.getY(); m.orientation.z = q.getZ(); m.orientation.w = q.getW();
+    }
+    else
+    {
+      m.orientation.x = v[3]; m.orientation.y = v[4]; m.orientation.z = v[5]; m.orientation.w = v[6];
+    }
+  }
+  else
+  {
+    m.position.x = v[3]; m.position.y = v[7]; m.position.z = v[11];
+    ::tf2::Matrix3x3 r(v[0], v[1], v[2], v[4], v[5], v[6], v[8], v[9], v[10]);
+    ::tf2::Quaternion q;
+    r.getRotation(q);
+    m.orientation.x = q.getX(); m.orientation.y = q.getY(); m.orientation.z = q.getZ(); m.orientation.w = q.getW();
   }
   return m;
 })
