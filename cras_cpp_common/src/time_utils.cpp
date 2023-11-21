@@ -99,9 +99,9 @@ ros::Time saturateAdd(const ros::Time& time, const ros::Duration& duration)
   const auto nsec64 = static_cast<int64_t>(time.toNSec()) + duration.toNSec();
   const auto sec64 = nsec64 / 1000000000LL;
   if (sec64 < 0)
-    return ros::Time::ZERO;
+    return {0, 0};
   if (sec64 > std::numeric_limits<uint32_t>::max())
-    return ros::Time::MAX;
+    return ros::TIME_MAX;
   return time + duration;
 }
 
@@ -110,9 +110,9 @@ ros::WallTime saturateAdd(const ros::WallTime& time, const ros::WallDuration& du
   const auto nsec64 = static_cast<int64_t>(time.toNSec()) + duration.toNSec();
   const auto sec64 = nsec64 / 1000000000LL;
   if (sec64 < 0)
-    return ros::WallTime::ZERO;
+    return {0, 0};
   if (sec64 > std::numeric_limits<uint32_t>::max())
-    return ros::WallTime::MAX;
+    return {ros::TIME_MAX.sec, ros::TIME_MAX.nsec};
   return time + duration;
 }
 
@@ -121,9 +121,9 @@ ros::SteadyTime saturateAdd(const ros::SteadyTime& time, const ros::WallDuration
   const auto nsec64 = static_cast<int64_t>(time.toNSec()) + duration.toNSec();
   const auto sec64 = nsec64 / 1000000000LL;
   if (sec64 < 0)
-    return ros::SteadyTime::ZERO;
+    return {0, 0};
   if (sec64 > std::numeric_limits<uint32_t>::max())
-    return ros::SteadyTime::MAX;
+    return {ros::TIME_MAX.sec, ros::TIME_MAX.nsec};
   return time + duration;
 }
 
