@@ -121,7 +121,7 @@ void TimeJumpResettable::initRos(const ros::NodeHandle& pnh)
   backTolerance = params.getParam("/jump_back_tolerance", backTolerance, "s", {.printMessages = false});
   this->data->jumpBackTolerance = params.getParam("jump_back_tolerance", backTolerance, "s", {.printMessages = false});
 
-  auto forwardTolerance = isWallTime ? ros::Duration::MAX : ros::Duration(10, 0);
+  auto forwardTolerance = isWallTime ? ros::DURATION_MAX : ros::Duration(10, 0);
   forwardTolerance = params.getParam("/jump_forward_tolerance", forwardTolerance, "s", {.printMessages = false});
   this->data->jumpForwardTolerance = params.getParam(
     "jump_forward_tolerance", forwardTolerance, "s", {.printMessages = false});
@@ -143,7 +143,7 @@ void TimeJumpResettable::checkTimeJump(const ros::Time& now)
   if ((!this->data->resetOnTimeJumpBack && !this->data->resetOnTimeJumpForward) || !ros::Time::isValid())
     return;
 
-  if (now < ros::Time::MIN)
+  if (now < ros::TIME_MIN)
     return;
 
   if (this->data->lastTimeStamp.has_value())
