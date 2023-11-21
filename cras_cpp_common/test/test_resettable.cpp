@@ -57,7 +57,7 @@ TEST(Resettable, Reset)  // NOLINT
     auto resetPub = pnh.advertise<std_msgs::Bool>("/reset", 1);
     auto resetPrivPub = pnh.advertise<std_msgs::Bool>("reset", 1);
 
-    ros::Time::setNow(ros::Time::MIN);
+    ros::Time::setNow(ros::TIME_MIN);
 
     auto node = TestNode(std::make_shared<cras::NodeLogHelper>());
 

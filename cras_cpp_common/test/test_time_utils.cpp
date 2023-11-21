@@ -244,46 +244,50 @@ TEST(TimeUtils, SaturateAddTime)  // NOLINT
   EXPECT_EQ(ros::Time(0, 0), cras::saturateAdd(ros::Time(1, 0), ros::Duration(-1, 0)));
   EXPECT_EQ(ros::Time(0, 0), cras::saturateAdd(ros::Time(1, 0), ros::Duration(-2, 0)));
   EXPECT_EQ(ros::Time(0, 0), cras::saturateAdd(ros::Time(1, 0), ros::Duration(-10, 0)));
-  EXPECT_EQ(ros::Time(0, 0), cras::saturateAdd(ros::Time(1, 0), -ros::Duration::MAX));
+  EXPECT_EQ(ros::Time(0, 0), cras::saturateAdd(ros::Time(1, 0), -ros::DURATION_MAX));
   EXPECT_EQ(ros::Time(10, 0), cras::saturateAdd(ros::Time(6, 0), ros::Duration(4, 0)));
-  EXPECT_EQ(ros::Time::MAX, cras::saturateAdd(ros::Time::MAX, ros::Duration(0, 0)));
-  EXPECT_EQ(ros::Time::MAX, cras::saturateAdd(ros::Time::MAX, ros::Duration(1, 0)));
-  EXPECT_EQ(ros::Time::MAX, cras::saturateAdd(ros::Time::MAX, ros::Duration(2, 0)));
-  EXPECT_EQ(ros::Time::MAX, cras::saturateAdd(ros::Time::MAX, ros::Duration::MAX));
-  EXPECT_EQ(ros::Time(ros::Duration::MAX.sec, ros::Duration::MAX.nsec),
-    cras::saturateAdd(ros::Time::ZERO, ros::Duration::MAX));
+  EXPECT_EQ(ros::TIME_MAX, cras::saturateAdd(ros::TIME_MAX, ros::Duration(0, 0)));
+  EXPECT_EQ(ros::TIME_MAX, cras::saturateAdd(ros::TIME_MAX, ros::Duration(1, 0)));
+  EXPECT_EQ(ros::TIME_MAX, cras::saturateAdd(ros::TIME_MAX, ros::Duration(2, 0)));
+  EXPECT_EQ(ros::TIME_MAX, cras::saturateAdd(ros::TIME_MAX, ros::DURATION_MAX));
+  EXPECT_EQ(ros::Time(ros::DURATION_MAX.sec, ros::DURATION_MAX.nsec),
+    cras::saturateAdd(ros::Time(0, 0), ros::DURATION_MAX));
 }
 
 TEST(TimeUtils, SaturateAddWallTime)  // NOLINT
 {
+  const ros::WallDuration DURATION_MAX(ros::DURATION_MAX.sec, ros::DURATION_MAX.nsec);
+  const ros::WallTime TIME_MAX(ros::TIME_MAX.sec, ros::TIME_MAX.nsec);
   EXPECT_EQ(ros::WallTime(2, 0), cras::saturateAdd(ros::WallTime(1, 0), ros::WallDuration(1, 0)));
   EXPECT_EQ(ros::WallTime(0, 0), cras::saturateAdd(ros::WallTime(1, 0), ros::WallDuration(-1, 0)));
   EXPECT_EQ(ros::WallTime(0, 0), cras::saturateAdd(ros::WallTime(1, 0), ros::WallDuration(-2, 0)));
   EXPECT_EQ(ros::WallTime(0, 0), cras::saturateAdd(ros::WallTime(1, 0), ros::WallDuration(-10, 0)));
-  EXPECT_EQ(ros::WallTime(0, 0), cras::saturateAdd(ros::WallTime(1, 0), -ros::WallDuration::MAX));
+  EXPECT_EQ(ros::WallTime(0, 0), cras::saturateAdd(ros::WallTime(1, 0), -DURATION_MAX));
   EXPECT_EQ(ros::WallTime(10, 0), cras::saturateAdd(ros::WallTime(6, 0), ros::WallDuration(4, 0)));
-  EXPECT_EQ(ros::WallTime::MAX, cras::saturateAdd(ros::WallTime::MAX, ros::WallDuration(0, 0)));
-  EXPECT_EQ(ros::WallTime::MAX, cras::saturateAdd(ros::WallTime::MAX, ros::WallDuration(1, 0)));
-  EXPECT_EQ(ros::WallTime::MAX, cras::saturateAdd(ros::WallTime::MAX, ros::WallDuration(2, 0)));
-  EXPECT_EQ(ros::WallTime::MAX, cras::saturateAdd(ros::WallTime::MAX, ros::WallDuration::MAX));
-  EXPECT_EQ(ros::WallTime(ros::WallDuration::MAX.sec, ros::WallDuration::MAX.nsec),
-    cras::saturateAdd(ros::WallTime::ZERO, ros::WallDuration::MAX));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(0, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(1, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(2, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, DURATION_MAX));
+  EXPECT_EQ(ros::WallTime(DURATION_MAX.sec, DURATION_MAX.nsec),
+    cras::saturateAdd(ros::WallTime(0, 0), DURATION_MAX));
 }
 
 TEST(TimeUtils, SaturateAddSteadyTime)  // NOLINT
 {
+  const ros::WallDuration DURATION_MAX(ros::DURATION_MAX.sec, ros::DURATION_MAX.nsec);
+  const ros::SteadyTime TIME_MAX(ros::TIME_MAX.sec, ros::TIME_MAX.nsec);
   EXPECT_EQ(ros::SteadyTime(2, 0), cras::saturateAdd(ros::SteadyTime(1, 0), ros::WallDuration(1, 0)));
   EXPECT_EQ(ros::SteadyTime(0, 0), cras::saturateAdd(ros::SteadyTime(1, 0), ros::WallDuration(-1, 0)));
   EXPECT_EQ(ros::SteadyTime(0, 0), cras::saturateAdd(ros::SteadyTime(1, 0), ros::WallDuration(-2, 0)));
   EXPECT_EQ(ros::SteadyTime(0, 0), cras::saturateAdd(ros::SteadyTime(1, 0), ros::WallDuration(-10, 0)));
-  EXPECT_EQ(ros::SteadyTime(0, 0), cras::saturateAdd(ros::SteadyTime(1, 0), -ros::WallDuration::MAX));
+  EXPECT_EQ(ros::SteadyTime(0, 0), cras::saturateAdd(ros::SteadyTime(1, 0), -DURATION_MAX));
   EXPECT_EQ(ros::SteadyTime(10, 0), cras::saturateAdd(ros::SteadyTime(6, 0), ros::WallDuration(4, 0)));
-  EXPECT_EQ(ros::SteadyTime::MAX, cras::saturateAdd(ros::SteadyTime::MAX, ros::WallDuration(0, 0)));
-  EXPECT_EQ(ros::SteadyTime::MAX, cras::saturateAdd(ros::SteadyTime::MAX, ros::WallDuration(1, 0)));
-  EXPECT_EQ(ros::SteadyTime::MAX, cras::saturateAdd(ros::SteadyTime::MAX, ros::WallDuration(2, 0)));
-  EXPECT_EQ(ros::SteadyTime::MAX, cras::saturateAdd(ros::SteadyTime::MAX, ros::WallDuration::MAX));
-  EXPECT_EQ(ros::SteadyTime(ros::WallDuration::MAX.sec, ros::WallDuration::MAX.nsec),
-    cras::saturateAdd(ros::SteadyTime::ZERO, ros::WallDuration::MAX));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(0, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(1, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, ros::WallDuration(2, 0)));
+  EXPECT_EQ(TIME_MAX, cras::saturateAdd(TIME_MAX, DURATION_MAX));
+  EXPECT_EQ(ros::SteadyTime(DURATION_MAX.sec, DURATION_MAX.nsec),
+    cras::saturateAdd(ros::SteadyTime(0, 0), DURATION_MAX));
 }
 
 class TestSleepInterface : public cras::InterruptibleSleepInterface
