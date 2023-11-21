@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.5 (2023-11-21)
+------------------
 * param_utils: Added getParam() specialization for geometry_msgs/Pose messages.
 * nodelet_utils: Added Resettable interface to NodeletWithSharedTfBuffer.
 * Added Resettable interface compatible with cras_py_common.
