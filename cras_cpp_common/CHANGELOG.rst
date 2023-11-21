@@ -2,6 +2,14 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* param_utils: Added getParam() specialization for geometry_msgs/Pose messages.
+* nodelet_utils: Added Resettable interface to NodeletWithSharedTfBuffer.
+* Added Resettable interface compatible with cras_py_common.
+* time_utils: Added saturateAdd().
+* Contributors: Martin Pecka
+
 2.3.4 (2023-10-25)
 ------------------
 * Do not use -march=native optimizations for cras_tf2_sensor_msgs. More generic platform-specific optimizations are used.
