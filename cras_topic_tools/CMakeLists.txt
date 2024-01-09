@@ -38,27 +38,27 @@ target_link_libraries(cras_generic_lazy_pubsub cras_lazy_subscriber cras_shape_s
 add_library(cras_count_messages_nodelet src/count_messages.cpp)
 add_dependencies(cras_count_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_count_messages_nodelet ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_count_messages_nodelet ${PROJECT_NAME}/count_messages.h cras::CountMessagesNodelet OUTPUT_NAME count_messages)
+cras_node_from_nodelet(cras_count_messages_nodelet cras::CountMessagesNodelet OUTPUT_NAME count_messages)
 
 add_library(cras_throttle_messages_nodelet src/throttle_messages.cpp)
 add_dependencies(cras_throttle_messages_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_throttle_messages_nodelet cras_generic_lazy_pubsub ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_throttle_messages_nodelet ${PROJECT_NAME}/throttle_messages.h cras::ThrottleMessagesNodelet OUTPUT_NAME throttle ANONYMOUS)
+cras_node_from_nodelet(cras_throttle_messages_nodelet cras::ThrottleMessagesNodelet OUTPUT_NAME throttle ANONYMOUS)
 
 add_library(cras_relay_nodelet src/relay.cpp)
 add_dependencies(cras_relay_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_relay_nodelet cras_generic_lazy_pubsub ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_relay_nodelet ${PROJECT_NAME}/relay.h cras::RelayNodelet OUTPUT_NAME relay ANONYMOUS)
+cras_node_from_nodelet(cras_relay_nodelet cras::RelayNodelet OUTPUT_NAME relay ANONYMOUS)
 
 add_library(cras_repeat_nodelet src/repeat.cpp)
 add_dependencies(cras_repeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_repeat_nodelet cras_generic_lazy_pubsub cras_shape_shifter ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_repeat_nodelet ${PROJECT_NAME}/repeat.h cras::RepeatMessagesNodelet OUTPUT_NAME repeat ANONYMOUS)
+cras_node_from_nodelet(cras_repeat_nodelet cras::RepeatMessagesNodelet OUTPUT_NAME repeat ANONYMOUS)
 
 add_library(cras_change_header_nodelet src/change_header.cpp)
 add_dependencies(cras_change_header_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_change_header_nodelet cras_generic_lazy_pubsub cras_shape_shifter ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_change_header_nodelet ${PROJECT_NAME}/change_header.h cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
+cras_node_from_nodelet(cras_change_header_nodelet cras::ChangeHeaderNodelet OUTPUT_NAME change_header ANONYMOUS)
 
 add_library(cras_priority_mux src/priority_mux_base.cpp)
 add_dependencies(cras_priority_mux ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -67,12 +67,12 @@ target_link_libraries(cras_priority_mux ${catkin_LIBRARIES})
 add_library(cras_priority_mux_nodelet src/priority_mux.cpp)
 add_dependencies(cras_priority_mux_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_priority_mux_nodelet cras_priority_mux cras_shape_shifter ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_priority_mux_nodelet ${PROJECT_NAME}/priority_mux.h cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
+cras_node_from_nodelet(cras_priority_mux_nodelet cras::PriorityMuxNodelet OUTPUT_NAME priority_mux ANONYMOUS)
 
 add_library(cras_heartbeat_nodelet src/heartbeat.cpp)
 add_dependencies(cras_heartbeat_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_heartbeat_nodelet cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES})
-cras_node_from_nodelet(cras_heartbeat_nodelet ${PROJECT_NAME}/heartbeat.h cras::HeartbeatNodelet OUTPUT_NAME heartbeat ANONYMOUS)
+cras_node_from_nodelet(cras_heartbeat_nodelet cras::HeartbeatNodelet OUTPUT_NAME heartbeat ANONYMOUS)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
