@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.6 (2024-01-09)
+------------------
 * node_from_nodelet: Implemented a simplified version that doesn't need the nodelet header file.
 * node_from_nodelet: Fixed a bug with missing return 0 at the end of main.
 * Contributors: Martin Pecka

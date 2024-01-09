@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>cras_bag_tools</name>
-  <version>2.3.5</version>
+  <version>2.3.6</version>
   <description>Various utilities to work with bag files</description>
 
   <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
