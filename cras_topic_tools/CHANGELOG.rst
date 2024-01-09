@@ -2,6 +2,11 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Made use of the simplified syntax of node_from_nodelet.
+* Contributors: Martin Pecka
+
 2.3.5 (2023-11-21)
 ------------------
 

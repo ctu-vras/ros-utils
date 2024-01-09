@@ -2,6 +2,12 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* node_from_nodelet: Implemented a simplified version that doesn't need the nodelet header file.
+* node_from_nodelet: Fixed a bug with missing return 0 at the end of main.
+* Contributors: Martin Pecka
+
 2.3.5 (2023-11-21)
 ------------------
 * param_utils: Added getParam() specialization for geometry_msgs/Pose messages.
