@@ -8,17 +8,25 @@
 
 #include <ros/datatypes.h>
 #include <ros/init.h>
+#include <ros/node_handle.h>
 #include <ros/this_node.h>
+#include <rosconsole/macros_generated.h>
 
 #include <nodelet/detail/callback_queue.h>
 #include <nodelet/detail/callback_queue_manager.h>
+#include <nodelet/nodelet.h>
 
 #include <cras_cpp_common/log_utils/node.h>
 #include <cras_cpp_common/param_utils/param_helper.hpp>
 
-#include <@NODELET_INCLUDE_FILE@>
-
 #cmakedefine01 CRAS_NODE_ANONYMOUS
+#cmakedefine01 NODE_IGNORE_HEADER
+
+#if NODE_IGNORE_HEADER
+#include <class_loader/class_loader_core.hpp>
+#else
+#include <@NODELET_INCLUDE_FILE@>
+#endif
 
 int main(int argc, char** argv)
 {
@@ -36,7 +44,16 @@ int main(int argc, char** argv)
   nodelet::detail::CallbackQueueManager manager(pnh.param("num_worker_threads", @CRAS_NODE_DEFAULT_NUM_THREADS@));
   
   // Declaration order of these variables is important to make sure they can be properly stopped and destroyed.
+#if NODE_IGNORE_HEADER
+  auto nodelet = boost::shared_ptr<nodelet::Nodelet>(class_loader::impl::createInstance<nodelet::Nodelet>("@NODELET_CLASS@", nullptr));
+#else
   auto nodelet = boost::make_shared<@NODELET_CLASS@>();
+#endif
+  if (nodelet == nullptr)
+  {
+    ROS_FATAL("Could not create node for nodelet cras_laser_geometry::ScanToPointCloud, factory failed.");
+    return 1;
+  }
   auto paramHelper = boost::dynamic_pointer_cast<cras::ParamHelper>(nodelet);
   if (paramHelper != nullptr)
     paramHelper->setLogger(std::make_shared<cras::NodeLogHelper>());
@@ -54,4 +71,6 @@ int main(int argc, char** argv)
 
   // Manager and callback queues are stopped and joined automatically in their destructors.
   // Explicitly removing the queues could lead to "boost: mutex lock failed" errors when stopping the node.
+
+  return 0;
 }
