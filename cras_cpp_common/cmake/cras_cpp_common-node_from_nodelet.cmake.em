@@ -71,7 +71,11 @@ function(cras_node_from_nodelet target include_file_or_class_name #[=[class_name
   if(NODE_IGNORE_HEADER)
     # In convention 2) (without a header file), we need to force the linker to include the nodelet library as normally
     # it would not link it as there is no code directly linking to its code.
-    target_link_options(${NODE_TARGET_NAME} PUBLIC "LINKER:--no-as-needed")
+    if(CMAKE_VERSION VERSION_LESS "3.13.0")
+      set_property(TARGET ${NODE_TARGET_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--no-as-needed")
+    else()
+      target_link_options(${NODE_TARGET_NAME} PUBLIC "LINKER:--no-as-needed")
+    endif()
   endif()
   
   install(TARGETS ${NODE_TARGET_NAME}
