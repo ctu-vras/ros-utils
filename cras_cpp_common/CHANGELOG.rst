@@ -2,6 +2,11 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* node_from_nodelet: Fix syntax for Melodic.
+* Contributors: Martin Pecka
+
 2.3.6 (2024-01-09)
 ------------------
 * node_from_nodelet: Implemented a simplified version that doesn't need the nodelet header file.
