@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.8 (2024-01-12)
+------------------
 * Fixed FindFilesystem CMake module usage of try_compile
 * Contributors: Martin Pecka
 
