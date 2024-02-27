@@ -12,21 +12,6 @@ install(DIRECTORY src/${PROJECT_NAME}/sphinx-themes DESTINATION ${CATKIN_PACKAGE
 if (CATKIN_ENABLE_TESTING)
   find_package(roslint REQUIRED)
 
-  # catkin_lint - checks validity of package.xml and CMakeLists.txt
-  # ROS buildfarm calls this without any environment and with empty rosdep cache,
-  # so we have problems reading the list of packages from env
-  # see https://github.com/ros-infrastructure/ros_buildfarm/issues/923
-  if(DEFINED ENV{ROS_HOME})
-    #catkin_lint: ignore_once env_var
-    set(ROS_HOME "$ENV{ROS_HOME}")
-  else()
-    #catkin_lint: ignore_once env_var
-    set(ROS_HOME "$ENV{HOME}/.ros")
-  endif()
-
-  #catkin_lint: ignore_once env_var
-  if(DEFINED ENV{ROS_ROOT} AND EXISTS "${ROS_HOME}/rosdep/sources.cache")
-    roslint_custom(catkin_lint "-W2" .)
-    roslint_add_test()  # Move this outside the if() block when more roslint tests are added
-  endif()
+  roslint_custom(catkin_lint "-W2" .)
+  roslint_add_test()  # Move this outside the if() block when more roslint tests are added
 endif()
