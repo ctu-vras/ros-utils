@@ -2,8 +2,8 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.9 (2024-02-27)
+------------------
 * Removed catkin_lint buildfarm hacks.
 * Contributors: Martin Pecka
 

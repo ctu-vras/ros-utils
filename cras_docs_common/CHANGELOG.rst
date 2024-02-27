@@ -2,8 +2,8 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.9 (2024-02-27)
+------------------
 * Removed catkin_lint buildfarm hacks.
 * Contributors: Martin Pecka
 

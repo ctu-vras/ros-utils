@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.9 (2024-02-27)
+------------------
 * Removed catkin_lint buildfarm hacks.
 * Updated to fast_float 6.1.0 .
 * Contributors: Martin Pecka
