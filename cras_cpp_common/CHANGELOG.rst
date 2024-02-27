@@ -2,6 +2,12 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Removed catkin_lint buildfarm hacks.
+* Updated to fast_float 6.1.0 .
+* Contributors: Martin Pecka
+
 2.3.8 (2024-01-12)
 ------------------
 * Fixed FindFilesystem CMake module usage of try_compile
