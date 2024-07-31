@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 #endif
   if (nodelet == nullptr)
   {
-    ROS_FATAL("Could not create node for nodelet cras_laser_geometry::ScanToPointCloud, factory failed.");
+    ROS_FATAL("Could not create node for nodelet @NODELET_CLASS@, factory failed.");
     return 1;
   }
   auto paramHelper = boost::dynamic_pointer_cast<cras::ParamHelper>(nodelet);
