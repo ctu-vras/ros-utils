@@ -65,6 +65,10 @@ namespace cras
  *   - `timeout` (double): How long does a message on this topic hold its priority.
  *   - `name` (str, default `topic`): Human-readable description of the input topic.
  *   - `disable_topic` (str, default ""): If nonempty, this topic will be subscribed to allow disabling the input topic.
+ *   - `disable_topic_inverted` (bool, default false): If true, `topic` will get disabled when false is received on
+ *                                                     `disable_topic`. If false, `topic` will get disabled when true is
+ *                                                     received on `disable_topic`. In case `disable_topic` is not of
+ *                                                     `std_msgs/Bool` type, this parameter does nothing.
  *   - `before_disable_message` (str, optional): If set, this string should point to a bagfile containing a single
  *                                               message. This message will be published on this topic just before the
  *                                               topic becomes disabled.
@@ -132,10 +136,14 @@ protected:
   /**
    * \brief Callback method triggered when a disable message is received.
    * \param[in] inTopic The input topic for which the disable message was received on.
+   * \param[in] invert If true, the topic will get disabled when false is received on the disable topic. If false,
+   *                   the topic will get disabled when true is received on the disable topic. In case the disable
+   *                   topic is not of std_msgs/Bool type, this parameter does nothing.
    * \param[in] event The received message ShapeShifter. If the message is of `std_msgs::Bool` type, it gets special
    *                  handling (the `data` field of the message tells whether the topic should be disabled or enabled).
    */
   virtual void disableCb(const ::std::string& inTopic,
+                         bool invert,
                          const ::ros::MessageEvent<::topic_tools::ShapeShifter const>& event);
 
   /**

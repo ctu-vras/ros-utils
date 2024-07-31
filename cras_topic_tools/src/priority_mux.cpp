@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include <pluginlib/class_list_macros.hpp>
@@ -73,6 +74,7 @@ void PriorityMuxNodelet::onInit()
   }
 
   std::unordered_map<std::string, std::string> disableTopics;
+  std::unordered_set<std::string> invertedDisableTopics;
 
   for (const auto& item : topicItems)
   {
@@ -126,6 +128,11 @@ void PriorityMuxNodelet::onInit()
     if (!disableTopic.empty())
     {
       disableTopics[config.inTopic] = disableTopic;
+
+      const auto disableTopicInverted = xmlParams.getParam("disable_topic_inverted", false);
+      if (disableTopicInverted)
+        invertedDisableTopics.insert(disableTopic);
+
       // If there should be a message sent just before disabling this topic, read the message from a bag
       const auto beforeDisableMessageBag = xmlParams.getParam("before_disable_message", std::string());
       if (!beforeDisableMessageBag.empty())
@@ -352,8 +359,9 @@ void PriorityMuxNodelet::onInit()
   {
     const auto& inTopic = inTopicAndDisableTopic.first;
     const auto& disableTopic = inTopicAndDisableTopic.second;
+    const bool invert = invertedDisableTopics.find(disableTopic) != invertedDisableTopics.end();
 
-    const auto cb = cras::bind_front(&PriorityMuxNodelet::disableCb, this, inTopic);
+    const auto cb = cras::bind_front(&PriorityMuxNodelet::disableCb, this, inTopic, invert);
     const auto sub = this->getNodeHandle().subscribe<topic_tools::ShapeShifter>(
       disableTopic, this->queueSize, cb, nullptr, transportHints);
     this->subscribers.push_back(sub);
@@ -442,11 +450,15 @@ void PriorityMuxNodelet::lockCb(const std::string& topic, const ros::MessageEven
 }
 
 void PriorityMuxNodelet::disableCb(
-  const std::string& inTopic, const ros::MessageEvent<const topic_tools::ShapeShifter>& event)
+  const std::string& inTopic, const bool invert, const ros::MessageEvent<const topic_tools::ShapeShifter>& event)
 {
   bool disable = true;
   if (event.getConstMessage()->getDataType() == ros::message_traits::DataType<std_msgs::Bool>::value())
+  {
     disable = event.getConstMessage()->instantiate<std_msgs::Bool>()->data;
+    if (invert)
+      disable = !disable;
+  }
 
   // Publish the "before disabled" message if there is any and the topic gets disabled right now
   if (disable && !this->mux->isDisabled(inTopic, event.getReceiptTime()))
