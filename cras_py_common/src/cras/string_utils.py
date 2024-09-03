@@ -3,10 +3,17 @@
 
 """Utilities helpful when working with strings in Python and rospy."""
 
+import ctypes
+import os
+import re
+
+from errno import errorcode, E2BIG, EILSEQ
 from enum import Enum
+
 import genpy
 import rospy
 
+from .ctypes_utils import get_ro_c_buffer, load_library
 from .time_utils import frequency, WallTime, WallRate, SteadyTime, SteadyRate
 
 
@@ -125,3 +132,251 @@ def to_str(obj):
             return braces[0] + ", ".join(items) + braces[1]
         except TypeError:  # obj is not iterable
             return str(obj)
+
+
+__LIBC = None
+__iconv_open = None
+__iconv = None
+__ICONV_CONV_DESCS = dict()
+
+
+def __get_libc():
+    global __LIBC
+    if __LIBC is None:
+        __LIBC = load_library("c", use_errno=True)
+    return __LIBC
+
+
+def __errno_to_str(errno):
+    return "%s: %s" % (errorcode[errno], os.strerror(errno))
+
+
+def __iconv_get_conv_desc(to_encoding, from_encoding):
+    if (to_encoding, from_encoding) not in __ICONV_CONV_DESCS:
+        global __iconv_open
+        if __iconv_open is None:
+            __iconv_open = __get_libc().iconv_open
+            __iconv_open.restype = ctypes.c_void_p
+
+        ctypes.set_errno(0)
+        cd = __iconv_open(
+            ctypes.c_char_p(to_encoding.encode("utf-8")),
+            ctypes.c_char_p(from_encoding.encode("utf-8")))
+
+        if cd == ctypes.c_void_p(-1).value:
+            raise ValueError("Could not create conversion descriptor from encoding '%s' to '%s': Error %s" % (
+                from_encoding, to_encoding, __errno_to_str(ctypes.get_errno())))
+
+        __ICONV_CONV_DESCS[(to_encoding, from_encoding)] = cd
+
+    return __ICONV_CONV_DESCS[(to_encoding, from_encoding)]
+
+
+class __IconvError(Exception):
+    def __init__(self, errno):
+        self.errno = errno
+
+
+def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ignore=False,
+                        initial_outbuf_size_scale=1.0, outbuf_enlarge_coef=2.0):
+    """Convert `in_bytes` from `from_encoding` to `to_encoding` using iconv.
+
+    :param str to_encoding: The target encoding. It may contain the //TRANSLIT and //IGNORE suffixes.
+    :param str from_encoding: The source encoding.
+    :param bytes in_bytes: The bytes to convert (get them e.g. by calling `"my_string".encode('utf-8')`).
+    :param bool translit: If True, the conversion will try to transliterate letters not present in target encoding.
+    :param bool ignore: If True, letters that can't be converted and transliterated will be left out.
+    :param float initial_outbuf_size_scale: The initial scale of the size of the output buffer. Setting this to the
+                                            correct value may speed up the conversion in case the output is much larger
+                                            than the input.
+    :param outbuf_enlarge_coef: The step size to use for enlarging the output buffer if it shows that its initial size
+                                is insufficient. Must be stritctly larger than 1.0.
+    :return: The converted bytes. Call e.g. `result.decode('utf-8')` to get a string from it.
+    :rtype: bytes
+    :raises ValueError: If some characters cannot be converted and `ignore` is False, or if the encodings are unknown.
+    """
+    if outbuf_enlarge_coef <= 1.0:
+        raise ValueError("outbuf_enlarge_coef has to be strictly larger than 1.0")
+
+    if translit and "//TRANSLIT" not in to_encoding:
+        to_encoding += "//TRANSLIT"
+    if ignore and "//IGNORE" not in to_encoding:
+        to_encoding += "//IGNORE"
+    ignore = "//IGNORE" in to_encoding or ("//" in to_encoding and ",IGNORE" in to_encoding)
+
+    cd = __iconv_get_conv_desc(to_encoding, from_encoding)
+
+    c_char_p = ctypes.POINTER(ctypes.c_char)
+
+    global __iconv
+    if __iconv is None:
+        def errcheck(ret, func, args):
+            if ret == ctypes.c_size_t(-1).value:
+                raise __IconvError(ctypes.get_errno())
+            return ret
+
+        __iconv = __get_libc().iconv
+        __iconv.errcheck = errcheck
+        __iconv.restype = ctypes.c_size_t
+        __iconv.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(c_char_p), ctypes.POINTER(ctypes.c_size_t),
+            ctypes.POINTER(c_char_p), ctypes.POINTER(ctypes.c_size_t)
+        ]
+
+    inbuf = get_ro_c_buffer(in_bytes)
+    inbuf_ptr = ctypes.cast(inbuf, c_char_p)
+    inbuf_unread_size = ctypes.c_size_t(len(in_bytes))
+
+    outbuf_len = int(len(in_bytes) * initial_outbuf_size_scale)
+    outbuf = ctypes.create_string_buffer(outbuf_len)
+    outbuf_ptr = ctypes.cast(outbuf, c_char_p)
+    outbuf_unused_size = ctypes.c_size_t(outbuf_len)
+
+    # Read the input until there is something to read
+    while inbuf_unread_size.value > 0:
+        try:
+            ctypes.set_errno(0)
+            __iconv(cd,
+                    ctypes.byref(inbuf_ptr), ctypes.byref(inbuf_unread_size),
+                    ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
+
+            # Clean up the conversion descriptor and flush possible "shift sequences"
+            ctypes.set_errno(0)
+            __iconv(cd, None, None, ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
+        except __IconvError as e:
+            # The output buffer is too small; increase its size and try the conversion again
+            if e.errno == E2BIG:
+                inbuf = get_ro_c_buffer(in_bytes)
+                inbuf_ptr = ctypes.cast(inbuf, c_char_p)
+                inbuf_unread_size = ctypes.c_size_t(len(in_bytes))
+
+                outbuf_len = int(outbuf_len * outbuf_enlarge_coef)  # Enlarge the output buffer size
+                outbuf = ctypes.create_string_buffer(outbuf_len)
+                outbuf_ptr = ctypes.cast(outbuf, c_char_p)
+                outbuf_unused_size = ctypes.c_size_t(outbuf_len)
+            # Invalid byte sequence encountered or cannot transliterate to output
+            else:
+                # Reset the conversion descriptor as we'll be ignoring some bytes, so all context is lost
+                ctypes.set_errno(0)
+                __iconv(cd, None, None, None, None)
+
+                if not ignore:
+                    raise ValueError("Could not convert %r from encoding %s to %s. Error %s" % (
+                        in_bytes, from_encoding, to_encoding, __errno_to_str(e.errno)))
+
+                # Ignore invalid input byte sequences or sequences we can't transliterate
+                if e.errno == EILSEQ and inbuf_unread_size.value > 1:
+                    inbuf_unread_size.value -= 1
+                    inbuf_ptr = ctypes.cast(ctypes.addressof(inbuf) + len(in_bytes) - inbuf_unread_size.value, c_char_p)
+                # EINVAL means invalid byte sequence at the end of input, just throw it away
+                # inbuf_unread_size == 0 means ignore is True, some chars were ignored, but otherwise, we have success
+                else:
+                    break
+
+    return outbuf.value[:(outbuf_len - outbuf_unused_size.value)]
+
+
+def transliterate_to_ascii(text):
+    """Transliterate the given string from UTF-8 to ASCII (replace non-ASCII chars by closest ASCII chars).
+
+    :param str text: The string to transliterate.
+    :return: The transliterated string.
+    :rtype: str
+    """
+    assert isinstance(text, STRING_TYPE)
+    conv_bytes = iconv_convert_bytes(
+        "ASCII", "UTF-8", text.encode('utf-8'), translit=True, ignore=True)
+    return conv_bytes.decode('ascii', 'ignore')
+
+
+NAME_LEGAL_CHARS_P = re.compile(r'^[~/]?[A-Za-z][a-zA-Z0-9/]*$')
+
+
+def is_legal_name(name):
+    """Check if name is a legal ROS name for graph resources.
+
+    This function works correctly, which can't be said about the rosgraph.names version.
+
+    :param str name: Name
+    :rtype: bool
+    """
+    if name is None:
+        return False
+    # empty string is a legal name as it resolves to namespace
+    if name == '' or name == '/' or name == '~':
+        return True
+    if '//' in name:
+        return False
+    m = NAME_LEGAL_CHARS_P.match(name)
+    return m is not None and m.group(0) == name
+
+
+BASE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
+
+
+def is_legal_base_name(name):
+    """Validates that name is a legal base name for a graph resource. A base name has no namespace context, e.g.
+    "node_name".
+
+    This function works correctly, which can't be said about the rosgraph.names version.
+
+    :param str name: Name
+    :rtype: bool
+    """
+    if name is None:
+        return False
+    m = BASE_NAME_LEGAL_CHARS_P.match(name)
+    return m is not None and m.group(0) == name
+
+
+def to_valid_ros_name(text, base_name=True, fallback_name=None):
+    """Make sure the given string can be used as ROS name.
+
+    :param str text: The text to convert.
+    :param bool base_name: If True, the text represents only one "level" of names. If False, it can be the absolute or
+                           relative name with ~ and /.
+    :param str fallback_name: If specified, this name will be used if the automated conversion fails. This name is not
+                              checked to be valid.
+    :return: The valid ROS graph resource name.
+    :rtype: str
+    :raises ValueError: If the given text cannot be converted to a valid ROS name, and no `fallback_name` is specified.
+    """
+    is_legal = is_legal_base_name if base_name else is_legal_name
+    if is_legal(text):
+        return text
+
+    if len(text) == 0:
+        if fallback_name is None:
+            raise ValueError("Empty name is not allowed")
+        return fallback_name
+
+    name = transliterate_to_ascii(text)
+    prefix = ''
+    if base_name:
+        name = re.sub(r'[^a-zA-Z0-9_]', '_', name)
+    else:
+        if name[0] == '~':
+            prefix = '~'
+            name = name[1:]
+        elif name[0] == '/':
+            prefix = '/'
+            name = name[1:]
+        name = re.sub(r'[^a-zA-Z0-9_/]', '_', name)
+
+    while "__" in name:
+        name = name.replace("__", "_")
+
+    name = re.sub(r'^[^a-zA-Z]*', '', name)
+    if len(name) == 0:
+        if fallback_name is None:
+            raise ValueError("Name '%s' cannot be converted to valid ROS name" % (name,))
+        return fallback_name
+
+    name = prefix + name
+    if not is_legal(name):
+        if fallback_name is None:
+            raise ValueError("Name '%s' cannot be converted to valid ROS name" % (name,))
+        return fallback_name
+
+    return name

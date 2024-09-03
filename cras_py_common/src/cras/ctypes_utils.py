@@ -20,7 +20,7 @@ RTLD_NOW = 2
 """Relocate dynamic symbols as soon as the library is loaded."""
 
 
-def load_library(library_name, mode=RTLD_LAZY):
+def load_library(library_name, mode=RTLD_LAZY, use_errno=False):
     """Load a C library (.so file) located on LD_LIBRARY_PATH.
 
     All dependencies of this library have to be loaded before this one with :obj:`mode` =  :const:`ctypes.RTLD_GLOBAL`.
@@ -28,6 +28,7 @@ def load_library(library_name, mode=RTLD_LAZY):
     :param str library_name: Name of the library (without the "lib" prefix and ".so" suffix).
     :param int mode: Symbol loading scope and when they should be loaded. Either :const:`ctypes.RTLD_LOCAL`,
                      :const:`ctypes.RTLD_GLOBAL`, :const:`RTLD_NOW` or :const:`RTLD_LAZY`.
+    :param bool use_errno: Whether called functions should use a ctypes' thread-local errno copy.
     :return: A handle to the loaded library.
     :rtype: CDLL
     """
@@ -39,7 +40,7 @@ def load_library(library_name, mode=RTLD_LAZY):
         rospy.logfatal("Could not find shared library " + library_name)
         return None
 
-    return CDLL(library, mode=mode)
+    return CDLL(library, mode=mode, use_errno=use_errno)
 
 
 def get_ro_c_buffer(buf, buf_len=None):

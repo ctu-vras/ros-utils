@@ -13,7 +13,7 @@ from rospy import Duration, Rate, Time
 from geometry_msgs.msg import Transform
 
 from cras import to_str, register_to_str
-from cras.string_utils import BufferStringIO
+from cras.string_utils import BufferStringIO, iconv_convert_bytes, to_valid_ros_name, transliterate_to_ascii
 
 
 class TestClass:
@@ -131,6 +131,65 @@ class StringUtils(unittest.TestCase):
         buf.seek(0, os.SEEK_SET)
         self.assertEqual(buf.tell(), 0)
         self.assertEqual(buf.getvalue(), b'test')
+
+    def test_iconv_convert_bytes(self):
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "test".encode("utf-8")), b"test")
+
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "ťěšť".encode("utf-8"), translit=True), b"test")
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "aťěšťz".encode("utf-8"), translit=True), b"atestz")
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "ťěšť".encode("utf-8"), ignore=True), b"")
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "aťěšťz".encode("utf-8"), ignore=True), b"az")
+        self.assertRaises(ValueError, iconv_convert_bytes, "ASCII", "UTF-8", "ťěšť".encode("utf-8"), translit=False)
+
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "tägelîch".encode("utf-8"), translit=True), b"tagelich")
+        self.assertRaises(ValueError, iconv_convert_bytes, "ASCII", "UTF-8", "tägelîch".encode("utf-8"), translit=False)
+
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "30 \U0001d5c4\U0001d5c6/\U0001d5c1".encode("utf-8"), translit=True), b"30 km/h")
+        self.assertRaises(ValueError, iconv_convert_bytes,
+                          "ASCII", "UTF-8", "30 \U0001d5c4\U0001d5c6/\U0001d5c1".encode("utf-8"), translit=False)
+
+        self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "かな漢字".encode("utf-8"), translit=True), b"????")
+        self.assertRaises(ValueError, iconv_convert_bytes, "ASCII", "UTF-8", "かな漢字".encode("utf-8"), translit=False)
+
+        self.assertEqual(iconv_convert_bytes(
+            "UTF-8", "ISO-8859-2", "ťěšť".encode("iso-8859-2"), initial_outbuf_size_scale=2.0), "ťěšť".encode('utf-8'))
+        self.assertEqual(iconv_convert_bytes(
+            "UTF-8", "ISO-8859-2", "ťěšť".encode("iso-8859-2"), initial_outbuf_size_scale=1.0), "ťěšť".encode('utf-8'))
+        self.assertEqual(iconv_convert_bytes(
+            "UTF-8", "ISO-8859-2", "ťěšť".encode("iso-8859-2"), initial_outbuf_size_scale=4.0), "ťěšť".encode('utf-8'))
+
+        self.assertEqual(iconv_convert_bytes(
+            "ISO-8859-2", "UTF-8", "ťěšťĊ".encode("utf-8"), translit=True), "ťěšťC".encode('iso-8859-2'))
+        self.assertEqual(iconv_convert_bytes(
+            "ISO-8859-2", "UTF-8", "ťěšťĊ".encode("utf-8"), ignore=True), "ťěšť".encode('iso-8859-2'))
+        self.assertRaises(ValueError, iconv_convert_bytes, "ISO-8859-2", "UTF-8", "ťěšťĊ".encode("utf-8"))
+
+        self.assertRaises(ValueError, iconv_convert_bytes, "UNKNOWN", "UTF-8", "ťěšť".encode("utf-8"))
+
+    def test_transliterate_to_ascii(self):
+        self.assertEqual(transliterate_to_ascii("test"), "test")
+        self.assertEqual(transliterate_to_ascii("ťěšť"), "test")
+        self.assertEqual(transliterate_to_ascii("tägelîch"), "tagelich")
+        self.assertEqual(transliterate_to_ascii("30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "30 km/h")
+        self.assertEqual(transliterate_to_ascii("かな漢字"), "????")
+
+    def test_to_valid_ros_name(self):
+        self.assertEqual(to_valid_ros_name("test"), "test")
+        self.assertEqual(to_valid_ros_name("Top Box"), "Top_Box")
+        self.assertEqual(to_valid_ros_name("ťěšť"), "test")
+        self.assertEqual(to_valid_ros_name("tägelîch"), "tagelich")
+        self.assertEqual(to_valid_ros_name("30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "km_h")
+        self.assertRaises(ValueError, to_valid_ros_name, "かな漢字")
+        self.assertEqual(to_valid_ros_name("かな漢字", fallback_name="test"), "test")
+        self.assertEqual(to_valid_ros_name("333", fallback_name="test"), "test")
+        self.assertEqual(to_valid_ros_name("a/b", fallback_name="test"), "a_b")
+        self.assertEqual(to_valid_ros_name("a/b", base_name=False), "a/b")
+        self.assertEqual(to_valid_ros_name("/3/b", base_name=False), "/b")
+        self.assertEqual(to_valid_ros_name("a/ťěšť", base_name=False), "a/test")
+        self.assertEqual(to_valid_ros_name("a/ťěšť/b", base_name=False), "a/test/b")
+        self.assertEqual(to_valid_ros_name("a/ťěšť/tägelîch", base_name=False), "a/test/tagelich")
+        self.assertEqual(to_valid_ros_name("30 \U0001d5c4\U0001d5c6/\U0001d5c1", base_name=False), "km/h")
 
 
 if __name__ == '__main__':
