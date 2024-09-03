@@ -56,7 +56,8 @@ except ImportError:
 
 master_doc = 'index'
 autoclass_content = 'both'
-
+# Allow specifying inline code only as `code` and not as ``code``
+default_role = 'code'
 
 this_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 theme_path = os.path.join(this_dir, 'sphinx-themes')

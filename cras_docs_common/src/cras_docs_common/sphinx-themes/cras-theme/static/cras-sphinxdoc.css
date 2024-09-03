@@ -15,6 +15,16 @@ code.descclassname {
     color: #00458EFF;
 }
 
+code span.pre {
+    background-color: #d0dbe4;
+    padding: 0px 2px;
+}
+
+code.xref span.pre {
+    background-color: transparent;
+    padding: 0px;
+}
+
 .document .body .section h2 {
     background-color: #005bb6;
     color: white;
