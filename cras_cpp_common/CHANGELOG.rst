@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2024-09-04)
+------------------
 * Added small_map and fixed concurrency problems in log_utils.
 * Updated fast_float to 6.1.5.
 * node_from_nodelet: Fixed error message

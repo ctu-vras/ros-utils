@@ -2,8 +2,8 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2024-09-04)
+------------------
 * Fine-tuned appearance of inline code in Spinx docs and allowed to type inline code by single backticks.
 * Contributors: Martin Pecka
 
