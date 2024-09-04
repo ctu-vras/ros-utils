@@ -111,7 +111,7 @@ protected:
   /**
    * \brief Reset the repeater, e.g. after a time jump.
    */
-  void reset();
+  void reset() override;
 
   /**
    * \brief Record the incoming message if it passes validations, and publish it if `publishOnlyOnTimer` is false.

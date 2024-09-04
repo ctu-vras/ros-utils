@@ -107,6 +107,8 @@ public:
               const SetTimerFn& setTimerFn, const ::ros::Time& now, const ::cras::LogHelperPtr& log,
               const ::std::string& noneTopic = "__none", int nonePriority = 0);
 
+  virtual ~PriorityMux();
+
   /**
    * \brief Callback function run when input topic message is received.
    *

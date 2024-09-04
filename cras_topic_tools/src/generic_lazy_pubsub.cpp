@@ -37,8 +37,8 @@ cras::GenericLazyPubSub::GenericLazyPubSub(
   const size_t inQueueSize, const size_t outQueueSize, CallbackType callback,
   ros::SubscribeOptions subscribeOptions, const cras::LogHelperPtr& logHelper) :
     cras::ConditionalSubscriber(cras::bind_front(&cras::GenericLazyPubSub::subscribe, this), logHelper),
-    topicIn(topicIn), topicOut(topicOut), callback(std::move(callback)), subscribeOptions(std::move(subscribeOptions)),
-    inQueueSize(inQueueSize), outQueueSize(outQueueSize), nhIn(nhIn), nhOut(nhOut)
+    topicIn(topicIn), topicOut(topicOut), inQueueSize(inQueueSize), outQueueSize(outQueueSize),
+    nhIn(nhIn), nhOut(nhOut), callback(std::move(callback)), subscribeOptions(std::move(subscribeOptions))
 {
   // We have to connect at the beginning so that we can create the publisher from a subscribed message.
   std::lock_guard<std::mutex> lock(this->connectMutex);
@@ -105,7 +105,7 @@ ros::AdvertiseOptions cras::GenericLazyPubSub::createAdvertiseOptions(
   opts.has_header = cras::hasHeader(*msg);
   if (event.getConnectionHeaderPtr() != nullptr)
   {
-    const auto header = event.getConnectionHeader();
+    const auto& header = event.getConnectionHeader();
     opts.latch = header.find("latching") != header.end() && event.getConnectionHeader()["latching"] == "1";
   }
   return opts;

@@ -95,7 +95,7 @@ protected:
   /**
    * \brief Reset the rate limiter, e.g. after a time jump.
    */
-  void reset();
+  void reset() override;
 
   /**
    * \brief Publish the incoming message if the rate limiter allows.

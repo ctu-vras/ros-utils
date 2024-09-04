@@ -110,6 +110,7 @@ void ThrottleMessagesNodelet::onReset(const ros::MessageEvent<const topic_tools:
 
 void ThrottleMessagesNodelet::reset()
 {
+  NodeletWithSharedTfBuffer::reset();
   std::lock_guard<std::mutex> lock(this->limiterMutex);
   this->limiter->reset();
 }

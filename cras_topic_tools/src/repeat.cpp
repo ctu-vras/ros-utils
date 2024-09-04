@@ -105,6 +105,8 @@ void RepeatMessagesNodelet::onReset(const ros::MessageEvent<const topic_tools::S
 
 void RepeatMessagesNodelet::reset()
 {
+  NodeletWithSharedTfBuffer::reset();
+
   this->timer.setPeriod(this->rate->expectedCycleTime(), true);
 
   std::lock_guard<std::mutex> lock(this->msgMutex);

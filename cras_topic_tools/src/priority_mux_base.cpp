@@ -23,7 +23,7 @@ PriorityMux::PriorityMux(const std::unordered_map<std::string, cras::priority_mu
                          const cras::PriorityMux::SetTimerFn& setTimerFn, const ::ros::Time& now,
                          const cras::LogHelperPtr& log, const std::string& noneTopic, int nonePriority) :
   cras::HasLogger(log), topicConfigs(topicConfigs), lockConfigs(lockConfigs), setTimer(setTimerFn),
-  noneTopic(noneTopic), nonePriority(nonePriority)
+  noneTopic(noneTopic), nonePriority(nonePriority), lastActivePriority(nonePriority)
 {
   this->resetImpl(now);
 
@@ -39,6 +39,8 @@ PriorityMux::PriorityMux(const std::unordered_map<std::string, cras::priority_mu
       this->setTimer(name, config.timeout);
   }
 }
+
+PriorityMux::~PriorityMux() = default;
 
 bool PriorityMux::cb(const std::string& inTopic, const ros::Time& stamp, const ros::Time& now)
 {
