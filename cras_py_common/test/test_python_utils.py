@@ -7,6 +7,8 @@
 
 import locale
 import os
+import sys
+
 import rostest
 import unittest
 
@@ -40,14 +42,18 @@ class PythonUtils(unittest.TestCase):
         self.assertEqual(libc_getenv("CRAS_TEST3", None), "Test3")
 
     def test_temp_locale(self):
+        if sys.version_info.major == 2:
+            format = locale.format
+        else:
+            format = locale.format_string
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-        self.assertEqual("1000.00", locale.format_string("%3.2f", 1000.0, monetary=True))
+        self.assertEqual("1000.00", format("%3.2f", 1000.0, monetary=True))
         with temp_locale(locale.LC_ALL, 'C'):
-            self.assertEqual("100000", locale.format_string("%3.2f", 1000.0, monetary=True))
-        self.assertEqual("1000.00", locale.format_string("%3.2f", 1000.0, monetary=True))
+            self.assertEqual("100000", format("%3.2f", 1000.0, monetary=True))
+        self.assertEqual("1000.00", format("%3.2f", 1000.0, monetary=True))
         with temp_locale(locale.LC_ALL, 'de_DE.UTF-8'):
-            self.assertEqual("1000,00", locale.format_string("%3.2f", 1000.0, monetary=True))
-        self.assertEqual("1000.00", locale.format_string("%3.2f", 1000.0, monetary=True))
+            self.assertEqual("1000,00", format("%3.2f", 1000.0, monetary=True))
+        self.assertEqual("1000.00", format("%3.2f", 1000.0, monetary=True))
 
 
 if __name__ == '__main__':
