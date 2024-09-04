@@ -62,5 +62,8 @@ def temp_locale(category, localename):
         locale.setlocale(category, localename)
         yield
     finally:
-        locale.setlocale(category, old_locale + "." + encoding)
+        if old_locale is not None and encoding is not None:
+            locale.setlocale(category, old_locale + "." + encoding)
+        else:
+            locale.resetlocale(category)
         pass

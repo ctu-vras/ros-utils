@@ -45,8 +45,9 @@ class PythonUtils(unittest.TestCase):
         with temp_locale(locale.LC_ALL, 'C'):
             self.assertEqual("100000", locale.format_string("%3.2f", 1000.0, monetary=True))
         self.assertEqual("1000.00", locale.format_string("%3.2f", 1000.0, monetary=True))
-
-        # unfortunately, the tests cannot rely on any other specific locales to be installed
+        with temp_locale(locale.LC_ALL, 'de_DE.UTF-8'):
+            self.assertEqual("1000,00", locale.format_string("%3.2f", 1000.0, monetary=True))
+        self.assertEqual("1000.00", locale.format_string("%3.2f", 1000.0, monetary=True))
 
 
 if __name__ == '__main__':
