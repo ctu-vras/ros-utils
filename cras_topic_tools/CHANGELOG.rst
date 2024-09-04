@@ -2,6 +2,12 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Little fixes suggested by linters.
+* priority_mux: Added option to invert disable_topic.
+* Contributors: Martin Pecka
+
 2.3.9 (2024-02-27)
 ------------------
 * Removed catkin_lint buildfarm hacks.

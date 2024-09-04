@@ -2,6 +2,13 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added small_map and fixed concurrency problems in log_utils.
+* Updated fast_float to 6.1.5.
+* node_from_nodelet: Fixed error message
+* Contributors: Martin Pecka
+
 2.3.9 (2024-02-27)
 ------------------
 * Removed catkin_lint buildfarm hacks.
