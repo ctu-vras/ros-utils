@@ -52,6 +52,14 @@ cras.param\_utils module
    :undoc-members:
    :show-inheritance:
 
+cras.python\_utils module
+--------------------------
+
+.. automodule:: cras.python_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cras.static\_transform\_broadcaster module
 ------------------------------------------
 

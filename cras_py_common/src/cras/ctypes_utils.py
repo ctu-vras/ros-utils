@@ -3,7 +3,8 @@
 
 """Utilities for working with the ctypes library."""
 
-from ctypes import CDLL, CFUNCTYPE, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, POINTER, string_at, sizeof
+from ctypes import CDLL, CFUNCTYPE, c_bool, c_char_p, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, \
+    get_errno, POINTER, set_errno, sizeof, string_at
 from ctypes.util import find_library
 from logging import LogRecord
 import os
@@ -11,7 +12,6 @@ import sys
 
 from rosgraph.roslogging import RosStreamHandler
 import rospy
-
 
 RTLD_LAZY = 1
 """Relocate dynamic symbols only when they are used."""
@@ -36,7 +36,7 @@ def load_library(library_name, mode=RTLD_LAZY, use_errno=False):
     os.environ['LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', '')
 
     library = find_library(library_name)
-    if library is None:
+    if library_name is not None and library is None:
         rospy.logfatal("Could not find shared library " + library_name)
         return None
 
@@ -76,6 +76,92 @@ def c_array(data, c_type):
     c_data[:-1] = data
     c_data[-1] = 0
     return c_data
+
+
+__libc = None
+
+
+def get_libc():
+    global __libc
+    if __libc is None:
+        __libc = load_library("c", use_errno=True)
+    return __libc
+
+
+__getenv = None
+__setenv = None
+__unsetenv = None
+__setlocale = None
+
+
+def libc_getenv(name, default_value=None):
+    """Call libc function `getenv()` to get a C program environment variable value.
+
+    :param str name: Name of the variable.
+    :param default_value: Default value to return if the variable is not found.
+    :type default_value: str, optional
+    :return: The variable (as Python string) or the default value if the variable is not set.
+    :rtype: str, optional
+    """
+    global __getenv
+    if __getenv is None:
+        libc = get_libc()
+        __getenv = libc.getenv
+        __getenv.argtypes = [c_char_p]
+        __getenv.restype = c_char_p
+    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
+    fsdecode = getattr(os, 'fsdecode', lambda x: x)  # Py2 doesn't have fsdecode
+    set_errno(0)
+    res = __getenv(fsencode(name))
+    if res is None:
+        return default_value
+    return fsdecode(res)
+
+
+def libc_setenv(name, value, overwrite=True):
+    """Call libc function `setenv()` to set the C program environment.
+
+    :param str name: Name of the variable.
+    :param str value: Value of the variable.
+    :param bool overwrite: Whether to overwrite an existing variable or return True without overwriting it.
+    :return: True on success.
+    :rtype: bool
+    :raises OSError: If there is not enough memory or `name` contains '='.
+    """
+    global __setenv
+    if __setenv is None:
+        libc = get_libc()
+        __setenv = libc.setenv
+        __setenv.argtypes = [c_char_p, c_char_p, c_bool]
+        __setenv.restype = int
+    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
+    set_errno(0)
+    res = __setenv(fsencode(name), fsencode(value), overwrite)
+    if res != 0:
+        raise OSError(get_errno(), os.strerror(get_errno()))
+    return True
+
+
+def libc_unsetenv(name):
+    """Call libc function `unsetenv()` to unset the C program environment.
+
+    :param str name: Name of the variable.
+    :return: True on success.
+    :rtype: bool
+    :raises OSError: If `name` contains '='.
+    """
+    global __unsetenv
+    if __unsetenv is None:
+        libc = get_libc()
+        __unsetenv = libc.unsetenv
+        __unsetenv.argtypes = [c_char_p]
+        __unsetenv.restype = int
+    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
+    set_errno(0)
+    res = __unsetenv(fsencode(name))
+    if res != 0:
+        raise OSError(get_errno(), os.strerror(get_errno()))
+    return True
 
 
 class Allocator(object):
@@ -161,6 +247,7 @@ class StringAllocator(Allocator):
 
 class BytesAllocator(Allocator):
     """ctypes allocator suitable for allocating byte arrays. The returned value is a bytes object."""
+
     def _alloc(self, size):
         return (c_uint8 * size)()
 
@@ -172,7 +259,7 @@ class BytesAllocator(Allocator):
 
     @property
     def values(self):
-        return[string_at(a, s) for a, s in zip(self.allocated, self.allocated_sizes)]
+        return [string_at(a, s) for a, s in zip(self.allocated, self.allocated_sizes)]
 
 
 class ScalarAllocator(Allocator):

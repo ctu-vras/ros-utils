@@ -14,7 +14,7 @@ from std_msgs.msg import Header
 from rosgraph_msgs.msg import Log
 
 from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, RosMessagesAllocator, \
-    LogMessagesAllocator, ScalarAllocator, get_ro_c_buffer, c_array
+    LogMessagesAllocator, ScalarAllocator, get_ro_c_buffer, c_array, libc_getenv, libc_setenv, libc_unsetenv
 from cras.string_utils import BufferStringIO
 from cras.test_utils import RosconsoleCapture
 
@@ -236,6 +236,14 @@ class CtypesUtils(unittest.TestCase):
         self.assertTrue(isinstance(c_arr, Array))
         self.assertEqual(len(c_arr), len(py_arr) + 1)
         self.assertEqual(c_arr[-1], 0)
+
+    def test_libc_env(self):
+        self.assertTrue(libc_unsetenv("TEST"))
+        self.assertIsNone(libc_getenv("TEST"))
+        self.assertTrue(libc_setenv("TEST", "Test"))
+        self.assertEqual(libc_getenv("TEST"), "Test")
+        self.assertTrue(libc_unsetenv("TEST"))
+        self.assertIsNone(libc_getenv("TEST"))
 
 
 if __name__ == '__main__':
