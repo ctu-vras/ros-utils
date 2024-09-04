@@ -2,6 +2,9 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.4.0 (2024-09-04)
 ------------------
 * string_utils: Fixed iconv functions when running with LC_ALL=C or other weird locale.
