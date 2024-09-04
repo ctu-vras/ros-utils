@@ -4,6 +4,7 @@
 """Utilities helpful when working with strings in Python and rospy."""
 
 import ctypes
+import locale
 import os
 import re
 
@@ -13,9 +14,9 @@ from enum import Enum
 import genpy
 import rospy
 
-from .ctypes_utils import get_ro_c_buffer, load_library
+from .ctypes_utils import get_libc, get_ro_c_buffer
+from .python_utils import temp_locale
 from .time_utils import frequency, WallTime, WallRate, SteadyTime, SteadyRate
-
 
 STRING_TYPE = str
 """A type that represents all string types, compatible with Py2 and Py3"""
@@ -24,7 +25,6 @@ try:
     STRING_TYPE = basestring
 except NameError:
     pass
-
 
 # A StringIO/BytesIO depending on Python version that can be used for serializing ROS messages
 try:
@@ -69,6 +69,7 @@ __numpy_array_type = None
 try:
     # noinspection PyUnresolvedReferences
     import numpy
+
     __numpy_array_type = numpy.ndarray
 except ImportError:
     pass
@@ -134,20 +135,14 @@ def to_str(obj):
             return str(obj)
 
 
-__LIBC = None
 __iconv_open = None
 __iconv = None
 __ICONV_CONV_DESCS = dict()
 
 
-def __get_libc():
-    global __LIBC
-    if __LIBC is None:
-        __LIBC = load_library("c", use_errno=True)
-    return __LIBC
-
-
 def __errno_to_str(errno):
+    if errno == 0:
+        return "No error"
     return "%s: %s" % (errorcode[errno], os.strerror(errno))
 
 
@@ -155,7 +150,7 @@ def __iconv_get_conv_desc(to_encoding, from_encoding):
     if (to_encoding, from_encoding) not in __ICONV_CONV_DESCS:
         global __iconv_open
         if __iconv_open is None:
-            __iconv_open = __get_libc().iconv_open
+            __iconv_open = get_libc().iconv_open
             __iconv_open.restype = ctypes.c_void_p
 
         ctypes.set_errno(0)
@@ -178,7 +173,7 @@ class __IconvError(Exception):
 
 
 def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ignore=False,
-                        initial_outbuf_size_scale=1.0, outbuf_enlarge_coef=2.0):
+                        initial_outbuf_size_scale=1.0, outbuf_enlarge_coef=2.0, localename=None):
     """Convert `in_bytes` from `from_encoding` to `to_encoding` using iconv.
 
     :param str to_encoding: The target encoding. It may contain the //TRANSLIT and //IGNORE suffixes.
@@ -191,6 +186,9 @@ def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ig
                                             than the input.
     :param outbuf_enlarge_coef: The step size to use for enlarging the output buffer if it shows that its initial size
                                 is insufficient. Must be stritctly larger than 1.0.
+    :param localename: If set, specifies the locale used for the iconv call. It may influence the transliteration
+                       results. If not set, a default english locale is used that usually works quite well.
+    :type localename: str, optional
     :return: The converted bytes. Call e.g. `result.decode('utf-8')` to get a string from it.
     :rtype: bytes
     :raises ValueError: If some characters cannot be converted and `ignore` is False, or if the encodings are unknown.
@@ -215,7 +213,7 @@ def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ig
                 raise __IconvError(ctypes.get_errno())
             return ret
 
-        __iconv = __get_libc().iconv
+        __iconv = get_libc().iconv
         __iconv.errcheck = errcheck
         __iconv.restype = ctypes.c_size_t
         __iconv.argtypes = [
@@ -236,14 +234,16 @@ def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ig
     # Read the input until there is something to read
     while inbuf_unread_size.value > 0:
         try:
-            ctypes.set_errno(0)
-            __iconv(cd,
-                    ctypes.byref(inbuf_ptr), ctypes.byref(inbuf_unread_size),
-                    ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
+            # iconv transliteration doesn't work with the default C locale, we need a UTF-8 one
+            with temp_locale(locale.LC_CTYPE, localename if localename is not None else "en_US.UTF-8"):
+                ctypes.set_errno(0)
+                __iconv(cd,
+                        ctypes.byref(inbuf_ptr), ctypes.byref(inbuf_unread_size),
+                        ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
 
-            # Clean up the conversion descriptor and flush possible "shift sequences"
-            ctypes.set_errno(0)
-            __iconv(cd, None, None, ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
+                # Clean up the conversion descriptor and flush possible "shift sequences"
+                ctypes.set_errno(0)
+                __iconv(cd, None, None, ctypes.byref(outbuf_ptr), ctypes.byref(outbuf_unused_size))
         except __IconvError as e:
             # The output buffer is too small; increase its size and try the conversion again
             if e.errno == E2BIG:

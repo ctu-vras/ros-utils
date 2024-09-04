@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
@@ -139,6 +140,16 @@ class StringUtils(unittest.TestCase):
         self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "aťěšťz".encode("utf-8"), translit=True), b"atestz")
         self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "ťěšť".encode("utf-8"), ignore=True), b"")
         self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "aťěšťz".encode("utf-8"), ignore=True), b"az")
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "aťěšťz".encode("utf-8"), translit=True, localename="C"), b"a????z")
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "aťěšťかz".encode("utf-8"), translit=True, ignore=False), b"atest?z")
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "aťěšťかz".encode("utf-8"), translit=True, ignore=False, localename="C"), b"a?????z")
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "aťěšťかz".encode("utf-8"), translit=True, ignore=True), b"atest?z")
+        self.assertEqual(iconv_convert_bytes(
+            "ASCII", "UTF-8", "aťěšťかz".encode("utf-8"), translit=True, ignore=True, localename="C"), b"a?????z")
         self.assertRaises(ValueError, iconv_convert_bytes, "ASCII", "UTF-8", "ťěšť".encode("utf-8"), translit=False)
 
         self.assertEqual(iconv_convert_bytes("ASCII", "UTF-8", "tägelîch".encode("utf-8"), translit=True), b"tagelich")
