@@ -137,6 +137,9 @@ add_library(cras_span INTERFACE)
 target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/span.hpp>)
 target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tcb/span.hpp>)
 
+add_library(cras_small_map INTERFACE)
+target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
+
 add_library(cras_c_api src/c_api.cpp)
 
 add_library(cras_semaphore src/thread_utils/semaphore.cpp)
@@ -480,6 +483,8 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_cras_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
   target_link_libraries(test_cras_thread_name_updating_nodelet cras_nodelet_utils)
+
+  catkin_add_gtest(test_cras_small_map test/test_small_map.cpp)
 
   catkin_add_gtest(test_cras_thread_utils test/test_thread_utils.cpp)
   target_link_libraries(test_cras_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)

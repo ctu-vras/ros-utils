@@ -54,6 +54,7 @@ Release jobs Noetic
 - `pool_allocator`: Provides a memory-pool-based allocator for ROS messages. It comes handy if you want to publish shared pointer messages on a high rate - it should decrease the time needed for object allocation via `new`.
 - `rate_limiter`: Library for intelligent rate-limiting of events (mainly messages). So far it implements the algorithm from `topic_tools throttle` (not very good), and token bucket algorithm (pretty good for most cases).
 - `set_utils`: Provides `isSetIntersectionEmpty()` working on a pair of `std::set`s.
+- `small_map`: Provides `SmallMap` and `SmallSet`, variants of `std::map` implemented using `std::list` which are append-only and lock-free for reading.
 - `span`: Provides forward compatibility for [`std::span`](https://en.cppreference.com/w/cpp/container/span).
 - `string_utils`: Provides many string manipulation helpers you've always dreamed of. Universal `to_string()` that converts almost anything to a sensible string. `startsWith()`/`endsWith()`, `replace()`, `contains()`, `split()`/`join()`, `format()` (like `sprintf()` but without hassle and on `std::string`), `stripLeading()`/`stripTrailing()`, `removePrefix()`/`removeSuffix()`, `parseFloat()`/`parseDouble()` (convert string to double independent of locale!), `parseInt32()` and friends (parse many textual representations to an integer).
 - `suppress_warnings`: Unified macros that suppress various compiler warnings for a piece of code.

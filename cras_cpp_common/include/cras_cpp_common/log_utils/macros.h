@@ -22,6 +22,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <cras_cpp_common/small_map.hpp>
+
 /**
  * \def CRASCONSOLE_AUTOINIT
  * \brief Initializes the logging library.  Usually unnecessary to call directly.
@@ -39,15 +41,10 @@
 
 #define CRASCONSOLE_DEFINE_LOCATION(logger, cond, level, name) \
   CRASCONSOLE_AUTOINIT((logger)); \
-  static ::std::unordered_map<const void*, ::ros::console::LogLocation> __rosconsole_define_location__map(1); \
+  static ::cras::SmallMap<const void*, ::ros::console::LogLocation> __rosconsole_define_location__map; \
   const auto __cras_logger_id__ = (logger)->getId(); \
-  if (ROS_UNLIKELY( \
-      __rosconsole_define_location__map.find(__cras_logger_id__) == __rosconsole_define_location__map.end())) \
-    { \
-      __rosconsole_define_location__map.emplace(__cras_logger_id__, \
-        ::ros::console::LogLocation{false, false, ::ros::console::levels::Count, NULL}); \
-    } \
-  auto& __rosconsole_define_location__loc = __rosconsole_define_location__map[__cras_logger_id__]; \
+  auto& __rosconsole_define_location__loc = __rosconsole_define_location__map.insertIfNew(__cras_logger_id__, \
+    false, false, ::ros::console::levels::Count, nullptr); \
   if (ROS_UNLIKELY(!__rosconsole_define_location__loc.initialized_)) \
   { \
     (logger)->initializeLogLocation(&__rosconsole_define_location__loc, (name), (level)); \
@@ -161,11 +158,10 @@
   do \
   { \
     CRASCONSOLE_DEFINE_LOCATION((logger), true, (level), (name)); \
-    static ::std::vector<const void*> hitSet; /* vector instead of set as we assume only a few elements */ \
-    const auto hit = ::std::find(hitSet.begin(), hitSet.end(), __cras_logger_id__) != hitSet.end(); \
+    static ::cras::SmallSet<const void*> hitSet; \
+    const auto hit = !hitSet.insert(__cras_logger_id__); \
     if (ROS_UNLIKELY(__rosconsole_define_location__enabled) && ROS_UNLIKELY(!hit)) \
     { \
-      hitSet.push_back(__cras_logger_id__); \
       CRASCONSOLE_PRINT_STREAM_AT_LOCATION((logger), args); \
     } \
   } while (false)
@@ -185,9 +181,9 @@
   do \
   { \
     CRASCONSOLE_DEFINE_LOCATION((logger), true, (level), (name)); \
-    static ::std::unordered_map<const void*, double> lastHitMap(1); \
-    auto& lastHit = lastHitMap[__cras_logger_id__]; \
+    static ::cras::SmallMap<const void*, double> lastHitMap; \
     const auto now = (logger)->getTimeNow().toSec(); \
+    auto& lastHit = lastHitMap.insertIfNew(__cras_logger_id__, 0.0); \
     if (ROS_UNLIKELY(__rosconsole_define_location__enabled) && ROSCONSOLE_THROTTLE_CHECK(now, lastHit, (period))) \
     { \
       lastHit = now; \
@@ -211,9 +207,9 @@
   do \
   { \
     CRASCONSOLE_DEFINE_LOCATION((logger), true, (level), (name)); \
-    static ::std::unordered_map<const void*, double> lastHitMap(1); \
-    auto& lastHit = lastHitMap[__cras_logger_id__]; \
+    static ::cras::SmallMap<const void*, double> lastHitMap; \
     const auto now = (logger)->getTimeNow().toSec(); \
+    auto& lastHit = lastHitMap.insertIfNew(__cras_logger_id__, 0.0); \
     if (ROS_UNLIKELY(__rosconsole_define_location__enabled) && ROSCONSOLE_THROTTLE_CHECK(now, lastHit, (period))) \
     { \
       lastHit = now; \
@@ -237,9 +233,8 @@
   { \
     CRASCONSOLE_DEFINE_LOCATION((logger), true, (level), (name)); \
     const auto now = (logger)->getTimeNow().toSec(); \
-    static ::std::unordered_map<const void*, double> lastHitMap(1); \
-    lastHitMap.emplace(__cras_logger_id__, now); \
-    auto& lastHit = lastHitMap[__cras_logger_id__]; \
+    static ::cras::SmallMap<const void*, double> lastHitMap; \
+    auto& lastHit = lastHitMap.insertIfNew(__cras_logger_id__, now); \
     if (ROS_UNLIKELY(__rosconsole_define_location__enabled) && ROSCONSOLE_THROTTLE_CHECK(now, lastHit, (period)))\
     { \
       lastHit = now; \
@@ -264,9 +259,8 @@
   { \
     CRASCONSOLE_DEFINE_LOCATION((logger), true, (level), (name)); \
     const auto now = (logger)->getTimeNow().toSec(); \
-    static ::std::unordered_map<const void*, double> lastHitMap(1); \
-    lastHitMap.emplace(__cras_logger_id__, now); \
-    auto& lastHit = lastHitMap[__cras_logger_id__]; \
+    static ::cras::SmallMap<const void*, double> lastHitMap; \
+    auto& lastHit = lastHitMap.insertIfNew(__cras_logger_id__, now); \
     if (ROS_UNLIKELY(__rosconsole_define_location__enabled) && ROSCONSOLE_THROTTLE_CHECK(now, lastHit, (period))) \
     { \
       lastHit = now; \
