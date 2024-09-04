@@ -19,25 +19,25 @@ class PythonUtils(unittest.TestCase):
         super(PythonUtils, self).__init__(*args, **kwargs)
 
     def test_temp_environ(self):
-        self.assertIsNone(os.environ.get("TEST", None))
-        self.assertIsNone(os.environ.get("TEST6", None))
-        os.environ["TEST2"] = "Test2"
-        os.environ["TEST4"] = "Test4"
-        libc_setenv("TEST3", "Test3")
-        libc_setenv("TEST5", "Test5")
-        with temp_environ(unset=["TEST2", "TEST5"], TEST="Test", TEST6="Test6"):
-            self.assertEqual(os.environ.get("TEST", None), "Test")
-            self.assertEqual(os.environ.get("TEST6", None), "Test6")
-            self.assertEqual(os.getenv("TEST"), "Test")
-            self.assertEqual(os.environ.get("TEST4", None), "Test4")
-            self.assertEqual(libc_getenv("TEST3", None), "Test3")
-            self.assertIsNone(os.environ.get("TEST2", None))
-            self.assertIsNone(libc_getenv("TEST5", None))
-        self.assertIsNone(os.environ.get("TEST", None))
-        self.assertIsNone(os.environ.get("TEST6", None))
-        self.assertEqual(os.environ.get("TEST2", None), "Test2")
-        self.assertEqual(os.environ.get("TEST4", None), "Test4")
-        self.assertEqual(libc_getenv("TEST3", None), "Test3")
+        self.assertIsNone(os.environ.get("CRAS_TEST", None))
+        self.assertIsNone(os.environ.get("CRAS_TEST6", None))
+        os.environ["CRAS_TEST2"] = "Test2"
+        os.environ["CRAS_TEST4"] = "Test4"
+        libc_setenv("CRAS_TEST3", "Test3")
+        libc_setenv("CRAS_TEST5", "Test5")
+        with temp_environ(unset=["CRAS_TEST2", "CRAS_TEST5"], CRAS_TEST="Test", CRAS_TEST6="Test6"):
+            self.assertEqual(os.environ.get("CRAS_TEST", None), "Test")
+            self.assertEqual(os.environ.get("CRAS_TEST6", None), "Test6")
+            self.assertEqual(os.getenv("CRAS_TEST"), "Test")
+            self.assertEqual(os.environ.get("CRAS_TEST4", None), "Test4")
+            self.assertEqual(libc_getenv("CRAS_TEST3", None), "Test3")
+            self.assertIsNone(os.environ.get("CRAS_TEST2", None))
+            self.assertIsNone(libc_getenv("CRAS_TEST5", None))
+        self.assertIsNone(os.environ.get("CRAS_TEST", None))
+        self.assertIsNone(os.environ.get("CRAS_TEST6", None))
+        self.assertEqual(os.environ.get("CRAS_TEST2", None), "Test2")
+        self.assertEqual(os.environ.get("CRAS_TEST4", None), "Test4")
+        self.assertEqual(libc_getenv("CRAS_TEST3", None), "Test3")
 
     def test_temp_locale(self):
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
