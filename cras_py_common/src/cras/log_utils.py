@@ -3,7 +3,9 @@
 
 """Utilities for working with rospy logging."""
 
+import inspect
 import logging
+from hashlib import md5
 
 import rospy
 
@@ -83,7 +85,28 @@ log_once_functions = {
 """The rospy once-only logging functions accessible by their ROS logging level index."""
 
 
-def log(level, *args, **kwargs):
+class __LoggingIdenticalOnce(object):
+
+    logging_identical_msg_table = set()
+
+    def __call__(self, caller_id, msg):
+        """Log specified message only if this message hasn't been logged yet.
+
+        :param str caller_id: Id to identify the caller.
+        :param str msg: Contents of the message to log.
+        """
+        msg_hash = md5(msg.encode()).hexdigest()
+
+        if (caller_id, msg_hash) not in self.logging_identical_msg_table:
+            self.logging_identical_msg_table.add((caller_id, msg_hash))
+            return True
+        return False
+
+
+__logging_identical_once = __LoggingIdenticalOnce()
+
+
+def log(level, message, *args, **kwargs):
     """Log a ROS message with a logger that has the given severity level.
 
     :param int level: Severity of the message (one of :class:`rosgraph_msgs.msg.Log` constants).
@@ -148,3 +171,99 @@ def log_once(level, message, *args, **kwargs):
     # if we call _base_logger() directly, we get exactly what we want.
     # noinspection PyProtectedMember
     rospy.core._base_logger(message, args, kwargs, once=True, level=log_level_ros_to_py_name[level].lower())
+
+
+def log_once_identical(level, message, *args, **kwargs):
+    """Log a ROS message with a once-only-identical logger that has the given severity level.
+
+    :param int level: Severity of the message (one of :class:`rosgraph_msgs.msg.Log` constants).
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.loginfo()` or the other functions.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.loginfo()` or the other functions.
+    :raises KeyError: if level is not one of the :class:`rosgraph_msgs.msg.Log` constants.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[level].lower())
+
+
+def logdebug_once_identical(message, *args, **kwargs):
+    """Log a debug ROS message with a once-only-identical logger.
+
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.logdebug()`.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.logdebug()`.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[Log.DEBUG].lower())
+
+
+def loginfo_once_identical(message, *args, **kwargs):
+    """Log an info ROS message with a once-only-identical logger.
+
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.loginfo()`.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.loginfo()`.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[Log.INFO].lower())
+
+
+def logwarn_once_identical(message, *args, **kwargs):
+    """Log a warning ROS message with a once-only-identical logger.
+
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.logwarn()`.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.logwarn()`.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[Log.WARN].lower())
+
+
+def logerr_once_identical(message, *args, **kwargs):
+    """Log an error ROS message with a once-only-identical logger.
+
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.logerr()`.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.logerr()`.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[Log.ERROR].lower())
+
+
+def logfatal_once_identical(message, *args, **kwargs):
+    """Log a fatal ROS message with a once-only-identical logger.
+
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
+    :param args: Args are passed directly to :func:`rospy.logfatal()`.
+    :param kwargs: Keyword args are passed directly to :func:`rospy.logfatal()`.
+    """
+    # noinspection PyProtectedMember
+    caller_id = rospy.core._frame_to_caller_id(inspect.currentframe().f_back)
+    if __logging_identical_once(caller_id, message):
+        # noinspection PyProtectedMember
+        rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[Log.FATAL].lower())
+
+
+log_once_identical_functions = {
+    Log.DEBUG: logdebug_once_identical,
+    Log.INFO: loginfo_once_identical,
+    Log.WARN: logwarn_once_identical,
+    Log.ERROR: logerr_once_identical,
+    Log.FATAL: logfatal_once_identical,
+}
+"""The once-only-identical logging functions accessible by their ROS logging level index."""

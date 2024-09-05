@@ -8,7 +8,9 @@ from .geometry_utils import quat_get_rpy, quat_get_roll, quat_get_pitch, quat_ge
 
 from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
     log_functions, log_throttle_functions, log_throttle_identical_functions, log_once_functions, log_levels, \
-    log_level_names, log_level_ros_to_py_name, log_level_py_to_ros, log_level_ros_to_py, log_level_py_name_to_ros
+    log_level_names, log_level_ros_to_py_name, log_level_py_to_ros, log_level_ros_to_py, log_level_py_name_to_ros, \
+    log_once_identical, logdebug_once_identical, loginfo_once_identical, logwarn_once_identical, \
+    logerr_once_identical, logfatal_once_identical, log_once_identical_functions
 
 from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module
 

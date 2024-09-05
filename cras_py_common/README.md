@@ -44,7 +44,7 @@ from cras.string_utils import to_str
 
 - [`ctypes_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.ctypes_utils): Utilities for working with the ctypes library.
 - [`geometry_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.geometry_utils): Finally THE module providing easy and foolproof conversion between quaternions and roll/pitch/yaw notation.
-- [`log_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.log_utils): Some convenience for `rospy` logging. This is mostly an internal library, but it can be used elsewhere, too.
+- [`log_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.log_utils): Some convenience for `rospy` logging. Provides `log*_once_identical()` functions to log unique messages.
 - [`message_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.message_utils): Conversion of `std_msgs/String` to Python type etc. Generic access to message fields using a string "address".
 - [`node_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.node_utils): Utilities for easier writing of nodes, adding e.g. easy-to-write `reset()` function that is automatically called when ROS time jumps back/forward.
 - [`param_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.param_utils): Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
