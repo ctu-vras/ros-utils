@@ -87,12 +87,16 @@ def log(level, *args, **kwargs):
     """Log a ROS message with a logger that has the given severity level.
 
     :param int level: Severity of the message (one of :class:`rosgraph_msgs.msg.Log` constants).
+    :param str message: The logged message template (same rules as in the logging module apply to args/kwargs).
     :param args: Args are passed directly to :func:`rospy.loginfo()` or the other functions.
     :param kwargs: Keyword args are passed directly to :func:`rospy.loginfo()` or the other functions.
     :raises KeyError: if level is not one of the :class:`rosgraph_msgs.msg.Log` constants.
     """
-    log_fn = log_functions[level]
-    log_fn(*args, **kwargs)
+    # Unfortunately, we can't call the rospy.loginfo() etc. functions directly, as the calling
+    # location would be this line. The internal code in base_logger unwinds two frames from stack trace to get the
+    # logging location, so if we call _base_logger() directly, we get exactly what we want.
+    # noinspection PyProtectedMember
+    rospy.core._base_logger(message, args, kwargs, level=log_level_ros_to_py_name[level].lower())
 
 
 def log_throttle(level, period, message, *args, **kwargs):
