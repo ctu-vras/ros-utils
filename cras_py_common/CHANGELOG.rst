@@ -2,8 +2,8 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.2 (2024-09-05)
+------------------
 * log_utils: Addded log_once_identical() functions.
 * log_utils: Fixed stack information for cras.log().
 * Contributors: Martin Pecka

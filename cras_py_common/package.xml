@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>cras_py_common</name>
-  <version>2.4.1</version>
+  <version>2.4.2</version>
   <description>A Czech-army knife for ROS code written in Python.</description>
 
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
