@@ -49,6 +49,14 @@ else()
   endif()
 endif()
 
+find_package(xmlrpcpp QUIET)
+if(xmlrpcpp_VERSION VERSION_LESS 1.17.0)
+  set(XMLRPCPP_HAS_PRINTTO 0)
+else()
+  set(XMLRPCPP_HAS_PRINTTO 1)
+endif()
+add_compile_options(-DXMLRPCPP_HAS_PRINTTO=${XMLRPCPP_HAS_PRINTTO})
+
 generate_dynamic_reconfigure_options(
   cfg/FilterChain.cfg
 )

@@ -28,6 +28,7 @@
 
 #include <cras_cpp_common/xmlrpc_value_traits.hpp>
 
+#if !XMLRPCPP_HAS_PRINTTO
 namespace XmlRpc
 {
 // This prevents GTest to understand all XmlRpcValues as structs and trying to print them as such.
@@ -38,6 +39,7 @@ inline void PrintTo(const XmlRpcValue& value, ::std::ostream* os)
     *os << value.toXml();
 }
 }
+#endif
 
 namespace cras
 {
