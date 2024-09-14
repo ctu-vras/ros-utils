@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.3 (2024-09-14)
+------------------
 * Fixed build with ros_comm 1.17.0 .
 * Contributors: Martin Pecka
 
