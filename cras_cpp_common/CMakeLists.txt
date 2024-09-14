@@ -50,10 +50,10 @@ else()
 endif()
 
 find_package(xmlrpcpp QUIET)
-if(xmlrpcpp_VERSION VERSION_LESS 1.17.0)
-  set(XMLRPCPP_HAS_PRINTTO 0)
-else()
+if(xmlrpcpp_FOUND AND xmlrpcpp_VERSION VERSION_GREATER_EQUAL 1.17.0)
   set(XMLRPCPP_HAS_PRINTTO 1)
+else()
+  set(XMLRPCPP_HAS_PRINTTO 0)
 endif()
 add_compile_options(-DXMLRPCPP_HAS_PRINTTO=${XMLRPCPP_HAS_PRINTTO})
 
