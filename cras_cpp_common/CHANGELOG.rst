@@ -2,6 +2,11 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed roslint.
+* Contributors: Martin Pecka
+
 2.4.3 (2024-09-14)
 ------------------
 * Fixed build with ros_comm 1.17.0 .
