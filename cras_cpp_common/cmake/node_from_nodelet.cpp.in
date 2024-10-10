@@ -7,6 +7,7 @@
  */
 
 #include <ros/datatypes.h>
+#include <ros/duration.h>
 #include <ros/init.h>
 #include <ros/node_handle.h>
 #include <ros/this_node.h>
@@ -18,6 +19,7 @@
 
 #include <cras_cpp_common/log_utils/node.h>
 #include <cras_cpp_common/param_utils/param_helper.hpp>
+#include <cras_cpp_common/nodelet_utils/stateful_nodelet.hpp>
 
 #cmakedefine01 CRAS_NODE_ANONYMOUS
 #cmakedefine01 NODE_IGNORE_HEADER
@@ -63,8 +65,22 @@ int main(int argc, char** argv)
   manager.addQueue(mtQueue, true);
   
   nodelet->init(ros::this_node::getName(), {}, my_argv, stQueue.get(), mtQueue.get());
-	
-  ros::spin();
+
+  auto statefulNodelet = dynamic_cast<cras::StatefulNodeletInterface*>(nodelet.get());
+  if (statefulNodelet != nullptr)
+  {
+    ros::WallDuration timeout(0.1);
+    while (ros::ok() && statefulNodelet->ok())
+    {
+      ros::spinOnce();
+      timeout.sleep();
+    }
+    statefulNodelet->requestStop();
+  }
+  else
+  {
+    ros::spin();
+  }
 
   // Destroying the nodelet helps stopping the queues.
   nodelet.reset();
