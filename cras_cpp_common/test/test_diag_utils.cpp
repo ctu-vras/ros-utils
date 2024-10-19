@@ -18,6 +18,7 @@
 #include <cras_cpp_common/diag_utils/diagnosed_pub_sub.hpp>
 #include <cras_cpp_common/diag_utils/duration_status.h>
 #include <cras_cpp_common/diag_utils/duration_status_param.h>
+#include <cras_cpp_common/diag_utils/offline_diag_updater.h>
 #include <cras_cpp_common/diag_utils/topic_status.hpp>
 #include <cras_cpp_common/diag_utils/topic_status_param.hpp>
 #include <cras_cpp_common/log_utils/node.h>
@@ -2661,6 +2662,85 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
   EXPECT_EQ(message.header.frame_id, boostLambdaValueFrame);
   EXPECT_EQ(message.header.frame_id, boostLambdaConstEventFrame);
   EXPECT_EQ(message.header.frame_id, boostLambdaEventFrame);
+}
+
+TEST(OfflineUpdater, Basic)  // NOLINT
+{
+  cras::OfflineDiagUpdater updater("test");
+
+  double minFreq {0.0};
+  double maxFreq {10.0};
+  diagnostic_updater::FrequencyStatusParam params(&minFreq, &maxFreq);
+  diagnostic_updater::FrequencyStatus task(params, "name");
+  updater.add(task);
+
+  ros::Time::setNow({10, 0});
+
+  auto msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow(ros::Time(10.1));
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow(ros::Time(10.5));
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow(ros::Time(10.9));
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow({11, 0});
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  ASSERT_TRUE(msg.has_value());
+  EXPECT_EQ(msg->header.stamp, ros::Time(11));
+  EXPECT_FALSE(msg->status.empty());
+  EXPECT_EQ(msg->status[0].hardware_id, "test");
+  EXPECT_EQ(msg->status[0].level, diagnostic_msgs::DiagnosticStatus::OK);
+  EXPECT_EQ(msg->status[0].message, "Desired frequency met");
+  EXPECT_EQ(msg->status[0].name, "name");
+  EXPECT_EQ(msg->status[0].values.size(), 5_sz);
+
+  ros::Time::setNow(ros::Time(11.1));
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow(ros::Time(11.9));
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  EXPECT_FALSE(msg.has_value());
+
+  ros::Time::setNow({12, 0});
+
+  task.tick();
+
+  msg = updater.update(ros::Time::now());
+  ASSERT_TRUE(msg.has_value());
+  EXPECT_EQ(msg->header.stamp, ros::Time(12));
+  EXPECT_FALSE(msg->status.empty());
 }
 
 int main(int argc, char **argv)
