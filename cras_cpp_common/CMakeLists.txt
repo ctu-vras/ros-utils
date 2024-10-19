@@ -319,9 +319,9 @@ target_link_libraries(cras_filter_chain
 add_library(cras_diag_utils
   src/diag_utils/duration_status.cpp
   src/diag_utils/duration_status_param.cpp
+  src/diag_utils/offline_diag_updater.cpp
   src/diag_utils/topic_diagnostic.cpp
-  src/diag_utils/topic_status_param.cpp
-  src/diag_utils/offline_diag_updater.cpp)
+  src/diag_utils/topic_status_param.cpp)
 add_dependencies(cras_diag_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_diag_utils
   PUBLIC cras_diag_updater cras_log_utils cras_math_utils cras_message_utils cras_optional
