@@ -2666,6 +2666,8 @@ TEST(DiagnosedSubscriber, AllSupportedCallbackSignaturesWithHeader)  // NOLINT
 
 TEST(OfflineUpdater, Basic)  // NOLINT
 {
+  ros::Time::setNow({10, 0});
+
   cras::OfflineDiagUpdater updater("test");
 
   double minFreq {0.0};
@@ -2673,8 +2675,6 @@ TEST(OfflineUpdater, Basic)  // NOLINT
   diagnostic_updater::FrequencyStatusParam params(&minFreq, &maxFreq);
   diagnostic_updater::FrequencyStatus task(params, "name");
   updater.add(task);
-
-  ros::Time::setNow({10, 0});
 
   auto msg = updater.update(ros::Time::now());
   EXPECT_FALSE(msg.has_value());
