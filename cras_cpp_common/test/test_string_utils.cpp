@@ -1356,6 +1356,105 @@ TEST(StringUtils, ParseDouble)  // NOLINT
   EXPECT_THROW(cras::parseDouble("3,14"), std::invalid_argument);
 }
 
+TEST(StringUtils, ParseTimezoneOffset)  // NOLINT
+{
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("+000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("-000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("+0000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("-0000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("0000"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("Z"));
+  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset(""));
+  EXPECT_EQ(ros::WallDuration(0, 0), cras::parseTimezoneOffset<ros::WallDuration>(""));
+
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+120"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+0120"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+1:20"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+01:20"));
+  EXPECT_EQ(ros::WallDuration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("+01:20"));
+
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("120"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("0120"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("1:20"));
+  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("01:20"));
+  EXPECT_EQ(ros::WallDuration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("01:20"));
+
+  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-120"));
+  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-0120"));
+  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-1:20"));
+  EXPECT_EQ(ros::WallDuration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("-01:20"));
+
+  EXPECT_THROW(cras::parseTimezoneOffset("+0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("-0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("0"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("00"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("00000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("000000"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("CET"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("CEST"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTimezoneOffset("T"), std::invalid_argument);
+}
+
+TEST(StringUtils, ParseTime)  // NOLINT
+{
+  const int MINUTE {60};
+  const int HOUR = {60 * MINUTE};
+  const int DAY = {24 * HOUR};
+
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("2:4:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02-04-50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02/04/50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02_04_50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450+0000"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("030450+0100"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("010450-0100"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+0130"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+130"));
+  EXPECT_NE(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("00:00:00 020450"));  // Year 00 is read as 2000
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 020450"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01t02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01_02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01-02:04:50"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 04:04:50+0200"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50Z"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:04:50-0200"));
+  EXPECT_EQ(ros::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T96:04:50-0200"));
+  EXPECT_EQ(ros::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:5764:50-0200"));
+  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37"));
+  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37Z"));
+  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37+00:00"));
+  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T17:22:37+01:00"));
+  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T15:22:37-01:00"));
+  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("16:22:30", cras::nullopt, ros::Time(1730478157, 0)));
+  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("18:22:30", ros::Duration(2 * HOUR, 0), {1730478157, 0}));
+  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("14:22:30", ros::Duration(-2 * HOUR, 0), {1730478157, 0}));
+  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("2024-11-01 16:22:30", cras::nullopt, {1111111111, 0}));
+
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("2:4:50.033"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("02:04:50.033"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("020450.033"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("19700101 020450.033"));
+  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("1970-01-01 02:04:50.033"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033Z"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033+0000"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37.033+200"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37.033+0200"));
+  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T14:22:37.033-0200"));
+
+  EXPECT_THROW(cras::parseTime("2450"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTime("0:0:0 020450"), std::invalid_argument);  // Non-delimited format requires 0-padding
+  EXPECT_THROW(cras::parseTime("0000:00:00 020450"), std::invalid_argument);  // Year 0 not supported
+  EXPECT_THROW(cras::parseTime("2024:-1:-1 02:04:50"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTime("2024:1:1 -02:04:50"), std::invalid_argument);
+  EXPECT_THROW(cras::parseTime("2024:1:1 02:-4:50"), std::invalid_argument);
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

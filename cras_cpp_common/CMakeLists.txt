@@ -221,7 +221,7 @@ add_dependencies(cras_tf2_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_tf2_utils
   PUBLIC cras_thread_utils cras_time_utils ${catkin_LIBRARIES})
 
-add_library(cras_string_utils src/string_utils.cpp src/string_utils/from_chars.cpp)
+add_library(cras_string_utils src/string_utils.cpp src/string_utils/from_chars.cpp src/string_utils/ros.cpp)
 add_dependencies(cras_string_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_string_utils
   PUBLIC cras_time_utils cras_type_traits ${catkin_LIBRARIES})

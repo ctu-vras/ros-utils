@@ -634,7 +634,30 @@ TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
   EXPECT_TRUE(started2);
 }
 
-  int main(int argc, char **argv)
+TEST(TimeUtils, DurationType)  // NOLINT
+{
+  static_assert(std::is_same<cras::DurationType<ros::Time>::value, ros::Duration>::value);
+  static_assert(std::is_same<cras::DurationType<ros::WallTime>::value, ros::WallDuration>::value);
+  static_assert(std::is_same<cras::DurationType<ros::SteadyTime>::value, ros::WallDuration>::value);
+}
+
+TEST(TimeUtils, ConvertTime)  // NOLINT
+{
+  EXPECT_EQ(ros::Time(1, 2), cras::convertTime<ros::Time>(ros::WallTime(1, 2)));
+  EXPECT_EQ(ros::Time(1, 2), cras::convertTime<ros::Time>(ros::SteadyTime(1, 2)));
+  EXPECT_EQ(ros::WallTime(1, 2), cras::convertTime<ros::WallTime>(ros::Time(1, 2)));
+  EXPECT_EQ(ros::WallTime(1, 2), cras::convertTime<ros::WallTime>(ros::SteadyTime(1, 2)));
+  EXPECT_EQ(ros::SteadyTime(1, 2), cras::convertTime<ros::SteadyTime>(ros::Time(1, 2)));
+  EXPECT_EQ(ros::SteadyTime(1, 2), cras::convertTime<ros::SteadyTime>(ros::WallTime(1, 2)));
+}
+
+TEST(TimeUtils, ConvertDuration)  // NOLINT
+{
+  EXPECT_EQ(ros::Duration(1, 2), cras::convertDuration<ros::Duration>(ros::WallDuration(1, 2)));
+  EXPECT_EQ(ros::WallDuration(1, 2), cras::convertDuration<ros::WallDuration>(ros::Duration(1, 2)));
+}
+
+int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

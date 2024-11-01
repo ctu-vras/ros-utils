@@ -15,6 +15,62 @@
 namespace cras
 {
 
+template<typename T, typename ::std::enable_if_t<
+    ::std::is_same<T, ::ros::Time>::value ||
+    ::std::is_same<T, ::ros::WallTime>::value ||
+    ::std::is_same<T, ::ros::SteadyTime>::value
+  >* = nullptr>
+struct DurationType
+{
+};
+
+template<> struct DurationType<ros::Time>
+{
+  typedef ::ros::Duration value;
+};
+
+template<> struct DurationType<ros::WallTime>
+{
+  typedef ::ros::WallDuration value;
+};
+
+template<> struct DurationType<ros::SteadyTime>
+{
+  typedef ::ros::WallDuration value;
+};
+
+template<
+  typename T1,
+  typename T2,
+  typename ::std::enable_if_t<
+    ::std::is_same<T1, ::ros::Time>::value ||
+    ::std::is_same<T1, ::ros::WallTime>::value ||
+    ::std::is_same<T1, ::ros::SteadyTime>::value>* = nullptr,
+  typename ::std::enable_if_t<
+    ::std::is_same<T2, ::ros::Time>::value ||
+    ::std::is_same<T2, ::ros::WallTime>::value ||
+    ::std::is_same<T2, ::ros::SteadyTime>::value>* = nullptr
+>
+inline T1 convertTime(const T2& time)
+{
+  return T1{time.sec, time.nsec};
+}
+
+template<
+  typename D1,
+  typename D2,
+  typename ::std::enable_if_t<
+    ::std::is_same<D1, ::ros::Duration>::value ||
+    ::std::is_same<D1, ::ros::WallDuration>::value>* = nullptr,
+  typename ::std::enable_if_t<
+    ::std::is_same<D2, ::ros::Duration>::value ||
+    ::std::is_same<D2, ::ros::WallDuration>::value>* = nullptr
+>
+inline D1 convertDuration(const D2& duration)
+{
+  return D1{duration.sec, duration.nsec};
+}
+
 /**
  * \brief Return remaining time to timeout from the query time.
  * \param[in] query The query time, e.g. of a TF.
