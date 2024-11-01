@@ -81,7 +81,7 @@ template<> ros::Time parseTime(
   const auto minute = cras::parseUInt16(matches[5].str(), 10);
   const auto second = cras::parseUInt16(matches[6].str(), 10);
   const auto zoneOffset = matches[8].matched ?
-    cras::parseTimezoneOffset(matches[8].str()) : timezoneOffset.value_or(ros::Duration::ZERO);
+    cras::parseTimezoneOffset(matches[8].str()) : timezoneOffset.value_or(ros::Duration{});
 
   tm t{};
   t.tm_year = year - 1900;
