@@ -507,9 +507,21 @@ template<typename T>
  * \return The corresponding 8-bit int value.
  * \throws std::invalid_argument If the string does not represent a 8-bit int value or if there are excess characters
  *                               other than whitespace.
- * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
+ * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B, octal with 0 and )
+ *       decimal otherwise.
  */
 int8_t parseInt8(const std::string& string);
+
+/**
+ * \brief Parse the given string to a 8-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 8-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 8-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+int8_t parseInt8(const std::string& string, uint8_t base);
 
 /**
  * \brief Parse the given string to a 8-bit  int.
@@ -525,10 +537,24 @@ inline int8_t parseInt8(const char* string)
 }
 
 /**
+ * \brief Parse the given string to a 8-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 8-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 8-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline int8_t parseInt8(const char* string, const uint8_t base)
+{
+  return ::cras::parseInt8(::std::string(string), base);
+}
+
+/**
  * \brief Parse the given string to a 8-bit unsigned int.
  * \param[in] string The string to parse.
  * \return The corresponding 8-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 8-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 8-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
@@ -537,14 +563,39 @@ uint8_t parseUInt8(const std::string& string);
 /**
  * \brief Parse the given string to a 8-bit unsigned int.
  * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
  * \return The corresponding 8-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 8-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 8-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+uint8_t parseUInt8(const std::string& string, uint8_t base);
+
+/**
+ * \brief Parse the given string to a 8-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \return The corresponding 8-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 8-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 inline uint8_t parseUInt8(const char* string)
 {
   return ::cras::parseUInt8(::std::string(string));
+}
+
+/**
+ * \brief Parse the given string to a 8-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 8-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 8-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline uint8_t parseUInt8(const char* string, const uint8_t base)
+{
+  return ::cras::parseUInt8(::std::string(string), base);
 }
 
 /**
@@ -556,6 +607,17 @@ inline uint8_t parseUInt8(const char* string)
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 int16_t parseInt16(const std::string& string);
+
+/**
+ * \brief Parse the given string to a 16-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 16-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 16-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+int16_t parseInt16(const std::string& string, uint8_t base);
 
 /**
  * \brief Parse the given string to a 16-bit  int.
@@ -571,10 +633,24 @@ inline int16_t parseInt16(const char* string)
 }
 
 /**
+ * \brief Parse the given string to a 16-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 16-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 16-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline int16_t parseInt16(const char* string, const uint8_t base)
+{
+  return ::cras::parseInt16(::std::string(string), base);
+}
+
+/**
  * \brief Parse the given string to a 16-bit unsigned int.
  * \param[in] string The string to parse.
  * \return The corresponding 16-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 16-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 16-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
@@ -583,14 +659,39 @@ uint16_t parseUInt16(const std::string& string);
 /**
  * \brief Parse the given string to a 16-bit unsigned int.
  * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
  * \return The corresponding 16-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 16-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 16-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+uint16_t parseUInt16(const std::string& string, uint8_t base);
+
+/**
+ * \brief Parse the given string to a 16-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \return The corresponding 16-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 16-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 inline uint16_t parseUInt16(const char* string)
 {
   return ::cras::parseUInt16(::std::string(string));
+}
+
+/**
+ * \brief Parse the given string to a 16-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 16-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 16-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline uint16_t parseUInt16(const char* string, const uint8_t base)
+{
+  return ::cras::parseUInt16(::std::string(string), base);
 }
 
 /**
@@ -602,6 +703,17 @@ inline uint16_t parseUInt16(const char* string)
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 int32_t parseInt32(const std::string& string);
+
+/**
+ * \brief Parse the given string to a 32-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 32-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 32-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+int32_t parseInt32(const std::string& string, uint8_t base);
 
 /**
  * \brief Parse the given string to a 32-bit  int.
@@ -617,10 +729,24 @@ inline int32_t parseInt32(const char* string)
 }
 
 /**
+ * \brief Parse the given string to a 32-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 32-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 32-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline int32_t parseInt32(const char* string, const uint8_t base)
+{
+  return ::cras::parseInt32(::std::string(string), base);
+}
+
+/**
  * \brief Parse the given string to a 32-bit unsigned int.
  * \param[in] string The string to parse.
  * \return The corresponding 32-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 32-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 32-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
@@ -629,14 +755,39 @@ uint32_t parseUInt32(const std::string& string);
 /**
  * \brief Parse the given string to a 32-bit unsigned int.
  * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
  * \return The corresponding 32-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 32-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 32-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+uint32_t parseUInt32(const std::string& string, uint8_t base);
+
+/**
+ * \brief Parse the given string to a 32-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \return The corresponding 32-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 32-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 inline uint32_t parseUInt32(const char* string)
 {
   return ::cras::parseUInt32(::std::string(string));
+}
+
+/**
+ * \brief Parse the given string to a 32-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 32-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 32-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline uint32_t parseUInt32(const char* string, const uint8_t base)
+{
+  return ::cras::parseUInt32(::std::string(string), base);
 }
 
 /**
@@ -648,6 +799,17 @@ inline uint32_t parseUInt32(const char* string)
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 int64_t parseInt64(const std::string& string);
+
+/**
+ * \brief Parse the given string to a 64-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 64-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 64-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+int64_t parseInt64(const std::string& string, uint8_t base);
 
 /**
  * \brief Parse the given string to a 64-bit  int.
@@ -663,10 +825,24 @@ inline int64_t parseInt64(const char* string)
 }
 
 /**
+ * \brief Parse the given string to a 64-bit int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 64-bit int value.
+ * \throws std::invalid_argument If the string does not represent a 64-bit int value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline int64_t parseInt64(const char* string, const uint8_t base)
+{
+  return ::cras::parseInt64(::std::string(string), base);
+}
+
+/**
  * \brief Parse the given string to a 64-bit unsigned int.
  * \param[in] string The string to parse.
  * \return The corresponding 64-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 64-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 64-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
@@ -675,14 +851,39 @@ uint64_t parseUInt64(const std::string& string);
 /**
  * \brief Parse the given string to a 64-bit unsigned int.
  * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
  * \return The corresponding 64-bit uint value.
- * \throws std::invalid_argument If the string does not represent a 64-bit  uint value or if there are excess characters
+ * \throws std::invalid_argument If the string does not represent a 64-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+uint64_t parseUInt64(const std::string& string, uint8_t base);
+
+/**
+ * \brief Parse the given string to a 64-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \return The corresponding 64-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 64-bit uint value or if there are excess characters
  *                               other than whitespace.
  * \note This function supports hexadecimal numbers starting with 0x/0X, binary numbers with 0b/0B and octal with 0.
  */
 inline uint64_t parseUInt64(const char* string)
 {
   return ::cras::parseUInt64(::std::string(string));
+}
+
+/**
+ * \brief Parse the given string to a 64-bit unsigned int.
+ * \param[in] string The string to parse.
+ * \param[in] base The numerical base (radix).
+ * \return The corresponding 64-bit uint value.
+ * \throws std::invalid_argument If the string does not represent a 64-bit uint value or if there are excess characters
+ *                               other than whitespace.
+ * \note This function does not support any prefixes.
+ */
+inline uint64_t parseUInt64(const char* string, const uint8_t base)
+{
+  return ::cras::parseUInt64(::std::string(string), base);
 }
 
 /**

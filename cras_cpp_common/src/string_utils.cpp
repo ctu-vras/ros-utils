@@ -246,46 +246,18 @@ inline void strtoint(const char* str, char** str_end, int base, uint64_t& result
 #endif
 
 template <typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
-inline T parseIntegralNumber(const std::string& string)
+inline T parseIntegralNumber(const std::string& string, const uint8_t base)
 {
   T result{};
 
-  auto cleanString = cras::stripLeading(string, ' ');
+  auto cleanString = string;
+  while (!cleanString.empty() && cleanString[0] == ' ')
+    cras::stripLeading(cleanString, ' ');
+  while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ')
+    cras::stripTrailing(cleanString, ' ');
   cras::stripLeading(cleanString, '+');
-  cras::stripTrailing(cleanString, ' ');
-
-  auto noSignString = cleanString;
-  cras::stripLeading(noSignString, '-');
-  auto base = 10;
-  if (noSignString.length() > 2 && noSignString[0] == '0')
-  {
-    if (noSignString[1] == 'x' || noSignString[1] == 'X')
-    {
-      base = 16;
-      cras::stripLeading(noSignString, '0');
-      cras::stripLeading(noSignString, 'x');
-      cras::stripLeading(noSignString, 'X');
-    }
-    else if (noSignString[1] == 'b' || noSignString[1] == 'B')
-    {
-      base = 2;
-      cras::stripLeading(noSignString, '0');
-      cras::stripLeading(noSignString, 'b');
-      cras::stripLeading(noSignString, 'B');
-    }
-    else
-    {
-      base = 8;
-      cras::stripLeading(noSignString, '0');
-    }
-    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
-  }
-  else if (noSignString.length() > 1 && noSignString[0] == '0')
-  {
-    base = 8;
-    cras::stripLeading(noSignString, '0');
-    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
-  }
+  while (cleanString.length() > 1 && cleanString[0] == '0')
+    cras::stripLeading(cleanString, '0');
 
 #if HAS_FROM_CHARS == 1
   auto [ptr, ec] = std::from_chars(cleanString.data(), cleanString.data() + cleanString.size(), result, base);
@@ -321,9 +293,60 @@ inline T parseIntegralNumber(const std::string& string)
   throw std::runtime_error("Unexpected case");
 }
 
+template <typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
+inline T parseIntegralNumber(const std::string& string)
+{
+  auto cleanString = string;
+  while (!cleanString.empty() && cleanString[0] == ' ')
+    cras::stripLeading(cleanString, ' ');
+  while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ')
+    cras::stripTrailing(cleanString, ' ');
+  cras::stripLeading(cleanString, '+');
+
+  auto noSignString = cleanString;
+  cras::stripLeading(noSignString, '-');
+  auto base = 10;
+  if (noSignString.length() > 2 && noSignString[0] == '0')
+  {
+    if (noSignString[1] == 'x' || noSignString[1] == 'X')
+    {
+      base = 16;
+      cras::stripLeading(noSignString, '0');
+      cras::stripLeading(noSignString, 'x');
+      cras::stripLeading(noSignString, 'X');
+    }
+    else if (noSignString[1] == 'b' || noSignString[1] == 'B')
+    {
+      base = 2;
+      cras::stripLeading(noSignString, '0');
+      cras::stripLeading(noSignString, 'b');
+      cras::stripLeading(noSignString, 'B');
+    }
+    else
+    {
+      base = 8;
+      cras::stripLeading(noSignString, '0');
+    }
+    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
+  }
+  else if (noSignString.length() > 1 && noSignString[0] == '0')
+  {
+    base = 8;
+    cras::stripLeading(noSignString, '0');
+    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
+  }
+
+  return parseIntegralNumber<T>(cleanString, base);
+}
+
 int8_t parseInt8(const std::string& string)
 {
   return cras::parseIntegralNumber<int8_t>(string);
+}
+
+int8_t parseInt8(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<int8_t>(string, base);
 }
 
 uint8_t parseUInt8(const std::string& string)
@@ -331,9 +354,19 @@ uint8_t parseUInt8(const std::string& string)
   return cras::parseIntegralNumber<uint8_t>(string);
 }
 
+uint8_t parseUInt8(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<uint8_t>(string, base);
+}
+
 int16_t parseInt16(const std::string& string)
 {
   return cras::parseIntegralNumber<int16_t>(string);
+}
+
+int16_t parseInt16(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<int16_t>(string, base);
 }
 
 uint16_t parseUInt16(const std::string& string)
@@ -341,9 +374,19 @@ uint16_t parseUInt16(const std::string& string)
   return cras::parseIntegralNumber<uint16_t>(string);
 }
 
+uint16_t parseUInt16(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<uint16_t>(string, base);
+}
+
 int32_t parseInt32(const std::string& string)
 {
   return cras::parseIntegralNumber<int32_t>(string);
+}
+
+int32_t parseInt32(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<int32_t>(string, base);
 }
 
 uint32_t parseUInt32(const std::string& string)
@@ -351,14 +394,29 @@ uint32_t parseUInt32(const std::string& string)
   return cras::parseIntegralNumber<uint32_t>(string);
 }
 
+uint32_t parseUInt32(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<uint32_t>(string, base);
+}
+
 int64_t parseInt64(const std::string& string)
 {
   return cras::parseIntegralNumber<int64_t>(string);
 }
 
+int64_t parseInt64(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<int64_t>(string, base);
+}
+
 uint64_t parseUInt64(const std::string& string)
 {
   return cras::parseIntegralNumber<uint64_t>(string);
+}
+
+uint64_t parseUInt64(const std::string& string, const uint8_t base)
+{
+  return cras::parseIntegralNumber<uint64_t>(string, base);
 }
 
 template <typename T, ::std::enable_if_t<::std::is_floating_point_v<::std::decay_t<T>>, bool> = true>
