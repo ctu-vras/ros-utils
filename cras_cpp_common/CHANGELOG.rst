@@ -2,6 +2,15 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* string_utils: Added date/time parsing methods.
+* string_utils: Added methods for parsing integers with known radix.
+* diag_utils: Added tests for offline diag updater.
+* diag_utils: Added offline diag updater.
+* node_from_nodelet: Added support for stopping the node when requestStop() has been called in the nodelet code.
+* Contributors: Martin Pecka
+
 2.4.4 (2024-09-14)
 ------------------
 * Fixed roslint.
