@@ -19,6 +19,7 @@
 #include <ros/message_traits.h>
 
 #include <cras_cpp_common/optional.hpp>
+#include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
