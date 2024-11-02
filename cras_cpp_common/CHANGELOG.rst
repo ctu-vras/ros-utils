@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.5 (2024-11-02)
+------------------
 * string_utils: Added date/time parsing methods.
 * string_utils: Added methods for parsing integers with known radix.
 * diag_utils: Added tests for offline diag updater.
