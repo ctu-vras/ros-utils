@@ -13,23 +13,16 @@ Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean C
 This package is supported on Melodic and Noetic until their End of Life (and maybe later). It is occasionally tested with non-default GCC versions like Melodic+GCC8 or Noetic+GCC11.
 
 Development versions: [![CI](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml)
-[![Dev melodic](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/badge/icon?subject=melodic+ubuntu)](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/)
 [![Dev noetic ubuntu](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/badge/icon?subject=noetic+ubuntu)](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/)
-[![Dev noetic debian](https://build.ros.org/job/Ndev_db__cras_ros_utils__debian_buster_amd64/badge/icon?subject=noetic+debian)](https://build.ros.org/job/Ndev_db__cras_ros_utils__debian_buster_amd64/)
 
 Release jobs Melodic
-[![Melodic version](https://img.shields.io/ros/v/melodic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-melodic-cras-cpp-common/):
-[![Bin melodic-amd64](https://build.ros.org/job/Mbin_uB64__cras_cpp_common__ubuntu_bionic_amd64__binary/badge/icon?subject=bionic+amd64)](https://build.ros.org/job/Mbin_uB64__cras_cpp_common__ubuntu_bionic_amd64__binary/)
-[![Bin melodic-arm64](https://build.ros.org/job/Mbin_ubv8_uBv8__cras_cpp_common__ubuntu_bionic_arm64__binary/badge/icon?subject=bionic+arm64)](https://build.ros.org/job/Mbin_ubv8_uBv8__cras_cpp_common__ubuntu_bionic_arm64__binary/)
-[![Bin melodic-armhf](https://build.ros.org/job/Mbin_ubhf_uBhf__cras_cpp_common__ubuntu_bionic_armhf__binary/badge/icon?subject=bionic+armhf)](https://build.ros.org/job/Mbin_ubhf_uBhf__cras_cpp_common__ubuntu_bionic_armhf__binary/)
+[![Melodic version](https://img.shields.io/ros/v/melodic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-melodic-cras-cpp-common/): Buildfarm no longer builds Melodic, but compatibility is still kept.
 
 Release jobs Noetic
 [![Noetic version](https://img.shields.io/ros/v/noetic/cras_ros_utils)](http://packages.ros.org/ros/ubuntu/pool/main/r/ros-noetic-cras-cpp-common/):
 [![Bin ubuntu noetic-amd64](https://build.ros.org/job/Nbin_uF64__cras_cpp_common__ubuntu_focal_amd64__binary/badge/icon?subject=focal+amd64)](https://build.ros.org/job/Nbin_uF64__cras_cpp_common__ubuntu_focal_amd64__binary/)
 [![Bin ubuntu noetic-arm64](https://build.ros.org/job/Nbin_ufv8_uFv8__cras_cpp_common__ubuntu_focal_arm64__binary/badge/icon?subject=focal+arm64)](https://build.ros.org/job/Nbin_ufv8_uFv8__cras_cpp_common__ubuntu_focal_arm64__binary/)
 [![Bin ubuntu noetic-armhf](https://build.ros.org/job/Nbin_ufhf_uFhf__cras_cpp_common__ubuntu_focal_armhf__binary/badge/icon?subject=focal+armhf)](https://build.ros.org/job/Nbin_ufhf_uFhf__cras_cpp_common__ubuntu_focal_armhf__binary/)
-[![Bin debian noetic-amd64](https://build.ros.org/job/Nbin_db_dB64__cras_cpp_common__debian_buster_amd64__binary/badge/icon?subject=buster+amd64)](https://build.ros.org/job/Nbin_db_dB64__cras_cpp_common__debian_buster_amd64__binary/)
-[![Bin debian noetic-arm64](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_cpp_common__debian_buster_arm64__binary/badge/icon?subject=buster+arm64)](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_cpp_common__debian_buster_arm64__binary/)
 
 ## List of provided libraries
 
@@ -56,14 +49,14 @@ Release jobs Noetic
 - `set_utils`: Provides `isSetIntersectionEmpty()` working on a pair of `std::set`s.
 - `small_map`: Provides `SmallMap` and `SmallSet`, variants of `std::map` implemented using `std::list` which are append-only and lock-free for reading.
 - `span`: Provides forward compatibility for [`std::span`](https://en.cppreference.com/w/cpp/container/span).
-- `string_utils`: Provides many string manipulation helpers you've always dreamed of. Universal `to_string()` that converts almost anything to a sensible string. `startsWith()`/`endsWith()`, `replace()`, `contains()`, `split()`/`join()`, `format()` (like `sprintf()` but without hassle and on `std::string`), `stripLeading()`/`stripTrailing()`, `removePrefix()`/`removeSuffix()`, `parseFloat()`/`parseDouble()` (convert string to double independent of locale!), `parseInt32()` and friends (parse many textual representations to an integer).
+- `string_utils`: Provides many string manipulation helpers you've always dreamed of. Universal `to_string()` that converts almost anything to a sensible string. `startsWith()`/`endsWith()`, `replace()`, `contains()`, `split()`/`join()`, `format()` (like `sprintf()` but without hassle and on `std::string`), `stripLeading()`/`stripTrailing()`, `removePrefix()`/`removeSuffix()`, `parseFloat()`/`parseDouble()` (convert string to double independent of locale!), `parseInt32()` and friends (parse many textual representations to an integer, or with specified radix). `parseTime()` and `parseDuration()` to parse textual date/time strings to `ros::Time` and `ros::Duration`.
 - `suppress_warnings`: Unified macros that suppress various compiler warnings for a piece of code.
 - `test_utils`: Provide a hack that allows loading a locally-defined nodelet without the need to register it via package.xml.
 - `tf2_utils`: `getRoll()`, `getPitch()`, `getYaw()`, `getRPY()` from a `tf2::Quaternion` or `geometry_msgs::Quaternion`!
   - Also provides `InterruptibleTFBuffer` that can cooperate with `cras::Nodelet` and stop a TF lookup if the nodelet is being unloaded (normally, the lookup freezes when you pause simulation time).
 - `thread_utils`: `getThreadName()` and `setThreadName()`.
   - Also provides `ReverseSemaphore` synchronization primitive that counts towards zero and notifies when empty.
-- `time_utils`: `remainingTime()` tells you how much of a timeout remains if you started waiting at some specified time. Conversions between `ros::Rate()` and frequency. Multiplication and division operators for ROS duration types.
+- `time_utils`: `remainingTime()` tells you how much of a timeout remains if you started waiting at some specified time. Conversions between `ros::Rate()` and frequency. Multiplication and division operators for ROS duration types. Seamless conversions between `WallTime`, `Time` and `SteadyTime` using `convertTime()`. Similarly, `convertDuration()`. 
 - `type_utils`: Provides compile-time and run-time `getTypeName()` helper that converts a C++ type to a string containing its name.
 - `urdf_utils`: Conversions between `urdf` and `Eigen` types.
 - `xmlrpc_value_traits`: Type traits for `XmlRpc::XmlRpcValue`.

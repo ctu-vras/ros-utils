@@ -7,8 +7,10 @@
  * \author Martin Pecka
  */
 
+#include <limits>
 #include <regex>
 #include <string>
+
 #include <boost/date_time/posix_time/ptime.hpp>
 
 #include <ros/duration.h>
@@ -47,14 +49,17 @@ ros::WallDuration parseTimezoneOffset(const std::string& s)
 template<> ros::Time parseTime(
   const std::string& s, const cras::optional<ros::Duration>& timezoneOffset, const ros::Time& referenceDate)
 {
+  if (s.length() == 3 && cras::toLower(s) == "now")
+    return ros::Time::now();
+
   // Check if the string contains delimiters. If so, do not require zero-padding of all numbers.
   const std::regex delimitersRegex {
-    R"((?:(?:(?:(\d+)[:_/-])?(\d+)[:_/-])?(\d+)[Tt _-])?(\d+)[:_/-](\d+)[:_/-](\d+)(?:\.(\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
+    R"((?:(?:(?:(\d+)[:_/-])?(\d+)[:_/-])?(\d+)[Tt _-])?(\d+)[:_/-](\d+)[:_/-](\d+)(?:[.,](\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
   std::smatch matches;
   if (!std::regex_match(s, matches, delimitersRegex))
   {
     const std::regex noDelimsRegex {
-      R"((?:((?:\d{2}){1,2})[:_/-]?([01]\d)[:_/-]?([0123]\d)[Tt _-])?([012]\d)[:_/-]?([0-6]\d)[:_/-]?([0-6]\d)(?:\.(\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
+      R"((?:((?:\d{2}){1,2})[:_/-]?([01]\d)[:_/-]?([0123]\d)[Tt _-])?([012]\d)[:_/-]?([0-6]\d)[:_/-]?([0-6]\d)(?:[.,](\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
     if (!std::regex_match(s, matches, noDelimsRegex))
       throw std::invalid_argument("Invalid time format");
   }
@@ -73,10 +78,17 @@ template<> ros::Time parseTime(
   const uint16_t year = yearStr.empty() ? static_cast<uint16_t>(boostDateRef.year()) : cras::parseUInt16(yearStr, 10);
   if (year < 1970)
     throw std::invalid_argument("Years before 1970 cannot be parsed to ros time.");
+
   const auto month = matches[2].matched ?
     cras::parseUInt16(matches[2].str(), 10) : static_cast<uint16_t>(boostDateRef.month());
+  if (month <= 0)
+    throw std::invalid_argument("Month has to be a positive number (i.e. non-zero).");
+
   const auto day = matches[3].matched ?
     cras::parseUInt16(matches[3].str(), 10) : static_cast<uint16_t>(boostDateRef.day());
+  if (day <= 0)
+    throw std::invalid_argument("Day has to be a positive number (i.e. non-zero).");
+
   const auto hour = cras::parseUInt16(matches[4].str(), 10);
   const auto minute = cras::parseUInt16(matches[5].str(), 10);
   const auto second = cras::parseUInt16(matches[6].str(), 10);
@@ -100,7 +112,11 @@ template<> ros::Time parseTime(
   uint32_t fracNsec = 0;
   if (matches[7].matched)
   {
-    const auto paddedNsec = cras::format("%s%0*d", matches[7].str().c_str(), 9 - matches[7].length(), 0);
+    auto paddedNsec = matches[7].str();
+    if (paddedNsec.length() < 9)
+      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), 9 - paddedNsec.length(), 0);
+    else if (paddedNsec.length() > 9)
+      paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
     fracNsec = cras::parseUInt32(paddedNsec, 10);
   }
 
@@ -110,6 +126,9 @@ template<> ros::Time parseTime(
 template<> ros::WallTime parseTime(
   const std::string& s, const cras::optional<ros::WallDuration>& timezoneOffset, const ros::WallTime& referenceTime)
 {
+  if (s.length() == 3 && cras::toLower(s) == "now")
+    return ros::WallTime::now();
+
   return convertTime<ros::WallTime>(parseTime(
     s,
     timezoneOffset.has_value() ? cras::optional{convertDuration<ros::Duration>(*timezoneOffset)} : cras::nullopt,
@@ -119,6 +138,9 @@ template<> ros::WallTime parseTime(
 template<> ros::SteadyTime parseTime(
   const std::string& s, const cras::optional<ros::WallDuration>& timezoneOffset, const ros::SteadyTime& referenceTime)
 {
+  if (s.length() == 3 && cras::toLower(s) == "now")
+    return ros::SteadyTime::now();
+
   return convertTime<ros::SteadyTime>(parseTime(
     s,
     timezoneOffset.has_value() ? cras::optional{convertDuration<ros::Duration>(*timezoneOffset)} : cras::nullopt,
@@ -128,44 +150,58 @@ template<> ros::SteadyTime parseTime(
 template<> ros::Duration parseDuration(const std::string& s)
 {
   // Check if the string contains delimiters. If so, do not require zero-padding of all numbers.
-  const std::regex delimitersRegex {
-    R"((?:(?:(?:(\d+)[:_/-])?(\d+)[:_/-])?(\d+)[Tt _-])?(\d+)[:_/-](\d+)[:_/-](\d+)(?:\.(\d+))?)"};
+  const std::regex secondsOnlyRegex {R"(([+-]?)(\d+)(?:[.,](\d+))?)"};
+  const std::regex delimitersRegex {R"(([+-]?)(?:(\d+)[:_/-])?(\d+)[:_/-](\d+)(?:[.,](\d+))?)"};
+
+  std::string signString;
+  uint32_t hours {0u};
+  uint32_t minutes {0u};
+  uint32_t seconds {0u};
+  std::string nsecString;
   std::smatch matches;
-  if (!std::regex_match(s, matches, delimitersRegex))
+
+  if (std::regex_match(s, matches, secondsOnlyRegex))
   {
-    const std::regex noDelimsRegex {
-      R"(((?:\d{2}){1,2})[:_/-]?([01]\d)[:_/-]?([0123]\d)[Tt _-]?([012]\d)[:_/-]?([0-6]\d)[:_/-]?([0-6]\d)(?:\.(\d+))?)"};
-    if (!std::regex_match(s, matches, noDelimsRegex))
-      throw std::invalid_argument("Invalid duration format");
+    signString = matches[1].str();
+    seconds = cras::parseUInt32(matches[2].str(), 10);
+    nsecString = matches[3].matched ? matches[3].str() : "";
+  }
+  else if (std::regex_match(s, matches, delimitersRegex))
+  {
+    signString = matches[1].str();
+    hours = matches[2].matched ? cras::parseUInt32(matches[2].str(), 10) : 0u;
+    minutes = cras::parseUInt32(matches[3].str(), 10);
+    seconds = cras::parseUInt32(matches[4].str(), 10);
+    nsecString = matches[5].matched ? matches[5].str() : "";
+  }
+  else
+  {
+    throw std::invalid_argument("Invalid duration format.");
   }
 
-  const auto year = matches[1].matched ? cras::parseUInt16(matches[1].str(), 10) + 1970 : 1970;
-  const auto month = matches[2].matched ? cras::parseUInt16(matches[2].str(), 10) + 1 : 1;
-  const auto day = matches[3].matched ? cras::parseUInt16(matches[3].str(), 10) + 1 : 1;
-  const auto hour = cras::parseUInt16(matches[4].str(), 10);
-  const auto minute = cras::parseUInt16(matches[5].str(), 10);
-  const auto second = cras::parseUInt16(matches[6].str(), 10);
-
-  tm t{};
-  t.tm_year = year - 1900;
-  t.tm_mon = month - 1;
-  t.tm_mday = day;
-  t.tm_hour = hour;
-  t.tm_min = minute;
-  t.tm_sec = second;
-  errno = 0;
-  const int32_t timeSecs = timegm(&t);
-  if (timeSecs < 0 || errno == EOVERFLOW)
-    throw std::invalid_argument("Invalid duration format (timegm overflow).");
+  const int8_t sign = signString == "-" ? -1 : 1;
 
   int32_t fracNsec = 0;
-  if (matches[7].matched)
+  if (!nsecString.empty())
   {
-    const auto paddedNsec = cras::format("%s%0*d", matches[7].str().c_str(), 9 - matches[7].length(), 0);
+    auto paddedNsec = nsecString;
+    if (paddedNsec.length() < 9)
+      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), 9 - paddedNsec.length(), 0);
+    else if (paddedNsec.length() > 9)
+      paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
     fracNsec = cras::parseInt32(paddedNsec, 10);
   }
 
-  return {timeSecs, fracNsec};
+  int64_t allSecs {0};  // Accumulate to int64_t to check for overflow
+  allSecs += seconds;
+  allSecs += minutes * 60;
+  allSecs += hours * 3600;
+  allSecs *= sign;
+
+  if (allSecs < std::numeric_limits<int32_t>::min() || allSecs > std::numeric_limits<int32_t>::max())
+    throw std::invalid_argument("Invalid duration (overflow).");
+
+  return {static_cast<int32_t>(allSecs), fracNsec};
 }
 
 template<> ros::WallDuration parseDuration(const std::string& s)

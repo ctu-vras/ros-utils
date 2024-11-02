@@ -61,6 +61,20 @@ inline std::string to_string(const M& msg)
   return s;
 }
 
+/**
+ * \brief Parse timezone offset from the given string.
+ *
+ * This function accepts this format:
+ * <pre>
+ * {|Z|[{+|-}HH[:]MM]}
+ * </pre>
+ *
+ * \note This function does not support textual timezones like CET.
+ *
+ * \tparam D Duration type.
+ * \param[in] s The string to parse.
+ * \return The duration corresponding to the timezone offset.
+ */
 template<typename D = ::ros::Duration, typename ::std::enable_if_t<
     ::std::is_same<D, ::ros::Duration>::value ||
     ::std::is_same<D, ::ros::WallDuration>::value
@@ -84,6 +98,8 @@ D parseTimezoneOffset(const ::std::string& s);
  *   contains a TZ offset, it will be used instead the one passed as argument. If neither is specified, UTC is assumed.
  * - If nonempty delimiters are used, the fields do not need to be zero-padded and can overflow their natural limit up
  *   to UINT16_MAX.
+ * - A special value `now` is recognized and always returns current time. It can be any case (`NOW`, `Now` etc.).
+ * - Decimal comma `,` can be used instead of decimal dot `.` .
  *
  * \param[in] s The string to parse.
  * \param[in] timezoneOffset Optional timezone offset to use if no offset is specified in the string.
@@ -99,22 +115,19 @@ template<typename T = ::ros::Time, typename ::std::enable_if_t<
 T parseTime(const ::std::string& s,
   const ::cras::optional<typename ::cras::DurationType<T>::value>& timezoneOffset = {}, const T& referenceDate = {});
 
-
 /**
  * \brief Parse the given string as duration.
  *
  * This function accepts this general format:
  * <pre>
- * [YY:MM:DD ]HH:MM:SS[.m]
+ * [{-|+}][HH:]MM:SS[.m]
  * </pre>
  *
  * However, many modifications of the format are supported:
  * - The delimiter can be any of `:-/_` (or empty string) and it doesn't need to be consistent in the string.
- * - The space delimiting years/months/days and time can be actually any of ` Tt_-`.
- * - The date part can be omitted.
- * - If year part is never interpreted as a 4-digit number unless it really has 4 digits. No century prefix is assumed.
- * - If nonempty delimiters are used, the fields do not need to be zero-padded and can overflow their natural limit up
- *   to UINT16_MAX.
+ * - The fields do not need to be zero-padded and can overflow their natural limit up to UINT32_MAX.
+ * - If no delimiters are present (except maybe the decimal dot), the number is treated as the number of seconds.
+ * - Decimal comma `,` can be used instead of decimal dot `.` .
  *
  * \param[in] s The string to parse.
  * \return The parsed duration.
