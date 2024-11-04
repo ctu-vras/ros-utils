@@ -269,7 +269,7 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, ::std::array<T, N>& v, bool 
   if (x.size() != N)
   {
     if (errors != nullptr)
-      errors->push_back(::cras::format("The array is expected to have %i items, but %i was given.", N, x.size()));
+      errors->push_back(::cras::format("The array is expected to have %zu items, but %i was given.", N, x.size()));
     return false;
   }
   for (size_t i = 0; i < x.size(); ++i)

@@ -351,7 +351,7 @@ void FilterChainNodelet<F>::filterFinishedCallback(const F& data, const size_t f
   ::std::lock_guard<::std::mutex> l(this->filterPublishersMutex);
   if (this->filterPublishers.find(name) == this->filterPublishers.end())
   {
-    const auto topicName = ::cras::format("filter%i/%s", filterNum, name.c_str());
+    const auto topicName = ::cras::format("filter%zu/%s", filterNum, name.c_str());
     this->filterPublishers[name] = this->privateNodeHandle.template advertise<F>(topicName, this->publisherQueueSize);
     ::ros::WallDuration(0.001).sleep();
   }
@@ -400,7 +400,7 @@ void FilterChainDiagnostics<F>::run(::diagnostic_updater::DiagnosticStatusWrappe
   else
   {
     stat.level = ::diagnostic_msgs::DiagnosticStatus::ERROR;
-    stat.message = ::cras::format("Some filters are failing (processed %lu messages since last update, %ul errors "
+    stat.message = ::cras::format("Some filters are failing (processed %lu messages since last update, %zu errors "
                                   "encountered)", totalCallbacks, totalFailures);
   }
 
