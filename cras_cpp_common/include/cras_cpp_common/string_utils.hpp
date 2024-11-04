@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/type_utils/string_traits.hpp>
 
 namespace cras
@@ -927,5 +928,83 @@ inline double parseDouble(const char* string)
 {
   return ::cras::parseDouble(::std::string(string));
 }
+
+/**
+ * \brief Check if name is a legal ROS name for graph resources.
+ * \param name Name
+ * \return Whether the name is valid.
+ */
+bool isLegalName(const ::std::string& name);
+
+/**
+ * \brief Validates that name is a legal base name for a graph resource. A base name has no namespace context, e.g.
+ *        "node_name".
+ * \param name Name
+ * \return Whether the name is a valid base name.
+ */
+bool isLegalBaseName(const ::std::string& name);
+
+/**
+ * \brief Helper class for temporarily setting locale in a RAII manner.
+ *
+ * Just create this object on stack and it will change the configured locale. When the object goes out of scope, the
+ * previous locale will be set again.
+ */
+class TempLocale
+{
+public:
+  /**
+   * \brief By creating this object on stack, you change the locale to the given one until the object goes out of scope.
+   * \param category The LC_* category of the locale.
+   * \param newLocale The new (temporary) locale.
+   */
+  TempLocale(int category, const char* newLocale);
+  ~TempLocale();
+
+private:
+  int category;  //!< The category of the locale.
+  const char* oldLocale;  //!< The previous locale.
+};
+
+/**
+ * \brief Convert `inText` from `fromEncoding` to `toEncoding` using iconv.
+ * \param toEncoding The target encoding. It may contain the //TRANSLIT and //IGNORE suffixes.
+ * \param fromEncoding The source encoding.
+ * \param inText The text to convert.
+ * \param translit If true, the conversion will try to transliterate letters not present in target encoding.
+ * \param ignore If true, letters that can't be converted and transliterated will be left out.
+ * \param initialOutbufSizeScale The initial scale of the size of the output buffer. Setting this to the correct value
+ *                               may speed up the conversion in case the output is much larger than the input.
+ * \param outbufEnlargeCoef The step size to use for enlarging the output buffer if it shows that its initial size
+ *                          is insufficient. Must be strictly larger than 1.0.
+ * \param localeName If set, specifies the locale used for the iconv call. It may influence the transliteration
+ *                   results. If not set, a default english locale is used that usually works quite well.
+ * \return
+ */
+::std::string iconvConvert(
+  const ::std::string& toEncoding, const ::std::string& fromEncoding, const ::std::string& inText,
+  bool translit = false, bool ignore = false, double initialOutbufSizeScale = 1.0, double outbufEnlargeCoef = 2.0,
+  const ::cras::optional<::std::string>& localeName = ::cras::nullopt);
+
+/**
+ * \brief Transliterate the given string from UTF-8 to ASCII (replace non-ASCII chars by closest ASCII chars).
+ * \param text The string to transliterate.
+ * \return The transliterated string.
+ */
+::std::string transliterateToAscii(const ::std::string& text);
+
+/**
+ * \brief Make sure the given string can be used as ROS name.
+ * \param text The text to convert.
+ * \param baseName If true, the text represents only one "level" of names. If False, it can be the absolute or relative
+ *                 name with ~ and /.
+ * \param fallbackName If specified, this name will be used if the automated conversion fails. This name is not checked
+ *                     to be valid.
+ * \return The valid ROS graph resource name.
+ * \throws std::invalid_argument If the given text cannot be converted to a valid ROS name, and no `fallback_name`
+ *                               is specified.
+ */
+::std::string toValidRosName(const ::std::string& text, bool baseName = true,
+  const ::cras::optional<::std::string>& fallbackName = ::cras::nullopt);
 
 }

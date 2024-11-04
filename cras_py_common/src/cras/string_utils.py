@@ -185,7 +185,7 @@ def iconv_convert_bytes(to_encoding, from_encoding, in_bytes, translit=False, ig
                                             correct value may speed up the conversion in case the output is much larger
                                             than the input.
     :param outbuf_enlarge_coef: The step size to use for enlarging the output buffer if it shows that its initial size
-                                is insufficient. Must be stritctly larger than 1.0.
+                                is insufficient. Must be strictly larger than 1.0.
     :param localename: If set, specifies the locale used for the iconv call. It may influence the transliteration
                        results. If not set, a default english locale is used that usually works quite well.
     :type localename: str, optional

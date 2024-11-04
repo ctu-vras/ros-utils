@@ -1527,6 +1527,88 @@ TEST(StringUtils, ParseDuration)  // NOLINT
   EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("00:00:11142.123456789"));
 }
 
+TEST(StringUtils, TempLocale)  // NOLINT
+{
+  const auto currLocale = setlocale(LC_ALL, nullptr);
+
+  {
+    EXPECT_STREQ(currLocale, setlocale(LC_ALL, nullptr));
+    TempLocale l(LC_ALL, "en_US.UTF-8");
+    EXPECT_STREQ("en_US.UTF-8", setlocale(LC_ALL, nullptr));
+  }
+  EXPECT_STREQ(currLocale, setlocale(LC_ALL, nullptr));
+
+  {
+    EXPECT_STREQ(currLocale, setlocale(LC_ALL, nullptr));
+    TempLocale l(LC_ALL, "en_US.UTF-8");
+    EXPECT_STREQ("en_US.UTF-8", setlocale(LC_ALL, nullptr));
+  }
+  EXPECT_STREQ(currLocale, setlocale(LC_ALL, nullptr));
+}
+
+TEST(StringUtils, IconvConvert)  // NOLINT
+{
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"test"), "test");
+
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"ťěšť", true), "test");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", true), "atestz");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"ťěšť", false, true), "");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", false, true), "az");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", true, false, 1, 2, "C"), "a????z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, false), "atest?z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, false, 1, 2, "C"), "a?????z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, true), "atest?z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, true, 1, 2, "C"), "a?????z");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"ťěšť", false), std::invalid_argument);
+
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"tägelîch", true), "tagelich");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"tägelîch", false), std::invalid_argument);
+
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", true), "30 km/h");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), std::invalid_argument);
+
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"かな漢字", true), "????");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"かな漢字", false), std::invalid_argument);
+
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 2.0), u8"ťěšť");
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 1.0), u8"ťěšť");
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 4.0), u8"ťěšť");
+
+  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ", true), "\xbb\xec\xb9\xbb" "C");
+  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ", false, true), "\xbb\xec\xb9\xbb");
+  EXPECT_THROW(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ"), std::invalid_argument);
+
+  EXPECT_THROW(iconvConvert("UNKNOWN", "UTF-8", u8"ťěšť"), std::invalid_argument);
+}
+
+TEST(StringUtils, TransliterateToAscii)  // NOLINT
+{
+  EXPECT_EQ(transliterateToAscii(u8"test"), "test");
+  EXPECT_EQ(transliterateToAscii(u8"ťěšť"), "test");
+  EXPECT_EQ(transliterateToAscii(u8"tägelîch"), "tagelich");
+  EXPECT_EQ(transliterateToAscii(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "30 km/h");
+  EXPECT_EQ(transliterateToAscii(u8"かな漢字"), "????");
+}
+
+TEST(StringUtils, ToValidRosName)  // NOLINT
+{
+  EXPECT_EQ(toValidRosName(u8"test"), "test");
+  EXPECT_EQ(toValidRosName(u8"Top Box"), "Top_Box");
+  EXPECT_EQ(toValidRosName(u8"ťěšť"), "test");
+  EXPECT_EQ(toValidRosName(u8"tägelîch"), "tagelich");
+  EXPECT_EQ(toValidRosName(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "km_h");
+  EXPECT_THROW(toValidRosName(u8"かな漢字"), std::invalid_argument);
+  EXPECT_EQ(toValidRosName(u8"かな漢字", true, "test"), "test");
+  EXPECT_EQ(toValidRosName(u8"333", true, "test"), "test");
+  EXPECT_EQ(toValidRosName(u8"a/b", true, "test"), "a_b");
+  EXPECT_EQ(toValidRosName(u8"a/b", false), "a/b");
+  EXPECT_EQ(toValidRosName(u8"/3/b", false), "/b");
+  EXPECT_EQ(toValidRosName(u8"a/ťěšť", false), "a/test");
+  EXPECT_EQ(toValidRosName(u8"a/ťěšť/b", false), "a/test/b");
+  EXPECT_EQ(toValidRosName(u8"a/ťěšť/tägelîch", false), "a/test/tagelich");
+  EXPECT_EQ(toValidRosName(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), "km/h");
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

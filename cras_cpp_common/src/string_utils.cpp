@@ -18,9 +18,14 @@
 
 #include <algorithm>
 #include <cctype>
+#include <clocale>
+#include <iconv.h>
 #include <limits>
+#include <regex>
 #include <string>
 #include <sstream>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <ros/console.h>
@@ -455,6 +460,215 @@ float parseFloat(const std::string& string)
 double parseDouble(const std::string& string)
 {
   return cras::parseFloatingNumber<double>(string);
+}
+
+const std::regex NAME_LEGAL_CHARS_P {R"(^[~/]?[A-Za-z][a-zA-Z0-9/]*$)"};
+
+bool isLegalName(const std::string& name)
+{
+  // empty string is a legal name as it resolves to namespace
+  if (name.empty() || name == "/" || name == "~")
+    return true;
+
+  if (cras::contains(name, "//"))
+    return false;
+
+  return std::regex_match(name, NAME_LEGAL_CHARS_P);
+}
+
+const std::regex BASE_NAME_LEGAL_CHARS_P {R"(^[A-Za-z][A-Za-z0-9_]*$)"};
+
+bool isLegalBaseName(const std::string& name)
+{
+  return std::regex_match(name,  BASE_NAME_LEGAL_CHARS_P);
+}
+
+TempLocale::TempLocale(const int category, const char* newLocale) :
+  category(category), oldLocale(setlocale(category, nullptr))
+{
+  setlocale(category, newLocale);
+}
+
+TempLocale::~TempLocale()
+{
+  setlocale(this->category, this->oldLocale);
+}
+
+namespace
+{
+template <class T> inline void hash_combine(size_t &seed, T const &v)
+{
+  seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+struct pair_hash
+{
+  template <class T1, class T2> size_t operator()(const std::pair<T1, T2> &p) const
+  {
+    size_t seed = 0;
+    hash_combine(seed, p.first);
+    hash_combine(seed, p.second);
+    return seed;
+  }
+};
+
+thread_local std::unordered_map<std::pair<std::string, std::string>, iconv_t, pair_hash> iconvDescriptors;
+}
+
+std::string iconvConvert(const std::string& toEncoding, const std::string& fromEncoding, const std::string& inText,
+                         const bool translit, bool ignore,
+                         const double initialOutbufSizeScale, const double outbufEnlargeCoef,
+                         const cras::optional<std::string>& localeName)
+{
+  if (outbufEnlargeCoef <= 1.0)
+    throw std::invalid_argument("outbufEnlargeCoef has to be strictly larger than 1.0");
+
+  auto toEnc = toEncoding;
+  if (translit && !cras::contains(toEncoding, "//TRANSLIT"))
+    toEnc += "//TRANSLIT";
+  if (ignore && !cras::contains(toEncoding, "//IGNORE"))
+    toEnc += "//IGNORE";
+  ignore = cras::contains(toEnc, "//IGNORE") || (cras::contains(toEnc, "//") && cras::contains(toEnc, ",IGNORE"));
+
+  iconv_t convDesc;
+  if (iconvDescriptors.find({fromEncoding, toEnc}) == iconvDescriptors.end())
+  {
+    errno = 0;
+    convDesc = iconv_open(toEnc.c_str(), fromEncoding.c_str());
+    if (convDesc == reinterpret_cast<iconv_t>(-1))
+      throw std::invalid_argument(cras::format(
+        "Could not create conversion descriptor from encoding '%s' to '%s': Error %s",
+          fromEncoding.c_str(), toEnc.c_str(), strerror(errno)));
+    iconvDescriptors[{fromEncoding, toEnc}] = convDesc;
+  }
+  else
+  {
+    convDesc = iconvDescriptors[{fromEncoding, toEnc}];
+    iconv(convDesc, nullptr, nullptr, nullptr, nullptr);
+  }
+
+  std::vector<char> inbufData(std::begin(inText), std::end(inText));
+  size_t inbufUnreadSize = inbufData.size();
+  char* inbuf = inbufData.data();
+
+  size_t outbufLen = static_cast<size_t>(inText.size() * initialOutbufSizeScale);
+  std::vector<char> outbufData(outbufLen);
+  size_t outbufUnusedSize = outbufData.size();
+  char* outbuf = outbufData.data();
+
+  // Read the input until there is something to read
+  while (inbufUnreadSize > 0)
+  {
+    // iconv transliteration doesn't work with the default C locale, we need a UTF-8 one
+    TempLocale tempLocale(LC_CTYPE, localeName.value_or("en_US.UTF-8").c_str());
+    errno = 0;
+    if (iconv(convDesc, &inbuf, &inbufUnreadSize, &outbuf, &outbufUnusedSize) != static_cast<size_t>(-1))
+    {
+      // Clean up the conversion descriptor and flush possible "shift sequences"
+      errno = 0;
+      iconv(convDesc, nullptr, nullptr, &outbuf, &outbufUnusedSize);
+    }
+    else
+    {
+      // The output buffer is too small; increase its size and try the conversion again
+      if (errno == E2BIG)
+      {
+        inbuf = inbufData.data();
+        inbufUnreadSize = inbufData.size();
+
+        outbufLen = static_cast<size_t>(std::ceil(outbufLen * outbufEnlargeCoef));  // Enlarge the output buffer size
+        outbufData.resize(outbufLen);
+        outbuf = outbufData.data();
+        outbufUnusedSize = outbufData.size();
+      }
+      // Invalid byte sequence encountered or cannot transliterate to output
+      else
+      {
+        const auto resErrno = errno;
+        // Reset the conversion descriptor as we'll be ignoring some bytes, so all context is lost
+        errno = 0;
+        iconv(convDesc, nullptr, nullptr, nullptr, nullptr);
+
+        if (!ignore)
+          throw std::invalid_argument(cras::format("Could not convert %s from encoding %s to %s. Error %s",
+            inText.c_str(), fromEncoding.c_str(), toEncoding.c_str(), strerror(resErrno)));
+
+        // Ignore invalid input byte sequences or sequences we can't transliterate
+        if (resErrno == EILSEQ && inbufUnreadSize > 1)
+        {
+          inbufUnreadSize -= 1;
+          inbuf = inbufData.data() + inText.size() - inbufUnreadSize;
+        }
+        // EINVAL means invalid byte sequence at the end of input, just throw it away
+        // inbufUnreadSize == 0 means ignore is True, some chars were ignored, but otherwise, we have success
+        else
+          break;
+      }
+    }
+  }
+
+  return {outbufData.data(), outbufLen - outbufUnusedSize};
+}
+
+std::string transliterateToAscii(const std::string& text)
+{
+  return iconvConvert("ASCII", "UTF-8", text, true, true);
+}
+
+std::string toValidRosName(
+  const std::string& text, const bool baseName, const cras::optional<std::string>& fallbackName)
+{
+  if ((baseName && isLegalBaseName(text)) || (!baseName && isLegalName(text)))
+    return text;
+
+  if (text.empty())
+  {
+    if (!fallbackName.has_value())
+      throw std::invalid_argument("Empty name is not allowed");
+    return *fallbackName;
+  }
+
+  auto name = transliterateToAscii(text);
+  std::string prefix;
+  if (baseName)
+  {
+    name = std::regex_replace(name, std::regex("[^a-zA-Z0-9_]"), "_");
+  }
+  else
+  {
+    if (name[0] == '~')
+    {
+      prefix = "~";
+      name = name.substr(1);
+    }
+    else if (name[0] == '/')
+    {
+      prefix = "/";
+      name = name.substr(1);
+    }
+    name = std::regex_replace(name, std::regex("[^a-zA-Z0-9_/]"), "_");
+  }
+
+  while (cras::contains(name, "__"))
+    cras::replace(name, "__", "_");
+
+  name = std::regex_replace(name, std::regex("^[^a-zA-Z]*"), "");
+  if (name.empty())
+  {
+    if (!fallbackName.has_value())
+        throw std::invalid_argument(cras::format("Name '%s' cannot be converted to valid ROS name", name.c_str()));
+    return *fallbackName;
+  }
+
+  name = prefix + name;
+  if ((baseName && !isLegalBaseName(name)) || (!baseName && !isLegalName(name)))
+  {
+    if (!fallbackName.has_value())
+      throw std::invalid_argument(cras::format("Name '%s' cannot be converted to valid ROS name", name.c_str()));
+    return *fallbackName;
+  }
+
+  return name;
 }
 
 };
