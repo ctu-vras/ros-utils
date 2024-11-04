@@ -114,7 +114,7 @@ template<> ros::Time parseTime(
   {
     auto paddedNsec = matches[7].str();
     if (paddedNsec.length() < 9)
-      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), 9 - paddedNsec.length(), 0);
+      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
     else if (paddedNsec.length() > 9)
       paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
     fracNsec = cras::parseUInt32(paddedNsec, 10);
@@ -186,7 +186,7 @@ template<> ros::Duration parseDuration(const std::string& s)
   {
     auto paddedNsec = nsecString;
     if (paddedNsec.length() < 9)
-      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), 9 - paddedNsec.length(), 0);
+      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
     else if (paddedNsec.length() > 9)
       paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
     fracNsec = cras::parseInt32(paddedNsec, 10);

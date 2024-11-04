@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Unit test for string_utils.hpp
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "gtest/gtest.h"
@@ -580,6 +581,7 @@ TEST(StringUtils, ToLower)  // NOLINT
 //  EXPECT_EQ("ěščřžýáíéďťňúů", cras::toLower("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ"));  // not yet working
 }
 
+__attribute__((__format__(__printf__, 2, 3)))
 void test_va_format(const std::string& res, const char* format, ...)
 {
   va_list(args);
@@ -600,6 +602,17 @@ TEST(StringUtils, FormatVaList)  // NOLINT
 
   std::string longString(300000, '*');  // generates a string of length 300.000 asterisks
   {SCOPED_TRACE("8"); test_va_format(longString, "%s", longString.c_str()); }
+
+  // Try to make vsnprintf fail with error. This is an attempt at passing it an invalid multibyte character.
+  // However, not all systems must have such character. That's why we need to first check whether the conversion
+  // of our chosen character WEOF is actually invalid on the running system.
+  {
+    TempLocale l(LC_ALL, "C");
+    std::mbstate_t state;
+    char tmp[MB_LEN_MAX];
+    if (wcrtomb(tmp, WEOF, &state) == static_cast<size_t>(-1))
+      EXPECT_THROW(cras::format("%lc", WEOF), std::runtime_error);
+  }
 }
 
 TEST(StringUtils, FormatCharPtr)  // NOLINT

@@ -1,19 +1,22 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utils for working with strings.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <array>
 #include <cstdarg>
+#include <cstring>
 #include <functional>
 #include <list>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -221,6 +224,7 @@ bool contains(const ::std::string& str, const ::std::string& needle);
  * \param[in] args Arguments of the format string.
  * \return The formatted string.
  */
+__attribute__((format(printf, 1, 0)))
 inline ::std::string format(const char* format, ::va_list args)
 {
   constexpr size_t BUF_LEN = 1024u;
@@ -232,7 +236,11 @@ inline ::std::string format(const char* format, ::va_list args)
   const auto len = ::vsnprintf(buf, BUF_LEN, format, args);
 
   ::std::string result;
-  if (len < BUF_LEN)
+  if (len < 0)
+  {
+    throw ::std::runtime_error(::std::string("Error formatting string '") + format + "': " + ::strerror(errno));
+  }
+  else if (len < BUF_LEN)
   {
     result = buf;
   }
@@ -253,6 +261,7 @@ inline ::std::string format(const char* format, ::va_list args)
  * \param[in] ... Arguments of the format string.
  * \return The formatted string.
  */
+__attribute__((format(printf, 1, 2)))
 inline ::std::string format(const char* format, ...)
 {
   ::va_list(args);
@@ -351,7 +360,7 @@ inline ::std::string to_string(const float& value)
 
 inline ::std::string to_string(const long double& value)
 {
-  return ::cras::format("%gL", value);
+  return ::cras::format("%Lg", value);
 }
 
 inline ::std::string to_string(const char* value)
