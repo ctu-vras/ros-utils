@@ -657,6 +657,76 @@ TEST(TimeUtils, ConvertDuration)  // NOLINT
   EXPECT_EQ(ros::WallDuration(1, 2), cras::convertDuration<ros::WallDuration>(ros::Duration(1, 2)));
 }
 
+bool operator==(const tm& t1, const tm& t2)
+{
+  return
+    t1.tm_year == t2.tm_year &&
+    t1.tm_mon == t2.tm_mon &&
+    t1.tm_mday == t2.tm_mday &&
+    t1.tm_hour == t2.tm_hour &&
+    t1.tm_min == t2.tm_min &&
+    t1.tm_sec == t2.tm_sec &&
+    t1.tm_gmtoff == t2.tm_gmtoff;
+}
+
+TEST(TimeUtils, ToStructTm)  // NOLINT
+{
+  tm t{};
+  t.tm_year = 1970 - 1900;
+  t.tm_mon = 1 - 1;
+  t.tm_mday = 1;
+  t.tm_hour = 0;
+  t.tm_min = 0;
+  t.tm_sec = 0;
+  t.tm_isdst = 0;
+  t.tm_gmtoff = 0;
+
+  EXPECT_EQ(t, cras::toStructTm(ros::Time()));
+  EXPECT_EQ(t, cras::toStructTm(ros::WallTime()));
+  EXPECT_EQ(t, cras::toStructTm(ros::SteadyTime()));
+
+  t.tm_year = 2024 - 1900;
+  t.tm_mon = 11 - 1;
+  t.tm_mday = 13;
+  t.tm_hour = 13;
+  t.tm_min = 44;
+  t.tm_sec = 04;
+  t.tm_isdst = 0;
+  t.tm_gmtoff = 0;
+
+  EXPECT_EQ(t, cras::toStructTm(ros::Time(1731505444, 0)));
+  EXPECT_EQ(t, cras::toStructTm(ros::WallTime(1731505444, 0)));
+  EXPECT_EQ(t, cras::toStructTm(ros::SteadyTime(1731505444, 0)));
+  EXPECT_EQ(t, cras::toStructTm(ros::Time(1731505444, 500000000)));
+}
+
+TEST(TimeUtils, GetYear)  // NOLINT
+{
+  EXPECT_EQ(1970, cras::getYear(ros::Time()));
+  EXPECT_EQ(1970, cras::getYear(ros::WallTime()));
+  EXPECT_EQ(1970, cras::getYear(ros::SteadyTime()));
+
+  EXPECT_EQ(2024, cras::getYear(ros::Time(1731505444, 0)));
+  EXPECT_EQ(2024, cras::getYear(ros::WallTime(1731505444, 0)));
+  EXPECT_EQ(2024, cras::getYear(ros::SteadyTime(1731505444, 0)));
+  EXPECT_EQ(2024, cras::getYear(ros::Time(1731505444, 500000000)));
+}
+
+TEST(TimeUtils, FromStructTm)  // NOLINT
+{
+  tm t{};
+
+  EXPECT_FALSE(cras::fromStructTm(t).has_value());
+
+  t.tm_year = 1970 - 1900; t.tm_mon = 1 - 1; t.tm_mday = 1; t.tm_hour = 0; t.tm_min = 0; t.tm_sec = 0;
+  ASSERT_TRUE(cras::fromStructTm(t).has_value());
+  EXPECT_EQ(ros::Time(), cras::fromStructTm(t));
+
+  t.tm_year = 2024 - 1900; t.tm_mon = 11 - 1; t.tm_mday = 13; t.tm_hour = 13; t.tm_min = 44; t.tm_sec = 4;
+  ASSERT_TRUE(cras::fromStructTm(t).has_value());
+  EXPECT_EQ(ros::Time(1731505444, 0), cras::fromStructTm(t));
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

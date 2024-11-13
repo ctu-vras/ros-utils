@@ -39,6 +39,19 @@ inline ::std::string to_string(const T& value)
   return ss.str();
 }
 
+/**
+ * \brief Convert the given time to a human-readable date-time representation according to ISO 8601.
+ * \tparam T Time type
+ * \param value The time to convert.
+ * \return Human-readable date-time representation.
+ */
+template<typename T, typename ::std::enable_if_t<
+    ::std::is_same<T, ::ros::Time>::value ||
+    ::std::is_same<T, ::ros::WallTime>::value ||
+    ::std::is_same<T, ::ros::SteadyTime>::value
+  >* = nullptr>
+::std::string to_pretty_string(const T& value);
+
 template<typename T, typename ::std::enable_if_t<
     ::std::is_same<T, ::ros::Rate>::value ||
     ::std::is_same<T, ::ros::WallRate>::value

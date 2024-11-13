@@ -7,10 +7,12 @@
  * \author Martin Pecka
  */
 
+#include <ctime>
 #include <limits>
 #include <regex>
 #include <string>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
 #include <ros/duration.h>
@@ -103,11 +105,9 @@ template<> ros::Time parseTime(
   t.tm_min = minute;
   t.tm_sec = second;
 
-  errno = 0;
-  int32_t timeSecs = timegm(&t);
-  if (timeSecs < 0 || errno == EOVERFLOW)
-    throw std::invalid_argument("Invalid time format (timegm overflow).");
-  timeSecs -= zoneOffset.sec;
+  const auto maybeTime = cras::fromStructTm(t);
+  if (!maybeTime.has_value())
+    throw std::invalid_argument(cras::format("Invalid time format (%s).", maybeTime.error().c_str()));
 
   uint32_t fracNsec = 0;
   if (matches[7].matched)
@@ -120,7 +120,7 @@ template<> ros::Time parseTime(
     fracNsec = cras::parseUInt32(paddedNsec, 10);
   }
 
-  return {static_cast<uint32_t>(timeSecs), fracNsec};
+  return {maybeTime->sec - zoneOffset.sec, fracNsec};
 }
 
 template<> ros::WallTime parseTime(
@@ -207,6 +207,24 @@ template<> ros::Duration parseDuration(const std::string& s)
 template<> ros::WallDuration parseDuration(const std::string& s)
 {
   return cras::convertDuration<ros::WallDuration>(parseDuration<ros::Duration>(s));
+}
+
+template<>
+std::string to_pretty_string(const ros::Time& value)
+{
+  return boost::posix_time::to_iso_extended_string(value.toBoost()) + "Z";
+}
+
+template<>
+std::string to_pretty_string(const ros::WallTime& value)
+{
+  return to_pretty_string(cras::convertTime<ros::Time>(value));
+}
+
+template<>
+std::string to_pretty_string(const ros::SteadyTime& value)
+{
+  return to_pretty_string(cras::convertTime<ros::Time>(value));
 }
 
 }

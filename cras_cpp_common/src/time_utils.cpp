@@ -7,11 +7,15 @@
  */
 
 #include <limits>
+#include <string>
 
 #include <ros/duration.h>
 #include <ros/rate.h>
 #include <ros/time.h>
 
+#include <cras_cpp_common/expected.hpp>
+#include <cras_cpp_common/string_utils/ros.hpp>
+#include <cras_cpp_common/string_utils/xmlrpc.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 // Fallback for 128bit ints on armhf or non-gcc compilers
@@ -125,6 +129,59 @@ ros::SteadyTime saturateAdd(const ros::SteadyTime& time, const ros::WallDuration
   if (sec64 > std::numeric_limits<uint32_t>::max())
     return {ros::TIME_MAX.sec, ros::TIME_MAX.nsec};
   return time + duration;
+}
+
+tm toStructTm(const ros::Time& time)
+{
+  const auto timet = static_cast<time_t>(time.sec);
+
+  tm structTm{};
+  const auto result = gmtime_r(&timet, &structTm);
+
+  // This shouldn't ever happen. gmtime can return nullptr only if year overflows, and max year of ros::Time is far
+  // from being able to overflow an int (even if 16-bit).
+  if (result == nullptr)
+    return structTm;
+
+  return structTm;
+}
+
+cras::expected<ros::Time, std::string> fromStructTm(const tm& time)
+{
+  tm t = time;
+#if _DEFAULT_SOURCE
+  errno = 0;
+  const auto timeSecs = timegm(&t);
+#else
+  const auto tz = getenv("TZ");
+  setenv("TZ", "", 1);
+  tzset();
+  const auto timeSecs = mktime(&t);
+  if (tz)
+    setenv("TZ", tz, 1);
+  else
+    unsetenv("TZ");
+  tzset();
+#endif
+  if (timeSecs == static_cast<time_t>(-1) || errno == EOVERFLOW)
+    return cras::make_unexpected(cras::format(
+      "Cannot convert the given tm struct to ROS time (timegm failed, errno=%d).", errno));
+  if (timeSecs < 0)
+    return cras::make_unexpected("Cannot convert the given tm struct to ROS time (negative seconds since 1970).");
+
+  try
+  {
+    return ros::Time(timeSecs, 0);
+  }
+  catch (const std::runtime_error& e)
+  {
+    return cras::make_unexpected(cras::format("Cannot convert the given tm struct to ROS time (%s).", e.what()));
+  }
+}
+
+int getYear(const ros::Time& time)
+{
+  return toStructTm(time).tm_year + 1900;
 }
 
 }

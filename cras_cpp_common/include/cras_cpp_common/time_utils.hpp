@@ -8,6 +8,10 @@
 
 #pragma once
 
+#include <ctime>
+#include <string>
+
+#include <cras_cpp_common/expected.hpp>
 #include <ros/duration.h>
 #include <ros/rate.h>
 #include <ros/time.h>
@@ -148,6 +152,65 @@ double frequency(const ::ros::WallRate& rate, bool maxCycleTimeMeansZero = false
  * \return The time plus the duration saturated between 0 and TIME_MAX.
  */
 ::ros::SteadyTime saturateAdd(const ::ros::SteadyTime& time, const ::ros::WallDuration& duration);
+
+/**
+ * \brief Convert the given ROS time to C tm struct representing UTC time.
+ * \param[in] time The ROS time to convert.
+ * \return The struct tm with corresponding time (please remember that year is offset from 1900 and month is 0-based).
+ * \note The fractional seconds will be lost during the conversion.
+ */
+::tm toStructTm(const ::ros::Time& time);
+
+/**
+ * \brief Convert the given ROS time to C tm struct representing UTC time.
+ * \param[in] time The ROS time to convert.
+ * \return The struct tm with corresponding time (please remember that year is offset from 1900 and month is 0-based).
+ * \note The fractional seconds will be lost during the conversion.
+ */
+inline ::tm toStructTm(const ::ros::WallTime& time)
+{
+  return ::cras::toStructTm(::cras::convertTime<::ros::Time>(time));
+}
+
+/**
+ * \brief Convert the given ROS time to C tm struct representing UTC time.
+ * \param[in] time The ROS time to convert.
+ * \return The struct tm with corresponding time (please remember that year is offset from 1900 and month is 0-based).
+ * \note The fractional seconds will be lost during the conversion.
+ */
+inline ::tm toStructTm(const ::ros::SteadyTime& time)
+{
+  return ::cras::toStructTm(::cras::convertTime<::ros::Time>(time));
+}
+
+::cras::expected<::ros::Time, ::std::string> fromStructTm(const ::tm& time);
+
+/**
+ * \brief Get the year represented by the given ROS time when interpreted as UTC time.
+ * \param[in] time The ROS time.
+ * \return The year.
+ */
+int getYear(const ::ros::Time& time);
+
+/**
+ * \brief Get the year represented by the given ROS time when interpreted as UTC time.
+ * \param[in] time The ROS time.
+ * \return The year.
+ */
+inline int getYear(const ::ros::WallTime& time)
+{
+  return ::cras::getYear(::cras::convertTime<::ros::Time>(time));
+}
+
+/**
+ * \brief Get the year represented by the given ROS time when interpreted as UTC time.
+ * \param[in] time The ROS time.
+ * \return The year.
+ */
+inline int getYear(const ::ros::SteadyTime& time)
+{
+  return ::cras::getYear(::cras::convertTime<::ros::Time>(time));
+}
 
 }
 

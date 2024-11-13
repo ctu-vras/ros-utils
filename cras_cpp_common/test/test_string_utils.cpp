@@ -190,6 +190,14 @@ TEST(StringUtils, ToStringRos)  // NOLINT
   EXPECT_EQ("1.500000000", to_string(ros::Duration(1, 500000000)));
   EXPECT_EQ("1.500000000", to_string(ros::WallDuration(1, 500000000)));
 
+  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::Time(1, 500000000)));
+  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::WallTime(1, 500000000)));
+  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::SteadyTime(1, 500000000)));
+
+  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::Time(1731505444, 0)));
+  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::WallTime(1731505444, 0)));
+  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::SteadyTime(1731505444, 0)));
+
   std_msgs::Bool b;
   EXPECT_EQ("data: 0", to_string(b));
   b.data = true;
