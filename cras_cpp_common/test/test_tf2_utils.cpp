@@ -1,21 +1,60 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Unit test for tf2_utils.h
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
+ */
+
+// Test TfMessageFilter is mostly taken from
+// https://github.com/ros/geometry2/blob/noetic-devel/tf2_ros/test/message_filter_test.cpp
+// on commit 589caf083cae9d8fae7effdb910454b4681b9ec1 . Slight modifications were done to increase reliability of
+// the test (circumventing real topic pub/sub) and to utilize the customized class TfMessageFilter.
+// For that part, the following copyright notice is valid:
+
+/*
+ * Copyright (c) 2014, Open Source Robotics Foundation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "gtest/gtest.h"
 
+#include <cras_cpp_common/log_utils/memory.h>
 #include <cras_cpp_common/tf2_utils.hpp>
 #include <cras_cpp_common/tf2_utils/interruptible_buffer.h>
+#include <cras_cpp_common/tf2_utils/message_filter.hpp>
 
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include <ros/callback_queue.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -689,6 +728,83 @@ TEST(TF2Utils, SetPollingParams)  // NOLINT
   while (!executed && ros::WallTime::now() < end)
     ros::WallDuration(0.01).sleep();
   EXPECT_TRUE(executed);
+}
+
+bool filter_callback_fired = false;
+void filter_callback(const geometry_msgs::PointStamped& msg)
+{
+  filter_callback_fired = true;
+}
+
+template<class T>
+class TestInput : public message_filters::SimpleFilter<T>
+{
+public:
+  void add(const typename T::ConstPtr& msg)
+  {
+    // Pass a complete MessageEvent to avoid calling ros::Time::now() to determine the missing timestamp
+    this->signalMessage(ros::MessageEvent<T const>(msg, msg->header.stamp));
+  }
+};
+
+TEST(TF2Utils, TfMessageFilter)
+{
+  ros::CallbackQueue cb;
+  TestInput<geometry_msgs::PointStamped> sub;
+  cras::LogHelperPtr log(new cras::MemoryLogHelper);
+  tf2_ros::Buffer buffer;
+  cras::TfMessageFilter<geometry_msgs::PointStamped> filter(log, buffer, "map", 10, &cb);
+  filter.connectInput(sub);
+  filter.registerCallback(&filter_callback);
+  // Register multiple target frames
+  std::vector<std::string> frames;
+  frames.push_back("odom");
+  frames.push_back("map");
+  filter.setTargetFrames(frames);
+  // Set a non-zero time tolerance
+  filter.setTolerance(ros::Duration(1, 0));
+
+  // Publish static transforms so the frame transformations will always be valid
+  geometry_msgs::TransformStamped map_to_odom;
+  map_to_odom.header.stamp = ros::Time(0, 0);
+  map_to_odom.header.frame_id = "map";
+  map_to_odom.child_frame_id = "odom";
+  map_to_odom.transform.translation.x = 0.0;
+  map_to_odom.transform.translation.y = 0.0;
+  map_to_odom.transform.translation.z = 0.0;
+  map_to_odom.transform.rotation.x = 0.0;
+  map_to_odom.transform.rotation.y = 0.0;
+  map_to_odom.transform.rotation.z = 0.0;
+  map_to_odom.transform.rotation.w = 1.0;
+  buffer.setTransform(map_to_odom, "test", true);
+
+  geometry_msgs::TransformStamped odom_to_base;
+  odom_to_base.header.stamp = ros::Time(0, 0);
+  odom_to_base.header.frame_id = "odom";
+  odom_to_base.child_frame_id = "base";
+  odom_to_base.transform.translation.x = 0.0;
+  odom_to_base.transform.translation.y = 0.0;
+  odom_to_base.transform.translation.z = 0.0;
+  odom_to_base.transform.rotation.x = 0.0;
+  odom_to_base.transform.rotation.y = 0.0;
+  odom_to_base.transform.rotation.z = 0.0;
+  odom_to_base.transform.rotation.w = 1.0;
+  buffer.setTransform(odom_to_base, "test", true);
+
+  EXPECT_TRUE(cb.empty());
+
+  // Publish a Point message in the "base" frame
+  geometry_msgs::PointStamped::Ptr point(new geometry_msgs::PointStamped);
+  point->header.stamp = ros::Time(0, 0);
+  point->header.frame_id = "base";
+  sub.add(point);
+
+  EXPECT_FALSE(cb.empty());
+  cb.callAvailable();
+  EXPECT_TRUE(cb.empty());
+
+  // The filter callback should have been fired because all required transforms are available
+  EXPECT_TRUE(filter_callback_fired);
 }
 
 int main(int argc, char **argv)

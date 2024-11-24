@@ -217,9 +217,10 @@ target_link_libraries(cras_rate_limiter
 add_library(cras_tf2_utils
   src/tf2_utils.cpp
   src/tf2_utils/interruptible_buffer.cpp)
+target_sources(cras_tf2_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/tf2_utils/message_filter.hpp>)
 add_dependencies(cras_tf2_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_tf2_utils
-  PUBLIC cras_thread_utils cras_time_utils ${catkin_LIBRARIES})
+  PUBLIC cras_log_utils cras_thread_utils cras_time_utils ${catkin_LIBRARIES})
 
 add_library(cras_string_utils src/string_utils.cpp src/string_utils/from_chars.cpp src/string_utils/ros.cpp)
 add_dependencies(cras_string_utils ${catkin_EXPORTED_TARGETS})
