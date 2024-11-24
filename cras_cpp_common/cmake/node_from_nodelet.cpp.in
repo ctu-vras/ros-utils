@@ -9,6 +9,7 @@
 #include <ros/datatypes.h>
 #include <ros/duration.h>
 #include <ros/init.h>
+#include <ros/names.h>
 #include <ros/node_handle.h>
 #include <ros/this_node.h>
 #include <rosconsole/macros_generated.h>
@@ -30,6 +31,14 @@
 #include <@NODELET_INCLUDE_FILE@>
 #endif
 
+namespace ros
+{
+namespace names
+{
+extern void init(const ros::M_string& remappings);
+}
+}
+
 int main(int argc, char** argv)
 {
   // Remove the program name from argv because the nodelet handling code does not expect it
@@ -41,6 +50,11 @@ int main(int argc, char** argv)
   if (CRAS_NODE_ANONYMOUS)
     initOptions = ros::init_options::AnonymousName;
   ros::init(argc, argv, "@NODE_NAME@", initOptions);
+  // Anonymous nodes have a problem that topic remappings of type ~a:=b are resolved against the node name without the
+  // anonymous part. Fix that by running names::init() again after ros::init() finishes and the full node name is known.
+  // This was reported and a fix provided in https://github.com/ros/ros_comm/issues/2324, but the fix never landed.
+  if (CRAS_NODE_ANONYMOUS)
+    ros::names::init(ros::names::getUnresolvedRemappings());
 
   ros::NodeHandle pnh("~");
   nodelet::detail::CallbackQueueManager manager(pnh.param("num_worker_threads", @CRAS_NODE_DEFAULT_NUM_THREADS@));
