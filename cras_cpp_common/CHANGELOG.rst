@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.7 (2024-12-12)
+------------------
 * Fixed installation of nodelet_manager_sharing_tf_buffer.
 * Contributors: Martin Pecka
 
