@@ -2,6 +2,11 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed installation of nodelet_manager_sharing_tf_buffer.
+* Contributors: Martin Pecka
+
 2.4.6 (2024-12-12)
 ------------------
 * nodelet_utils: Allowed accessing the shared_ptr of the shared TF buffer.

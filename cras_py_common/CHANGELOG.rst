@@ -2,6 +2,9 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.4.6 (2024-12-12)
 ------------------
 * string_utils: Added iconvConvert(), transliterateToAscii() and toValidRosName() functions.
