@@ -383,6 +383,7 @@ install(DIRECTORY cmake/Modules
 install(FILES cmake/node_from_nodelet.cpp.in
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake)
 
+# Install libraries
 install(TARGETS
   cras_any
   cras_c_api
@@ -418,13 +419,19 @@ install(TARGETS
   cras_type_traits
   cras_type_utils
   cras_urdf_utils
-  nodelet_manager_sharing_tf_buffer
+  nodelet_manager_sharing_tf_buffer  # Technically, having the executable here is wrong, but we keep it for compatibility
   xmlrpc_value_traits
   xmlrpc_value_utils
 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+# Install executables
+install(TARGETS
+  nodelet_manager_sharing_tf_buffer
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 if (CATKIN_ENABLE_TESTING)
