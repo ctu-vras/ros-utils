@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.6 (2024-12-12)
+------------------
 * nodelet_utils: Allowed accessing the shared_ptr of the shared TF buffer.
 * node_from_nodelet: Worked around the bug where remapping private topics was impossible for anonymous nodes.
 * tf2_utils: Added TfMessageFilter compatible with log_utils.
