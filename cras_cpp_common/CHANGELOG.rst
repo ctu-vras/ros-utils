@@ -2,6 +2,17 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* nodelet_utils: Allowed accessing the shared_ptr of the shared TF buffer.
+* node_from_nodelet: Worked around the bug where remapping private topics was impossible for anonymous nodes.
+* tf2_utils: Added TfMessageFilter compatible with log_utils.
+* time_utils: Added converters between ros::Time and struct tm.
+* Fixed a few printf format issues.
+* string_utils: Handle possible error in vsnprintf. Added printf-format attributes to cras::format() to enable compile-time checks of format strings.
+* string_utils: Added iconvConvert(), transliterateToAscii() and toValidRosName() functions.
+* Contributors: Martin Pecka
+
 2.4.5 (2024-11-02)
 ------------------
 * string_utils: Added date/time parsing methods.
