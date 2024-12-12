@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief NodeletWithSharedTfBuffer allows you to use a tf2_ros::Buffer provided by the nodelet manager.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <memory>
@@ -45,7 +46,7 @@ public:
    * \brief Get the TF buffer used by the nodelet. If none has been set by `setBuffer()`, a buffer is automatically
    * created.
    * \return The buffer.
-   * \note This buffer is only offers the timeouting versions of canTransform() and lookupTransform().
+   * \note This buffer only offers the timeouting versions of canTransform() and lookupTransform().
    *       It does not offer setTransform() and many other functions. User getRawBuffer() on the returned instance to
    *       get a tf2::BufferCore that offers the missing non-time-aware functionality.
    */
@@ -77,10 +78,11 @@ struct NodeletWithSharedTfBuffer : public virtual NodeletType, public ::cras::No
 {
 public:
   NodeletWithSharedTfBuffer();
-  virtual ~NodeletWithSharedTfBuffer();
+  ~NodeletWithSharedTfBuffer() override;
 
   void setBuffer(const ::std::shared_ptr<::tf2_ros::Buffer>& buffer) override;
   ::cras::NodeletAwareTFBuffer& getBuffer() const override;
+  ::std::shared_ptr<::cras::NodeletAwareTFBuffer> getBufferPtr() const;
   bool usesSharedBuffer() const override;
 
   virtual void onInit();

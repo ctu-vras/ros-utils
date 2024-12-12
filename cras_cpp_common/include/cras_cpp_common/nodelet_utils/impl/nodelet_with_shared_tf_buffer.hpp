@@ -1,12 +1,13 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief NodeletWithSharedTfBuffer allows you to use a tf2_ros::Buffer provided by the nodelet manager (private
  *   implementation details, do not include this directly).
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "../nodelet_with_shared_tf_buffer.hpp"
@@ -89,6 +90,14 @@ template <typename NodeletType>
     NODELET_INFO("Initialized standalone tf2 buffer");
   }
   return *this->data->buffer;
+}
+
+template <typename NodeletType>
+::std::shared_ptr<::cras::NodeletAwareTFBuffer>
+NodeletWithSharedTfBuffer<NodeletType>::getBufferPtr() const
+{
+  this->getBuffer();
+  return this->data->buffer;
 }
 
 template <typename NodeletType>
