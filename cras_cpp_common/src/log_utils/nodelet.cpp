@@ -20,7 +20,7 @@ const static std::string NOT_SET {"getNameFn is not set!"};  // NOLINT
 NodeletLogHelper::NodeletLogHelper(const GetNameFn& getNameFn) : getNameFn(getNameFn)
 {
   if (!this->getNameFn)
-    this->getNameFn = [](){ return NOT_SET; };
+    this->getNameFn = []() -> const std::string& { return NOT_SET; };
 }
 
 void NodeletLogHelper::initializeLogLocationImpl(
