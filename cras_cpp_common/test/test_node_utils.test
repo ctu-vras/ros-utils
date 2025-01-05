@@ -4,4 +4,6 @@
     <rosparam command="load" file="$(dirname)/test_params.yaml" />
     <test test-name="test_node_utils_diagnostics" pkg="cras_cpp_common" type="test_cras_node_utils_diagnostics"/>
     <test test-name="test_node_utils_get_param" pkg="cras_cpp_common" type="test_cras_node_utils_get_param"/>
+    <test test-name="test_node_utils_node_with_master_no_ns" pkg="cras_cpp_common" type="test_cras_node_with_master"/>
+    <test test-name="test_node_utils_node_with_master_ns" pkg="cras_cpp_common" type="test_cras_node_with_master" args="ns"/>
 </launch>

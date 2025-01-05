@@ -335,6 +335,7 @@ target_link_libraries(cras_resettable PRIVATE cras_functional cras_param_utils c
 
 add_library(cras_node_utils
   src/node_utils/node_handle_with_diagnostics.cpp
+  src/node_utils/node_with_optional_master.cpp
   src/node_utils/param_helper.cpp)
 target_sources(cras_node_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/node_utils.hpp>)
 add_dependencies(cras_node_utils ${catkin_EXPORTED_TARGETS})
@@ -521,6 +522,9 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_cras_xmlrpc_value_utils test/test_xmlrpc_value_utils.cpp)
   target_link_libraries(test_cras_xmlrpc_value_utils xmlrpc_value_utils ${catkin_LIBRARIES})
 
+  catkin_add_gtest(test_cras_node_without_master test/test_node_utils_node_without_master.cpp)
+  target_link_libraries(test_cras_node_without_master cras_node_utils cras_param_utils ${catkin_LIBRARIES})
+
   # ROSTEST tests (need rosmaster)
 
   add_rostest_gtest(test_cras_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
@@ -573,9 +577,14 @@ if (CATKIN_ENABLE_TESTING)
     target_compile_definitions(test_cras_node_utils_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
   endif()
 
+  catkin_add_executable_with_gtest(test_cras_node_with_master test/test_node_utils_node_with_master.cpp EXCLUDE_FROM_ALL)
+  target_link_libraries(test_cras_node_with_master cras_node_utils cras_param_utils ${catkin_LIBRARIES})
+  add_dependencies(tests test_cras_node_with_master)
+
   add_rostest(test/test_node_utils.test DEPENDENCIES
     test_cras_node_utils_diagnostics
-    test_cras_node_utils_get_param)
+    test_cras_node_utils_get_param
+    test_cras_node_with_master)
   # roslaunch_add_file_check(test/test_node_utils.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
 
   # nodelet_utils runs multiple tests from a single rostest launch file
