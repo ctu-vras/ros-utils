@@ -22,6 +22,10 @@ using namespace cras;
 
 std::string ns;  // NOLINT
 
+#ifndef GTEST_SKIP
+#define GTEST_SKIP() return;
+#endif
+
 TEST(NodeWithoutMaster, NoNamespace)
 {
   if (!ns.empty())
