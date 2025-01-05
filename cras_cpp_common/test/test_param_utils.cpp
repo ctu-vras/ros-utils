@@ -1534,6 +1534,14 @@ TEST(GetParamOptions, Constructor)  // NOLINT
   {GetParamOptions<std::map<std::string, std::map<std::string, XmlRpc::XmlRpcValue>>> options; options.toResult({});}
   {GetParamOptions<std::map<std::string, std::map<std::string, std::vector<std::map<std::string, bool>>>>> options;
     options.toResult({});}
+
+  {
+    const auto options = GetParamConvertingOptions<int, std::string>(
+      [](const int i) {return cras::to_string(i);}, [](const std::string& s) {return cras::parseInt32(s);});
+    EXPECT_EQ("1", options.resultToStr(1));
+    EXPECT_EQ(1, options.toResult("1"));
+    EXPECT_EQ("1", options.paramToStr("1"));
+  }
 }
 
 template <typename T>

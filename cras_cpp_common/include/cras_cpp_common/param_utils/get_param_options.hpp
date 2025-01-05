@@ -240,4 +240,27 @@ struct GetParamOptions
   }
 };
 
+/**
+ * \brief Get GetParamOptions that uses default toParam and paramToStr, but non-default toResult and resultToStr.
+ *
+ * This is mostly a workaround for compilers that do not support non-trivial structured bindings (e.g. GCC 7).
+ * In such compilers, it is impossible to even create an empty instance of the GetParamOptions struct.
+ *
+ * \tparam ResultType Type of getParam() result.
+ * \tparam ParamServerType Type of the intermediate value to which the XmlRpcValue param is converted.
+ * \param[in] resultToStr A function that converts ResultType values to string for use in log messages.
+ * \param[in] toResult A function converting ParamServerType values to ResultType.
+ * \return 
+ */
+template<typename ResultType, typename ParamServerType>
+::cras::GetParamOptions<ResultType, ParamServerType> GetParamConvertingOptions(
+  const ::cras::ToStringFn<ResultType>& resultToStr,
+  const typename ::cras::GetParamOptions<ResultType, ParamServerType>::ToResultFn& toResult)
+{
+  return {
+    true, false, false, true, std::string{}, std::string{}, &::cras::ParamToStringFn<ParamServerType>::to_string,
+    resultToStr, toResult, &::cras::DefaultToParamFn<ParamServerType>::toParam
+  };
+}
+
 }
