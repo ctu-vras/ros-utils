@@ -340,6 +340,34 @@ TEST(ShapeShifter, CopyCrasShapeShifter)  // NOLINT
   EXPECT_NE(cras::getBuffer(shifter), cras::getBuffer(shifter3));
 }
 
+TEST(ShapeShifter, MessageTraits)  // NOLINT
+{
+  // Create a message
+  geometry_msgs::PointStamped msg;
+  msg.header.stamp.sec = 1;
+  msg.header.stamp.nsec = 2;
+  msg.header.frame_id = "test";
+  msg.point.x = 1;
+  msg.point.y = 2;
+  msg.point.z = 3;
+
+  // Load the message into the shape shifter object
+  topic_tools::ShapeShifter shifter;
+  cras::msgToShapeShifter(msg, shifter);
+
+  namespace mt = ros::message_traits;
+
+  EXPECT_STREQ(mt::datatype(msg), mt::datatype(shifter));
+  EXPECT_STREQ(mt::definition(msg), mt::definition(shifter));
+  EXPECT_STREQ(mt::md5sum(msg), mt::md5sum(shifter));
+  // We need to use the + trick so that we don't get undefined reference errors
+  // https://stackoverflow.com/a/46296720/1076564
+  EXPECT_EQ(true, +mt::IsMessage<cras::ShapeShifter>::value);
+  EXPECT_EQ(false, +mt::IsSimple<cras::ShapeShifter>::value);
+  EXPECT_EQ(false, +mt::IsFixedSize<cras::ShapeShifter>::value);
+  EXPECT_EQ(false, +mt::HasHeader<cras::ShapeShifter>::value);
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

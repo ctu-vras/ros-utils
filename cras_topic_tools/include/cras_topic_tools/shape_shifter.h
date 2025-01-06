@@ -9,6 +9,7 @@
  * \author Martin Pecka
  */
 
+#include <string>
 #include <type_traits>
 
 #include <ros/message_traits.h>
@@ -130,5 +131,75 @@ public:
 #endif
 
 }
+
+#if !ROS_VERSION_MINIMUM(1, 15, 0)
+namespace ros {
+namespace message_traits {
+
+template <> struct IsMessage<cras::ShapeShifter> : TrueType { };
+template <> struct IsMessage<const cras::ShapeShifter> : TrueType { };
+
+template<>
+struct MD5Sum<cras::ShapeShifter>
+{
+  static const char* value(const cras::ShapeShifter& m) { return m.getMD5Sum().c_str(); }
+  static const char* value() { return "*"; }
+};
+
+template<>
+struct DataType<cras::ShapeShifter>
+{
+  static const char* value(const cras::ShapeShifter& m) { return m.getDataType().c_str(); }
+  static const char* value() { return "*"; }
+};
+
+template<>
+struct Definition<cras::ShapeShifter>
+{
+  static const char* value(const cras::ShapeShifter& m) { return m.getMessageDefinition().c_str(); }
+};
+
+}
+
+namespace serialization
+{
+
+template<>
+struct Serializer<cras::ShapeShifter>
+{
+  template<typename Stream>
+  inline static void write(Stream& stream, const cras::ShapeShifter& m) {
+    m.write(stream);
+  }
+
+  template<typename Stream>
+  inline static void read(Stream& stream, cras::ShapeShifter& m)
+  {
+    m.read(stream);
+  }
+
+  inline static uint32_t serializedLength(const cras::ShapeShifter& m) {
+    return m.size();
+  }
+};
+
+
+template<>
+struct PreDeserialize<cras::ShapeShifter>
+{
+  static void notify(const PreDeserializeParams<cras::ShapeShifter>& params)
+  {
+    std::string md5      = (*params.connection_header)["md5sum"];
+    std::string datatype = (*params.connection_header)["type"];
+    std::string msg_def  = (*params.connection_header)["message_definition"];
+    std::string latching  = (*params.connection_header)["latching"];
+
+    params.message->morph(md5, datatype, msg_def, latching);
+  }
+};
+
+}
+}
+#endif
 
 #include "impl/shape_shifter.hpp"

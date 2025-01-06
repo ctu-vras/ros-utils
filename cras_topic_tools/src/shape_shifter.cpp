@@ -200,8 +200,8 @@ bool setHeader(topic_tools::ShapeShifter& msg, std_msgs::Header& header)
 #if ROS_VERSION_MINIMUM(1, 15, 0)
 #else
 
-ShapeShifter::ShapeShifter() = default;
-ShapeShifter::~ShapeShifter() = default;
+ShapeShifter::ShapeShifter() {}
+ShapeShifter::~ShapeShifter() {}
 
 ShapeShifter::ShapeShifter(const topic_tools::ShapeShifter& other) :
   ShapeShifter(reinterpret_cast<const ShapeShifter&>(other))
