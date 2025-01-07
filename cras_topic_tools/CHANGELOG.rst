@@ -2,6 +2,11 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added support for ros::message_traits operations on cras::ShapeShifter on Melodic.
+* Contributors: Martin Pecka
+
 2.4.7 (2024-12-12)
 ------------------
 

@@ -2,6 +2,14 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added GetParamConvertingOptions() to ease defining converting getParam() that works with GCC 7.
+* Added NodeWithOptionalMaster.
+* Improved compatibility with newer compilers.
+  Resolves https://github.com/RoboStack/ros-noetic/pull/501#issuecomment-2567224502 .
+* Contributors: Martin Pecka
+
 2.4.7 (2024-12-12)
 ------------------
 * Fixed installation of nodelet_manager_sharing_tf_buffer.
