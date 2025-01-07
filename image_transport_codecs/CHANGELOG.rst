@@ -2,8 +2,8 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.8 (2025-01-07)
+------------------
 * Improved compatibility with newer compilers.
   Resolves https://github.com/RoboStack/ros-noetic/pull/501#issuecomment-2567224502 .
 * Contributors: Martin Pecka
