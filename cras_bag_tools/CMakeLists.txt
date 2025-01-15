@@ -8,6 +8,7 @@ catkin_python_setup()
 catkin_package()
 
 catkin_install_python(PROGRAMS
+  scripts/extract_images
   scripts/filter_bag
   scripts/fix_msg_defs
   scripts/merge_bag

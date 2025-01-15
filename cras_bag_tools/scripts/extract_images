@@ -1,0 +1,648 @@
+#!/usr/bin/env python
+
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+"""Extract image topics from bag file to image or video files.
+
+<pre>
+Usage: extract_images [-h] [--out-format OUT_FORMAT] [--verbose] bag_file output_dir [image_topics [image_topics ...]]
+</pre>
+
+The parameters are:
+
+* `bag_file`: The bag to read.
+* `output_dir`: Directory where all generated files should be stored.
+* `image_topics`: Zero or more topics to convert. If zero, all image topics are converted. Each image topic can be
+                  followed by additional configuration in the form
+                  `TOPIC:OUT_FORMAT:COMPRESSION:ENCODING:IN_FPS:OUT_FPS:PIX_FMT` (only `TOPIC` is required)
+  * `OUT_FORMAT`: Format of the exported images/video (e.g. `jpg`, `mp4` etc.). Defaults to `--out-format`.
+  * `COMPRESSION`: Compression level. The meaning depends on `OUT_FORMAT`. JPG has 0-100, PNG 0-9, MP4 0-51 (CRF).
+  * `ENCODING`: Pixel format to convert the images to. E.g. `bgr8` or `mono8`. `passthrough` means keeping the format.
+                Empty string retains the format for raw images and converts compressed images to the recorded raw format
+                in their `.format` field if it is available. Defaults to `passthrough`.
+  * Following options are for video formats only.
+  * `IN_FPS`: Framerate of the topic images. If not set, it is estimated from the frequency of the messages in the bag.
+              You can set the FPS higher than the original, effectively speeding up the video.
+  * `OUT_FPS`: Output framerate. Defaults to `IN_FPS`.
+  * `PIX_FMT`: The `-pix_fmt` output option for ffmpeg, i.e. the pixel format of the video stream. Defaults to
+               `yuvj420p`.
+* `-h`: Shows help.
+* `--out-format`: Default format for all topics (e.g. `jpg`, `mp4` etc.). Defaults to `jpg`.
+* `--verbose`: Print various details during execution.
+
+Example command:
+
+<pre>
+# Convert all image topics in the bag to a series of JPEG images in folder imgs/
+rosrun cras_bag_tools extract_images spot_2022-10-27-10-35-46.video.bag imgs
+
+# Convert topic /rviz/fixed_image/compressed to an MP4 video
+rosrun cras_bag_tools extract_images spot_2022-10-27-10-35-46.video.bag . \
+  /rviz/fixed_image/compressed:mp4:23:passthrough:25
+</pre>
+"""
+
+from __future__ import division
+from __future__ import print_function
+
+import argparse
+import errno
+from collections import defaultdict
+import cv2
+import os
+import re
+import sys
+
+import rosbag
+import rospy
+from sensor_msgs.msg import Image
+import subprocess
+from cv_bridge import CvBridge
+import numpy as np
+
+from cras_bag_tools import TqdmBag
+from image_transport_codecs import decode, get_compressed_image_content
+
+
+DEFAULT_VIDEO_ENCODING = "rgb8"  # one of `color_encodings`
+DEFAULT_PIX_FMT = "yuvj420p"  # one of `ffmpeg -pix_fmts`
+
+
+color_encodings = {
+    "rgb8",
+    "bgr8",
+    "rgba8",
+    "bgra8",
+    "rgb16",
+    "bgr16",
+    "rgba16",
+    "bgra16",
+}
+"""ROS message color encodings (should be compatible with OpenCV)."""
+
+
+max_bit_depth = defaultdict(lambda: 8)
+"""Maximum bit depth allowed by each output format."""
+
+# According to https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
+max_bit_depth["pbm"] = 1
+max_bit_depth["ppm"] = 16
+max_bit_depth["png"] = 16
+max_bit_depth["jp2"] = 16
+max_bit_depth["tif"] = 32
+max_bit_depth["tiff"] = 32
+max_bit_depth["exr"] = 32
+max_bit_depth["hdr"] = 32
+# all video codecs use 8-bit
+
+
+bit_depth_to_dtype = {
+    1: np.bool,
+    8: np.uint8,
+    16: np.uint16,
+    32: np.float,
+}
+"""Numpy dtypes corresponding to the given bit depths."""
+
+
+default_compression_levels = {
+    'jpg': 95,  # JPEG Quality, 0 - 100
+    'png': 3,  # PNG Quality, 0 - 9
+    'mp4': 21,  # CRF, 0 - 51
+    'ogv': 31,  # CRF, 0 - 63
+}
+"""Map of output format type and default compression parameter value."""
+
+compression_level_params = {
+    "jpg": cv2.IMWRITE_JPEG_QUALITY,
+    "png": cv2.IMWRITE_PNG_COMPRESSION,
+}
+"""OpenCV `imwrite()` compression parameter names."""
+
+video_formats = {
+    "mp4",
+    "ogv",
+    "mkv",
+    "avi",
+}
+"""Output formats considered to be video."""
+
+cv_pixfmt_to_ffmpeg_pixfmt = {
+    "rgb8": "rgb24",
+    "bgr8": "bgr24",
+    "8UC3": "bgr24",
+    "mono8": "gray",
+    "8UC1": "gray",
+}
+"""Conversion table from OpenCV encodings to ffmpeg pix_fmt."""
+
+default_video_encoders = defaultdict(lambda: "libx264")
+"""Default video encoders to be used for given output formats."""
+default_video_encoders["ogv"] = "libvpx"
+
+
+video_compression_params = {
+    "libx264": "-crf %i",
+    "libvpx": "-crf %i",
+}
+"""ffmpeg quality flags. The string will receive a single value via Python's string interpolation mechanism (i.e.
+`param % (val,)`, so make sure to place there one percent-sign modifier."""
+
+
+bridge = CvBridge()
+
+
+def get_dtype_instance(dtype):
+    return np.array((), dtype=dtype).dtype
+
+
+def convert_image(im, raw_encoding, topic_config):
+    desired_encoding = \
+        topic_config.encoding if topic_config.encoding and topic_config.encoding != "passthrough" else raw_encoding
+
+    in_dtype, in_channels = bridge.encoding_to_dtype_with_channels(raw_encoding)
+    in_bit_depth = get_dtype_instance(in_dtype).itemsize * 8
+
+    dtype, channels = bridge.encoding_to_dtype_with_channels(desired_encoding)
+    bit_depth = get_dtype_instance(dtype).itemsize * 8
+
+    if in_bit_depth != min(bit_depth, max_bit_depth[topic_config.out_format]):
+        new_bit_depth = min(bit_depth, max_bit_depth[topic_config.out_format])
+
+        if in_channels == 1 and topic_config.normalize_range:
+            min_im = np.min(im)
+            rng = max(np.max(im) - min_im, 1)
+            im = (np.power(2.0, in_bit_depth) * (im - min_im) / rng)
+
+        im = im * (np.power(2.0, new_bit_depth) / np.power(2.0, in_bit_depth))
+
+        dtype = bit_depth_to_dtype[new_bit_depth]
+        im = im.astype(dtype)
+        desired_encoding = bridge.dtype_with_channels_to_cvtype2(get_dtype_instance(dtype), channels)
+
+    topic_config.encoding = desired_encoding
+
+    if channels == 1:
+        return im
+
+    from cv_bridge.boost.cv_bridge_boost import cvtColor2
+    return cvtColor2(im, raw_encoding,  desired_encoding)
+
+
+def decode_compressed(compressed_msg, topic):
+    raw, err = decode(compressed_msg, topic)
+
+    if raw is None:
+        print(err, file=sys.stderr)
+
+    return raw
+
+
+video_out_pipes = dict()
+"""Pipes to open ffmpeg processes, one for each topic."""
+
+
+broken_video_pipes = dict()
+"""ffmpeg pipes that got broken."""
+
+
+def open_video_pipe(cv_msg, format, out_file, in_fps=25.0, in_pix_fmt='rgb24', out_fps=None, out_pix_fmt='yuvj420p',
+                    compression=None, in_params="", out_params="", verbose=False):
+    """Run ffmpeg as a subprocess and open a pipe on its stdin."""
+    codec = default_video_encoders[format]
+    command = [
+        'ffmpeg',
+        '-hide_banner',
+        '-loglevel', 'error',
+        '-y',
+        '-f', 'rawvideo',
+        '-vcodec', 'rawvideo',
+        '-s', '%ix%i' % (cv_msg.shape[1], cv_msg.shape[0]),
+        '-pix_fmt', in_pix_fmt,
+        '-r', '%.2f' % (in_fps,),
+    ]
+    if len(in_params) > 0:
+        command += in_params.split(" ")
+    command += [
+        '-i', '-',
+        '-an',
+        '-vcodec', codec,
+        '-pix_fmt', out_pix_fmt,
+    ]
+    if len(out_params) > 0:
+        command += out_params.split(" ")
+
+    if out_fps is not None:
+        command.extend(['-r', '%.2f' % (out_fps,)])
+    if compression is not None and codec in video_compression_params:
+        command.extend((video_compression_params[codec] % (compression,)).split(" "))
+    command.append(out_file)
+
+    if verbose:
+        print("Calling " + " ".join(command))
+    pipe = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=sys.stderr)
+
+    return pipe
+
+
+class HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, image_parser, video_parser, width=None, *args, **kwargs):
+        # we have to force large width, otherwise the formatting algorithm would print --image and --video twice
+        super(HelpFormatter, self).__init__(width=1000, *args, **kwargs)
+        self._image_parser = image_parser
+        self._video_parser = video_parser
+
+    def _format_actions_usage(self, actions, groups):
+        text = super(HelpFormatter, self)._format_actions_usage(actions, groups)
+
+        usage = self._image_parser.format_usage().replace("\n", "")
+        while "  " in usage:
+            usage = usage.replace("  ", " ")
+        text += " [--image " + usage + " ...]"
+
+        usage = self._video_parser.format_usage().replace("\n", "")
+        while "  " in usage:
+            usage = usage.replace("  ", " ")
+        text += " [--video " + usage + " ...]"
+        return text
+
+
+class SubparserHelpFormatter(argparse.RawDescriptionHelpFormatter):
+
+    def _format_usage(self, usage, actions, groups, prefix=None):
+        # do not print prog after --image and --video
+        self._prog = ""
+        return super(SubparserHelpFormatter, self)._format_usage(usage, actions, groups, "")
+
+
+class Parser(argparse.ArgumentParser):
+
+    def __init__(self):
+        self._image_parser = self.create_subparser(False)
+        self._video_parser = self.create_subparser(True)
+
+        description = "Extract images from a ROS bag. If you pass no --image and --video options, all image " \
+                      "topics will be exported as images in their natural format (or --out-format, if " \
+                      "specified)."
+
+        super(Parser, self).__init__(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
+
+        self.add_argument("bag_file", help="Input bagfile.")
+        self.add_argument("output_dir", help="Output directory.")
+        self.add_argument("-f", "--out-format", default="", help="Default output format (jpg, png, mp4, ...).")
+        self.add_argument("-v", "--verbose", action="store_true", help="Enable debug prints.")
+        self.add_argument("-q", "--no-progress", action="store_false", dest="progress", default=True,
+                          help="Disable progress bars.")
+        self.add_argument("-r", "--normalize-range", action="store_true", default=False,
+                          help="If set, the range of values in all single-channel images will be normalized to cover "
+                               "the whole available range.")
+        self.add_argument("-d", "--force-decode", action="store_true", default=False,
+                          help="Normally, if message content matches the output format, it is directly written to the "
+                               "output file without transcoding to speed up execution. However, in that case, the exact"
+                               " codec configuration might not be respected (e.g. JPEG compression level etc.). "
+                               "--force-decode disables this fast path and forces the image to go through the "
+                               "transcoding, respecting all output codec configuration.")
+
+        usage = self._image_parser.usage
+        self._image_parser.usage = argparse.SUPPRESS
+        self.epilog = "--image options:\n================\n"
+        self.epilog += self._image_parser.format_help()
+        self._image_parser.usage = usage
+
+        usage = self._video_parser.usage
+        self._video_parser.usage = argparse.SUPPRESS
+        self.epilog += "\n--video options:\n================\n"
+        self.epilog += self._video_parser.format_help()
+        self._video_parser.usage = usage
+
+    def create_subparser(self, is_video):
+        p = argparse.ArgumentParser(formatter_class=SubparserHelpFormatter)
+        # relay error handling to the parent parser
+        p.error = lambda message, _self=self: _self.error(("--video " if is_video else "--image ") + message)
+
+        p.add_argument("topic", type=str, help="Topic")
+        p.add_argument("-f", "--out-format", type=str, required=False,
+                       help="Output format (i.e. filename extension)")
+        p.add_argument("-c", "--compression", type=str, required=False,
+                       help="Codec-specific compression parameter. JPEG 0-100, PNG 0-9, MP4 0-51, ... If not "
+                            "specified, a codec-specific default is used.")
+        p.add_argument("-e", "--encoding", type=str, default="passthrough",
+                       help="Color encoding or pixel format of the output. Can be bgr8, mono8 etc. If no specified, "
+                            "the encoding will try to match the input encoding if possible. Note that 16-bit depth "
+                            "has to be resampled to 8-bit when generating videos or JPEGs. This resampling happens "
+                            "automatically (The actual value range is compressed into 8 bits of precision).")
+        p.add_argument("-n", "--name-pattern", type=str, required=False,
+                       help="Pattern to generate the filename. The pattern is passed to str.format() with the "
+                            "following variables defined: bag (filename of the bagfile without extension), "
+                            "topic (the topic with slashes substituted with underscores), "
+                            "secs (header.stamp.secs of the message), nsecs (header.stamp.nsecs of the message), "
+                            "format (the file format). If the pattern does not end with '.{format}', "
+                            "it is added automatically. If not specified, pattern '{bag}-{topic}.{format}' is used "
+                            "for video and '{bag}-{topic}.{secs}.{nsecs:09d}.{format}' for images.")
+        p.add_argument("-d", "--force-decode", action="store_true", default=False,
+                       help="Normally, if message content matches the output format, it is directly written to the "
+                            "output file without transcoding to speed up execution. However, in that case, the exact "
+                            "codec configuration might not be respected (e.g. JPEG compression level etc.). "
+                            "--force-decode disables this fast path and forces the image to go through the "
+                            "transcoding, respecting all output codec configuration.")
+        p.add_argument("-r", "--normalize-range", action="store_true", default=False,
+                       help="If set and the image is single-channel, the range of values will be normalized to cover "
+                             "the whole available range.")
+
+        if is_video:
+            p.add_argument("-i", "--in-fps", type=float, required=False,
+                           help="Framerate of the input video. If not specified, it is estimated from the bagfile.")
+            p.add_argument("-o", "--out-fps", type=float, required=False,
+                           help="Framerate of the output video. If not specified, it matches the input framerate. "
+                                "If it is slower/faster, it just affects duration of the video, i.e. no frames are "
+                                "dropped or duplicated.")
+            p.add_argument("-s", "--speedup", default=1.0, type=float, doc="Speedup factor of the videos.")
+            p.add_argument("-p", "--pix-fmt", type=str, default="",
+                           help="ffmpeg pixel format of the output video. If not specified or empty, a sensible "
+                                "default is used.")
+
+        return p
+
+    def _get_formatter(self):
+        return HelpFormatter(self._image_parser, self._video_parser, prog=self.prog)
+
+    def parse_args(self, sys_args, namespace=None):
+        # This method splits the CLI arguments to parts divided by --image and --video. The first part is treated as
+        # global options and the other parts are passed to image/video subparsers. This structure with repeated use
+        # of the subparsers is not supported by the standard argparse subparser logic.
+
+        topic_args = list()
+
+        parts = list()
+        part = list()
+        for r in sys_args[1:]:
+            if r in ("--image", "--video"):
+                if len(part) > 0:
+                    parts.append(part)
+                part = [r]
+            else:
+                part.append(r)
+        if len(part) > 0:
+            parts.append(part)
+
+        if len(parts) == 0:
+            self.error('No arguments provided.')
+
+        args = super(Parser, self).parse_args(parts[0], namespace)
+        parts = parts[1:]
+
+        for part in parts:
+            if len(part) > 0 and part[0] in ("--image", "--video"):
+                a = self.parse_topic_args(part, args)
+                topic_args.append(a)
+            else:
+                self.error("Unrecognized arguments: " + " ".join(part))
+
+        return args, topic_args
+
+    def parse_topic_args(self, part, args):
+        a = argparse.Namespace(type=part[0])
+        part = part[1:]
+
+        p = self.create_subparser(is_video=a.type == "--video")
+        a, part = p.parse_known_args(part, a)
+
+        if not a.topic:
+            self.error("Topic name cannot be empty.")
+        if len(part) > 0:
+            self.error("Unrecognized arguments passed for topic %s: %s" % (a.topic, " ".join(part)))
+
+        # resolve value-dependent defaults
+        a.out_format = (a.out_format if a.out_format is not None else args.out_format).lower()
+        default_compression = default_compression_levels.get(a.out_format, None)
+        a.compression = int(a.compression) if a.compression is not None else default_compression
+        a.force_decode = bool(a.force_decode) or bool(args.force_decode)
+        a.normalize_range = bool(a.normalize_range) or bool(args.normalize_range)
+
+        # out_format can be empty string, but in that case, we want images, so it is okay
+        a.is_video = a.out_format in video_formats
+        if a.is_video:
+            a.in_fps = float(a.in_fps) if a.in_fps is not None and a.in_fps != '' else 0
+            a.out_fps = float(a.out_fps) if a.out_fps is not None and a.out_fps != '' else 0
+
+        if a.is_video and a.type != "--video":
+            self.error("Non-video format passed to --video: %s." % (a.out_format,))
+
+        return a
+
+
+def get_filename(bag, config, topic, msg=None, t=None, msg_num=None):
+    if config.name_pattern:
+        name_pattern = config.name_pattern
+    else:
+        name_pattern = "{bag}-{topic}"
+        if not config.is_video:
+            name_pattern += "-{secs}.{nsecs:09d}"
+        name_pattern += ".{format}"
+    name_pattern = name_pattern.strip("'").strip('"')
+    if not name_pattern.endswith(".{format}"):
+        name_pattern += ".{format}"
+
+    if msg is not None:
+        stamp = msg.header.stamp if hasattr(msg, "header") else rospy.Time(t)
+    else:
+        # if msg is None, we want to get just a template that is not dependent on a particular message data, so we
+        # escape the substitutions by doubling the curly braces
+        name_pattern = re.sub(r'{secs[^}]*}', r'{\g<0>}', name_pattern)
+        name_pattern = re.sub(r'{nsecs[^}]*}', r'{\g<0>}', name_pattern)
+        name_pattern = re.sub(r'{msg_num[^}]*}', r'{\g<0>}', name_pattern)
+        stamp = rospy.Time(0)
+
+    filename = name_pattern.format(
+        bag=bag, topic=topic.replace("/", "_").lstrip("_"), format=config.out_format,
+        secs=stamp.secs, nsecs=stamp.nsecs, msg_num=msg_num)
+
+    return filename
+
+
+__topic_info = None
+"""Cached topic info for the bag file."""
+
+
+def get_topic_info(bag):
+    """Lazy getter of topic info (which might take time to read).
+
+    :param rosbag.Bag bag: The bag file to get topic info from.
+    :return: The topic info.
+    :rtype: tuple
+    """
+    global __topic_info
+    if __topic_info is None:
+        __topic_info = bag.get_type_and_topic_info().topics
+    return __topic_info
+
+
+def main():
+    parser = Parser()
+
+    args, topic_args = parser.parse_args(sys.argv)
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    # Parse topic arguments into a per-topic dict
+
+    topics = dict()
+    for config in topic_args:
+        if config.topic not in topics:
+            topics[config.topic] = list()
+        topics[config.topic].append(config)
+
+    basename = os.path.splitext(os.path.basename(args.bag_file))[0]
+
+    bag_class = TqdmBag if args.progress else rosbag.Bag
+    with bag_class(args.bag_file, "r") as bag:
+        # If no topics were specified, select all image topics
+        if len(topics) == 0:
+            topic_info = get_topic_info(bag)
+            image_topics = [t for t in topic_info if topic_info[t].msg_type
+                            in ("sensor_msgs/Image", "sensor_msgs/CompressedImage")]
+            is_video = args.out_format.lower() in video_formats
+            video_arg = "--video" if is_video else "--image"
+            for topic in image_topics:
+                # configure each image topic as if just its name was given and no optional arguments
+                topics[topic] = [parser.parse_topic_args((video_arg, topic), args)]
+
+        if args.verbose:
+            num_images = bag.get_message_count(topics.keys())
+            print("Extracting %i messages from %s into %s on the following topics:" % (
+                num_images, args.bag_file, args.output_dir))
+            for t in topics:
+                print("- " + t)
+
+        # Read and convert the topics
+
+        msg_nums = defaultdict(lambda: -1)
+        reported_outputs = set()
+        for topic, msg, t in bag.read_messages(topics=tuple(topics.keys())):
+            if topic not in topics:  # Should not happen, but to be sure
+                continue
+            msg_nums[topic] += 1
+            for config_num, config in enumerate(topics[topic]):
+                try:
+                    # If we get e.g. a JPEG in the message and want JPEG output, just paste it directly in the file
+                    is_compressed = msg._type != Image._type
+                    if is_compressed and not config.is_video and not config.force_decode and not config.normalize_range:
+                        content, err = get_compressed_image_content(msg, topic, config.out_format)
+                        if content is not None:
+                            if len(config.out_format) == 0:
+                                config.out_format = content.format.replace("jpeg", "jpg")
+                            out_file = os.path.join(
+                                args.output_dir, get_filename(basename, config, topic, msg, t, msg_nums[topic]))
+                            if args.verbose and (topic, config_num) not in reported_outputs:
+                                reported_outputs.add((topic, config_num))
+                                out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                                print("Exporting topic %s as images %s." % (topic, out_template))
+
+                            with open(out_file, 'wb') as f:
+                                f.write(content.data)
+                            continue
+
+                    # Decode the (possibly compressed) image into raw bytes
+                    raw_img = decode_compressed(msg, topic) if is_compressed else msg
+                    if raw_img is None:
+                        rospy.logerr_throttle(1.0, "Could not decode image on topic " + topic)
+                        continue
+
+                    cv_img = bridge.imgmsg_to_cv2(raw_img)
+
+                    if len(config.out_format) == 0:
+                        config.out_format = "mp4" if config.is_video else "jpg"
+
+                    cv_img = convert_image(cv_img, raw_img.encoding, config)
+
+                    out_file = os.path.join(
+                        args.output_dir, get_filename(basename, config, topic, msg, t, msg_nums[topic]))
+                    if not os.path.exists(os.path.dirname(out_file)):
+                        os.makedirs(os.path.dirname(out_file))
+
+                    # Write the raw bytes in the output
+
+                    if not config.is_video:
+                        compression_param = None
+                        if config.out_format in compression_level_params and config.compression is not None:
+                            compression_param = (compression_level_params[config.out_format], config.compression)
+
+                        if args.verbose and (topic, config_num) not in reported_outputs:
+                            reported_outputs.add((topic, config_num))
+                            out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                            print("Exporting topic %s as images %s (%ix%i)." % (
+                                topic, out_template, cv_img.shape[1], cv_img.shape[0]))
+
+                        cv2.imwrite(out_file, cv_img, compression_param)
+                    else:
+                        pix_fmt = cv_pixfmt_to_ffmpeg_pixfmt.get(config.encoding, DEFAULT_VIDEO_ENCODING)
+
+                        # Crop the image so that we get dimensions divisible by 2 (required by most video codecs)
+                        if cv_img.shape[0] % 2 != 0 or cv_img.shape[1] % 2 != 0:
+                            h = cv_img.shape[0] // 2 * 2
+                            w = cv_img.shape[1] // 2 * 2
+                            print("Cropping dimensions from %ix%i to %ix%i to conform to video codec requirements for "
+                                  "images from topic %s." % (cv_img.shape[1], cv_img.shape[0], w, h, topic),
+                                  file=sys.stderr)
+                            cv_img = cv_img[:h, :w]
+
+                        pipe_name = "%s-%i" % (topic, config_num)
+                        # If ffmpeg has not been started yet for this topic, start it
+                        if pipe_name not in video_out_pipes:
+                            config.in_fps = config.in_fps if config.in_fps is not None else None
+                            if config.in_fps == 0:
+                                topic_info = get_topic_info(bag)
+                                config.in_fps = config.speedup * float(topic_info[topic].frequency) \
+                                    if topic_info[topic].frequency is not None else None
+                            if config.in_fps is None:
+                                config.in_fps = 25.0
+                            config.out_fps = config.out_fps if config.out_fps is not None else None
+                            if config.out_fps == 0:
+                                config.out_fps = config.in_fps / config.speedup
+                            config.out_pix_fmt = config.pix_fmt if config.pix_fmt else DEFAULT_PIX_FMT
+                            if args.verbose:
+                                out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                                # we use \r here to get rid of the interleaving with tqdm
+                                print("\rExporting topic %s as video %s (%s, %ix%i, %.1f FPS, %s)." % (
+                                    topic, out_template, default_video_encoders[config.out_format],
+                                    cv_img.shape[1], cv_img.shape[0],
+                                    config.out_fps if config.out_fps is not None else config.in_fps,
+                                    config.out_pix_fmt))
+                            video_out_pipes[pipe_name] = open_video_pipe(
+                                cv_img, config.out_format, out_file, config.in_fps, pix_fmt, config.out_fps,
+                                config.out_pix_fmt, config.compression, os.environ.get("FFMPEG_IN_PARAMS", ""),
+                                os.environ.get("FFMPEG_OUT_PARAMS", ""), args.verbose)
+
+                        try:
+                            if pipe_name not in broken_video_pipes:
+                                video_out_pipes[pipe_name].stdin.write(cv_img.tostring())
+                        except IOError as e:
+                            if e.errno == errno.EPIPE:
+                                broken_video_pipes[pipe_name] = True
+                                print("Error communicating with ffmpeg for topic %s: %s" % (topic, str(e)), sys.stderr)
+                            else:
+                                raise
+                except IOError as e:
+                    print("Error writing image from topic %s: %s" % (topic, str(e)), sys.stderr)
+                except cv2.error as e:
+                    print("Error converting image from topic %s: %s" % (topic, str(e)), sys.stderr)
+
+    # Close the ffmpeg pipes
+
+    for pipe_name in video_out_pipes:
+        try:
+            pipe = video_out_pipes[pipe_name]
+            pipe.stdin.close()
+            if pipe.stdout is not None:
+                pipe.stdout.close()
+            pipe.terminate()
+            pipe.wait()
+        except Exception as e:
+            print("Error closing ffmpeg: " + str(e), sys.stderr)
+
+
+if __name__ == '__main__':
+    rospy.init_node("test")
+    main()
