@@ -7,6 +7,7 @@ The querying is done using expressions like `topic in set` or `topic not in set`
 """
 
 
+import sys
 from typing import AnyStr, Iterable
 
 
@@ -23,20 +24,29 @@ class TopicSet(object):
             self._empty = True
             return
         self._items = items
-
-        # Internally, this library uses MARISA - an efficient trie library
-        import marisa
-        self._invalid_key_id = marisa.INVALID_KEY_ID
-        keyset = marisa.Keyset()
-        for item in items:
-            keyset.push_back(item)
-        self._trie = marisa.Trie()
-        self._trie.build(keyset)
+        self._has_marisa = False
+        try:
+            import marisa
+            self._has_marisa = True
+            self._marisa_invalid_key_id = marisa.INVALID_KEY_ID
+            keyset = marisa.Keyset()
+            for item in items:
+                keyset.push_back(item)
+            self._trie = marisa.Trie()
+            self._trie.build(keyset)
+        except ImportError:
+            if not TopicSet._warned:
+                print("!!!\n!!!\nInstall python-marisa or python3-marisa for up to 100% speedup!!!\n!!!\n!!!",
+                      file=sys.stderr)
+                TopicSet._warned = True
+            self._set = set(items)
 
     def __contains__(self, item):
         if self._empty:
             return False
-        return self._trie.lookup(item) != self._invalid_key_id
+        if self._has_marisa:
+            return self._trie.lookup(item) != self._marisa_invalid_key_id
+        return item in self._set
 
     def __str__(self):
         return str(self._items) if not self._empty else str(set())

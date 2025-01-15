@@ -1,0 +1,4 @@
+out_format: '{name}.cams_decompressed{ext}'
+compression: lz4
+filters:
+  - DecompressImages: []

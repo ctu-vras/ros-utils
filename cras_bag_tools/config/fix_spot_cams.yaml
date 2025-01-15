@@ -1,0 +1,21 @@
+out_format: '{name}.cams_fixed{ext}'
+compression: lz4
+filters:
+  - FixSpotCams:
+      include:
+        - /spot/camera/back/image/compressed
+        - /spot/camera/frontleft/image/compressed
+        - /spot/camera/frontright/image/compressed
+        - /spot/camera/left/image/compressed
+        - /spot/camera/right/image/compressed
+        - /spot/camera/hand_color/image/compressed
+        - /spot/camera/hand_mono/image/compressed
+        - /spot/depth/back/image/compressed
+        - /spot/depth/frontleft/image/compressed
+        - /spot/depth/frontleft/depth_in_visual/compressed
+        - /spot/depth/frontright/image/compressed
+        - /spot/depth/frontright/depth_in_visual/compressed
+        - /spot/depth/left/image/compressed
+        - /spot/depth/right/image/compressed
+        - /spot/depth/hand/depth_in_color/compressed
+        - /spot/depth/hand/image/compressed

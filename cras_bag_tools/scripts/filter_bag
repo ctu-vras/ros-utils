@@ -1,0 +1,730 @@
+#!/usr/bin/env python3
+from __future__ import absolute_import, division, print_function
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
+from argparse import ArgumentParser
+
+import cv2
+
+import rospy
+from cv_bridge import CvBridge, CvBridgeError
+from glob import glob
+import numpy as np
+import os
+import rosbag
+from shutil import copyfile
+import sys
+import yaml
+
+from cras_bag_tools import TopicSet, TqdmBag
+from sensor_msgs.msg import CompressedImage, Image
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    print('Could not import tqdm, progress bar will not be available.')
+
+    def tqdm(*args, **kwargs):
+        assert len(args) >= 1
+        return args[0]
+
+
+def is_sequence(o):
+    return isinstance(o, (list, tuple))
+
+
+def dict_as_kwargs(d):
+    return ', '.join('%s=%s' % (k, v) for k, v in d.items())
+
+
+def out_path(path, fmt):
+    dirname, basename = os.path.split(path)
+    name, ext = os.path.splitext(basename)
+    out = fmt.format(dirname=dirname, name=name, ext=ext)
+    try:
+        os.makedirs(os.path.dirname(out))
+    except OSError:
+        pass
+    return out
+
+
+msg_to_raw_buffer = StringIO()
+
+
+def msg_to_raw(msg):
+    datatype = msg.__class__._type
+    md5sum = msg.__class__._md5sum
+    pytype = msg.__class__
+    msg_to_raw_buffer.seek(0)
+    msg_to_raw_buffer.truncate(0)
+    msg.serialize(msg_to_raw_buffer)
+    data = msg_to_raw_buffer.getvalue()
+    return datatype, data, md5sum, pytype
+
+
+def raw_to_msg(datatype, data, md5sum, pytype):
+    msg = pytype()
+    msg.deserialize(data)
+    return msg
+
+
+class MessageFilter(object):
+
+    def __init__(self, is_raw):
+        self.is_raw = is_raw
+        self._include_topics = TopicSet()
+        self._exclude_topics = TopicSet()
+        self._include_types = TopicSet()
+        self._exclude_types = TopicSet()
+        self._min_stamp = None
+        self._max_stamp = None
+
+    def __call__(self, *args, **kwargs):
+        return self.filter(*args, **kwargs)
+
+    def consider_message(self, topic, datatype, stamp, header):
+        """This function should be called before calling filter(). If it returns False, filter() should not be called
+        and the original message should be used instead.
+
+        :param str topic:
+        :param str datatype:
+        :param Time stamp:
+        :param dict header:
+        :return: Whether filter() should be called.
+        :rtype: bool
+        """
+        if self._min_stamp is not None and stamp < self._min_stamp:
+            return False
+        if self._max_stamp is not None and stamp > self._max_stamp:
+            return False
+        if self._include_topics and topic not in self._include_topics:
+            return False
+        if self._exclude_topics and topic in self._exclude_topics:
+            return False
+        if self._include_types and datatype not in self._include_types:
+            return False
+        if self._exclude_types and datatype in self._exclude_types:
+            return False
+        return True
+
+    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
+        """Connection filter passed to Bag.read_messages().
+
+        :param topic:
+        :param datatype:
+        :param md5sum:
+        :param msg_def:
+        :param header:
+        :return: If False, the topic will not be read from the input bag.
+        :rtype: bool
+        """
+        return True
+
+    def topic_filter(self, topic):
+        """Filter of topics to be read from the bag file.
+
+        :param topic:
+        :return: If False, the topic will not be read from the input bag.
+        :rtype: bool
+        """
+        return True
+
+    @staticmethod
+    def from_config(cfg):
+        if cfg is None:
+            return None
+        # Assume cfg is either a filter config or a sequence of such configs.
+        # If it is a sequence, construct filter chain.
+        if is_sequence(cfg):
+            return FilterChain([MessageFilter.from_config(d) for d in cfg])
+        # Assume one of the following filter config structures:
+        # {class: [args, kwargs]}.
+        # {class: kwargs}.
+        assert len(cfg) == 1
+        k, v = list(cfg.items())[0]
+        if is_sequence(v):
+            args = v[0] if len(v) >= 1 else ()
+            kwargs = v[1] if len(v) >= 2 else {}
+        else:
+            args = ()
+            kwargs = v
+        # Eval in the current environment.
+        f = eval(k)(*args, **kwargs)
+        return f
+
+    def __str__(self):
+        return self.__class__.__name__
+
+
+class RawMessageFilter(MessageFilter):
+    def __init__(self):
+        super(RawMessageFilter, self).__init__(True)
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        raise NotImplementedError
+
+
+class DeserializedMessageFilter(MessageFilter):
+    def __init__(self):
+        super(DeserializedMessageFilter, self).__init__(False)
+
+    def filter(self, topic, msg, stamp, header):
+        raise NotImplementedError
+
+
+class Passthrough(RawMessageFilter):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+
+class FilterChain(RawMessageFilter):
+    def __init__(self, filters):
+        super(FilterChain, self).__init__()
+        self.filters = filters
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        # print(topic)
+        msg = None
+        last_was_raw = True
+        for f in self.filters:
+            # print(f)
+            if not f.consider_message(topic, datatype, stamp, header):
+                continue
+            if f.is_raw:
+                if not last_was_raw:
+                    datatype, data, md5sum, pytype = msg_to_raw(msg)
+                ret = f(topic, datatype, data, md5sum, pytype, stamp, header)
+                if ret is None:
+                    return None
+                topic, datatype, data, md5sum, pytype, stamp, header = ret
+                last_was_raw = True
+            else:
+                if last_was_raw:
+                    msg = raw_to_msg(datatype, data, md5sum, pytype)
+                ret = f(topic, msg, stamp, header)
+                if ret is None:
+                    return None
+                topic, msg, stamp, header = ret
+                datatype = msg.__class__._type  # needed in consider_message() above
+                last_was_raw = False
+        if not last_was_raw:
+            datatype, data, md5sum, pytype = msg_to_raw(msg)
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
+        for f in self.filters:
+            if not f.connection_filter(topic, datatype, md5sum, msg_def, header):
+                return False
+        return True
+
+    def topic_filter(self, topic):
+        for f in self.filters:
+            if not f.topic_filter(topic):
+                return False
+        return True
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(str(f) for f in self.filters))
+
+    def __iadd__(self, other):
+        if other is None:
+            return self
+        assert isinstance(other, MessageFilter)
+        if isinstance(other, FilterChain):
+            self.filters += other.filters
+            return self
+
+        self.filters.append(other)
+        return self
+
+    def __add__(self, other):
+        if other is None:
+            return self
+        assert isinstance(other, MessageFilter)
+        if isinstance(other, FilterChain):
+            return FilterChain(self.filters + other.filters)
+        return FilterChain(self.filters + [other.filters])
+
+
+class SetFields(DeserializedMessageFilter):
+    def __init__(self, include_types, **kwargs):
+        super(SetFields, self).__init__()
+        self._include_types = TopicSet(include_types)
+        self.field_values = kwargs
+
+    def filter(self, topic, msg, stamp, header):
+        for k, v in self.field_values.items():
+            if k not in msg.__slots__:
+                continue
+            setattr(msg, k, v)
+        return topic, msg, stamp, header
+
+    def __str__(self):
+        return '%s(%s, %s)' % (self.__class__.__name__, self._include_types, dict_as_kwargs(self.field_values))
+
+
+class FixHeader(DeserializedMessageFilter):
+    def __init__(self, include_topics=(), frame_id="", frame_id_prefix="", frame_id_suffix="",
+                 stamp_from_receive_time=False, stamp_offset=0.0):
+        super(FixHeader, self).__init__()
+        self._include_topics = TopicSet(include_topics)
+        self.frame_id = frame_id
+        self.frame_id_prefix = frame_id_prefix
+        self.frame_id_suffix = frame_id_suffix
+        self.stamp_from_receive_time = stamp_from_receive_time
+        self.stamp_offset = rospy.Duration(stamp_offset)
+
+    def filter(self, topic, msg, stamp, header):
+        if len(msg.__slots__) == 0 or msg.__slots__[0] != 'header':
+            return topic, msg, stamp, header
+
+        if len(self.frame_id) > 0:
+            msg.header.frame_id = self.frame_id
+        else:
+            if len(self.frame_id_prefix) > 0:
+                msg.header.frame_id = self.frame_id_prefix + msg.header.frame_id
+            if len(self.frame_id_suffix) > 0:
+                msg.header.frame_id += self.frame_id_suffix
+
+        if self.stamp_from_receive_time:
+            msg.header.stamp = stamp
+        msg.header.stamp += self.stamp_offset
+
+        return topic, msg, stamp, header
+
+    def __str__(self):
+        return '%s(%s, %s, %s, %s, %s, %i.%09u)' % (
+            self.__class__.__name__, self._include_topics, self.frame_id, self.frame_id_prefix, self.frame_id_suffix,
+            "True" if self.stamp_from_receive_time else "False", self.stamp_offset.secs, self.stamp_offset.nsecs)
+
+
+class Remap(RawMessageFilter):
+    def __init__(self, remap):
+        super(Remap, self).__init__()
+        self.remap = remap
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        return self.remap.get(topic, topic), datatype, data, md5sum, pytype, stamp, header
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.remap)
+
+
+class Throttle(RawMessageFilter):
+    def __init__(self, **kwargs):
+        super(Throttle, self).__init__()
+        self.hz = kwargs
+        self._include_topics = TopicSet(self.hz.keys())
+        self.prev_t = {}
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        t = stamp.to_sec()
+        if topic in self.prev_t:
+            period = t - self.prev_t[topic]
+            if period <= 0.:
+                return None
+            hz = 1. / period
+            if hz > self.hz[topic]:
+                return None
+        self.prev_t[topic] = t
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+    def __str__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.hz)
+
+
+class Topics(RawMessageFilter):
+    def __init__(self, include=(), exclude=()):
+        super(Topics, self).__init__()
+        # do not use _include_topics and _exclude_topics here as they would not allow the filter to reject the messages
+        self.include = TopicSet(include)
+        self.exclude = TopicSet(exclude)
+
+    def topic_filter(self, topic):
+        if self.include and topic not in self.include:
+            return False
+        if self.exclude and topic in self.exclude:
+            return False
+        return True
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        # The filtering is done in topic_filter()
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+    def __str__(self):
+        return ('%s(include=%s, exclude=%s)'
+                % (self.__class__.__name__, self.include, self.exclude))
+
+
+class TopicTypes(RawMessageFilter):
+    def __init__(self, include=(), exclude=()):
+        super(TopicTypes, self).__init__()
+        # do not use _include_topics and _exclude_topics here as they would not allow the filter to reject the messages
+        self.include = TopicSet(include)
+        self.exclude = TopicSet(exclude)
+
+    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
+        if self.include and datatype not in self.include:
+            return False
+        if self.exclude and datatype in self.exclude:
+            return False
+        return True
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        # The filtering is done in connection_filter()
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+    def __str__(self):
+        return ('%s(include=%s, exclude=%s)'
+                % (self.__class__.__name__, self.include, self.exclude))
+
+
+class Transforms(DeserializedMessageFilter):
+    def __init__(self, include_parents=(), exclude_parents=(), include_children=(), exclude_children=()):
+        super(Transforms, self).__init__()
+        self._include_types = TopicSet(['tf2_msgs/TFMessage'])
+        self.include_parents = TopicSet(include_parents)
+        self.exclude_parents = TopicSet(exclude_parents)
+        self.include_children = TopicSet(include_children)
+        self.exclude_children = TopicSet(exclude_children)
+
+    def filter(self, topic, msg, stamp, header):
+        if self.include_parents:
+            msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id in self.include_parents]
+        if self.exclude_parents:
+            msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id not in self.exclude_parents]
+        if self.include_children:
+            msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id in self.include_children]
+        if self.exclude_children:
+            msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id not in self.exclude_children]
+        if not msg.transforms:
+            return None
+        return topic, msg, stamp, header
+
+    def __str__(self):
+        return ('%s(include_parents=%s, exclude_parents=%s, '
+                'include_children=%s, exclude_children=%s)'
+                % (self.__class__.__name__, self.include_parents, self.exclude_parents,
+                   self.include_children, self.exclude_children))
+
+
+class FixSpotCams(RawMessageFilter):
+    def __init__(self, include=()):
+        super(FixSpotCams, self).__init__()
+        self._include_topics = TopicSet(include)
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        header["message_definition"] = CompressedImage._full_text
+        header["md5sum"] = md5sum = CompressedImage._md5sum
+        header["type"] = datatype = CompressedImage._type
+        pytype = CompressedImage
+
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+
+class MakeLatched(RawMessageFilter):
+    def __init__(self, include=()):
+        super(MakeLatched, self).__init__()
+        self._include_topics = TopicSet(include)
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        header["latching"] = "1"
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+
+color_encodings = {
+    "rgb8",
+    "bgr8",
+    "rgba8",
+    "bgra8",
+    "rgb16",
+    "bgr16",
+    "rgba16",
+    "bgra16",
+}
+
+
+class CompressImages(DeserializedMessageFilter):
+    def __init__(self, include=(), only_lossless=False, compression_levels=None, format_mapping=None):
+        super(CompressImages, self).__init__()
+        self._cv = CvBridge()
+
+        self._include_types = TopicSet(['sensor_msgs/Image'])
+        self._include_topics = TopicSet(include)
+        self.only_lossless = only_lossless  # if True, even 8-bit images are converted to lossless PNG
+
+        self.compression_levels = {  # map of output format type and compression parameter value
+            'jpg': 95,  # 0 - 100
+            'png': 3,  # 0 - 9
+        }
+        if compression_levels is not None:
+            self.compression_levels.update(compression_levels)
+
+        self.compression_level_params = {
+            "jpg": cv2.IMWRITE_JPEG_QUALITY,
+            "png": cv2.IMWRITE_PNG_COMPRESSION,
+        }
+
+        # map of the raw images' encoding parameter to output image format
+        self.format_mapping = format_mapping if format_mapping is not None else {}
+
+    def filter(self, topic, msg, stamp, header):
+        try:
+            raw_image = self._cv.imgmsg_to_cv2(msg)
+
+            bit_depth = self.get_bit_depth(msg)
+
+            # by default, 8-bit images are converted to jpg and more-bit images to png
+            default_format = "jpg" if not self.only_lossless and bit_depth == 8 else "png"
+            out_format = self.format_mapping.get(msg.encoding, default_format)
+            compression_param = (self.compression_level_params[out_format], self.compression_levels[out_format])
+
+            compressed_msg = self.cv2_to_compressed_imgmsg(
+                raw_image, out_format, msg.encoding, bit_depth, compression_param)
+            compressed_msg.header = msg.header
+
+            msg = compressed_msg
+        except RuntimeError as e:
+            print('Error converting image: ' + str(e), file=sys.stderr)
+            return topic, msg, stamp, header
+        return topic + "/compressed", msg, stamp, header
+
+    @staticmethod
+    def cv2_to_compressed_imgmsg(raw_img, dst_format="jpg", encoding="bgr8", bit_depth=8, compression_params=()):
+        """Like CvBridge cv2_to_compressed_imgmsg, but allows passing compression parameters."""
+        if not isinstance(raw_img, (np.ndarray, np.generic)):
+            raise TypeError('Your input type is not a numpy array')
+        compressed_msg = CompressedImage()
+
+        # Composition of the format string is done in a similar way to
+        # https://github.com/ros-perception/image_transport_plugins/blob/noetic-devel/compressed_image_transport/src/compressed_publisher.cpp#L79
+        compressed_msg.format = "%s; %s compressed " % (encoding, "jpeg" if dst_format == "jpg" else dst_format)
+        if encoding in color_encodings:
+            compressed_msg.format += "bgr"
+            if dst_format == "jpg" or (dst_format == "png" and bit_depth == 8):
+                compressed_msg.format += "8"
+            elif dst_format == "png" and bit_depth == 16:
+                compressed_msg.format += "16"
+
+        ext_format = '.' + dst_format
+
+        # Here is the difference to CvBridge
+        compressed_msg.data = np.array(cv2.imencode(ext_format, raw_img, compression_params)[1]).tostring()
+
+        return compressed_msg
+
+    def __str__(self):
+        return ('%s(include=%s, only_lossless=%r, compression_levels=%r, format_mapping=%r)'
+                % (self.__class__.__name__, self._include_topics, self.only_lossless, self.compression_levels,
+                   self.format_mapping))
+
+    @staticmethod
+    def get_bit_depth(msg):
+        bit_depth = 8
+        if "16" in msg.encoding:
+            bit_depth = 16
+        elif "32" in msg.encoding:
+            bit_depth = 32
+        elif "64" in msg.encoding:
+            bit_depth = 64
+        return bit_depth
+
+
+class DecompressImages(DeserializedMessageFilter):
+    def __init__(self, include=(), desired_encodings=None):
+        super(DecompressImages, self).__init__()
+        self._include_types = TopicSet(['sensor_msgs/CompressedImage'])
+        self._include_topics = TopicSet(include)
+        # map from topic to desired encoding of the raw images (one of the strings in sensor_msgs/image_encodings.h)
+        self.desired_encodings = desired_encodings if desired_encodings is not None else {}
+        self.is_dtype_byteorder_bigendian = {
+            '=': sys.byteorder == 'big',  # platform native
+            '<': False,  # little endian
+            '>': True,  # big endian
+            '|': False,  # N/A
+        }
+
+    def filter(self, topic, msg, stamp, header):
+        try:
+            desired_encoding = self.desired_encodings.get(topic, 'passthrough')
+            raw_image = np.array(self.compressed_imgmsg_to_cv2(msg, desired_encoding))
+
+            img_msg = Image()
+            img_msg.header = msg.header
+            img_msg.data = raw_image.tostring()
+            img_msg.height, img_msg.width = raw_image.shape[:2]
+            img_msg.step = len(img_msg.data) / img_msg.height
+            img_msg.is_bigendian = self.is_dtype_byteorder_bigendian[raw_image.dtype.byteorder]
+            if desired_encoding != 'passthrough':
+                img_msg.encoding = desired_encoding
+            else:
+                dtype_size_str = "8" if raw_image.dtype.itemsize == 1 else "16"
+                if len(raw_image.shape) == 2 or raw_image.shape[2] == 1:
+                    img_msg.encoding = "mono" + dtype_size_str
+                elif len(raw_image.shape) == 3 and raw_image.shape[2] == 3:
+                    img_msg.encoding = "bgr" + dtype_size_str
+                elif len(raw_image.shape) == 3 and raw_image.shape[2] == 4:
+                    img_msg.encoding = "bgra" + dtype_size_str
+                else:
+                    raise RuntimeError("Could not determine output image encoding for topic %s. "
+                                       "Please, provide it manually in parameter 'desired_encodings'." % (topic,))
+            msg = img_msg
+        except RuntimeError as e:
+            print('Error converting image: ' + str(e), file=sys.stderr)
+            return topic, msg, stamp, header
+        if topic.endswith("/compressed"):
+            topic = topic[:(-len("/compressed"))]
+        return topic, msg, stamp, header
+
+    @staticmethod
+    def compressed_imgmsg_to_cv2(compressed_msg, desired_encoding="passthrough"):
+        """Like CvBridge compressed_imgmsg_to_cv2, but allows reading 16-bit depth data."""
+
+        buf = np.ndarray(shape=(1, len(compressed_msg.data)), dtype=np.uint8, buffer=compressed_msg.data)
+        # Here is the difference from the cv_bridge version
+        im = cv2.imdecode(buf, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+
+        if desired_encoding == "passthrough":
+            return im
+
+        src_encoding = "bgr8"
+        parts = compressed_msg.format.split(" ")
+        if parts[-1] in color_encodings:
+            src_encoding = parts[-1]
+
+        if desired_encoding == "":
+            desired_encoding = compressed_msg.format.split(";")[0]
+
+        from cv_bridge.boost.cv_bridge_boost import cvtColor2
+        return cvtColor2(im, src_encoding, desired_encoding)
+
+    def __str__(self):
+        return ('%s(include=%s, desired_encodings=%r)'
+                % (self.__class__.__name__, self._include_topics, self.desired_encodings))
+
+
+def fix_connection_header(header, raw_msg):
+    datatype, _, md5sum, pytype = raw_msg
+    header["message_definition"] = pytype._full_text
+    header["md5sum"] = md5sum
+    header["type"] = datatype
+    return header
+
+
+def filter_bag(bag, out, filter=Passthrough()):
+    topics = [c.topic for c in bag._get_connections()]  # get all topics
+    topics = [t for t in topics if filter.topic_filter(t)]  # apply topic filters
+    topics = [c.topic for c in bag._get_connections(topics, filter.connection_filter)]  # apply connection filters
+
+    connection_filter = filter.connection_filter
+    for topic, msg, stamp, header in bag.read_messages(
+            topics=topics, return_connection_header=True, raw=filter.is_raw, connection_filter=connection_filter):
+        # Apply filter chain, discard message if None is returned.
+        if filter.is_raw:
+            datatype, data, md5sum, _, pytype = msg
+            if filter.consider_message(topic, datatype, stamp, header):
+                ret = filter(topic, datatype, data, md5sum, pytype, stamp, header)
+                if ret is None:
+                    continue
+                topic, datatype, data, md5sum, pytype, stamp, header = ret
+        else:
+            if filter.consider_message(topic, msg.__class__._type, stamp, header):
+                ret = filter(topic, msg, stamp, header)
+                if ret is None:
+                    continue
+                topic, msg, stamp, header = ret
+            datatype, data, md5sum, pytype = msg_to_raw(msg)
+        raw_msg = (datatype, data, md5sum, pytype)
+        # make sure connection header corresponds to the actual data type of the message
+        # (if some filter forgot to update it)
+        header = fix_connection_header(header, raw_msg)
+        out.write(topic, raw_msg, stamp, connection_header=header, raw=True)
+
+
+def copy_params_if_any(bag_path, out_bag_path):
+    try:
+        copyfile(bag_path + '.params', out_bag_path + '.params')
+    except (OSError, IOError) as ex:
+        print('Params (%s) not found.' % (bag_path + '.params'))
+
+
+def filter_bags(bags, out_format, compression, filter):
+    for bag_path in bags:
+        out_bag_path = out_path(bag_path, out_format)
+        copy_params_if_any(bag_path, out_bag_path)
+        print()
+        print('Source:      %s' % bag_path)
+        print('Destination: %s' % out_bag_path)
+        with TqdmBag(bag_path, skip_index=True) as bag, rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
+            bag.read_index()
+            filter_bag(bag, out, filter)
+
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('bags', nargs='+')
+    parser.add_argument('-i', '--incl-topics', nargs='+')
+    parser.add_argument('-e', '--excl-topics', nargs='+')
+    parser.add_argument('--throttle', '--hz', nargs='+')
+    parser.add_argument('--incl-tf-parents', nargs='+')
+    parser.add_argument('--excl-tf-parents', nargs='+')
+    parser.add_argument('--incl-tf-children', nargs='+')
+    parser.add_argument('--excl-tf-children', nargs='+')
+    parser.add_argument('-c', '--config', nargs='+')
+    parser.add_argument('-o', '--out-format')
+    parser.add_argument('--lz4', dest='compression', action='store_const', const=rosbag.Compression.LZ4)
+    parser.add_argument('--bz2', dest='compression', action='store_const', const=rosbag.Compression.BZ2)
+    parser.add_argument('-f', '--filters', nargs='+')
+    args = parser.parse_args()
+    print()
+    print('Command-line arguments:')
+    for k, v in sorted(vars(args).items(), key=lambda kv: kv[0]):
+        if v is not None:
+            print('%s: %s' % (k, v))
+    if args.throttle:
+        topics = args.throttle[0:]
+        hz = [float(hz) for hz in args.throttle[1:]]
+        args.throttle = dict(zip(topics, hz))
+    else:
+        args.throttle = {}
+    if args.config is None:
+        args.config = []
+    args.config = [list(glob(config)) for config in args.config]
+    args.config = sum(args.config, [])
+    for config in args.config:
+        with open(config, 'r') as f:
+            cfg = yaml.safe_load(f)
+            for key in ['bags', 'out_format', 'compression',
+                        'incl_topics', 'excl_topics', 'throttle',
+                        'incl_tf_parents', 'excl_tf_parents',
+                        'incl_tf_children', 'excl_tf_children',
+                        'filters']:
+                if args.__getattribute__(key) is None and key in cfg:
+                    args.__setattr__(key, cfg[key])
+    # Parse command-line args, also for backward compatibility.
+    filters = []
+    if args.incl_topics or args.excl_topics:
+        filters.append(Topics(include=args.incl_topics,
+                              exclude=args.excl_topics))
+    if args.throttle:
+        filters.append(Throttle(args.throttle))
+    if args.incl_tf_parents or args.excl_tf_parents or args.incl_tf_children or args.excl_tf_children:
+        filters.append(Transforms(include_parents=args.incl_tf_parents,
+                                  exclude_parents=args.excl_tf_parents,
+                                  include_children=args.incl_tf_children,
+                                  exclude_children=args.excl_tf_children))
+    filter = FilterChain(filters) + MessageFilter.from_config(args.filters)
+    print()
+    print('Filters:')
+    print('\n'.join(str(f) for f in filter.filters))
+    if args.compression is None:
+        args.compression = rosbag.Compression.NONE
+
+    filter_bags(args.bags, args.out_format, args.compression, filter)
+
+
+if __name__ == '__main__':
+    main()

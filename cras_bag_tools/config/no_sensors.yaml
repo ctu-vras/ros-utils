@@ -1,0 +1,10 @@
+# Removes topics that contain large sensory outputs (camera images and pointclouds).
+out_format: '{name}.no_sensors{ext}'
+compression: lz4
+filters:
+  - TopicTypes:
+      exclude:
+        - sensor_msgs/CompressedImage
+        - sensor_msgs/Image
+        - sensor_msgs/PointCloud
+        - sensor_msgs/PointCloud2

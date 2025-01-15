@@ -1,0 +1,7 @@
+out_format: '{dirname}/tf/{name}{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include:
+        - /tf
+        - /tf_static

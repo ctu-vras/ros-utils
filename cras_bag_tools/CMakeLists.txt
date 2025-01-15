@@ -8,10 +8,16 @@ catkin_python_setup()
 catkin_package()
 
 catkin_install_python(PROGRAMS
+  scripts/filter_bag
   scripts/fix_msg_defs
   scripts/merge_bag
   scripts/size_per_topic
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY config/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
 )
 
 if(CATKIN_ENABLE_TESTING)
