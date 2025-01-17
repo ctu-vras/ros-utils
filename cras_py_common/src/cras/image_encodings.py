@@ -86,6 +86,10 @@ def isBayer(encoding):
     return fn(encoding.encode('ascii'))
 
 
+def isDepth(encoding):
+    return encoding == TYPE_16UC1 or encoding == TYPE_32FC1
+
+
 def hasAlpha(encoding):
     fn = sensor_msgs_py.hasAlpha
     fn.restype = ctypes.c_bool

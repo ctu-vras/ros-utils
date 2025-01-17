@@ -44,6 +44,16 @@ class ImageEncodings(unittest.TestCase):
         self.assertFalse(isBayer(TYPE_8SC1))
         self.assertFalse(isBayer(YUV422))
 
+    def test_is_depth(self):
+        self.assertFalse(isDepth(MONO8))
+        self.assertFalse(isDepth(RGB8))
+        self.assertFalse(isDepth(BGR8))
+        self.assertFalse(isDepth(BAYER_BGGR8))
+        self.assertFalse(isDepth(TYPE_8SC1))
+        self.assertFalse(isDepth(YUV422))
+        self.assertTrue(isDepth(TYPE_16UC1))
+        self.assertTrue(isDepth(TYPE_32FC1))
+
     def test_has_alpha(self):
         self.assertFalse(hasAlpha(MONO8))
         self.assertFalse(hasAlpha(RGB8))
