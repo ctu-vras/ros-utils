@@ -1,35 +1,33 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 from __future__ import absolute_import, division, print_function
+
+import copy
+
+import cv2
+import numpy as np
+import os
+import sys
+import yaml
+from argparse import ArgumentParser
+from glob import glob
+from shutil import copyfile
 
 try:
     from StringIO import StringIO
 except ImportError:
     from io import BytesIO as StringIO
-from argparse import ArgumentParser
 
-import cv2
-
-import rospy
-from cv_bridge import CvBridge, CvBridgeError
-from glob import glob
-import numpy as np
-import os
 import rosbag
-from shutil import copyfile
-import sys
-import yaml
-
+import rospy
+import rospy.names
 from cras_bag_tools import TopicSet, TqdmBag
+from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, YUV422
+from cv_bridge import CvBridge, CvBridgeError
+from image_transport_codecs import decode, encode
+from image_transport_codecs.compressed_depth_codec import has_rvl
+from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from sensor_msgs.msg import CompressedImage, Image
-
-try:
-    from tqdm import tqdm
-except ImportError:
-    print('Could not import tqdm, progress bar will not be available.')
-
-    def tqdm(*args, **kwargs):
-        assert len(args) >= 1
-        return args[0]
 
 
 def is_sequence(o):
@@ -435,175 +433,124 @@ class MakeLatched(RawMessageFilter):
         return topic, datatype, data, md5sum, pytype, stamp, header
 
 
-color_encodings = {
-    "rgb8",
-    "bgr8",
-    "rgba8",
-    "bgra8",
-    "rgb16",
-    "bgr16",
-    "rgba16",
-    "bgra16",
-}
-
-
 class CompressImages(DeserializedMessageFilter):
-    def __init__(self, include=(), only_lossless=False, compression_levels=None, format_mapping=None):
+    def __init__(self, include=(), exclude=(), only_color=False, only_depth=False, transport=None,
+                 transport_params=None, transport_mapping=None, format_mapping=None):
         super(CompressImages, self).__init__()
         self._cv = CvBridge()
 
         self._include_types = TopicSet(['sensor_msgs/Image'])
         self._include_topics = TopicSet(include)
-        self.only_lossless = only_lossless  # if True, even 8-bit images are converted to lossless PNG
+        self._exclude_topics = TopicSet(exclude)
 
-        self.compression_levels = {  # map of output format type and compression parameter value
-            'jpg': 95,  # 0 - 100
-            'png': 3,  # 0 - 9
-        }
-        if compression_levels is not None:
-            self.compression_levels.update(compression_levels)
+        self.only_color = only_color
+        self.only_depth = only_depth
 
-        self.compression_level_params = {
-            "jpg": cv2.IMWRITE_JPEG_QUALITY,
-            "png": cv2.IMWRITE_PNG_COMPRESSION,
-        }
-
+        self.transport = transport
+        self.transport_mapping = transport_mapping if transport_mapping is not None else {}
+        self.transport_params = transport_params if transport_params is not None else {}
         # map of the raw images' encoding parameter to output image format
         self.format_mapping = format_mapping if format_mapping is not None else {}
 
     def filter(self, topic, msg, stamp, header):
-        try:
-            raw_image = self._cv.imgmsg_to_cv2(msg)
+        enc = msg.encoding
+        is_color = isColor(enc) or isMono(enc) or isBayer(enc) or enc == YUV422
+        is_depth = isDepth(enc)
 
-            bit_depth = self.get_bit_depth(msg)
-
-            # by default, 8-bit images are converted to jpg and more-bit images to png
-            default_format = "jpg" if not self.only_lossless and bit_depth == 8 else "png"
-            out_format = self.format_mapping.get(msg.encoding, default_format)
-            compression_param = (self.compression_level_params[out_format], self.compression_levels[out_format])
-
-            compressed_msg = self.cv2_to_compressed_imgmsg(
-                raw_image, out_format, msg.encoding, bit_depth, compression_param)
-            compressed_msg.header = msg.header
-
-            msg = compressed_msg
-        except RuntimeError as e:
-            print('Error converting image: ' + str(e), file=sys.stderr)
+        if (self.only_color and not is_color) or (self.only_depth and not is_depth):
             return topic, msg, stamp, header
-        return topic + "/compressed", msg, stamp, header
 
-    @staticmethod
-    def cv2_to_compressed_imgmsg(raw_img, dst_format="jpg", encoding="bgr8", bit_depth=8, compression_params=()):
-        """Like CvBridge cv2_to_compressed_imgmsg, but allows passing compression parameters."""
-        if not isinstance(raw_img, (np.ndarray, np.generic)):
-            raise TypeError('Your input type is not a numpy array')
-        compressed_msg = CompressedImage()
+        transport = ("compressedDepth" if is_depth else "compressed") if self.transport is None else self.transport
+        transport = self.transport_mapping.get(enc, transport)
 
-        # Composition of the format string is done in a similar way to
-        # https://github.com/ros-perception/image_transport_plugins/blob/noetic-devel/compressed_image_transport/src/compressed_publisher.cpp#L79
-        compressed_msg.format = "%s; %s compressed " % (encoding, "jpeg" if dst_format == "jpg" else dst_format)
-        if encoding in color_encodings:
-            compressed_msg.format += "bgr"
-            if dst_format == "jpg" or (dst_format == "png" and bit_depth == 8):
-                compressed_msg.format += "8"
-            elif dst_format == "png" and bit_depth == 16:
-                compressed_msg.format += "16"
+        compressed_msg, compressed_topic, err = self.get_image_for_transport(msg, topic, transport)
+        # If encoding using compressedDepth fails, try with compressed
+        if compressed_msg is None and transport == "compressedDepth":
+            transport = "compressed"
+            compressed_msg, compressed_topic, err = self.get_image_for_transport(msg, topic, transport)
 
-        ext_format = '.' + dst_format
+        if compressed_msg is None:
+            print('Error converting image: ' + str(err), file=sys.stderr)
+            return topic, msg, stamp, header
 
-        # Here is the difference to CvBridge
-        compressed_msg.data = np.array(cv2.imencode(ext_format, raw_img, compression_params)[1]).tostring()
+        return compressed_topic, compressed_msg, stamp, header
 
-        return compressed_msg
+    def get_image_for_transport(self, msg, topic, transport):
+        compressed_topic = rospy.names.ns_join(topic, transport)
+
+        config = self.transport_params.get(transport, {})
+        if msg.encoding in self.format_mapping:
+            config = copy.deepcopy(config)
+            config["format"] = self.format_mapping[msg.encoding]
+        # 16-bit images cannot be compressed to JPEG
+        if transport == "compressed" and bitDepth(msg.encoding) > 8:
+            config["format"] = "png"
+        # Melodic doesn't have RVL
+        if transport == "compressedDepth" and not has_rvl():
+            config["format"] = "png"
+
+        compressed_msg, err = encode(msg, compressed_topic, config)
+
+        return compressed_msg, compressed_topic, err
 
     def __str__(self):
-        return ('%s(include=%s, only_lossless=%r, compression_levels=%r, format_mapping=%r)'
-                % (self.__class__.__name__, self._include_topics, self.only_lossless, self.compression_levels,
-                   self.format_mapping))
-
-    @staticmethod
-    def get_bit_depth(msg):
-        bit_depth = 8
-        if "16" in msg.encoding:
-            bit_depth = 16
-        elif "32" in msg.encoding:
-            bit_depth = 32
-        elif "64" in msg.encoding:
-            bit_depth = 64
-        return bit_depth
+        return ('%s(include=%s, exclude=%s, only_color=%r, only_depth=%r, '
+                'transport=%r, transport_params=%r, transport_mapping=%r format_mapping=%r)') % \
+               (self.__class__.__name__, self._include_topics, self._exclude_topics,
+                self.only_color, self.only_depth, self.transport, self.transport_params,
+                self.transport_mapping, self.format_mapping)
 
 
 class DecompressImages(DeserializedMessageFilter):
-    def __init__(self, include=(), desired_encodings=None):
+    def __init__(self, include=(), exclude=(), desired_encodings=None, transport=None, transport_config=None):
         super(DecompressImages, self).__init__()
+
+        self._cv = CvBridge()
+
         self._include_types = TopicSet(['sensor_msgs/CompressedImage'])
         self._include_topics = TopicSet(include)
+        self._exclude_topics = TopicSet(exclude)
         # map from topic to desired encoding of the raw images (one of the strings in sensor_msgs/image_encodings.h)
         self.desired_encodings = desired_encodings if desired_encodings is not None else {}
-        self.is_dtype_byteorder_bigendian = {
-            '=': sys.byteorder == 'big',  # platform native
-            '<': False,  # little endian
-            '>': True,  # big endian
-            '|': False,  # N/A
-        }
+        self.transport = transport
+        self.transport_config = transport_config if transport_config is not None else {}
 
     def filter(self, topic, msg, stamp, header):
-        try:
-            desired_encoding = self.desired_encodings.get(topic, 'passthrough')
-            raw_image = np.array(self.compressed_imgmsg_to_cv2(msg, desired_encoding))
+        transport = self.transport
+        raw_topic = topic
+        if transport is None and "/" in topic:
+            raw_topic, transport = topic.rsplit("/", 1)
 
-            img_msg = Image()
-            img_msg.header = msg.header
-            img_msg.data = raw_image.tostring()
-            img_msg.height, img_msg.width = raw_image.shape[:2]
-            img_msg.step = len(img_msg.data) / img_msg.height
-            img_msg.is_bigendian = self.is_dtype_byteorder_bigendian[raw_image.dtype.byteorder]
-            if desired_encoding != 'passthrough':
-                img_msg.encoding = desired_encoding
-            else:
-                dtype_size_str = "8" if raw_image.dtype.itemsize == 1 else "16"
-                if len(raw_image.shape) == 2 or raw_image.shape[2] == 1:
-                    img_msg.encoding = "mono" + dtype_size_str
-                elif len(raw_image.shape) == 3 and raw_image.shape[2] == 3:
-                    img_msg.encoding = "bgr" + dtype_size_str
-                elif len(raw_image.shape) == 3 and raw_image.shape[2] == 4:
-                    img_msg.encoding = "bgra" + dtype_size_str
-                else:
-                    raise RuntimeError("Could not determine output image encoding for topic %s. "
-                                       "Please, provide it manually in parameter 'desired_encodings'." % (topic,))
-            msg = img_msg
-        except RuntimeError as e:
-            print('Error converting image: ' + str(e), file=sys.stderr)
+        config = self.transport_config.get(transport, {}) if transport is not None else {}
+        raw_img, err = decode(msg, topic, config)
+        if raw_img is None:
+            print('Error converting image: ' + str(err), file=sys.stderr)
             return topic, msg, stamp, header
-        if topic.endswith("/compressed"):
-            topic = topic[:(-len("/compressed"))]
-        return topic, msg, stamp, header
 
-    @staticmethod
-    def compressed_imgmsg_to_cv2(compressed_msg, desired_encoding="passthrough"):
-        """Like CvBridge compressed_imgmsg_to_cv2, but allows reading 16-bit depth data."""
+        desired_encoding = self.desired_encodings.get(topic, 'passthrough')
+        if desired_encoding == 'passthrough':
+            return raw_topic, raw_img, stamp, header
 
-        buf = np.ndarray(shape=(1, len(compressed_msg.data)), dtype=np.uint8, buffer=compressed_msg.data)
-        # Here is the difference from the cv_bridge version
-        im = cv2.imdecode(buf, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+        compressed_fmt, compressed_depth_fmt, err = guess_any_compressed_image_transport_format(msg)
+        if compressed_fmt is None and compressed_depth_fmt is None:
+            print('Error converting image to desired encoding: ' + str(err), file=sys.stderr)
+            return raw_topic, raw_img, stamp, header
 
-        if desired_encoding == "passthrough":
-            return im
+        raw_encoding = compressed_fmt.rawEncoding if compressed_fmt is not None else compressed_depth_fmt.rawEncoding
+        if desired_encoding == raw_encoding:
+            return raw_topic, raw_img, stamp, header
 
-        src_encoding = "bgr8"
-        parts = compressed_msg.format.split(" ")
-        if parts[-1] in color_encodings:
-            src_encoding = parts[-1]
-
-        if desired_encoding == "":
-            desired_encoding = compressed_msg.format.split(";")[0]
-
-        from cv_bridge.boost.cv_bridge_boost import cvtColor2
-        return cvtColor2(im, src_encoding, desired_encoding)
+        try:
+            cv_img = self._cv.imgmsg_to_cv2(raw_img, desired_encoding)
+            return raw_topic, self._cv.cv2_to_imgmsg(cv_img, desired_encoding, raw_img.header), stamp, header
+        except CvBridgeError as e:
+            print('Error converting image to desired encoding: ' + str(e), file=sys.stderr)
+            return raw_topic, raw_img, stamp, header
 
     def __str__(self):
-        return ('%s(include=%s, desired_encodings=%r)'
-                % (self.__class__.__name__, self._include_topics, self.desired_encodings))
+        return ('%s(include=%s, exclude=%s, desired_encodings=%r, transport=%r, transport_config=%r)'
+                % (self.__class__.__name__, self._include_topics, self._exclude_topics, self.desired_encodings,
+                   self.transport, self.transport_config))
 
 
 def fix_connection_header(header, raw_msg):

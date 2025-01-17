@@ -1,0 +1,10 @@
+out_format: '{name}.cams_compressed{ext}'
+compression: lz4
+filters:
+  - CompressImages:
+      transport_params:
+        compressed:
+          jpeg_quality: 90
+          png_level: 5
+        compressedDepth:
+          format: rvl
