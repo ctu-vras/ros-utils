@@ -1,10 +1,18 @@
-# Removes topics that contain large sensory outputs (camera images and pointclouds).
+# Removes topics that contain large sensory outputs (camera images, pointclouds and messages over 100 kB).
 out_format: '{name}.no_sensors{ext}'
 compression: lz4
 filters:
   - TopicTypes:
-      exclude:
+      exclude_types:
         - sensor_msgs/CompressedImage
         - sensor_msgs/Image
+        - sensor_msgs/LaserScan
         - sensor_msgs/PointCloud
         - sensor_msgs/PointCloud2
+  - Topics:
+      exclude_topics:
+        - /os_node/lidar_packets
+        - /rosout
+        - /rosout_agg
+  - MessageSize:
+      size_limit: 100000
