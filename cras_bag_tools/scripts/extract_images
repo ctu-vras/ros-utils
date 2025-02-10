@@ -357,7 +357,7 @@ class Parser(argparse.ArgumentParser):
                            help="Framerate of the output video. If not specified, it matches the input framerate. "
                                 "If it is slower/faster, it just affects duration of the video, i.e. no frames are "
                                 "dropped or duplicated.")
-            p.add_argument("-s", "--speedup", default=1.0, type=float, doc="Speedup factor of the videos.")
+            p.add_argument("-s", "--speedup", default=1.0, type=float, help="Speedup factor of the videos.")
             p.add_argument("-p", "--pix-fmt", type=str, default="",
                            help="ffmpeg pixel format of the output video. If not specified or empty, a sensible "
                                 "default is used.")
