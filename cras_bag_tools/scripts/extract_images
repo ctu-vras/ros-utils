@@ -303,6 +303,7 @@ class Parser(argparse.ArgumentParser):
                                " codec configuration might not be respected (e.g. JPEG compression level etc.). "
                                "--force-decode disables this fast path and forces the image to go through the "
                                "transcoding, respecting all output codec configuration.")
+        self.add_argument("-s", "--speedup", default=1.0, type=float, help="Speedup factor of the videos.")
 
         usage = self._image_parser.usage
         self._image_parser.usage = argparse.SUPPRESS
@@ -405,7 +406,8 @@ class Parser(argparse.ArgumentParser):
         a = argparse.Namespace(type=part[0])
         part = part[1:]
 
-        p = self.create_subparser(is_video=a.type == "--video")
+        is_video = a.type == "--video"
+        p = self.create_subparser(is_video)
         a, part = p.parse_known_args(part, a)
 
         if not a.topic:
@@ -419,6 +421,8 @@ class Parser(argparse.ArgumentParser):
         a.compression = int(a.compression) if a.compression is not None else default_compression
         a.force_decode = bool(a.force_decode) or bool(args.force_decode)
         a.normalize_range = bool(a.normalize_range) or bool(args.normalize_range)
+        if is_video:
+            a.speedup = float(a.speedup) or float(args.speedup)
 
         # out_format can be empty string, but in that case, we want images, so it is okay
         a.is_video = a.out_format in video_formats
@@ -426,7 +430,7 @@ class Parser(argparse.ArgumentParser):
             a.in_fps = float(a.in_fps) if a.in_fps is not None and a.in_fps != '' else 0
             a.out_fps = float(a.out_fps) if a.out_fps is not None and a.out_fps != '' else 0
 
-        if a.is_video and a.type != "--video":
+        if a.is_video and not is_video:
             self.error("Non-video format passed to --video: %s." % (a.out_format,))
 
         return a
