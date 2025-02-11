@@ -207,8 +207,8 @@ broken_video_pipes = dict()
 """ffmpeg pipes that got broken."""
 
 
-def open_video_pipe(cv_msg, format, out_file, in_fps=25.0, in_pix_fmt='rgb24', out_fps=None, out_pix_fmt='yuvj420p',
-                    compression=None, in_params="", out_params="", verbose=False):
+def open_video_pipe(cv_msg, format, out_file, in_fps=25.0, in_pix_fmt='rgb24', out_fps=None, speedup=None,
+                    out_pix_fmt='yuvj420p', compression=None, in_params="", out_params="", verbose=False):
     """Run ffmpeg as a subprocess and open a pipe on its stdin."""
     codec = default_video_encoders[format]
     command = [
@@ -233,6 +233,8 @@ def open_video_pipe(cv_msg, format, out_file, in_fps=25.0, in_pix_fmt='rgb24', o
     if len(out_params) > 0:
         command += out_params.split(" ")
 
+    if speedup is not None and speedup > 1 + 1e-6:
+        command.extend(['-filter:v', 'setpts={0:f}*PTS'.format(1.0 / speedup)])
     if out_fps is not None:
         command.extend(['-r', '%.2f' % (out_fps,)])
     if compression is not None and codec in video_compression_params:
@@ -303,7 +305,10 @@ class Parser(argparse.ArgumentParser):
                                " codec configuration might not be respected (e.g. JPEG compression level etc.). "
                                "--force-decode disables this fast path and forces the image to go through the "
                                "transcoding, respecting all output codec configuration.")
-        self.add_argument("-s", "--speedup", default=1.0, type=float, help="Speedup factor of the videos.")
+        self.add_argument("-s", "--speedup", default=1.0, type=float,
+                          help="Speedup factor of the videos. If in_fps * speedup exceeds out_fps, frames are dropped "
+                               "to satisfy the output FPS. If out_fps is not specified, it is the same as in_fps.")
+        self.add_argument("--out-fps", type=float, required=False, help="Default output video FPS.")
 
         usage = self._image_parser.usage
         self._image_parser.usage = argparse.SUPPRESS
@@ -357,8 +362,10 @@ class Parser(argparse.ArgumentParser):
             p.add_argument("-o", "--out-fps", type=float, required=False,
                            help="Framerate of the output video. If not specified, it matches the input framerate. "
                                 "If it is slower/faster, it just affects duration of the video, i.e. no frames are "
-                                "dropped or duplicated.")
-            p.add_argument("-s", "--speedup", default=1.0, type=float, help="Speedup factor of the videos.")
+                                "dropped or duplicated (unless speedup is specified, too).")
+            p.add_argument("-s", "--speedup", type=float, required=False,
+                           help="Speedup factor of the video. If in_fps * speedup exceeds out_fps, frames are dropped "
+                                "to satisfy the output FPS. If out_fps is not specified, it is the same as in_fps.")
             p.add_argument("-p", "--pix-fmt", type=str, default="",
                            help="ffmpeg pixel format of the output video. If not specified or empty, a sensible "
                                 "default is used.")
@@ -421,14 +428,14 @@ class Parser(argparse.ArgumentParser):
         a.compression = int(a.compression) if a.compression is not None else default_compression
         a.force_decode = bool(a.force_decode) or bool(args.force_decode)
         a.normalize_range = bool(a.normalize_range) or bool(args.normalize_range)
-        if is_video:
-            a.speedup = float(a.speedup) or float(args.speedup)
 
         # out_format can be empty string, but in that case, we want images, so it is okay
         a.is_video = a.out_format in video_formats
         if a.is_video:
             a.in_fps = float(a.in_fps) if a.in_fps is not None and a.in_fps != '' else 0
-            a.out_fps = float(a.out_fps) if a.out_fps is not None and a.out_fps != '' else 0
+            default_out_fps = float(args.out_fps) if args.out_fps is not None and args.out_fps != '' else 0
+            a.out_fps = float(a.out_fps) if a.out_fps is not None and a.out_fps != '' else default_out_fps
+            a.speedup = float(a.speedup) if a.speedup is not None else float(args.speedup)
 
         if a.is_video and not is_video:
             self.error("Non-video format passed to --video: %s." % (a.out_format,))
@@ -514,7 +521,7 @@ def main():
                 topics[topic] = [parser.parse_topic_args((video_arg, topic), args)]
 
         if args.verbose:
-            num_images = bag.get_message_count(topics.keys())
+            num_images = bag.get_message_count(list(topics.keys()))
             print("Extracting %i messages from %s into %s on the following topics:" % (
                 num_images, args.bag_file, args.output_dir))
             for t in topics:
@@ -598,13 +605,13 @@ def main():
                             config.in_fps = config.in_fps if config.in_fps is not None else None
                             if config.in_fps == 0:
                                 topic_info = get_topic_info(bag)
-                                config.in_fps = config.speedup * float(topic_info[topic].frequency) \
+                                config.in_fps = float(topic_info[topic].frequency) \
                                     if topic_info[topic].frequency is not None else None
                             if config.in_fps is None:
                                 config.in_fps = 25.0
                             config.out_fps = config.out_fps if config.out_fps is not None else None
                             if config.out_fps == 0:
-                                config.out_fps = config.in_fps / config.speedup
+                                config.out_fps = config.in_fps
                             config.out_pix_fmt = config.pix_fmt if config.pix_fmt else DEFAULT_PIX_FMT
                             if args.verbose:
                                 out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
@@ -616,8 +623,9 @@ def main():
                                     config.out_pix_fmt))
                             video_out_pipes[pipe_name] = open_video_pipe(
                                 cv_img, config.out_format, out_file, config.in_fps, pix_fmt, config.out_fps,
-                                config.out_pix_fmt, config.compression, os.environ.get("FFMPEG_IN_PARAMS", ""),
-                                os.environ.get("FFMPEG_OUT_PARAMS", ""), args.verbose)
+                                config.speedup, config.out_pix_fmt, config.compression,
+                                os.environ.get("FFMPEG_IN_PARAMS", ""), os.environ.get("FFMPEG_OUT_PARAMS", ""),
+                                args.verbose)
 
                         try:
                             if pipe_name not in broken_video_pipes:
