@@ -6,9 +6,10 @@
 
 import importlib
 
+import genpy
 from dynamic_reconfigure.msg import Config, BoolParameter, DoubleParameter, IntParameter, StrParameter
 
-from .string_utils import STRING_TYPE
+from .string_utils import BufferStringIO, STRING_TYPE
 
 
 __pkg_modules = dict()
@@ -108,3 +109,37 @@ def dict_to_dynamic_config_msg(d):
         elif isinstance(value, STRING_TYPE):
             c.strs.append(StrParameter(key, value))
     return c
+
+
+def msg_to_raw(msg):  # type: (genpy.Message) -> (str, bytes, str, type)
+    """Converts a message to raw representation.
+
+    :param msg: The message to convert.
+    :return: ROS datatype (as string), the raw bytes, md5sum of the datatype, ROS datatype (Python type)
+    """
+    datatype = msg.__class__._type
+    md5sum = msg.__class__._md5sum
+    pytype = msg.__class__
+    msg_to_raw_buffer = BufferStringIO()
+    msg.serialize(msg_to_raw_buffer)
+    data = msg_to_raw_buffer.getvalue()
+    return datatype, data, md5sum, pytype
+
+
+def raw_to_msg(datatype, data, md5sum, pytype):
+    """Convert a raw message representation to a ROS message
+
+    :param str datatype: The ROS datatype as string.
+    :param bytes data: The raw data.
+    :param str md5sum: The MD5 sum of the datatype.
+    :param type pytype: The ROS datatype (Python type).
+    :return: The message instance.
+    :rtype: genpy.Message
+    :raises RuntimeError: If pytype does not match datatype and md5sum.
+    """
+    if pytype._type != datatype or pytype._md5sum != md5sum:
+        raise RuntimeError(
+            "The provided Python type %r does not match the ROS datatype %s/%s" % (pytype, datatype, md5sum))
+    msg = pytype()
+    msg.deserialize(data)
+    return msg

@@ -13,6 +13,8 @@ from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
     logerr_once_identical, logfatal_once_identical, log_once_identical_functions
 
 from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module
+from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module, \
+    msg_to_raw, raw_to_msg
 
 from .node_utils import Node
 

@@ -20,6 +20,7 @@
   <build_depend>sensor_msgs</build_depend>
 
   <exec_depend>dynamic_reconfigure</exec_depend>
+  <exec_depend>genpy</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>language-pack-en</exec_depend>  <!-- Needed to get en_US.UTF-8 locale -->
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-enum34</exec_depend>

@@ -7,7 +7,8 @@
 
 import unittest
 
-from cras import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module
+from cras import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module, \
+    msg_to_raw, raw_to_msg
 
 
 class MessageUtils(unittest.TestCase):
@@ -98,6 +99,26 @@ class MessageUtils(unittest.TestCase):
         self.assertEqual(config.strs[0].value, "str")
 
         self.assertEqual(dict_to_dynamic_config_msg(config), config)
+
+    def test_msg_to_raw(self):
+        from std_msgs.msg import Int32
+        msg = Int32()
+        msg.data = 0x42
+        datatype, raw, md5sum, pytype = msg_to_raw(msg)
+        self.assertEqual(datatype, "std_msgs/Int32")
+        self.assertEqual(md5sum, Int32._md5sum)
+        self.assertEqual(pytype, Int32)
+        self.assertEqual(b'\x42\x00\x00\x00', raw)
+
+    def test_raw_to_msg(self):
+        from std_msgs.msg import Int32
+        datatype = "std_msgs/Int32"
+        md5sum = Int32._md5sum
+        pytype = Int32
+        raw = b'\x42\x00\x00\x00'
+        msg = raw_to_msg(datatype, raw, md5sum, pytype)
+        self.assertIsInstance(msg, Int32)
+        self.assertEqual(msg.data, 0x42)
 
 
 if __name__ == '__main__':
