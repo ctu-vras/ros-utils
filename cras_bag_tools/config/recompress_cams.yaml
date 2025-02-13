@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
-out_format: '{name}.cams_compressed{ext}'
+out_format: '{name}.cams_recompressed{ext}'
 compression: lz4
+bags:
+  - "/media/data/bags/spot_arm_visual_data.bag"
 filters:
+  - DecompressImages: []
   - CompressImages:
       transport_params:
         compressed:
-          jpeg_quality: 90
-          png_level: 5
+          jpeg_quality: 50
+          png_level: 9
         compressedDepth:
           format: rvl

@@ -5,6 +5,7 @@
 
 import ctypes
 import locale
+import math
 import os
 import re
 
@@ -133,6 +134,22 @@ def to_str(obj):
             return braces[0] + ", ".join(items) + braces[1]
         except TypeError:  # obj is not iterable
             return str(obj)
+
+
+__filesize_suffixes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+
+
+def pretty_file_size(size):
+    """Convert a file size in Bytes to a human-friendly string representation.
+
+    Copied from https://stackoverflow.com/a/25613067/1076564 (CC BY-SA 4.0).
+
+    :param int size: The size in bytes.
+    :return: The human-friendly string representation.
+    :rtype: str
+    """
+    order = int(math.log2(size) / 10) if size else 0
+    return '{:.4g} {}'.format(size / (1 << (order * 10)), __filesize_suffixes[order])
 
 
 __iconv_open = None

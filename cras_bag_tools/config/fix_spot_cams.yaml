@@ -1,8 +1,11 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 out_format: '{name}.cams_fixed{ext}'
 compression: lz4
 filters:
   - FixSpotCams:
-      include:
+      include_topics:
         - /spot/camera/back/image/compressed
         - /spot/camera/frontleft/image/compressed
         - /spot/camera/frontright/image/compressed

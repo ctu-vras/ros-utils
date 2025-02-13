@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
-out_format: '{name}.tf{ext}'
+out_format: '{name}.preview{ext}'
 compression: lz4
-merge_initial_static_tf: True
 filters:
-  - Topics:
-      include_topics:
-        - /tf
-        - /tf_static
+  - DepthImagePreview:
+      normalize: True
+      # num_normalization_samples: 0.03
