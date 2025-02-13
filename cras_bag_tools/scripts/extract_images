@@ -47,22 +47,21 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import errno
-from collections import defaultdict
 import cv2
+import errno
+import numpy as np
 import os
 import re
+import subprocess
 import sys
+from collections import defaultdict
 
 import rosbag
 import rospy
-from sensor_msgs.msg import Image
-import subprocess
-from cv_bridge import CvBridge
-import numpy as np
-
 from cras_bag_tools import TqdmBag
+from cv_bridge import CvBridge
 from image_transport_codecs import decode, get_compressed_image_content
+from sensor_msgs.msg import Image
 
 
 DEFAULT_VIDEO_ENCODING = "rgb8"  # one of `color_encodings`
