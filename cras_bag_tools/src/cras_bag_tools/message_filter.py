@@ -47,8 +47,7 @@ DeserializedFilterResult = Union[None, DeserializedMessageData, List[Deserialize
 
 
 class MessageFilter(object):
-    """
-    Base class for message filters. Do not implement this directly: instead implement either RawMessageFilter or
+    """Base class for message filters. Do not implement this directly: instead implement either RawMessageFilter or
     DeserializeMessageFilter.
 
     The workflow of the filters is as follows:

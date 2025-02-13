@@ -1,20 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 
 import os
-import time
-import catkin_pkg.package
-catkin_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-catkin_package = catkin_pkg.package.parse_package(os.path.join(catkin_dir, catkin_pkg.package.PACKAGE_MANIFEST_FILENAME))
+os.environ['CRAS_DOCS_COMMON_SPHINX_PACKAGE_PATH'] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-project = catkin_package.name
-copyright = time.strftime("%Y") + ', Czech Technical University in Prague'
-author = ", ".join([a.name for a in catkin_package.authors])
-version = catkin_package.version
-release = catkin_package.version
+# By default, the ctu-vras theme will be used. To use your custom theme, set
+# CRAS_DOCS_COMMON_SPHINX_THEME_PATH and CRAS_DOCS_COMMON_SPHINX_HTML_THEME
 
-extensions = ['sphinx.ext.autodoc']
-
-master_doc = 'index'
-autoclass_content = 'both'
-
-html_theme = 'default'
+# include the master configuration
+from cras_docs_common.sphinx_docs_conf import *
