@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+"""Script that filters a bag file using a sequence of message filters."""
+
 from __future__ import absolute_import, division, print_function
 
 import argparse
-import copy
 
 import os
 import sys
+
 import yaml
 from argparse import ArgumentParser
 from glob import glob
@@ -18,26 +23,20 @@ except ImportError:
     from io import BytesIO as StringIO
 
 import rosbag
-import rospy
-import rospy.names
-from cras_bag_tools import TopicSet, TqdmBag
-from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, YUV422
-from cv_bridge import CvBridge, CvBridgeError
-from image_transport_codecs import decode, encode
-from image_transport_codecs.compressed_depth_codec import has_rvl
-from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
-from sensor_msgs.msg import CompressedImage, Image
-
-
-def is_sequence(o):
-    return isinstance(o, (list, tuple))
-
-
-def dict_as_kwargs(d, sep='='):
-    return ', '.join('%s%s%s' % (k, sep, v) for k, v in d.items())
+from cras import pretty_file_size
+from cras_bag_tools.bag_filter import filter_bag
+from cras_bag_tools.message_filter import FilterChain, MessageFilter, get_filters
+from cras_bag_tools.tqdm_bag import TqdmBag
 
 
 def out_path(path, fmt):
+    """Resolve output path template.
+
+    :param str path: Path of the current bag file.
+    :param str fmt: The output name template.
+    :return: The output path.
+    :rtype: str
+    """
     dirname, basename = os.path.split(path)
     name, ext = os.path.splitext(basename)
     out = fmt.format(dirname=dirname, name=name, ext=ext)
@@ -48,676 +47,44 @@ def out_path(path, fmt):
     return out
 
 
-msg_to_raw_buffer = StringIO()
-
-
-def msg_to_raw(msg):
-    datatype = msg.__class__._type
-    md5sum = msg.__class__._md5sum
-    pytype = msg.__class__
-    msg_to_raw_buffer.seek(0)
-    msg_to_raw_buffer.truncate(0)
-    msg.serialize(msg_to_raw_buffer)
-    data = msg_to_raw_buffer.getvalue()
-    return datatype, data, md5sum, pytype
-
-
-def raw_to_msg(datatype, data, md5sum, pytype):
-    msg = pytype()
-    msg.deserialize(data)
-    return msg
-
-
-class MessageFilter(object):
-
-    def __init__(self, is_raw, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
-                 min_stamp=None, max_stamp=None):
-        self.is_raw = is_raw
-        self._include_topics = TopicSet(include_topics)
-        self._exclude_topics = TopicSet(exclude_topics)
-        self._include_types = TopicSet(include_types)
-        self._exclude_types = TopicSet(exclude_types)
-        self._min_stamp = min_stamp
-        self._max_stamp = max_stamp
-
-    def __call__(self, *args, **kwargs):
-        return self.filter(*args, **kwargs)
-
-    def consider_message(self, topic, datatype, stamp, header):
-        """This function should be called before calling filter(). If it returns False, filter() should not be called
-        and the original message should be used instead.
-
-        :param str topic:
-        :param str datatype:
-        :param Time stamp:
-        :param dict header:
-        :return: Whether filter() should be called.
-        :rtype: bool
-        """
-        if self._min_stamp is not None and stamp < self._min_stamp:
-            return False
-        if self._max_stamp is not None and stamp > self._max_stamp:
-            return False
-        if self._include_topics and topic not in self._include_topics:
-            return False
-        if self._exclude_topics and topic in self._exclude_topics:
-            return False
-        if self._include_types and datatype not in self._include_types:
-            return False
-        if self._exclude_types and datatype in self._exclude_types:
-            return False
-        return True
-
-    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
-        """Connection filter passed to Bag.read_messages().
-
-        :param topic:
-        :param datatype:
-        :param md5sum:
-        :param msg_def:
-        :param header:
-        :return: If False, the topic will not be read from the input bag.
-        :rtype: bool
-        """
-        return True
-
-    def topic_filter(self, topic):
-        """Filter of topics to be read from the bag file.
-
-        :param topic:
-        :return: If False, the topic will not be read from the input bag.
-        :rtype: bool
-        """
-        return True
-
-    @staticmethod
-    def from_config(cfg):
-        if cfg is None:
-            return None
-        # Assume cfg is either a filter config or a sequence of such configs.
-        # If it is a sequence, construct filter chain.
-        if is_sequence(cfg):
-            return FilterChain([MessageFilter.from_config(d) for d in cfg])
-        # Assume one of the following filter config structures:
-        # {class: [args, kwargs]}.
-        # {class: kwargs}.
-        assert len(cfg) == 1
-        k, v = list(cfg.items())[0]
-        if is_sequence(v):
-            args = v[0] if len(v) >= 1 else ()
-            kwargs = v[1] if len(v) >= 2 else {}
-        else:
-            args = ()
-            kwargs = v
-        # Eval in the current environment.
-        f = eval(k)(*args, **kwargs)
-        return f
-
-    def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__, self._str_params())
-
-    def _str_params(self):
-        parts = []
-        if self.is_raw:
-            parts.append('raw')
-        if self._include_topics:
-            parts.append('include_topics=%s' % str(self._include_topics))
-        if self._exclude_topics:
-            parts.append('exclude_topics=%s' % str(self._exclude_topics))
-        if self._include_types:
-            parts.append('include_types=%s' % str(self._include_types))
-        if self._exclude_types:
-            parts.append('exclude_types=%s' % str(self._exclude_types))
-        if self._min_stamp:
-            parts.append('min_stamp=%s' % str(self._min_stamp))
-        if self._max_stamp:
-            parts.append('max_stamp=%s' % str(self._max_stamp))
-        return ",".join(parts)
-
-
-class RawMessageFilter(MessageFilter):
-    def __init__(self, *args, **kwargs):
-        super(RawMessageFilter, self).__init__(True, *args, **kwargs)
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        raise NotImplementedError
-
-
-class DeserializedMessageFilter(MessageFilter):
-    def __init__(self, *args, **kwargs):
-        super(DeserializedMessageFilter, self).__init__(False, *args, **kwargs)
-
-    def filter(self, topic, msg, stamp, header):
-        raise NotImplementedError
-
-
-class Passthrough(RawMessageFilter):
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-
-class FilterChain(RawMessageFilter):
-    def __init__(self, filters):
-        super(FilterChain, self).__init__()
-        self.filters = filters
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        # print(topic)
-        msg = None
-        last_was_raw = True
-        for f in self.filters:
-            # print(f)
-            if not f.consider_message(topic, datatype, stamp, header):
-                continue
-            if f.is_raw:
-                if not last_was_raw:
-                    datatype, data, md5sum, pytype = msg_to_raw(msg)
-                ret = f(topic, datatype, data, md5sum, pytype, stamp, header)
-                if ret is None:
-                    return None
-                topic, datatype, data, md5sum, pytype, stamp, header = ret
-                last_was_raw = True
-            else:
-                if last_was_raw:
-                    msg = raw_to_msg(datatype, data, md5sum, pytype)
-                ret = f(topic, msg, stamp, header)
-                if ret is None:
-                    return None
-                topic, msg, stamp, header = ret
-                datatype = msg.__class__._type  # needed in consider_message() above
-                last_was_raw = False
-        if not last_was_raw:
-            datatype, data, md5sum, pytype = msg_to_raw(msg)
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
-        for f in self.filters:
-            if not f.connection_filter(topic, datatype, md5sum, msg_def, header):
-                return False
-        return True
-
-    def topic_filter(self, topic):
-        for f in self.filters:
-            if not f.topic_filter(topic):
-                return False
-        return True
-
-    def __str__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(str(f) for f in self.filters))
-
-    def __iadd__(self, other):
-        if other is None:
-            return self
-        assert isinstance(other, MessageFilter)
-        if isinstance(other, FilterChain):
-            self.filters += other.filters
-            return self
-
-        self.filters.append(other)
-        return self
-
-    def __add__(self, other):
-        if other is None:
-            return self
-        assert isinstance(other, MessageFilter)
-        if isinstance(other, FilterChain):
-            return FilterChain(self.filters + other.filters)
-        return FilterChain(self.filters + [other.filters])
-
-
-class SetFields(DeserializedMessageFilter):
-    def __init__(self, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
-                 min_stamp=None, max_stamp=None, **kwargs):
-        super(SetFields, self).__init__(
-            include_topics, exclude_topics, include_types, exclude_types, min_stamp, max_stamp)
-        self.field_values = kwargs
-
-    def filter(self, topic, msg, stamp, header):
-        for k, v in self.field_values.items():
-            if k not in msg.__slots__:
-                continue
-            setattr(msg, k, v)
-        return topic, msg, stamp, header
-
-    def _str_params(self):
-        parts = []
-        params = dict_as_kwargs(self.field_values)
-        if len(params) > 0:
-            parts.append(params)
-        parent_params = super(SetFields, self)._str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ",".join(parts)
-
-
-class FixHeader(DeserializedMessageFilter):
-    def __init__(self, frame_id="", frame_id_prefix="", frame_id_suffix="", stamp_from_receive_time=False,
-                 stamp_offset=0.0, *args, **kwargs):
-        super(FixHeader, self).__init__(*args, **kwargs)
-        self.frame_id = frame_id
-        self.frame_id_prefix = frame_id_prefix
-        self.frame_id_suffix = frame_id_suffix
-        self.stamp_from_receive_time = stamp_from_receive_time
-        self.stamp_offset = rospy.Duration(stamp_offset)
-
-    def filter(self, topic, msg, stamp, header):
-        if len(msg.__slots__) == 0 or msg.__slots__[0] != 'header':
-            return topic, msg, stamp, header
-
-        if len(self.frame_id) > 0:
-            msg.header.frame_id = self.frame_id
-        else:
-            if len(self.frame_id_prefix) > 0:
-                msg.header.frame_id = self.frame_id_prefix + msg.header.frame_id
-            if len(self.frame_id_suffix) > 0:
-                msg.header.frame_id += self.frame_id_suffix
-
-        if self.stamp_from_receive_time:
-            msg.header.stamp = stamp
-        msg.header.stamp += self.stamp_offset
-
-        return topic, msg, stamp, header
-
-    def _str_params(self):
-        parts = []
-        if len(self.frame_id) > 0:
-            parts.append('frame_id=' + self.frame_id)
-        if len(self.frame_id_prefix) > 0:
-            parts.append('frame_id_prefix=' + self.frame_id_prefix)
-        if len(self.frame_id_suffix) > 0:
-            parts.append('frame_id_suffix='  +self.frame_id_suffix)
-        if self.stamp_from_receive_time:
-            parts.append('stamp_from_receive_time')
-        if self.stamp_offset != rospy.Duration(0, 0):
-            parts.append('stamp_offset=' + self.stamp_offset)
-        parent_params = super(FixHeader, self)._str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ",".join(parts)
-
-
-class Remap(RawMessageFilter):
-    def __init__(self, **kwargs):
-        super(Remap, self).__init__(include_topics=kwargs.keys())
-        self.remap = kwargs
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        return self.remap.get(topic, topic), datatype, data, md5sum, pytype, stamp, header
-
-    def _str_params(self):
-        return dict_as_kwargs(self.remap, '=>')
-
-
-class Throttle(RawMessageFilter):
-    def __init__(self, **kwargs):
-        super(Throttle, self).__init__(include_topics=kwargs.keys())
-        self.hz = kwargs
-        self.prev_t = {}
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        t = stamp.to_sec()
-        if topic in self.prev_t:
-            period = t - self.prev_t[topic]
-            if period <= 0.:
-                return None
-            hz = 1. / period
-            if hz > self.hz[topic]:
-                return None
-        self.prev_t[topic] = t
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-    def _str_params(self):
-        return dict_as_kwargs(self.hz, '@')
-
-
-class Topics(RawMessageFilter):
-    def __init__(self, include_topics=None, exclude_topics=None):
-        super(Topics, self).__init__()
-        # do not use _include_topics and _exclude_topics here as they would not allow the filter to reject the messages
-        self.include = TopicSet(include_topics)
-        self.exclude = TopicSet(exclude_topics)
-
-    def topic_filter(self, topic):
-        if self.include and topic not in self.include:
-            return False
-        if self.exclude and topic in self.exclude:
-            return False
-        return True
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        # The filtering is done in topic_filter()
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-    def _str_params(self):
-        params = []
-        if self.include:
-            params.append('include_topics=' + str(self.include))
-        if self.exclude:
-            params.append('exclude_topics=' + str(self.exclude))
-        return ", ".join(params)
-
-
-class TopicTypes(RawMessageFilter):
-    def __init__(self, include_types=None, exclude_types=None):
-        super(TopicTypes, self).__init__()
-        # do not use _include_types and _exclude_types here as they would not allow the filter to reject the messages
-        self.include = TopicSet(include_types)
-        self.exclude = TopicSet(exclude_types)
-
-    def connection_filter(self, topic, datatype, md5sum, msg_def, header):
-        if self.include and datatype not in self.include:
-            return False
-        if self.exclude and datatype in self.exclude:
-            return False
-        return True
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        # The filtering is done in connection_filter()
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-    def _str_params(self):
-        params = []
-        if self.include:
-            params.append('include_types=' + str(self.include))
-        if self.exclude:
-            params.append('exclude_types=' + str(self.exclude))
-        return ", ".join(params)
-
-
-class Transforms(DeserializedMessageFilter):
-    def __init__(self, include_parents=(), exclude_parents=(), include_children=(), exclude_children=(),
-                 change=None, include_topics=None, exclude_topics=None, min_stamp=None, max_stamp=None):
-        super(Transforms, self).__init__(
-            include_topics=include_topics if include_topics is not None else ['/tf', '/tf_static'],
-            exclude_topics=exclude_topics, include_types=['tf2_msgs/TFMessage'],
-            min_stamp=min_stamp, max_stamp=max_stamp)
-        self.include_parents = TopicSet(include_parents)
-        self.exclude_parents = TopicSet(exclude_parents)
-        self.include_children = TopicSet(include_children)
-        self.exclude_children = TopicSet(exclude_children)
-        self.change = change if change is not None else {}
-        self.changed_parents = TopicSet(self.change.keys())
-
-    def filter(self, topic, msg, stamp, header):
-        if self.include_parents:
-            msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id in self.include_parents]
-        if self.exclude_parents:
-            msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id not in self.exclude_parents]
-        if self.include_children:
-            msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id in self.include_children]
-        if self.exclude_children:
-            msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id not in self.exclude_children]
-        if len(self.change) > 0:
-            for transform in msg.transforms:
-                if transform.header.frame_id in self.changed_parents:
-                    if transform.child_frame_id in self.change[transform.header.frame_id]:
-                        changes = self.change[transform.header.frame_id][transform.child_frame_id]
-                        if 'translation' in changes:
-                            transform.translation.x = float(changes['translation'].get('x', transform.translation.x))
-                            transform.translation.y = float(changes['translation'].get('y', transform.translation.y))
-                            transform.translation.z = float(changes['translation'].get('z', transform.translation.z))
-                        if 'rotation' in changes:
-                            transform.rotation.x = float(changes['rotation'].get('x', transform.rotation.x))
-                            transform.rotation.y = float(changes['rotation'].get('y', transform.rotation.y))
-                            transform.rotation.z = float(changes['rotation'].get('z', transform.rotation.z))
-                            transform.rotation.w = float(changes['rotation'].get('w', transform.rotation.w))
-                        if 'frame_id' in changes:
-                            transform.header.frame_id = changes['frame_id']
-                        if 'child_frame_id' in changes:
-                            transform.child_frame_id = changes['child_frame_id']
-        if not msg.transforms:
-            return None
-        return topic, msg, stamp, header
-
-    def _str_params(self):
-        parts = []
-        if self.include_parents:
-            parts.append('include_parents=' + str(self.include_parents))
-        if self.exclude_parents:
-            parts.append('exclude_parents=' + str(self.exclude_parents))
-        if self.include_children:
-            parts.append('include_children=' + str(self.include_children))
-        if self.exclude_children:
-            parts.append('exclude_children=' + str(self.exclude_children))
-        if len(self.change) > 0:
-            parts.append('change=%r' % (self.change,))
-        parent_params = super(Transforms, self)._str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ",".join(parts)
-
-
-class FixSpotCams(RawMessageFilter):
-    def __init__(self, *args, **kwargs):
-        super(FixSpotCams, self).__init__(*args, **kwargs)
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        header["message_definition"] = CompressedImage._full_text
-        header["md5sum"] = md5sum = CompressedImage._md5sum
-        header["type"] = datatype = CompressedImage._type
-        pytype = CompressedImage
-
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-
-class MessageSize(RawMessageFilter):
-    def __init__(self, size_limit, *args, **kwargs):
-        super(MessageSize, self).__init__(*args, **kwargs)
-        self.size_limit = size_limit
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        if len(data) > self.size_limit:
-            return None
-
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-    def _str_params(self):
-        params = ["size=%d B" % self.size_limit]
-        parent_params = super(MessageSize, self)._str_params()
-        if len(parent_params) > 0:
-            params.append(parent_params)
-        return ",".join(params)
-
-
-class MakeLatched(RawMessageFilter):
-    def __init__(self, *args, **kwargs):
-        super(MakeLatched, self).__init__(*args, **kwargs)
-
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        header["latching"] = "1"
-        return topic, datatype, data, md5sum, pytype, stamp, header
-
-
-class CompressImages(DeserializedMessageFilter):
-    def __init__(self, only_color=False, only_depth=False, transport=None, transport_params=None,
-                 transport_mapping=None, format_mapping=None, *args, **kwargs):
-        if 'include_types' in kwargs:
-            del kwargs['include_types']
-        super(CompressImages, self).__init__(include_types=['sensor_msgs/Image'], *args, **kwargs)
-        self._cv = CvBridge()
-
-        self.only_color = only_color
-        self.only_depth = only_depth
-
-        self.transport = transport
-        self.transport_mapping = transport_mapping if transport_mapping is not None else {}
-        self.transport_params = transport_params if transport_params is not None else {}
-        # map of the raw images' encoding parameter to output image format
-        self.format_mapping = format_mapping if format_mapping is not None else {}
-
-    def filter(self, topic, msg, stamp, header):
-        enc = msg.encoding
-        is_color = isColor(enc) or isMono(enc) or isBayer(enc) or enc == YUV422
-        is_depth = isDepth(enc)
-
-        if (self.only_color and not is_color) or (self.only_depth and not is_depth):
-            return topic, msg, stamp, header
-
-        transport = ("compressedDepth" if is_depth else "compressed") if self.transport is None else self.transport
-        transport = self.transport_mapping.get(enc, transport)
-
-        compressed_msg, compressed_topic, err = self.get_image_for_transport(msg, topic, transport)
-        # If encoding using compressedDepth fails, try with compressed
-        if compressed_msg is None and transport == "compressedDepth":
-            transport = "compressed"
-            compressed_msg, compressed_topic, err = self.get_image_for_transport(msg, topic, transport)
-
-        if compressed_msg is None:
-            print('Error converting image: ' + str(err), file=sys.stderr)
-            return topic, msg, stamp, header
-
-        return compressed_topic, compressed_msg, stamp, header
-
-    def get_image_for_transport(self, msg, topic, transport):
-        compressed_topic = rospy.names.ns_join(topic, transport)
-
-        config = self.transport_params.get(transport, {})
-        if msg.encoding in self.format_mapping:
-            config = copy.deepcopy(config)
-            config["format"] = self.format_mapping[msg.encoding]
-        # 16-bit images cannot be compressed to JPEG
-        if transport == "compressed" and bitDepth(msg.encoding) > 8:
-            config["format"] = "png"
-        # Melodic doesn't have RVL
-        if transport == "compressedDepth" and not has_rvl():
-            config["format"] = "png"
-
-        compressed_msg, err = encode(msg, compressed_topic, config)
-
-        return compressed_msg, compressed_topic, err
-
-    def _str_params(self):
-        parts = []
-        if self.only_color:
-            parts.append('only_color')
-        if self.only_depth:
-            parts.append('only_depth')
-        if self.transport:
-            parts.append('transport=' + self.transport)
-        if len(self.transport_params) > 0:
-            parts.append('transport_params=%r' % (self.transport_params,))
-        if len(self.transport_mapping) > 0:
-            parts.append('transport_mapping=%r' % (self.transport_mapping,))
-        if len(self.format_mapping) > 0:
-            parts.append('format_mapping=%r' % (self.format_mapping,))
-        parent_params = super(CompressImages, self)._str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ",".join(parts)
-
-
-class DecompressImages(DeserializedMessageFilter):
-    def __init__(self, include_types=None, desired_encodings=None, transport=None, transport_config=None,
-                 *args, **kwargs):
-        super(DecompressImages, self).__init__(
-            include_types=include_types if include_types is not None else ['sensor_msgs/CompressedImage'],
-            *args, **kwargs)
-
-        self._cv = CvBridge()
-
-        # map from topic to desired encoding of the raw images (one of the strings in sensor_msgs/image_encodings.h)
-        self.desired_encodings = desired_encodings if desired_encodings is not None else {}
-        self.transport = transport
-        self.transport_config = transport_config if transport_config is not None else {}
-
-    def filter(self, topic, msg, stamp, header):
-        transport = self.transport
-        raw_topic = topic
-        if transport is None and "/" in topic:
-            raw_topic, transport = topic.rsplit("/", 1)
-
-        config = self.transport_config.get(transport, {}) if transport is not None else {}
-        raw_img, err = decode(msg, topic, config)
-        if raw_img is None:
-            print('Error converting image: ' + str(err), file=sys.stderr)
-            return topic, msg, stamp, header
-
-        desired_encoding = self.desired_encodings.get(topic, 'passthrough')
-        if desired_encoding == 'passthrough':
-            return raw_topic, raw_img, stamp, header
-
-        compressed_fmt, compressed_depth_fmt, err = guess_any_compressed_image_transport_format(msg)
-        if compressed_fmt is None and compressed_depth_fmt is None:
-            print('Error converting image to desired encoding: ' + str(err), file=sys.stderr)
-            return raw_topic, raw_img, stamp, header
-
-        raw_encoding = compressed_fmt.rawEncoding if compressed_fmt is not None else compressed_depth_fmt.rawEncoding
-        if desired_encoding == raw_encoding:
-            return raw_topic, raw_img, stamp, header
-
-        try:
-            cv_img = self._cv.imgmsg_to_cv2(raw_img, desired_encoding)
-            return raw_topic, self._cv.cv2_to_imgmsg(cv_img, desired_encoding, raw_img.header), stamp, header
-        except CvBridgeError as e:
-            print('Error converting image to desired encoding: ' + str(e), file=sys.stderr)
-            return raw_topic, raw_img, stamp, header
-
-    def _str_params(self):
-        parts = []
-        if len(self.desired_encodings):
-            parts.append('desired_encodings=%r' % (self.desired_encodings,))
-        if self.transport:
-            parts.append('transport=' + self.transport)
-        if len(self.transport_config) > 0:
-            parts.append('transport_config=%r' % (self.transport_config,))
-        parent_params = super(DecompressImages, self)._str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ",".join(parts)
-
-
-def fix_connection_header(header, raw_msg):
-    datatype, _, md5sum, pytype = raw_msg
-    header["message_definition"] = pytype._full_text
-    header["md5sum"] = md5sum
-    header["type"] = datatype
-    return header
-
-
-def filter_bag(bag, out, filter=Passthrough()):
-    topics = [c.topic for c in bag._get_connections()]  # get all topics
-    topics = [t for t in topics if filter.topic_filter(t)]  # apply topic filters
-    topics = [c.topic for c in bag._get_connections(topics, filter.connection_filter)]  # apply connection filters
-
-    connection_filter = filter.connection_filter
-    for topic, msg, stamp, header in bag.read_messages(
-            topics=topics, return_connection_header=True, raw=filter.is_raw, connection_filter=connection_filter):
-        # Apply filter chain, discard message if None is returned.
-        if filter.is_raw:
-            datatype, data, md5sum, _, pytype = msg
-            if filter.consider_message(topic, datatype, stamp, header):
-                ret = filter(topic, datatype, data, md5sum, pytype, stamp, header)
-                if ret is None:
-                    continue
-                topic, datatype, data, md5sum, pytype, stamp, header = ret
-        else:
-            if filter.consider_message(topic, msg.__class__._type, stamp, header):
-                ret = filter(topic, msg, stamp, header)
-                if ret is None:
-                    continue
-                topic, msg, stamp, header = ret
-            datatype, data, md5sum, pytype = msg_to_raw(msg)
-        raw_msg = (datatype, data, md5sum, pytype)
-        # make sure connection header corresponds to the actual data type of the message
-        # (if some filter forgot to update it)
-        header = fix_connection_header(header, raw_msg)
-        out.write(topic, raw_msg, stamp, connection_header=header, raw=True)
-
-
 def copy_params_if_any(bag_path, out_bag_path):
+    """If the bagfile has a sidecar parameters file named $BAG.params, copy this file to the out path.
+
+    :param str bag_path: Source bag path.
+    :param out_bag_path: Output bag path.
+    """
     try:
         copyfile(bag_path + '.params', out_bag_path + '.params')
+        print('Params: %s copied to %s.' % (bag_path + '.params', out_bag_path + '.params'))
     except (OSError, IOError) as ex:
-        print('Params (%s) not found.' % (bag_path + '.params'))
+        print('Params: %s not found.' % (bag_path + '.params'))
 
 
-def filter_bags(bags, out_format, compression, filter):
+def filter_bags(bags, out_format, compression, copy_params, filter):
+    """Filter all given bags using the given filter.
+
+    :param list bags: The bags to filter.
+    :param str out_format: Output path template.
+    :param str compression: Output bag compression. One of 'rosbag.Compression.*' constants.
+    :param bool copy_params: If True, copy parameters file along with the bag file if it exists.
+    :param MessageFilter filter: The filter to apply.
+    """
+    i = 0
     for bag_path in bags:
+        i += 1
         out_bag_path = out_path(bag_path, out_format)
-        copy_params_if_any(bag_path, out_bag_path)
         print()
-        print('Source:      %s' % bag_path)
-        print('Destination: %s' % out_bag_path)
+        print("[{}/{}] Bag {}".format(i, len(bags), bag_path))
+        print('Source:      %s' % (os.path.abspath(bag_path),))
+        if not os.path.exists(bag_path):
+            print('Source bag does not exist', file=sys.stderr)
+            continue
+        print('- Size: %s' % (pretty_file_size(os.path.getsize(bag_path)),))
+        print('Destination: %s' % (os.path.abspath(out_bag_path),))
+        print('- Compression: %s' % (compression,))
+        if copy_params:
+            copy_params_if_any(bag_path, out_bag_path)
+        print()
         with TqdmBag(bag_path, skip_index=True) as bag, rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
             bag.read_index()
             filter_bag(bag, out, filter)
@@ -725,64 +92,102 @@ def filter_bags(bags, out_format, compression, filter):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('bags', nargs='+')
-    parser.add_argument('-i', '--incl-topics', nargs='+')
-    parser.add_argument('-e', '--excl-topics', nargs='+')
-    parser.add_argument('--throttle', '--hz', nargs='+')
-    parser.add_argument('--incl-tf-parents', nargs='+')
-    parser.add_argument('--excl-tf-parents', nargs='+')
-    parser.add_argument('--incl-tf-children', nargs='+')
-    parser.add_argument('--excl-tf-children', nargs='+')
-    parser.add_argument('-c', '--config', nargs='+')
-    parser.add_argument('-o', '--out-format')
+    parser.add_argument('bags', nargs='*', help="The bag files to filter.")
+    parser.add_argument('-c', '--config', nargs='+', help="YAML configs of filters")
+    parser.add_argument('-o', '--out-format', default=argparse.SUPPRESS,
+                        help='Template for naming the output bag. Defaults to "{name}.proc{ext}"')
     parser.add_argument('--lz4', dest='compression', action='store_const', const=rosbag.Compression.LZ4,
                         help="Compress the bag via LZ4")
     parser.add_argument('--bz2', dest='compression', action='store_const', const=rosbag.Compression.BZ2,
                         help="Compress the bag via BZ2 (space-efficient, but very slow)")
     parser.add_argument('-f', '--filters', nargs='+', help=argparse.SUPPRESS)
+    parser.add_argument('--no-copy-params', dest='copy_params', action='store_false',
+                        help="If set, no .params file will be copied.")
+    parser.add_argument("--list-yaml-keys", dest="list_yaml_keys", action="store_true",
+                        help="Print a list of all available YAML top-level keys provided by filters.")
+    parser.add_argument("--list-filters", dest="list_filters", action="store_true",
+                        help="Print a list of all available filters.")
+
+    loaded_filters = get_filters()
+    unique_filters = set(loaded_filters.values())
+    for f in unique_filters:
+        if hasattr(f, 'add_cli_args'):
+            getattr(f, 'add_cli_args')(parser)
+
+    default_yaml_keys = ['bags', 'out_format', 'compression', 'filters']
+
+    if "--list-filters" in sys.argv:
+        for f in unique_filters:
+            print("{}: {}".format(".".join([f.__module__, f.__name__]), f.__doc__))
+            if f.__init__.__doc__ is not None:
+                print(f.__init__.__doc__)
+        sys.exit(0)
+
+    if "--list-yaml-keys" in sys.argv:
+        print("Global:")
+        for arg in default_yaml_keys:
+            print("  {}".format(arg))
+        for f in unique_filters:
+            if hasattr(f, 'yaml_config_args'):
+                args = getattr(f, 'yaml_config_args')()
+                if len(args) > 0:
+                    print("{}: {}".format(".".join([f.__module__, f.__name__]), f.__doc__))
+                    for arg in args:
+                        print("  {}".format(arg))
+        sys.exit(0)
+
     args = parser.parse_args()
+
     print()
     print('Command-line arguments:')
     for k, v in sorted(vars(args).items(), key=lambda kv: kv[0]):
         if v is not None:
             print('%s: %s' % (k, v))
-    if args.throttle:
-        topics = args.throttle[0:]
-        hz = [float(hz) for hz in args.throttle[1:]]
-        args.throttle = dict(zip(topics, hz))
-    else:
-        args.throttle = {}
+
     if args.config is None:
         args.config = []
     args.config = [list(glob(config)) for config in args.config]
     args.config = sum(args.config, [])
+
+    print()
+    print('YAML arguments:')
+    yaml_keys = list(default_yaml_keys)
+    for f in unique_filters:
+        if hasattr(f, 'yaml_config_args'):
+            yaml_keys.extend(getattr(f, 'yaml_config_args')())
     for config in args.config:
         with open(config, 'r') as f:
             cfg = yaml.safe_load(f)
-            for key in ['bags', 'out_format', 'compression',
-                        'incl_topics', 'excl_topics', 'throttle',
-                        'incl_tf_parents', 'excl_tf_parents',
-                        'incl_tf_children', 'excl_tf_children',
-                        'filters']:
-                if args.__getattribute__(key) is None and key in cfg:
-                    args.__setattr__(key, cfg[key])
-    # Parse command-line args, also for backward compatibility.
+            for key in yaml_keys:
+                if key not in cfg:
+                    continue
+                if not hasattr(args, key) or getattr(args, key) is None or \
+                        (isinstance(getattr(args, key), list) and len(getattr(args, key)) == 0):
+                    setattr(args, key, cfg[key])
+                    if key != "filters":
+                        print("{}: {}".format(key, cfg[key]))
+
+    # Process command-line args
     filters = []
-    if args.incl_topics or args.excl_topics:
-        filters.append(Topics(include_topics=args.incl_topics, exclude_topics=args.excl_topics))
-    if args.throttle:
-        filters.append(Throttle(**args.throttle))
-    if args.incl_tf_parents or args.excl_tf_parents or args.incl_tf_children or args.excl_tf_children:
-        filters.append(Transforms(include_parents=args.incl_tf_parents, exclude_parents=args.excl_tf_parents,
-                                  include_children=args.incl_tf_children, exclude_children=args.excl_tf_children))
+    for f in unique_filters:
+        if hasattr(f, 'process_cli_args'):
+            getattr(f, 'process_cli_args')(filters, args)
+
     filter = FilterChain(filters) + MessageFilter.from_config(args.filters)
+    if len(filter.filters) == 0:
+        print("No filters defined, exiting.", file=sys.stderr)
+        sys.exit(1)
+
     print()
     print('Filters:')
     print('\n'.join(str(f) for f in filter.filters))
+
     if args.compression is None:
         args.compression = rosbag.Compression.NONE
+    if "out_format" not in args or args.out_format is None:
+        args.out_format = "{name}.proc{ext}"
 
-    filter_bags(args.bags, args.out_format, args.compression, filter)
+    filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter)
 
 
 if __name__ == '__main__':

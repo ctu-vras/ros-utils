@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 # Removes topics that contain large sensory outputs (camera images, pointclouds and messages over 100 kB).
 out_format: '{name}.no_sensors{ext}'
 compression: lz4
@@ -14,5 +17,5 @@ filters:
         - /os_node/lidar_packets
         - /rosout
         - /rosout_agg
-  - MessageSize:
+  - MaxMessageSize:
       size_limit: 100000
