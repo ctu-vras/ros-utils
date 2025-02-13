@@ -2,6 +2,9 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.4.8 (2025-01-07)
 ------------------
 * Added GetParamConvertingOptions() to ease defining converting getParam() that works with GCC 7.

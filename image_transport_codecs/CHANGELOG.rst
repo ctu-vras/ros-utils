@@ -2,6 +2,12 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed RVL decoder incorrectly marking some images as malformed.
+  Apparently, the compression ratio can get better that 5:1 (happens mostly in images with large NaN areas).
+* Contributors: Martin Pecka
+
 2.4.8 (2025-01-07)
 ------------------
 * Improved compatibility with newer compilers.

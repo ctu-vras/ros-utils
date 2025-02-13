@@ -2,6 +2,9 @@
 Changelog for package tf_static_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.4.8 (2025-01-07)
 ------------------
 

@@ -382,11 +382,11 @@ cv::Mat CompressedDepthCodec::decodeRVL(const std::vector<uint8_t>& compressed) 
   }
 
   // Sanity check - the best compression ratio is 4x; we leave some buffer, so we check whether the output image would
-  // not be more than 100x larger than the compressed one. If it is, we probably received corrupted data.
-  // The condition should be "numPixels * 2 > compressed.size() * 100" (because each pixel is 2 bytes), but to prevent
+  // not be more than 500x larger than the compressed one. If it is, we probably received corrupted data.
+  // The condition should be "numPixels * 2 > compressed.size() * 500" (because each pixel is 2 bytes), but to prevent
   // overflow, we have canceled out the *2 from both sides of the inequality.
   const auto numPixels = static_cast<uint64_t>(rows) * cols;
-  if (numPixels > std::numeric_limits<int>::max() || numPixels > static_cast<uint64_t>(compressed.size()) * 50)
+  if (numPixels > std::numeric_limits<int>::max() || numPixels > static_cast<uint64_t>(compressed.size()) * 250)
   {
     CRAS_ERROR_THROTTLE(1.0, "Received malformed RVL-encoded image. It reports size %ux%u.", cols, rows);
     return cv::Mat(0, 0, CV_16UC1);

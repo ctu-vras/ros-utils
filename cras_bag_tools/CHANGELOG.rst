@@ -2,6 +2,17 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* filter_bag: Split into a reusable module, added more filters and example configs.
+* topic_set: Support iteration over TopicSet.
+* extract_images: Support global speedup setting.
+* filter_bag: Refactor.
+* filter_bag: Rewritten to use image_transport_codecs 
+* Added extract_images 
+* Added filter_bag 
+* Contributors: Martin Pecka
+
 2.4.8 (2025-01-07)
 ------------------
 

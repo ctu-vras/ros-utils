@@ -2,6 +2,17 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* plugin_utils: Fixed Python 2.7 compatibility.
+* Added plugin_utils.
+* string_utils: Added pretty_file_size()
+* message_utils: Added msg_to_raw and raw_to_msg
+* Fixed dependencies.
+* image_encodings: Added isDepth().
+* Added image_encodings.py and distortion_models.py .
+* Contributors: Martin Pecka
+
 2.4.8 (2025-01-07)
 ------------------
 

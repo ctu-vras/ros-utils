@@ -2,6 +2,9 @@
 Changelog for package cras_docs_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.4.8 (2025-01-07)
 ------------------
 
