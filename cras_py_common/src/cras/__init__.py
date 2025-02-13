@@ -12,7 +12,6 @@ from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
     log_once_identical, logdebug_once_identical, loginfo_once_identical, logwarn_once_identical, \
     logerr_once_identical, logfatal_once_identical, log_once_identical_functions
 
-from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module
 from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module, \
     msg_to_raw, raw_to_msg
 
@@ -33,6 +32,6 @@ try:
 except ImportError:
     pass
 
-from .string_utils import to_str, register_to_str
+from .string_utils import to_str, register_to_str, pretty_file_size
 
 from .topic_utils import GenericMessageSubscriber
