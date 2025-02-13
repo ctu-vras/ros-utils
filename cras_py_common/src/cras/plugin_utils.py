@@ -3,6 +3,7 @@
 
 """Utilities for working with plugins defined in the `<export>` section of package.xml."""
 
+from __future__ import print_function
 
 import sys
 from typing import Iterator, Tuple
