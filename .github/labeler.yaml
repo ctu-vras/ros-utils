@@ -1,0 +1,35 @@
+camera_throttle:
+  - changed-files:
+      - any-glob-to-any-file: camera_throttle/**
+
+cras_bag_tools:
+  - changed-files:
+      - any-glob-to-any-file: cras_bag_tools/**
+
+cras_cpp_common:
+  - changed-files:
+      - any-glob-to-any-file: cras_cpp_common/**
+
+cras_docs_common:
+  - changed-files:
+      - any-glob-to-any-file: cras_docs_common/**
+
+cras_py_common:
+  - changed-files:
+      - any-glob-to-any-file: cras_py_common/**
+
+cras_topic_tools:
+  - changed-files:
+      - any-glob-to-any-file: cras_topic_tools/**
+
+image_transport_codecs:
+  - changed-files:
+      - any-glob-to-any-file: image_transport_codecs/**
+
+tf_static_publisher:
+  - changed-files:
+      - any-glob-to-any-file: tf_static_publisher/**
+
+CI:
+  - changed-files:
+      - any-glob-to-any-file: .github/**
