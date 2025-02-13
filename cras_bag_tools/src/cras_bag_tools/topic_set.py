@@ -48,6 +48,13 @@ class TopicSet(object):
             return self._trie.lookup(item.lstrip('/')) != self._marisa_invalid_key_id
         return item.lstrip('/') in self._set
 
+    def __iter__(self):
+        if self._empty:
+            return iter([])
+        if self._has_marisa:
+            return iter(self._items)
+        return iter(self._set)
+
     def __str__(self):
         return str(self._items) if not self._empty else str(set())
 
