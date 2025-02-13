@@ -15,6 +15,8 @@ from .log_utils import log, log_throttle, log_throttle_identical, log_once, \
 from .message_utils import dict_to_dynamic_config_msg, get_msg_field, get_msg_type, get_srv_types, get_cfg_module, \
     msg_to_raw, raw_to_msg
 
+from .plugin_utils import find_plugins, get_plugin_implementations
+
 from .node_utils import Node
 
 from .param_utils import get_param, get_param_verbose, GetParamException, GetParamResult, GetParamResultInfo, \
