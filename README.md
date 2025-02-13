@@ -6,6 +6,7 @@ Various ROS utilities and building blocks developed by [Center for Robotics and 
 
 Parts of this package were used by [team CTU-CRAS-Norlab in DARPA Subterranean Challenge](https://robotics.fel.cvut.cz/cras/darpa-subt/).
 
+* `cras_bag_tools`: utilities for working with BAG files, including filters and image extractor
 * `cras_cpp_common`: convenience utilities for ROS programming in C++
 * `cras_docs_common`: utilities for setting up documentation generators
 * `cras_py_common`: convenience utilities for ROS programming in Python
@@ -18,7 +19,6 @@ This package is supported on Melodic and Noetic until their End of Life (and may
 
 Development versions:
 [![CI](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml/badge.svg)](https://github.com/ctu-vras/ros-utils/actions/workflows/ci.yaml)
-[![Dev melodic](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/badge/icon?subject=melodic+ubuntu)](https://build.ros.org/job/Mdev__cras_ros_utils__ubuntu_bionic_amd64/)
 [![Dev noetic ubuntu](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/badge/icon?subject=noetic+ubuntu)](https://build.ros.org/job/Ndev__cras_ros_utils__ubuntu_focal_amd64/)
 
 Releases:
