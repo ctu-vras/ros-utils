@@ -14,6 +14,7 @@ from typing import Dict
 import rospy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
+import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
