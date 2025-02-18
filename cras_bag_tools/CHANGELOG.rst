@@ -2,8 +2,8 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.1 (2025-02-18)
+------------------
 * Fixed running on Jetsons.
 * Contributors: Martin Pecka
 
