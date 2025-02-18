@@ -2,6 +2,9 @@
 Changelog for package image_transport_codecs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.5.0 (2025-02-13)
 ------------------
 * Fixed RVL decoder incorrectly marking some images as malformed.

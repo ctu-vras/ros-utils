@@ -2,6 +2,11 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed running on Jetsons.
+* Contributors: Martin Pecka
+
 2.5.0 (2025-02-13)
 ------------------
 * filter_bag: Split into a reusable module, added more filters and example configs.
