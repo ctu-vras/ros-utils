@@ -234,7 +234,7 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   if (std::numeric_limits<char>::is_signed)
     {TRACE; test_converts<std::array<char, 3>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
   else
-    {TRACE; test_converts<std::array<char, 3>>(x, {0, 1}, true, true);}
+    {TRACE; test_not_converts<std::array<char, 3>>(x, true);}
   {TRACE; test_converts<std::array<short, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::array<long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::array<long long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
