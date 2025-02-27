@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <limits>
 #include <list>
 #include <map>
 #include <set>
@@ -69,7 +70,10 @@ TEST(XmlRpcValueUtils, ConvertBasic)
   test_converts<short>(-1, -1);  // NOLINT
   test_converts<char>(0, 0);
   test_converts<char>(1, 1);
-  test_converts<char>(-1, -1);
+  if (std::numeric_limits<char>::is_signed)
+    test_converts<char>(-1, -1);
+  else
+    test_not_converts<char>(-1, -1);
   test_converts<signed char>(0, 0);
   test_converts<signed char>(1, 1);
   test_converts<signed char>(-1, -1);
@@ -152,7 +156,10 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   x.clear(); x.setSize(3); x[0] = 0; x[1] = 1; x[2] = -1;
   {TRACE; test_converts<std::vector<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::vector<int>>(x, {0, 1, -1}, true, false);}
-  {TRACE; test_converts<std::vector<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::vector<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  else
+    {TRACE; test_converts<std::vector<char>>(x, {0, 1}, true, true);}
   {TRACE; test_converts<std::vector<short>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::vector<long>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::vector<long long>>(x, {0, 1, -1}, true, false);}  // NOLINT
@@ -168,7 +175,10 @@ TEST(XmlRpcValueUtils, ConvertArrays)
 
   {TRACE; test_converts<std::set<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::set<int>>(x, {0, 1, -1}, true, false);}
-  {TRACE; test_converts<std::set<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::set<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  else
+    {TRACE; test_converts<std::set<char>>(x, {0, 1}, true, true);}
   {TRACE; test_converts<std::set<short>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::set<long>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::set<long long>>(x, {0, 1, -1}, true, false);}  // NOLINT
@@ -184,7 +194,10 @@ TEST(XmlRpcValueUtils, ConvertArrays)
 
   {TRACE; test_converts<std::list<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::list<int>>(x, {0, 1, -1}, true, false);}
-  {TRACE; test_converts<std::list<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::list<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  else
+    {TRACE; test_converts<std::list<char>>(x, {0, 1}, true, true);}
   {TRACE; test_converts<std::list<short>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::list<long>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::list<long long>>(x, {0, 1, -1}, true, false);}  // NOLINT
@@ -200,7 +213,10 @@ TEST(XmlRpcValueUtils, ConvertArrays)
 
   {TRACE; test_converts<std::unordered_set<bool>>(x, {false, true}, true, true);}
   {TRACE; test_converts<std::unordered_set<int>>(x, {0, 1, -1}, true, false);}
-  {TRACE; test_converts<std::unordered_set<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::unordered_set<char>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  else
+    {TRACE; test_converts<std::unordered_set<char>>(x, {0, 1}, true, true);}
   {TRACE; test_converts<std::unordered_set<short>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::unordered_set<long>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::unordered_set<long long>>(x, {0, 1, -1}, true, false);}  // NOLINT
@@ -215,7 +231,10 @@ TEST(XmlRpcValueUtils, ConvertArrays)
   {TRACE; test_converts<std::unordered_set<long double>>(x, {0.0, 1.0, -1.0}, true, false);}
 
   {TRACE; test_converts<std::array<int, 3>>(x, {0, 1, -1}, true, false);}
-  {TRACE; test_converts<std::array<char, 3>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::array<char, 3>>(x, {0, 1, static_cast<char>(-1)}, true, false);}
+  else
+    {TRACE; test_converts<std::array<char, 3>>(x, {0, 1}, true, true);}
   {TRACE; test_converts<std::array<short, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::array<long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
   {TRACE; test_converts<std::array<long long, 3>>(x, {0, 1, -1}, true, false);}  // NOLINT
@@ -272,8 +291,12 @@ TEST(XmlRpcValueUtils, ConvertMaps)
   x.clear(); x["a"] = 0; x["b"] = 1; x["c"] = -1;
   {TRACE; test_converts<std::map<std::string, bool>>(x, {{"a", false}, {"b", true}}, true, true);}
   {TRACE; test_converts<std::map<std::string, int>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}
-  {TRACE; test_converts<std::map<std::string, char>>(
-    x, {{"a", 0}, {"b", 1}, {"c", static_cast<char>(-1)}}, true, false);}
+  if (std::numeric_limits<char>::is_signed)
+    {TRACE; test_converts<std::map<std::string, char>>(
+      x, {{"a", 0}, {"b", 1}, {"c", static_cast<char>(-1)}}, true, false);}
+  else
+    {TRACE; test_converts<std::map<std::string, char>>(
+      x, {{"a", 0}, {"b", 1}}, true, true);}
   {TRACE; test_converts<std::map<std::string, short>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT
   {TRACE; test_converts<std::map<std::string, long>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT
   {TRACE; test_converts<std::map<std::string, long long>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT
@@ -289,8 +312,12 @@ TEST(XmlRpcValueUtils, ConvertMaps)
 
   {TRACE; test_converts<std::unordered_map<std::string, bool>>(x, {{"a", false}, {"b", true}}, true, true);}
   {TRACE; test_converts<std::unordered_map<std::string, int>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}
-  {TRACE; test_converts<std::unordered_map<std::string, char>>(
-    x, {{"a", 0}, {"b", 1}, {"c", static_cast<char>(-1)}}, true, false);}
+  // if (std::numeric_limits<char>::is_signed)
+  //   {TRACE; test_converts<std::unordered_map<std::string, char>>(
+  //     x, {{"a", 0}, {"b", 1}, {"c", static_cast<char>(-1)}}, true, false);}
+  // else
+  //   {TRACE; test_converts<std::unordered_map<std::string, char>>(
+  //     x, {{"a", 0}, {"b", 1}}, true, true);}
   {TRACE; test_converts<std::unordered_map<std::string, short>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT
   {TRACE; test_converts<std::unordered_map<std::string, long>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT
   {TRACE; test_converts<std::unordered_map<std::string, long long>>(x, {{"a", 0}, {"b", 1}, {"c", -1}}, true, false);}  // NOLINT

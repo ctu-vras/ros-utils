@@ -119,8 +119,8 @@ inline bool convert(const ::XmlRpc::XmlRpcValue& x, int& v, bool /*skipNonConver
     return true; \
   }
 
-DEFINE_INTEGRAL_CONVERT(char, int, CHAR_MIN, CHAR_MAX)
-DEFINE_INTEGRAL_CONVERT(signed char, int, CHAR_MIN, CHAR_MAX)
+DEFINE_INTEGRAL_CONVERT(char, int, std::numeric_limits<char>::min(), std::numeric_limits<char>::max())
+DEFINE_INTEGRAL_CONVERT(signed char, int, SCHAR_MIN, SCHAR_MAX)
 DEFINE_INTEGRAL_CONVERT(short, int, SHRT_MIN, SHRT_MAX)  // NOLINT
 DEFINE_INTEGRAL_CONVERT(long, int, LONG_MIN, LONG_MAX)  // NOLINT
 DEFINE_INTEGRAL_CONVERT(long long, int, LONG_LONG_MIN, LONG_LONG_MAX)  // NOLINT
