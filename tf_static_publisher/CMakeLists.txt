@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_srvs tf2_ros
+  CATKIN_DEPENDS geometry_msgs roscpp tf2_ros
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
