@@ -4,6 +4,7 @@ project(tf_static_publisher)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
+  std_srvs
   tf2_ros
 )
 
