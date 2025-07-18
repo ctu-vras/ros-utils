@@ -11,10 +11,12 @@
 
 #include <array>
 #include <cstdarg>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -23,7 +25,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/type_utils/string_traits.hpp>
 
 namespace cras
@@ -401,17 +402,13 @@ inline ::std::string to_string(const ::std::string& value)
 #include "cras_cpp_common/string_utils/eigen.hpp"
 #endif
 
-#if __has_include(<tf2/LinearMath/Vector3.h>)
-#include "cras_cpp_common/string_utils/tf2.hpp"
-#endif
+//#if __has_include(<tf2/LinearMath/Vector3.h>)
+//#include "cras_cpp_common/string_utils/tf2.hpp"
+//#endif
 
-#if __has_include(<ros/ros.h>)
-#include "cras_cpp_common/string_utils/ros.hpp"
-#endif
-
-#if __has_include(<xmlrpcpp/XmlRpcValue.h>)
-#include "cras_cpp_common/string_utils/xmlrpc.hpp"
-#endif
+//#if __has_include(<ros/ros.h>)
+//#include "cras_cpp_common/string_utils/ros.hpp"
+//#endif
 
 namespace cras
 {
@@ -993,7 +990,7 @@ private:
 ::std::string iconvConvert(
   const ::std::string& toEncoding, const ::std::string& fromEncoding, const ::std::string& inText,
   bool translit = false, bool ignore = false, double initialOutbufSizeScale = 1.0, double outbufEnlargeCoef = 2.0,
-  const ::cras::optional<::std::string>& localeName = ::cras::nullopt);
+  const ::std::optional<::std::string>& localeName = ::std::nullopt);
 
 /**
  * \brief Transliterate the given string from UTF-8 to ASCII (replace non-ASCII chars by closest ASCII chars).
@@ -1014,6 +1011,6 @@ private:
  *                               is specified.
  */
 ::std::string toValidRosName(const ::std::string& text, bool baseName = true,
-  const ::cras::optional<::std::string>& fallbackName = ::cras::nullopt);
+  const ::std::optional<::std::string>& fallbackName = ::std::nullopt);
 
 }

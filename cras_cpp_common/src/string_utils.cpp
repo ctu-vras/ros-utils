@@ -19,8 +19,10 @@
 #include <algorithm>
 #include <cctype>
 #include <clocale>
+#include <cmath>
 #include <iconv.h>
 #include <limits>
+#include <optional>
 #include <regex>
 #include <string>
 #include <sstream>
@@ -28,8 +30,8 @@
 #include <utility>
 #include <vector>
 
-#include <ros/console.h>
-#include <rosconsole/macros_generated.h>
+//#include <ros/console.h>
+//#include <rosconsole/macros_generated.h>
 
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/string_utils/from_chars.h>
@@ -39,7 +41,8 @@ namespace cras
 
 void warnLeadingSlash(const std::string& s)
 {
-  ROS_WARN_STREAM("Found initial slash in " << s);
+  // TODO ROS 2 logging
+  //  ROS_WARN_STREAM("Found initial slash in " << s);
 }
 
 void stripLeading(std::string& s, const char& c)
@@ -518,7 +521,7 @@ thread_local std::unordered_map<std::pair<std::string, std::string>, iconv_t, pa
 std::string iconvConvert(const std::string& toEncoding, const std::string& fromEncoding, const std::string& inText,
                          const bool translit, bool ignore,
                          const double initialOutbufSizeScale, const double outbufEnlargeCoef,
-                         const cras::optional<std::string>& localeName)
+                         const std::optional<std::string>& localeName)
 {
   if (outbufEnlargeCoef <= 1.0)
     throw std::invalid_argument("outbufEnlargeCoef has to be strictly larger than 1.0");
@@ -616,7 +619,7 @@ std::string transliterateToAscii(const std::string& text)
 }
 
 std::string toValidRosName(
-  const std::string& text, const bool baseName, const cras::optional<std::string>& fallbackName)
+  const std::string& text, const bool baseName, const std::optional<std::string>& fallbackName)
 {
   if ((baseName && isLegalBaseName(text)) || (!baseName && isLegalName(text)))
     return text;

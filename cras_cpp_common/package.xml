@@ -13,46 +13,19 @@
   <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
   <url type="repository">https://github.com/ctu-vras/ros-utils</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>bondcpp</depend>
-  <depend>diagnostic_msgs</depend>
-  <depend>diagnostic_updater</depend>
-  <depend>dynamic_reconfigure</depend>
-  <depend>filters</depend>
-  <depend>geometry_msgs</depend>
-  <depend>liburdfdom-headers-dev</depend>
-  <depend>nodelet</depend>
-  <depend>roscpp</depend>
-  <depend>rosconsole</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>topic_tools</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
 
-  <build_depend>boost</build_depend>
-  <build_depend>class_loader</build_depend>
-  <build_depend>eigen</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>rosgraph_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf2_eigen</build_depend>
-  <build_depend>tf2_geometry_msgs</build_depend>
-  <build_depend>tf2_sensor_msgs</build_depend>
-  
-  <build_export_depend>boost</build_export_depend>
-  <build_export_depend>class_loader</build_export_depend>
-  <build_export_depend>eigen</build_export_depend>
-  <build_export_depend>pluginlib</build_export_depend>
-
-  <test_depend condition="$ROS_PYTHON_VERSION == 2">python-catkin-lint</test_depend>
-  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-catkin-lint</test_depend>
-  <test_depend>roslaunch</test_depend>
-  <test_depend>roslint</test_depend>
-  <test_depend>rostest</test_depend>
+<!--  <test_depend>python3-catkin-lint</test_depend>-->
+<!--  <test_depend>roslaunch</test_depend>-->
+<!--  <test_depend>roslint</test_depend>-->
+<!--  <test_depend>rostest</test_depend>-->
 
   <export>
     <rosdoc config="rosdoc.yaml" />
+    <build_type>ament_cmake</build_type>
   </export>
 
 </package>

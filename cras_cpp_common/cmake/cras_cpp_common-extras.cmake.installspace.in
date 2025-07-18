@@ -1,4 +1,0 @@
-# Append cmake modules from source directory to the cmake module path
-list(APPEND CMAKE_MODULE_PATH "${cras_cpp_common_DIR}/../../../@CATKIN_PACKAGE_SHARE_DESTINATION@/cmake/Modules")
-cmake_policy(SET CMP0022 NEW)
-add_compile_options(-DXMLRPCPP_HAS_PRINTTO=@XMLRPCPP_HAS_PRINTTO@)
