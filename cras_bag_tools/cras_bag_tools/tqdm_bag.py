@@ -4,7 +4,7 @@
 """Bag file reader that shows progressbars when loading index or reading messages."""
 
 import os
-import rosbag
+import rosbag2_py
 from tqdm import tqdm
 
 

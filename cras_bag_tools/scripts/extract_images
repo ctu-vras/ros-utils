@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
@@ -43,9 +43,6 @@ rosrun cras_bag_tools extract_images spot_2022-10-27-10-35-46.video.bag . \
 </pre>
 """
 
-from __future__ import division
-from __future__ import print_function
-
 import argparse
 import cv2
 import errno
@@ -56,12 +53,15 @@ import subprocess
 import sys
 from collections import defaultdict
 
-import rosbag
-import rospy
-from cras_bag_tools import TqdmBag
+import rosbag2_py
+import rclpy
+import rclpy.time
+from rclpy.serialization import deserialize_message
+from rosidl_runtime_py.utilities import get_message
+# from cras_bag_tools import TqdmBag
 from cv_bridge import CvBridge
-from image_transport_codecs import decode, get_compressed_image_content
-from sensor_msgs.msg import Image
+# from image_transport_codecs import decode, get_compressed_image_content
+from sensor_msgs.msg import Image, CompressedImage
 
 
 DEFAULT_VIDEO_ENCODING = "rgb8"  # one of `color_encodings`
@@ -97,10 +97,10 @@ max_bit_depth["hdr"] = 32
 
 
 bit_depth_to_dtype = {
-    1: np.bool,
+    1: np.bool_,
     8: np.uint8,
     16: np.uint16,
-    32: np.float,
+    32: np.float64,
 }
 """Numpy dtypes corresponding to the given bit depths."""
 
@@ -190,12 +190,14 @@ def convert_image(im, raw_encoding, topic_config):
 
 
 def decode_compressed(compressed_msg, topic):
-    raw, err = decode(compressed_msg, topic)
-
-    if raw is None:
-        print(err, file=sys.stderr)
-
-    return raw
+    # TODO
+    raise NotImplementedError()
+    # raw, err = decode(compressed_msg, topic)
+    #
+    # if raw is None:
+    #     print(err, file=sys.stderr)
+    #
+    # return raw
 
 
 video_out_pipes = dict()
@@ -374,7 +376,7 @@ class Parser(argparse.ArgumentParser):
     def _get_formatter(self):
         return HelpFormatter(self._image_parser, self._video_parser, prog=self.prog)
 
-    def parse_args(self, sys_args, namespace=None):
+    def parse_args(self, sys_args=None, namespace=None):
         # This method splits the CLI arguments to parts divided by --image and --video. The first part is treated as
         # global options and the other parts are passed to image/video subparsers. This structure with repeated use
         # of the subparsers is not supported by the standard argparse subparser logic.
@@ -455,37 +457,25 @@ def get_filename(bag, config, topic, msg=None, t=None, msg_num=None):
         name_pattern += ".{format}"
 
     if msg is not None:
-        stamp = msg.header.stamp if hasattr(msg, "header") else rospy.Time(t)
+        stamp = msg.header.stamp if hasattr(msg, "header") else rclpy.time.Time(nanoseconds=t)
     else:
         # if msg is None, we want to get just a template that is not dependent on a particular message data, so we
         # escape the substitutions by doubling the curly braces
         name_pattern = re.sub(r'{secs[^}]*}', r'{\g<0>}', name_pattern)
         name_pattern = re.sub(r'{nsecs[^}]*}', r'{\g<0>}', name_pattern)
         name_pattern = re.sub(r'{msg_num[^}]*}', r'{\g<0>}', name_pattern)
-        stamp = rospy.Time(0)
+        stamp = rclpy.time.Time(seconds=0, nanoseconds=0)
 
     filename = name_pattern.format(
         bag=bag, topic=topic.replace("/", "_").lstrip("_"), format=config.out_format,
-        secs=stamp.secs, nsecs=stamp.nsecs, msg_num=msg_num)
+        secs=stamp.sec, nsecs=stamp.nanosec, msg_num=msg_num)
 
     return filename
 
 
-__topic_info = None
-"""Cached topic info for the bag file."""
-
-
-def get_topic_info(bag):
-    """Lazy getter of topic info (which might take time to read).
-
-    :param rosbag.Bag bag: The bag file to get topic info from.
-    :return: The topic info.
-    :rtype: tuple
-    """
-    global __topic_info
-    if __topic_info is None:
-        __topic_info = bag.get_type_and_topic_info().topics
-    return __topic_info
+def get_compressed_image_content(msg, topic, out_format):
+    # TODO
+    return msg, None
 
 
 def main():
@@ -506,21 +496,33 @@ def main():
 
     basename = os.path.splitext(os.path.basename(args.bag_file))[0]
 
-    bag_class = TqdmBag if args.progress else rosbag.Bag
-    with bag_class(args.bag_file, "r") as bag:
+    # bag_class = TqdmBag if args.progress else rosbag2_py.SequentialReader
+    bag_class = rosbag2_py.SequentialReader
+    reader = bag_class()
+    storage_options = rosbag2_py.StorageOptions(uri=args.bag_file, storage_id='mcap')
+    converter_options = rosbag2_py.ConverterOptions('', '')
+    reader.open(storage_options, converter_options)
+    reader.get_metadata()
+    if True:
+        topic_info = {t.name: t for t in reader.get_all_topics_and_types()}
+        topics_with_message_count = {t.topic_metadata.name: t for t in reader.get_metadata().topics_with_message_count}
+
         # If no topics were specified, select all image topics
         if len(topics) == 0:
-            topic_info = get_topic_info(bag)
-            image_topics = [t for t in topic_info if topic_info[t].msg_type
-                            in ("sensor_msgs/Image", "sensor_msgs/CompressedImage")]
+            image_topics = [t for t in topic_info if topic_info[t].type
+                            in ("sensor_msgs/msg/Image", "sensor_msgs/msg/CompressedImage")]
             is_video = args.out_format.lower() in video_formats
             video_arg = "--video" if is_video else "--image"
             for topic in image_topics:
                 # configure each image topic as if just its name was given and no optional arguments
                 topics[topic] = [parser.parse_topic_args((video_arg, topic), args)]
 
+        reader.set_filter(rosbag2_py.StorageFilter(list(topics.keys())))
+
         if args.verbose:
-            num_images = bag.get_message_count(list(topics.keys()))
+            num_images = 0
+            for topic in topics:
+                num_images += topics_with_message_count[topic].message_count
             print("Extracting %i messages from %s into %s on the following topics:" % (
                 num_images, args.bag_file, args.output_dir))
             for t in topics:
@@ -530,14 +532,17 @@ def main():
 
         msg_nums = defaultdict(lambda: -1)
         reported_outputs = set()
-        for topic, msg, t in bag.read_messages(topics=tuple(topics.keys())):
+        while reader.has_next():
+            topic, data, t = reader.read_next()
             if topic not in topics:  # Should not happen, but to be sure
                 continue
             msg_nums[topic] += 1
+            msg_type = topic_info[topic].type
+            msg = deserialize_message(data, get_message(msg_type))
             for config_num, config in enumerate(topics[topic]):
                 try:
                     # If we get e.g. a JPEG in the message and want JPEG output, just paste it directly in the file
-                    is_compressed = msg._type != Image._type
+                    is_compressed = msg_type != "std_msgs.msg.Image"
                     if is_compressed and not config.is_video and not config.force_decode and not config.normalize_range:
                         content, err = get_compressed_image_content(msg, topic, config.out_format)
                         if content is not None:
@@ -557,7 +562,7 @@ def main():
                     # Decode the (possibly compressed) image into raw bytes
                     raw_img = decode_compressed(msg, topic) if is_compressed else msg
                     if raw_img is None:
-                        rospy.logerr_throttle(1.0, "Could not decode image on topic " + topic)
+                        print("Could not decode image on topic " + topic, file=sys.stderr)
                         continue
 
                     cv_img = bridge.imgmsg_to_cv2(raw_img)
@@ -603,9 +608,9 @@ def main():
                         if pipe_name not in video_out_pipes:
                             config.in_fps = config.in_fps if config.in_fps is not None else None
                             if config.in_fps == 0:
-                                topic_info = get_topic_info(bag)
-                                config.in_fps = float(topic_info[topic].frequency) \
-                                    if topic_info[topic].frequency is not None else None
+                                config.in_fps = \
+                                    float(topics_with_message_count[topic].message_count) / reader.get_metadata().duration\
+                                    if topic in topics_with_message_count else None
                             if config.in_fps is None:
                                 config.in_fps = 25.0
                             config.out_fps = config.out_fps if config.out_fps is not None else None
@@ -655,5 +660,4 @@ def main():
 
 
 if __name__ == '__main__':
-    rospy.init_node("test")
     main()
