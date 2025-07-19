@@ -9,7 +9,6 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/extract_images
 #  scripts/filter_bag
-#  scripts/fix_msg_defs
 #  scripts/merge_bag
 #  scripts/size_per_topic
   DESTINATION lib/${PROJECT_NAME}

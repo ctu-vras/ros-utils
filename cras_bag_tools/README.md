@@ -6,15 +6,17 @@ Czech-army knife for working with ROS BAG files.
 
 Several useful functions are exported as Python submodules as module `cras_bag_tools`:
 
+<!--
 - [`bag_filter`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.bag_filter): Filter a bag file using a MessageFilter.
-- [`fix_msg_defs`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.fix_msg_defs): Fix message definitions in a bag file according to local definitions.
 - [`message_filter`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.message_filter): A message filter that can decide whether a message should be kept or not, and possibly alter it.
 - [`message_filters`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.message_filters): Implementations of common message filters.
+-->
 - [`topic_set`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.topic_set): Efficient data structure to hold a static set of topics with super-fast is-in-set queries.
 - [`tqdm_bag`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.tqdm_bag): Bag file reader that shows progressbars when loading index or reading messages.
 
 ## Scripts
 
+<!--
 ### merge_bag
 
 Merge two or more bag files into one.
@@ -40,6 +42,7 @@ Print total cumulative serialized message size per topic.
 - `BAG`: Bag file.
 - `-c`, `--csv`: Output as CSV.
 - `-a`, `--sort-alphabetical`: Sort by topic names (default is by topic sizes).
+-->
 
 ### extract_images
 
@@ -47,7 +50,7 @@ Extract image topics from bag file to image or video files.
 
 #### Usage
 
-    rosrun cras_bag_tools extract_images [-h] [--out-format OUT_FORMAT] [--verbose] bag_file output_dir [image_topics [image_topics ...]]
+    ros2 run cras_bag_tools extract_images [-h] [--out-format OUT_FORMAT] [--verbose] bag_file output_dir [image_topics [image_topics ...]]
 
 * `bag_file`: The bag to read.
 * `output_dir`: Directory where all generated files should be stored.
@@ -73,12 +76,13 @@ Extract image topics from bag file to image or video files.
 
 ```bash
 # Convert all image topics in the bag to a series of JPEG images in folder imgs/
-rosrun cras_bag_tools extract_images spot_2022-10-27-10-35-46.video.bag imgs
+ros2 run cras_bag_tools extract_images spot_2022-10-27-10-35-46 imgs
 
 # Convert topic /rviz/fixed_image/compressed to an MP4 video
-rosrun cras_bag_tools extract_images spot_2022-10-27-10-35-46.video.bag . /rviz/fixed_image/compressed:mp4:23:passthrough:25
+ros2 run cras_bag_tools extract_images spot_2022-10-27-10-35-46 . /rviz/fixed_image/compressed:mp4:23:passthrough:25
 ```
 
+<!--
 ### filter_bag
 
 Process bag files with a configured set of filters.
@@ -134,23 +138,4 @@ Other filters can be defined by 3rd-party packages via pluginlib. The package ha
 `<cras_bag_tools filters="$PACKAGE.$MODULE" />`. With this in place, `filter_bag` will search the specified module
 for all classes that subclass `cras_bag_tools.MessageFilter` and it will provide these as additional filters.
 
-### fix_msg_defs
-
-Sometimes it can happen that wrong textual definitions of messages are stored in bag files (although the MD5 sums are correct).
-Such bag files can have problems when they are processed using scripts like `rosbag` etc.
-This script fixes the definitions using the definitions from the local catkin workspace.
-
-**The fix is done inplace, so it changes the original bag file.**
-
-#### Usage
-
-    rosrun cras_bag_tools fix_msg_defs BAGFILE [TOPIC [TOPIC ...]]
-
-- `BAGFILE`: The bag file to fix.
-- `TOPIC`: Any number of topic names to fix. If not set, all topics are fixed. The topics are sensitive to the starting slash (not) being present.
-
-> **Note**
-> If there is a mismatch between the stored and local MD5 sum of the message definition, it will not be fixed and a warning will be printed.
-
-> **Note**
-> If a definition cannot be found locally for some message type, a warning will be printed and this definition will not be fixed.
+-->
