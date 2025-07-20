@@ -6,3 +6,5 @@ from .tqdm_bag import BagIterator, TqdmBag
 # from .message_filter import MessageFilter, DeserializedMessageFilter, RawMessageFilter, FilterChain, Passthrough, \
 #     filter_message, get_filters
 # from .bag_filter import filter_bag
+
+__all__ = [TopicSet, BagIterator, TqdmBag]

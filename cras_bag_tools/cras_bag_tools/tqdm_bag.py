@@ -4,17 +4,19 @@
 """Bag file reader that shows progressbars when reading messages."""
 
 import os
+from typing import Any, Generator, Optional, Union
+
 import rosbag2_py
 from tqdm import tqdm
-from typing import Optional, Tuple, Union, Any, Generator
 
 
 class BagIterator(rosbag2_py.SequentialReader):
     """Utility class for easier working with ROS2 BAG files."""
 
     def __init__(self, storage_options: Union[rosbag2_py.StorageOptions, str],
-                 converter_options: rosbag2_py.ConverterOptions = rosbag2_py.ConverterOptions("", "")):
-        """Construct the bag iterator and give it arguments for opening the bag, but do not open it yet.
+                 converter_options: rosbag2_py.ConverterOptions = rosbag2_py.ConverterOptions('', '')):
+        """
+        Construct the bag iterator and give it arguments for opening the bag, but do not open it yet.
 
         :param storage_options: Storage options.
         :param converter_options: Converter options.
@@ -30,7 +32,8 @@ class BagIterator(rosbag2_py.SequentialReader):
     def read_messages(self, topics: Optional[list[str]] = None,
                       start_time: Optional[int] = None, end_time: Optional[int] = None) -> \
             Generator[tuple[str, bytes, int], Any, None]:
-        """Iterate through messages in the bag.
+        """
+        Iterate through messages in the bag.
 
         :param topics: If nonempty, this is the list of topics to filter by.
         :param start_time: If set, this is the time of the first read message (in nanoseconds since epoch).

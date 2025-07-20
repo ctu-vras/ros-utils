@@ -15,26 +15,26 @@
 #include <cstdlib>
 #endif
 
+#include <iconv.h>
 
 #include <algorithm>
 #include <cctype>
 #include <clocale>
 #include <cmath>
-#include <iconv.h>
 #include <limits>
 #include <optional>
 #include <regex>
-#include <string>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-//#include <ros/console.h>
-//#include <rosconsole/macros_generated.h>
+// #include <ros/console.h>
+// #include <rosconsole/macros_generated.h>
 
 #include <cras_cpp_common/string_utils.hpp>
-#include <cras_cpp_common/string_utils/from_chars.h>
+#include <cras_cpp_common/string_utils/from_chars.hpp>
 
 namespace cras
 {
@@ -42,7 +42,7 @@ namespace cras
 void warnLeadingSlash(const std::string& s)
 {
   // TODO ROS 2 logging
-  //  ROS_WARN_STREAM("Found initial slash in " << s);
+  // ROS_WARN_STREAM("Found initial slash in " << s);
 }
 
 void stripLeading(std::string& s, const char& c)
@@ -218,7 +218,7 @@ std::string toLower(const std::string& str)
 }
 
 #if HAS_FROM_CHARS == 0
-template <typename T>
+template<typename T>
 inline void strtoint(const char* str, char** str_end, int base, T& result)
 {
   auto tmp = std::strtol(str, str_end, base);
@@ -253,19 +253,25 @@ inline void strtoint(const char* str, char** str_end, int base, uint64_t& result
 }
 #endif
 
-template <typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
+template<typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
 inline T parseIntegralNumber(const std::string& string, const uint8_t base)
 {
   T result{};
 
   auto cleanString = string;
   while (!cleanString.empty() && cleanString[0] == ' ')
+  {
     cras::stripLeading(cleanString, ' ');
+  }
   while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ')
+  {
     cras::stripTrailing(cleanString, ' ');
+  }
   cras::stripLeading(cleanString, '+');
   while (cleanString.length() > 1 && cleanString[0] == '0')
+  {
     cras::stripLeading(cleanString, '0');
+  }
 
 #if HAS_FROM_CHARS == 1
   auto [ptr, ec] = std::from_chars(cleanString.data(), cleanString.data() + cleanString.size(), result, base);
@@ -301,14 +307,18 @@ inline T parseIntegralNumber(const std::string& string, const uint8_t base)
   throw std::runtime_error("Unexpected case");
 }
 
-template <typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
+template<typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
 inline T parseIntegralNumber(const std::string& string)
 {
   auto cleanString = string;
   while (!cleanString.empty() && cleanString[0] == ' ')
+  {
     cras::stripLeading(cleanString, ' ');
+  }
   while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ')
+  {
     cras::stripTrailing(cleanString, ' ');
+  }
   cras::stripLeading(cleanString, '+');
 
   auto noSignString = cleanString;
@@ -427,7 +437,7 @@ uint64_t parseUInt64(const std::string& string, const uint8_t base)
   return cras::parseIntegralNumber<uint64_t>(string, base);
 }
 
-template <typename T, ::std::enable_if_t<::std::is_floating_point_v<::std::decay_t<T>>, bool> = true>
+template<typename T, ::std::enable_if_t<::std::is_floating_point_v<::std::decay_t<T>>, bool> = true>
 inline T parseFloatingNumber(const std::string& string)
 {
   T result{};
@@ -483,11 +493,11 @@ const std::regex BASE_NAME_LEGAL_CHARS_P {R"(^[A-Za-z][A-Za-z0-9_]*$)"};
 
 bool isLegalBaseName(const std::string& name)
 {
-  return std::regex_match(name,  BASE_NAME_LEGAL_CHARS_P);
+  return std::regex_match(name, BASE_NAME_LEGAL_CHARS_P);
 }
 
-TempLocale::TempLocale(const int category, const char* newLocale) :
-  category(category), oldLocale(setlocale(category, nullptr))
+TempLocale::TempLocale(const int category, const char* newLocale)
+  : category(category), oldLocale(setlocale(category, nullptr))
 {
   setlocale(category, newLocale);
 }
@@ -499,14 +509,14 @@ TempLocale::~TempLocale()
 
 namespace
 {
-template <class T> inline void hash_combine(size_t &seed, T const &v)
+template<class T> inline void hash_combine(size_t& seed, T const& v)
 {
   seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
 struct pair_hash
 {
-  template <class T1, class T2> size_t operator()(const std::pair<T1, T2> &p) const
+  template<class T1, class T2> size_t operator()(const std::pair<T1, T2>& p) const
   {
     size_t seed = 0;
     hash_combine(seed, p.first);
@@ -653,13 +663,15 @@ std::string toValidRosName(
   }
 
   while (cras::contains(name, "__"))
+  {
     cras::replace(name, "__", "_");
+  }
 
   name = std::regex_replace(name, std::regex("^[^a-zA-Z]*"), "");
   if (name.empty())
   {
     if (!fallbackName.has_value())
-        throw std::invalid_argument(cras::format("Name '%s' cannot be converted to valid ROS name", name.c_str()));
+      throw std::invalid_argument(cras::format("Name '%s' cannot be converted to valid ROS name", name.c_str()));
     return *fallbackName;
   }
 
@@ -674,4 +686,4 @@ std::string toValidRosName(
   return name;
 }
 
-};
+}

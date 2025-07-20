@@ -8,11 +8,11 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <sstream>
-#include <string>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include <sstream>
+#include <string>
 
 namespace cras
 {

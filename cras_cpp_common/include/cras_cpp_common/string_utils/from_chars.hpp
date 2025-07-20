@@ -19,7 +19,7 @@ enum chars_format
   scientific = 1 << 0,
   fixed = 1 << 2,
   hex = 1 << 3,
-  general = fixed | scientific
+  general = fixed | scientific,
 };
 
 struct from_chars_result
@@ -41,7 +41,8 @@ struct from_chars_result
  *         It is implementation specific, whether `result_out_of_range` or 0/inf will be returned for too small/large
  *         values. `ptr` points to the first character that was not parsed as a part of the numeric value.
  */
-::cras::from_chars_result from_chars(const char* first, const char* last, float& value,
+::cras::from_chars_result from_chars(
+  const char* first, const char* last, float& value,
   ::cras::chars_format fmt = ::cras::chars_format::general) noexcept;
 
 /**
@@ -57,7 +58,8 @@ struct from_chars_result
  *         It is implementation specific, whether `result_out_of_range` or 0/inf will be returned for too small/large
  *         values. `ptr` points to the first character that was not parsed as a part of the numeric value.
  */
-::cras::from_chars_result from_chars(const char* first, const char* last, double& value,
+::cras::from_chars_result from_chars(
+  const char* first, const char* last, double& value,
   ::cras::chars_format fmt = ::cras::chars_format::general) noexcept;
 
 /**
@@ -72,7 +74,8 @@ struct from_chars_result
  *         It is implementation specific, whether `result_out_of_range` or 0/inf will be returned for too small/large
  *         values. `ptr` points to the first character that was not parsed as a part of the numeric value.
  */
-inline ::cras::from_chars_result from_chars(const ::std::string& string, float& value,
+inline ::cras::from_chars_result from_chars(
+  const ::std::string& string, float& value,
   ::cras::chars_format fmt = ::cras::chars_format::general) noexcept
 {
   return ::cras::from_chars(string.data(), string.data() + string.size(), value, fmt);

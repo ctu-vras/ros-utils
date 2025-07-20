@@ -105,7 +105,7 @@ private:
  *       if the semaphore is blocked for new acquisitions), the pattern should be the following:
  *       `SemaphoreGuard&lt;ReverseSemaphore&gt; guard(sem); if (!guard.acquired()) return;
  */
-template <typename T>
+template<typename T>
 class SemaphoreGuard
 {
 public:

@@ -6,7 +6,7 @@
 /**
  * \file
  * \brief An implementation of the `std::expected` proposal.
- * 
+ *
  * `std::expected` should be used in functions that can either succeed and return a value, or fail and return an error.
  * \author Martin Pecka
  */
@@ -15,12 +15,12 @@
 
 namespace cras
 {
-  using ::tl::bad_expected_access;
-  using ::tl::expected;
-  using ::tl::in_place;
-  using ::tl::make_unexpected;
-  using ::tl::unexpect;
-  using ::tl::unexpected;
+using ::tl::bad_expected_access;
+using ::tl::expected;
+using ::tl::in_place;
+using ::tl::make_unexpected;
+using ::tl::unexpect;
+using ::tl::unexpected;
 }
 
 #include <type_traits>

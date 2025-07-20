@@ -7,4 +7,4 @@ os.environ['CRAS_DOCS_COMMON_SPHINX_PACKAGE_PATH'] = os.path.dirname(os.path.dir
 # CRAS_DOCS_COMMON_SPHINX_THEME_PATH and CRAS_DOCS_COMMON_SPHINX_HTML_THEME
 
 # include the master configuration
-from cras_docs_common.sphinx_docs_conf import *
+from cras_docs_common.sphinx_docs_conf import *  # noqa: E402, F401, F403

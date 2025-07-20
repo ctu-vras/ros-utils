@@ -7,37 +7,38 @@
  * \author Martin Pecka
  */
 
+#include <cras_cpp_common/qos.hpp>
+
+#include <rmw/qos_string_conversions.h>
+
 #include <stdexcept>
 #include <string>
 
 #include <rclcpp/duration.hpp>
 #include <rclcpp/qos.hpp>
-#include <rmw/qos_string_conversions.h>
-
-#include <cras_cpp_common/qos.h>
 
 namespace cras
 {
 
 rclcpp::QoS parseQoSPreset(const std::string& qosPreset)
 {
-  if (qosPreset == "CLOCK") {
+  if (qosPreset == "CLOCK")
     return rclcpp::ClockQoS();
-  } else if (qosPreset == "SENSOR_DATA") {
+  if (qosPreset == "SENSOR_DATA")
     return rclcpp::SensorDataQoS();
-  } else if (qosPreset == "PARAMETERS") {
+  if (qosPreset == "PARAMETERS")
     return rclcpp::ParametersQoS();
-  } else if (qosPreset == "SERVICES") {
+  if (qosPreset == "SERVICES")
     return rclcpp::ServicesQoS();
-  } else if (qosPreset == "PARAMETER_EVENTS") {
+  if (qosPreset == "PARAMETER_EVENTS")
     return rclcpp::ParameterEventsQoS();
-  } else if (qosPreset == "ROSOUT") {
+  if (qosPreset == "ROSOUT")
     return rclcpp::RosoutQoS();
-  } else if (qosPreset == "SYSTEM_DEFAULT") {
+  if (qosPreset == "SYSTEM_DEFAULT")
     return rclcpp::SystemDefaultsQoS();
-  } else if (qosPreset == "BEST_AVAILABLE") {
+  if (qosPreset == "BEST_AVAILABLE")
     return rclcpp::BestAvailableQoS();
-  }
+
   throw std::invalid_argument(std::string("Invalid QoS preset '") + qosPreset + "'");
 }
 

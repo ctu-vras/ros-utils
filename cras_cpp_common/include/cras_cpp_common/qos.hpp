@@ -9,12 +9,13 @@
  * \author Martin Pecka
  */
 
+#include <rmw/types.h>
+
 #include <optional>
 #include <string>
 
 #include <rclcpp/duration.hpp>
 #include <rclcpp/qos.hpp>
-#include <rmw/types.h>
 
 namespace cras
 {
@@ -27,12 +28,14 @@ namespace cras
  */
 ::rclcpp::QoS parseQoSPreset(const ::std::string& qosPreset);
 
-bool configureQoSProfile(::rclcpp::QoS& profile, const ::std::optional<int>& depth,
+bool configureQoSProfile(
+  ::rclcpp::QoS& profile, const ::std::optional<int>& depth,
   const ::std::optional<::std::string>& history, const ::std::optional<::std::string>& reliability,
   const ::std::optional<::std::string>& durability, const ::std::optional<::std::string>& liveliness,
   const ::std::optional<double>& livelinessLeaseDurationSeconds);
 
-void configureQoSProfile(::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
+void configureQoSProfile(
+  ::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
   const ::std::optional<::rmw_qos_history_policy_t>& history,
   const ::std::optional<::rmw_qos_reliability_policy_t>& reliability,
   const ::std::optional<::rmw_qos_durability_policy_t>& durability,

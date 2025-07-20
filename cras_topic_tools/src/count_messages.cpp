@@ -15,8 +15,8 @@
 #include <rclcpp/serialized_message.hpp>
 
 #include <cras_cpp_common/param_utils.hpp>
-#include <cras_cpp_common/qos.h>
-#include <cras_topic_tools/count_messages.h>
+#include <cras_cpp_common/qos.hpp>
+#include <cras_topic_tools/count_messages.hpp>
 #include <cras_topic_tools/generic_subscription.hpp>
 
 namespace cras

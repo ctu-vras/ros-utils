@@ -10,7 +10,7 @@
 #include <string>
 
 #include <cras_cpp_common/string_utils.hpp>
-#include <cras_cpp_common/thread_utils.h>
+#include <cras_cpp_common/thread_utils.hpp>
 
 namespace cras
 {

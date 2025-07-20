@@ -19,16 +19,14 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-#if(CATKIN_ENABLE_TESTING)
-#  find_package(roslint REQUIRED)
-#
-#  roslint_custom(catkin_lint "-W2" .)
-#
-#  # Run roslint on Python sources
-#  file(GLOB_RECURSE python_files scripts/* src/*.py)
-#  roslint_python("${python_files}")
-#
-#  roslint_add_test()
-#endif()
+if(BUILD_TESTING)
+  find_package(cras_lint REQUIRED)
+  cras_lint_common()
+  cras_lint_py(EXCLUDE
+    cras_bag_tools/bag_filter.py
+    cras_bag_tools/message_filter.py
+    cras_bag_tools/message_filters.py
+  )
+endif()
 
 ament_package()

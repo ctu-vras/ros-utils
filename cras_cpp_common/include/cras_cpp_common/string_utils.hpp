@@ -18,9 +18,9 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -154,7 +154,7 @@ enum class ReplacePosition
   START,
 
   //! \brief Act only on the end of the string.
-  END
+  END,
 };
 
 /**
@@ -165,7 +165,8 @@ enum class ReplacePosition
  * \param[in] where Where to do the replacement.
  * \return `str` with all occurrences of `from` replaced with `to`.
  */
-::std::string replace(const ::std::string& str, const ::std::string& from, const ::std::string& to,
+::std::string replace(
+  const ::std::string& str, const ::std::string& from, const ::std::string& to,
   const ::cras::ReplacePosition& where = ::cras::ReplacePosition::EVERYWHERE);
 
 /**
@@ -175,7 +176,8 @@ enum class ReplacePosition
  * \param[in] to The replacement.
  * \param[in] where Where to do the replacement.
  */
-void replace(::std::string& str, const ::std::string& from, const ::std::string& to,
+void replace(
+  ::std::string& str, const ::std::string& from, const ::std::string& to,
   const ::cras::ReplacePosition& where = ::cras::ReplacePosition::EVERYWHERE);
 
 /**
@@ -402,13 +404,13 @@ inline ::std::string to_string(const ::std::string& value)
 #include "cras_cpp_common/string_utils/eigen.hpp"
 #endif
 
-//#if __has_include(<tf2/LinearMath/Vector3.h>)
-//#include "cras_cpp_common/string_utils/tf2.hpp"
-//#endif
+// #if __has_include(<tf2/LinearMath/Vector3.h>)
+// #include "cras_cpp_common/string_utils/tf2.hpp"
+// #endif
 
-//#if __has_include(<ros/ros.h>)
-//#include "cras_cpp_common/string_utils/ros.hpp"
-//#endif
+// #if __has_include(<ros/ros.h>)
+// #include "cras_cpp_common/string_utils/ros.hpp"
+// #endif
 
 namespace cras
 {
@@ -452,7 +454,7 @@ inline ::std::string to_string(const ::std::array<T, N>& value)
   for (const auto& v : value)
   {
     ss << ::cras::quoteIfStringType(::cras::to_string(v), v);
-    if (i + 1 < value.size())ss << ", ";
+    if (i + 1 < value.size()) ss << ", ";
     ++i;
   }
   ss << ("]");
@@ -1010,7 +1012,8 @@ private:
  * \throws std::invalid_argument If the given text cannot be converted to a valid ROS name, and no `fallback_name`
  *                               is specified.
  */
-::std::string toValidRosName(const ::std::string& text, bool baseName = true,
+::std::string toValidRosName(
+  const ::std::string& text, bool baseName = true,
   const ::std::optional<::std::string>& fallbackName = ::std::nullopt);
 
 }

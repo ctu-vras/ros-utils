@@ -52,7 +52,7 @@ add_library(cras_type_traits INTERFACE)
 target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/string_traits.hpp>)
 
 add_library(cras_literal_sz INTERFACE)
-target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.h>)
+target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.hpp>)
 
 #add_library(cras_urdf_utils src/urdf_utils.cpp)
 ##catkin_lint: ignore_once external_interface_path
@@ -116,7 +116,7 @@ target_include_directories(cras_string_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_string_utils PUBLIC cras_type_traits)
-if (HAS_FROM_CHARS_FLOAT)
+if(HAS_FROM_CHARS_FLOAT)
   target_compile_definitions(cras_string_utils PRIVATE HAS_FROM_CHARS_FLOAT=1)
 endif()
 
@@ -236,13 +236,16 @@ target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp)
 #  src/nodelet_utils/stateful_nodelet.cpp)
 #target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils.hpp>)
 #target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/log_macros.h>)
-#target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/nodelet_with_diagnostics.hpp>)
+#target_sources(
+#  cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/nodelet_with_diagnostics.hpp>)
 #target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/param_helper.hpp>)
-#target_sources(cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/thread_name_updating_nodelet.hpp>)
+#target_sources(
+#  cras_nodelet_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/nodelet_utils/thread_name_updating_nodelet.hpp>)
 #add_dependencies(cras_nodelet_utils ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(cras_nodelet_utils
-#  PUBLIC cras_diag_updater cras_diag_utils cras_log_utils cras_message_utils cras_node_utils cras_param_utils cras_resettable
-#    cras_string_utils cras_thread_utils cras_time_utils cras_tf2_utils ${catkin_LIBRARIES} Boost::boost)
+#  PUBLIC cras_diag_updater cras_diag_utils cras_log_utils cras_message_utils cras_node_utils cras_param_utils
+#    cras_resettable cras_string_utils cras_thread_utils cras_time_utils cras_tf2_utils ${catkin_LIBRARIES}
+#    Boost::boost)
 
 #add_library(cras_filter_chain_nodelet INTERFACE)
 #target_sources(cras_filter_chain_nodelet INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_chain_nodelet.hpp>)
@@ -300,7 +303,6 @@ install(TARGETS
   cras_type_traits
   cras_type_utils
 #  cras_urdf_utils
-#  nodelet_manager_sharing_tf_buffer  # Technically, having the executable here is wrong, but we keep it for compatibility
 
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
@@ -314,33 +316,65 @@ install(TARGETS
 #  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #)
 
-#if (CATKIN_ENABLE_TESTING)
-#  find_package(roslaunch REQUIRED)
-#  find_package(roslint REQUIRED)
-#  find_package(rostest REQUIRED)
-#
-#  roslint_custom(catkin_lint "-W2" .)
-#
-#  # Roslint C++ - checks formatting and some other rules for C++ files
-#
-#  file(GLOB_RECURSE ROSLINT_INCLUDE include/*.h include/*.hpp)
-#  list(FILTER ROSLINT_INCLUDE EXCLUDE REGEX ".*/external/.*")
-#  list(FILTER ROSLINT_INCLUDE EXCLUDE REGEX ".*/cloud.hpp")  # The big macro is full of false positives
-#  list(FILTER ROSLINT_INCLUDE EXCLUDE REGEX ".*/nodelet_utils/nodelet_with_diagnostics.hpp")  # Macros have false positives
-#
-#  file(GLOB_RECURSE ROSLINT_SRC src/*.cpp src/*.hpp src/*.h)
-#
-#  file(GLOB_RECURSE ROSLINT_TEST test/*.cpp)
-#
-#  set(ROSLINT_CPP_OPTS "--extensions=h,hpp,hh,c,cpp,cc;--linelength=120;--filter=\
-#    -build/header_guard,-readability/namespace,-whitespace/braces,-runtime/references,\
-#    -build/c++11,-readability/nolint,-readability/todo,-legal/copyright")
-#  roslint_cpp(${ROSLINT_INCLUDE} ${ROSLINT_SRC})
-#
-#  set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
-#  roslint_cpp(${ROSLINT_TEST})
-#
-#  roslint_add_test()
+if(BUILD_TESTING)
+  # cras_lint - checks formatting and some other rules for C++ files
+  find_package(cras_lint REQUIRED)
+  cras_lint_common()
+  set(cras_lint_FILE_EXCLUDE
+    include/${PROJECT_NAME}/cloud/impl/*
+    include/${PROJECT_NAME}/diag_utils/*
+    include/${PROJECT_NAME}/diag_utils/deprecated/*
+    include/${PROJECT_NAME}/diag_utils/impl/*
+    include/${PROJECT_NAME}/diagnostics/*
+    include/${PROJECT_NAME}/filter_utils/*
+    include/${PROJECT_NAME}/filter_utils/impl/*
+    include/${PROJECT_NAME}/log_utils/*
+    include/${PROJECT_NAME}/log_utils/deprecated/*
+    include/${PROJECT_NAME}/node_utils/*
+    include/${PROJECT_NAME}/nodelet_utils/*
+    include/${PROJECT_NAME}/nodelet_utils/impl/*
+    include/${PROJECT_NAME}/string_utils/ros.hpp
+    include/${PROJECT_NAME}/string_utils/tf2.hpp
+    include/${PROJECT_NAME}/test_utils/*
+    include/${PROJECT_NAME}/tf2_utils/*
+    include/${PROJECT_NAME}/time_utils/*
+    include/${PROJECT_NAME}/cloud.hpp
+    include/${PROJECT_NAME}/diag_utils.hpp
+    include/${PROJECT_NAME}/filter_chain_nodelet.hpp
+    include/${PROJECT_NAME}/filter_utils.hpp
+    include/${PROJECT_NAME}/log_utils.h
+    include/${PROJECT_NAME}/message_utils.hpp
+    include/${PROJECT_NAME}/node_utils.hpp
+    include/${PROJECT_NAME}/nodelet_utils.hpp
+    include/${PROJECT_NAME}/rate_limiter.h
+    include/${PROJECT_NAME}/resettable.h
+    include/${PROJECT_NAME}/tf2_sensor_msgs.h
+    include/${PROJECT_NAME}/tf2_utils.hpp
+    include/${PROJECT_NAME}/time_utils.hpp
+    include/${PROJECT_NAME}/urdf_utils.h
+    nodes/*
+    src/diag_utils/*
+    src/log_utils/*
+    src/node_utils/*
+    src/nodelet_utils/*
+    src/string_utils/ros.cpp
+    src/tf2_utils/interruptible_buffer.cpp
+    src/time_utils/*
+    src/cloud.cpp
+    src/log_utils.cpp
+    src/rate_limiter.cpp
+    src/resettable.cpp
+    src/tf2_sensor_msgs.cpp
+    src/tf2_utils.cpp
+    src/time_utils.cpp
+    src/urdf_utils.cpp
+    test/*
+  )
+  cras_lint_cpp(EXCLUDE
+    include/${PROJECT_NAME}/external/fast_float/*
+    include/${PROJECT_NAME}/external/tcb/*
+    include/${PROJECT_NAME}/external/tl/*
+  )
 #
 #  # GTEST tests (no rosmaster required)
 #
@@ -406,7 +440,8 @@ install(TARGETS
 #
 #  # ROSTEST tests (need rosmaster)
 #
-#  add_rostest_gtest(test_cras_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
+#  add_rostest_gtest(
+#    test_cras_filter_chain_nodelet test/test_filter_chain_nodelet.test test/test_filter_chain_nodelet.cpp)
 #  target_link_libraries(test_cras_filter_chain_nodelet cras_filter_chain_nodelet ${catkin_LIBRARIES})
 #  roslaunch_add_file_check(test/test_filter_chain_nodelet.test USE_TEST_DEPENDENCIES)
 #
@@ -439,7 +474,8 @@ install(TARGETS
 #  add_rostest_gtest(test_cras_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
 #  target_link_libraries(test_cras_nodelet_get_param cras_nodelet_utils cras_param_utils ${catkin_LIBRARIES})
 #  target_compile_options(test_cras_nodelet_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
-#  # roslaunch_add_file_check(test/test_nodelet_get_param.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
+#  # Disabled due to conflicting params
+#  # roslaunch_add_file_check(test/test_nodelet_get_param.test USE_TEST_DEPENDENCIES)
 #
 #  # node_utils runs multiple tests from a single rostest launch file
 #
@@ -448,7 +484,8 @@ install(TARGETS
 #  target_compile_options(test_cras_node_utils_get_param PRIVATE -fno-var-tracking-assignments)  # speed up build
 #  add_dependencies(tests test_cras_node_utils_get_param)
 #
-#  catkin_add_executable_with_gtest(test_cras_node_utils_diagnostics test/test_node_utils_diagnostics.cpp EXCLUDE_FROM_ALL)
+#  catkin_add_executable_with_gtest(
+#    test_cras_node_utils_diagnostics test/test_node_utils_diagnostics.cpp EXCLUDE_FROM_ALL)
 #  target_link_libraries(test_cras_node_utils_diagnostics cras_node_utils cras_param_utils ${catkin_LIBRARIES})
 #  target_compile_options(test_cras_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
 #  add_dependencies(tests test_cras_node_utils_diagnostics)
@@ -456,7 +493,8 @@ install(TARGETS
 #    target_compile_definitions(test_cras_node_utils_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
 #  endif()
 #
-#  catkin_add_executable_with_gtest(test_cras_node_with_master test/test_node_utils_node_with_master.cpp EXCLUDE_FROM_ALL)
+#  catkin_add_executable_with_gtest(
+#    test_cras_node_with_master test/test_node_utils_node_with_master.cpp EXCLUDE_FROM_ALL)
 #  target_link_libraries(test_cras_node_with_master cras_node_utils cras_param_utils ${catkin_LIBRARIES})
 #  add_dependencies(tests test_cras_node_with_master)
 #
@@ -468,7 +506,8 @@ install(TARGETS
 #
 #  # nodelet_utils runs multiple tests from a single rostest launch file
 #
-#  catkin_add_executable_with_gtest(test_cras_nodelet_aware_tf_buffer test/test_nodelet_aware_tf_buffer.cpp EXCLUDE_FROM_ALL)
+#  catkin_add_executable_with_gtest(
+#    test_cras_nodelet_aware_tf_buffer test/test_nodelet_aware_tf_buffer.cpp EXCLUDE_FROM_ALL)
 #  target_link_libraries(test_cras_nodelet_aware_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
 #  add_dependencies(tests test_cras_nodelet_aware_tf_buffer)
 #
@@ -480,7 +519,8 @@ install(TARGETS
 #  target_link_libraries(test_cras_nodelet_log_macros cras_nodelet_utils ${catkin_LIBRARIES})
 #  add_dependencies(tests test_cras_nodelet_log_macros)
 #
-#  catkin_add_executable_with_gtest(test_cras_nodelet_with_shared_tf_buffer test/test_nodelet_with_shared_tf_buffer.cpp EXCLUDE_FROM_ALL)
+#  catkin_add_executable_with_gtest(
+#    test_cras_nodelet_with_shared_tf_buffer test/test_nodelet_with_shared_tf_buffer.cpp EXCLUDE_FROM_ALL)
 #  target_link_libraries(test_cras_nodelet_with_shared_tf_buffer cras_nodelet_utils ${catkin_LIBRARIES})
 #  add_dependencies(tests test_cras_nodelet_with_shared_tf_buffer)
 #
@@ -503,7 +543,7 @@ install(TARGETS
 #  add_rostest_gtest(test_resettable test/test_resettable.test test/test_resettable.cpp)
 #  target_link_libraries(test_resettable cras_resettable cras_test_utils ${catkin_LIBRARIES})
 #  roslaunch_add_file_check(test/test_resettable.test USE_TEST_DEPENDENCIES)
-#endif()
+endif()
 
 ament_export_include_directories("include/${PROJECT_NAME}")
 

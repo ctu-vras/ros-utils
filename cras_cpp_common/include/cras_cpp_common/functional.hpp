@@ -21,9 +21,10 @@ namespace cras
 #if defined(__cpp_lib_bind_front) && __cpp_lib_bind_front >= 201907L
 using std::bind_front;
 #else
-template<class F, class...Args>
+template<class F, class... Args>
 auto bind_front(F&& f, Args&&... args)
 {
+  // *INDENT-OFF*
   return [f = ::std::forward<F>(f), boundArgs = ::std::make_tuple(::std::forward<Args>(args)...)](auto&&... unboundArgs)
   {
     return ::cras::apply(
@@ -31,6 +32,7 @@ auto bind_front(F&& f, Args&&... args)
         return ::cras::invoke(f, decltype(args)(args)..., decltype(unboundArgs)(unboundArgs)...); },
       boundArgs);
   };
+  // *INDENT-ON*
 }
 #endif
 

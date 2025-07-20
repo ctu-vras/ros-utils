@@ -9,7 +9,9 @@
  * \author Martin Pecka
  */
 
+#include <memory>
 #include <mutex>
+#include <string>
 
 #include <rclcpp/generic_subscription.hpp>
 #include <rclcpp/node.hpp>

@@ -1,23 +1,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
 
-"""Efficient data structure to hold a static set of topics with super-fast is-in-set queries.
+"""
+Efficient data structure to hold a static set of topics with super-fast is-in-set queries.
 
 The querying is done using expressions like `topic in set` or `topic not in set`.
 """
 
 
 import sys
-from typing import AnyStr, Iterable
+from typing import Iterable, Optional
 
 
 class TopicSet(object):
     """Efficient data structure to hold a static set of topics with super-fast is-in-set queries."""
 
-    def __init__(self, items=None):
-        """Build the data structure. Adding items later is not supported.
+    def __init__(self, items: Optional[Iterable[str]] = None):
+        """
+        Build the data structure. Adding items later is not supported.
 
-        :param Iterable[AnyStr]|None items: The topics to search. Leading slash will be removed.
+        :param items: The topics to search. Leading slash will be removed.
         """
         self._empty = False
         if items is None or not items:
@@ -36,7 +38,7 @@ class TopicSet(object):
             self._trie.build(keyset)
         except ImportError:
             if not TopicSet._warned:
-                print("!!!\n!!!\nInstall python-marisa or python3-marisa for up to 100% speedup!!!\n!!!\n!!!",
+                print('!!!\n!!!\nInstall python-marisa or python3-marisa for up to 100% speedup!!!\n!!!\n!!!',
                       file=sys.stderr)
                 TopicSet._warned = True
             self._set = set(self._items)

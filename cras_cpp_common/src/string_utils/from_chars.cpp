@@ -6,7 +6,7 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <cras_cpp_common/string_utils/from_chars.h>
+#include <cras_cpp_common/string_utils/from_chars.hpp>
 
 // Passed from CMake as a result of try_compile
 #if defined(HAS_FROM_CHARS_FLOAT) && HAS_FROM_CHARS_FLOAT == 1

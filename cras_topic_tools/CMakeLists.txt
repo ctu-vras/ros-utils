@@ -19,7 +19,8 @@ find_package(topic_tools REQUIRED)
 #
 #add_library(cras_generic_lazy_pubsub src/generic_lazy_pubsub.cpp)
 #add_dependencies(cras_generic_lazy_pubsub ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(cras_generic_lazy_pubsub cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES} Boost::boost)
+#target_link_libraries(cras_generic_lazy_pubsub
+#  cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_count_messages SHARED src/count_messages.cpp)
 target_include_directories(cras_count_messages PUBLIC
@@ -91,29 +92,41 @@ install(TARGETS
 #catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-#if (BUILD_TESTING)
+if(BUILD_TESTING)
 #  find_package(geometry_msgs REQUIRED)
 #  find_package(roslaunch REQUIRED)
-#  find_package(roslint REQUIRED)
 #  find_package(rostest REQUIRED)
-#
-#  roslint_custom(catkin_lint "-W2" "--ignore" "description_boilerplate" .)
-#
-#  # Roslint C++ - checks formatting and some other rules for C++ files
-#
-#  file(GLOB_RECURSE ROSLINT_INCLUDE include/*.h include/*.hpp)
-#  file(GLOB_RECURSE ROSLINT_SRC src/*.cpp src/*.hpp src/*.h)
-#  file(GLOB_RECURSE ROSLINT_TEST test/*.cpp)
-#
-#  set(ROSLINT_CPP_OPTS "--extensions=h,hpp,hh,c,cpp,cc;--linelength=120;--filter=\
-#    -build/header_guard,-readability/namespace,-whitespace/braces,-runtime/references,\
-#    -build/c++11,-readability/nolint,-readability/todo,-legal/copyright")
-#  roslint_cpp(${ROSLINT_INCLUDE} ${ROSLINT_SRC})
-#
-#  set(ROSLINT_CPP_OPTS "${ROSLINT_CPP_OPTS},-build/namespaces")  # allow "using namespace cras;" in tests
-#  roslint_cpp(${ROSLINT_TEST})
-#
-#  roslint_add_test()
+  # cras_lint - checks formatting and some other rules for C++ files
+  find_package(cras_lint REQUIRED)
+  cras_lint_common()
+  set(cras_lint_FILE_EXCLUDE
+    include/${PROJECT_NAME}/impl/*
+    include/${PROJECT_NAME}/change_header.h
+    include/${PROJECT_NAME}/generic_lazy_pubsub.hpp
+    include/${PROJECT_NAME}/generic_subscription.hpp
+    include/${PROJECT_NAME}/heartbeat.h
+    include/${PROJECT_NAME}/lazy_subscriber.hpp
+    include/${PROJECT_NAME}/priority_mux.h
+    include/${PROJECT_NAME}/priority_mux_base.h
+    include/${PROJECT_NAME}/relay.h
+    include/${PROJECT_NAME}/repeat.h
+    include/${PROJECT_NAME}/shape_shifter.h
+    include/${PROJECT_NAME}/throttle_messages.h
+    nodes/*
+    src/change_header.cpp
+    src/generic_lazy_pubsub.cpp
+    src/heartbeat.cpp
+    src/lazy_subscriber.cpp
+    src/priority_mux.cpp
+    src/priority_mux_base.cpp
+    src/relay.cpp
+    src/repeat.cpp
+    src/shape_shifter.cpp
+    src/throttle_messages.cpp
+    test/*
+  )
+  cras_lint_cpp()
+  cras_lint_py()
 #
 #  # GTest tests
 #
@@ -170,7 +183,7 @@ install(TARGETS
 #
 #  add_rostest(test/test_priority_mux.test DEPENDENCIES cras_priority_mux_nodelet_node)
 #  roslaunch_add_file_check(test/test_priority_mux.test USE_TEST_DEPENDENCIES)
-#endif()
+endif()
 
 ament_export_include_directories("include/${PROJECT_NAME}")
 

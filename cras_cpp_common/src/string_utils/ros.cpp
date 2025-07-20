@@ -28,8 +28,10 @@ namespace cras
 template<>
 ros::Duration parseTimezoneOffset(const std::string& s)
 {
-  if (s.empty() || s =="Z")
+  if (s.empty() || s == "Z")
+  {
     return {0, 0};
+  }
 
   const std::regex zoneOffsetRegex {R"(([+-]?)(\d{1,2}):?(\d{2}))"};
   std::smatch matches;
@@ -39,7 +41,9 @@ ros::Duration parseTimezoneOffset(const std::string& s)
   const auto sign = (matches[1].matched && matches[1].str() == "-") ? -1 : 1;
   const auto hours = cras::parseUInt8(matches[2].str(), 10);
   const auto minutes = cras::parseUInt8(matches[3].str(), 10);
+  // *INDENT-OFF*
   return {sign * (hours * 3600 + minutes * 60), 0};
+  // *INDENT-ON*
 }
 
 template<>
@@ -55,13 +59,17 @@ template<> ros::Time parseTime(
     return ros::Time::now();
 
   // Check if the string contains delimiters. If so, do not require zero-padding of all numbers.
+  // *INDENT-OFF*
   const std::regex delimitersRegex {
     R"((?:(?:(?:(\d+)[:_/-])?(\d+)[:_/-])?(\d+)[Tt _-])?(\d+)[:_/-](\d+)[:_/-](\d+)(?:[.,](\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
+  // *INDENT-ON*
   std::smatch matches;
   if (!std::regex_match(s, matches, delimitersRegex))
   {
+    // *INDENT-OFF*
     const std::regex noDelimsRegex {
       R"((?:((?:\d{2}){1,2})[:_/-]?([01]\d)[:_/-]?([0123]\d)[Tt _-])?([012]\d)[:_/-]?([0-6]\d)[:_/-]?([0-6]\d)(?:[.,](\d+))?(Z|[+-]?\d{1,2}:?\d{2})?)"};  // NOLINT
+    // *INDENT-ON*
     if (!std::regex_match(s, matches, noDelimsRegex))
       throw std::invalid_argument("Invalid time format");
   }
@@ -116,7 +124,8 @@ template<> ros::Time parseTime(
     if (paddedNsec.length() < 9)
       paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
     else if (paddedNsec.length() > 9)
-      paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
+      // We could correctly round here, but who cares about one ns?
+      paddedNsec = paddedNsec.substr(0, 9);
     fracNsec = cras::parseUInt32(paddedNsec, 10);
   }
 
@@ -188,7 +197,8 @@ template<> ros::Duration parseDuration(const std::string& s)
     if (paddedNsec.length() < 9)
       paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
     else if (paddedNsec.length() > 9)
-      paddedNsec = paddedNsec.substr(0, 9);  // We could correctly round here, but who cares about one ns?
+      // We could correctly round here, but who cares about one ns?
+      paddedNsec = paddedNsec.substr(0, 9);
     fracNsec = cras::parseInt32(paddedNsec, 10);
   }
 

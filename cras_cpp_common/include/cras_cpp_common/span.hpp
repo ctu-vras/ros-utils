@@ -15,13 +15,13 @@
 
 namespace cras
 {
-  using ::std::span;
-  using ::std::make_span;
-  using ::std::get;
-  using ::std::as_bytes;
-  using ::std::as_writable_bytes;
-  using ::std::dynamic_extent;
-  using ::std::byte;
+using ::std::span;
+using ::std::make_span;
+using ::std::get;
+using ::std::as_bytes;
+using ::std::as_writable_bytes;
+using ::std::dynamic_extent;
+using ::std::byte;
 }
 
 #else
@@ -30,13 +30,13 @@ namespace cras
 
 namespace cras
 {
-  using ::tcb::span;
-  using ::tcb::make_span;
-  using ::tcb::get;
-  using ::tcb::as_bytes;
-  using ::tcb::as_writable_bytes;
-  using ::tcb::dynamic_extent;
-  using ::tcb::byte;
+using ::tcb::span;
+using ::tcb::make_span;
+using ::tcb::get;
+using ::tcb::as_bytes;
+using ::tcb::as_writable_bytes;
+using ::tcb::dynamic_extent;
+using ::tcb::byte;
 }
 
 #endif

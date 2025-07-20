@@ -7,11 +7,11 @@
  * \author Martin Pecka
  */
 
+#include <cras_cpp_common/c_api.hpp>
+
 #include <cstring>
 #include <string>
 #include <vector>
-
-#include <cras_cpp_common/c_api.h>
 
 namespace cras
 {

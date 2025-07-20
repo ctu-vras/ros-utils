@@ -12,7 +12,7 @@
 #include <string>
 #include <type_traits>
 
-#include "type_utils/literal_sz.h"
+#include "type_utils/literal_sz.hpp"
 #include "type_utils/string_traits.hpp"
 
 namespace cras
@@ -37,7 +37,7 @@ namespace cras
  * \tparam T Type to get info about.
  * \return Human-readable name.
  */
-template <typename T>
+template<typename T>
 inline ::std::string getTypeName()
 {
 #if defined(__clang__)

@@ -17,7 +17,7 @@
 
 #include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/node.h>
-#include <cras_cpp_common/suppress_warnings.h>
+#include <cras_cpp_common/suppress_warnings.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 namespace cras

@@ -16,7 +16,7 @@
 namespace cras
 {
 
-template <typename T>
+template<typename T>
 ::std::optional<T> maybeParam(const ::rclcpp::ParameterValue& value)
 {
   if (value.get_type() == ::rclcpp::PARAMETER_NOT_SET)

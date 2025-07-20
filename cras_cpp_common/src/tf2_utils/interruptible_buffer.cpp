@@ -256,6 +256,7 @@ tf2::BufferCore& InterruptibleTFBuffer::getRawBuffer()
 
 const tf2::BufferCore& InterruptibleTFBuffer::getRawBuffer() const
 {
+  // cppcheck-suppress returnTempReference
   return (this->parentBuffer ? *static_cast<const tf2::BufferCore*>(this->parentBuffer.get()) : *this);
 }
 
