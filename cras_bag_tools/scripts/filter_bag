@@ -85,9 +85,27 @@ def filter_bags(bags, out_format, compression, copy_params, filter):
         if copy_params:
             copy_params_if_any(bag_path, out_bag_path)
         print()
-        with TqdmBag(bag_path, skip_index=True) as bag, rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
-            bag.read_index()
-            filter_bag(bag, out, filter)
+        params_path = bag_path + '.params'
+        params = None
+        if os.path.exists(params_path):
+            try:
+                with open(params_path, "r") as f:
+                    params = yaml.safe_load(f)
+                print("Loaded ROS parameters from file " + bag_path + '.params')
+            except yaml.YAMLError as e:
+                print("Error parsing ROS parameters from file %s: %s" % (params_path, str(e)), file=sys.stderr)
+            except Exception as e:
+                print("Error loading ROS parameters from file %s: %s" % (params_path, str(e)), file=sys.stderr)
+
+        try:
+            with TqdmBag(bag_path, skip_index=True) as bag:
+                with rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
+                    bag.read_index()
+                    filter_bag(bag, out, filter, params)
+        except Exception as e:
+            print('Error processing bag file %s: %s' % (bag_path, str(e)), file=sys.stderr)
+            import traceback
+            traceback.print_exc()
 
 
 def main():
@@ -101,7 +119,7 @@ def main():
     parser.add_argument('--bz2', dest='compression', action='store_const', const=rosbag.Compression.BZ2,
                         help="Compress the bag via BZ2 (space-efficient, but very slow)")
     parser.add_argument('-f', '--filters', nargs='+', help=argparse.SUPPRESS)
-    parser.add_argument('--no-copy-params', dest='copy_params', action='store_false',
+    parser.add_argument('--no-copy-params', dest='copy_params', action='store_false', default=None,
                         help="If set, no .params file will be copied.")
     parser.add_argument("--list-yaml-keys", dest="list_yaml_keys", action="store_true",
                         help="Print a list of all available YAML top-level keys provided by filters.")
@@ -114,7 +132,7 @@ def main():
         if hasattr(f, 'add_cli_args'):
             getattr(f, 'add_cli_args')(parser)
 
-    default_yaml_keys = ['bags', 'out_format', 'compression', 'filters']
+    default_yaml_keys = ['bags', 'out_format', 'compression', 'filters', 'copy_params']
 
     if "--list-filters" in sys.argv:
         for f in unique_filters:
@@ -186,6 +204,8 @@ def main():
         args.compression = rosbag.Compression.NONE
     if "out_format" not in args or args.out_format is None:
         args.out_format = "{name}.proc{ext}"
+    if args.copy_params is None:
+        args.copy_params = True
 
     filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter)
 

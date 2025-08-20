@@ -13,6 +13,7 @@ import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
 
+from .time_range import TimeRange
 from .topic_set import TopicSet
 
 
@@ -63,7 +64,7 @@ class MessageFilter(object):
     """
 
     def __init__(self, is_raw, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
-                 min_stamp=None, max_stamp=None):
+                 min_stamp=None, max_stamp=None, include_time_ranges=None, exclude_time_ranges=None):
         """Constructor.
 
         :param bool is_raw: Whether the filter works on raw or deserialized messages.
@@ -73,6 +74,10 @@ class MessageFilter(object):
         :param list exclude_types: If nonempty, the filter will skip these message types (but pass them further).
         :param rospy.Time min_stamp: If set, the filter will only work on messages after this timestamp.
         :param rospy.Time max_stamp: If set, the filter will only work on messages before this timestamp.
+        :param list include_time_ranges: Time ranges that specify which regions of the bag should be processed.
+                                         List of pairs (start, end_or_duration).
+        :param list exclude_time_ranges: Time ranges that specify which regions of the bag should be skipped.
+                                         List of pairs (start, end_or_duration).
         """
         self.is_raw = is_raw
         """Whether the filter works on raw or deserialized messages."""
@@ -90,6 +95,19 @@ class MessageFilter(object):
         """If set, the filter will only work on messages before this timestamp."""
         self._bag = None
         """If this filter is working on a bag, it should be set here before the filter starts being used on the bag."""
+        self._params = None
+        """If ROS parameters are recorded for the bag, they should be passed here."""
+        self._include_time_ranges = self._parse_time_ranges(include_time_ranges)
+        """Time ranges that specify which regions of the bag should be processed by this filter. If empty,
+        the filter should work for all time regions except the excluded ones."""
+        self._exclude_time_ranges = self._parse_time_ranges(exclude_time_ranges)
+        """Time ranges that specify which regions of the bag should be skipped (but passed further)."""
+
+    @staticmethod
+    def _parse_time_ranges(ranges):
+        if ranges is None:
+            return ()
+        return tuple([TimeRange(start, end) for start, end in ranges])
 
     def set_bag(self, bag):
         """If this filter is working on a bag, it should be set here before the filter starts being used on the bag.
@@ -97,6 +115,41 @@ class MessageFilter(object):
         :param rosbag.bag.Bag bag: The bag file open for reading.
         """
         self._bag = bag
+
+        start_time = bag.get_start_time()
+        for time_range in self._include_time_ranges:
+            time_range.set_base_time(start_time)
+        for time_range in self._exclude_time_ranges:
+            time_range.set_base_time(start_time)
+
+    def set_params(self, params):
+        """Set the ROS parameters recorded for the currently open bag file.
+
+        :param params: The ROS parameters.
+        :type params: dict
+        """
+        self._params = params
+
+    def _get_param(self, param, default=None):
+        """Get parameter `param` from the parameters set by :meth:`set_params`.
+
+        :param str param: The parameter to get.
+        :param default: The default value returned in case the parameter is not found.
+        :return: The found parameter value or the default.
+        """
+        return self.__get_param(self._params, param, default)
+
+    def __get_param(self, params, param, default=None):
+        if param.startswith("/"):
+            param = param[1:]
+        if params is None:
+            return default
+        if param in params:
+            return params[param]
+        if "/" not in param:
+            return default
+        key, rest = param.split("/", 1)
+        return self.__get_param(params.get(key, None), rest, default)
 
     def __call__(self, *args, **kwargs):
         """Do the filtering.
@@ -144,6 +197,10 @@ class MessageFilter(object):
             return False
         if self._exclude_types and datatype in self._exclude_types:
             return False
+        if self._include_time_ranges and not(any([stamp in r for r in self._include_time_ranges])):
+            return False
+        if self._exclude_time_ranges and any([stamp in r for r in self._exclude_time_ranges]):
+            return False
         return True
 
     def connection_filter(self, topic, datatype, md5sum, msg_def, header):
@@ -171,6 +228,7 @@ class MessageFilter(object):
     def reset(self):
         """Reset the filter. This should be called e.g. before starting a new bag."""
         self._bag = None
+        self._params = None
 
     @staticmethod
     def add_cli_args(parser):
@@ -272,6 +330,10 @@ class MessageFilter(object):
             parts.append('min_stamp=%s' % str(self._min_stamp))
         if self._max_stamp:
             parts.append('max_stamp=%s' % str(self._max_stamp))
+        if self._include_time_ranges:
+            parts.append('include_time_ranges=%s' % str(self._include_time_ranges))
+        if self._exclude_time_ranges:
+            parts.append('exclude_time_ranges=%s' % str(self._exclude_time_ranges))
         return ",".join(parts)
 
 
@@ -401,6 +463,11 @@ class FilterChain(RawMessageFilter):
             f.set_bag(bag)
         super(FilterChain, self).set_bag(bag)
 
+    def set_params(self, params):
+        for f in self.filters:
+            f.set_params(params)
+        super(FilterChain, self).set_params(params)
+
     def reset(self):
         for f in self.filters:
             f.reset()
@@ -429,7 +496,8 @@ class FilterChain(RawMessageFilter):
         return FilterChain(self.filters + [other.filters])
 
 
-def fix_connection_header(header, datatype, md5sum, pytype):
+def fix_connection_header(header, topic, datatype, md5sum, pytype):
+    header["topic"] = topic
     header["message_definition"] = pytype._full_text
     header["md5sum"] = md5sum
     header["type"] = datatype
@@ -485,7 +553,7 @@ def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True
 
     # make sure connection header corresponds to the actual data type of the message
     # (if the filter forgot to update it)
-    connection_header = fix_connection_header(connection_header, datatype, md5sum, pytype)
+    connection_header = fix_connection_header(connection_header, topic, datatype, md5sum, pytype)
 
     ret = topic, out_msg, stamp, connection_header
 

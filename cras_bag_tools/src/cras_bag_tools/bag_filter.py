@@ -3,6 +3,7 @@
 
 """Filter a bag file using a MessageFilter."""
 
+import copy
 from queue import Queue
 
 import rosbag.bag
@@ -10,13 +11,15 @@ import rosbag.bag
 from .message_filter import MessageFilter, Passthrough, filter_message
 
 
-def filter_bag(bag, out, filter=Passthrough()):
+def filter_bag(bag, out, filter=Passthrough(), params=None):
     """Filter the given bagfile 'bag' into bagfile 'out' using message filter 'filter'.
 
     :param rosbag.bag.Bag bag: The input bag (open in read mode).
     :param rosbag.bag.Bag out: The output bag (open in write mode).
     :param MessageFilter filter: The filter to apply.
+    :param dict params: Loaded ROS parameters.
     """
+    filter.set_params(params)
     filter.set_bag(bag)
 
     topics = [c.topic for c in bag._get_connections()]  # get all topics
@@ -30,6 +33,7 @@ def filter_bag(bag, out, filter=Passthrough()):
         queue.put((topic, msg, stamp, connection_header))
         while not queue.empty():
             _topic, _msg, _stamp, _connection_header = queue.get()
+            _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
             ret = filter_message(_topic, _msg, _stamp, _connection_header, filter, True)
             if not isinstance(ret, list):
                 ret = [ret]
