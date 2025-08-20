@@ -205,6 +205,19 @@ class Remap(RawMessageFilter):
     def _str_params(self):
         return dict_to_str(self.remap, '=>')
 
+    @staticmethod
+    def add_cli_args(parser):
+        parser.add_argument(
+            '--remap', nargs='+', metavar="FROM TO",
+            help="Remap topics. This argument should be an even-sized list of pairs [FROM TO].")
+
+    @staticmethod
+    def process_cli_args(filters, args):
+        if args.remap:
+            topics_from = args.remap[0::2]
+            topics_to = args.remap[1::2]
+            filters.append(Remap(**dict(zip(topics_from, topics_to))))
+
 
 class Throttle(RawMessageFilter):
     """Throttle messages on topics."""
@@ -256,7 +269,7 @@ class Throttle(RawMessageFilter):
 
 
 class Topics(RawMessageFilter):
-    """Select topics that will be retained or removed."""
+    """Select topics that will be retained or removed. This works as a global filter."""
 
     def __init__(self, include_topics=None, exclude_topics=None):
         """
@@ -303,7 +316,7 @@ class Topics(RawMessageFilter):
 
 
 class TopicTypes(RawMessageFilter):
-    """Select topic types that will be retained or removed."""
+    """Select topic types that will be retained or removed. This works as a global filter."""
 
     def __init__(self, include_types=None, exclude_types=None):
         """
@@ -347,6 +360,14 @@ class TopicTypes(RawMessageFilter):
     def process_cli_args(filters, args):
         if args.include_types or args.exclude_types:
             filters.append(TopicTypes(include_types=args.include_types, exclude_types=args.exclude_types))
+
+
+class Drop(RawMessageFilter):
+    """Drop matching messages. The difference between Topics and Drop is that Drop acts locally, i.e. can be used in the
+     middle of a filter chain."""
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        return None
 
 
 class Transforms(DeserializedMessageFilter):
