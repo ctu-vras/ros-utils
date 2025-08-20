@@ -237,8 +237,13 @@ TEST(StringUtils, ToStringRos)  // NOLINT
   m.dim[1].size = 43;
   m.dim[1].label = "cras2";
   m.dim[1].stride = 44;
+#if GENCPP_HAS_ARRAY_PRINTERS
   EXPECT_EQ("dim: ,   -,     label: cras,     size: 42,     stride: 42,   -,     label: cras2,     size: 43,     "
             "stride: 44, data_offset: 0", to_string(m));
+#else
+  EXPECT_EQ("dim[],   dim[0]: ,     label: cras,     size: 42,     stride: 42,   dim[1]: ,     label: cras2,     "
+            "size: 43,     stride: 44, data_offset: 0", to_string(m));
+#endif
 }
 
 TEST(StringUtils, ToStringEigen)  // NOLINT
