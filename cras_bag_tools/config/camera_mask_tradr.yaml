@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Generates robot model masks for cameras
+# Requires https://github.com/ctu-vras/robot_model_renderer in workspace.
+out_format: '{name}.mask{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include_topics:
+        - /tf
+        - /tf_static
+        - /viz/camera_0/camera_info
+        - /viz/camera_1/camera_info
+        - /viz/camera_2/camera_info
+        - /viz/camera_3/camera_info
+        - /viz/camera_4/camera_info
+        - /viz/camera_5/camera_info
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_0/camera_info
+      mask_topic: /viz/camera_0/image/mask
+      description_param: nifti_robot_description
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_1/camera_info
+      mask_topic: /viz/camera_1/image/mask
+      description_param: nifti_robot_description
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_2/camera_info
+      mask_topic: /viz/camera_2/image/mask
+      description_param: nifti_robot_description
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_3/camera_info
+      mask_topic: /viz/camera_3/image/mask
+      description_param: nifti_robot_description
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_4/camera_info
+      mask_topic: /viz/camera_4/image/mask
+      description_param: nifti_robot_description
+  - RenderCameraMask:
+      camera_info_topic: /viz/camera_5/camera_info
+      mask_topic: /viz/camera_5/image/mask
+      description_param: nifti_robot_description
+  - CompressImages:
+      transport: cv
+      transport_params:
+        cv:
+          format: pbm
+  - Drop:
+      include_topics:
+        - /tf
+        - /tf_static
+        - /viz/camera_0/camera_info
+        - /viz/camera_1/camera_info
+        - /viz/camera_2/camera_info
+        - /viz/camera_3/camera_info
+        - /viz/camera_4/camera_info
+        - /viz/camera_5/camera_info
