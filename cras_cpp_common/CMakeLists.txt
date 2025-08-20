@@ -57,6 +57,14 @@ else()
 endif()
 add_compile_options(-DXMLRPCPP_HAS_PRINTTO=${XMLRPCPP_HAS_PRINTTO})
 
+find_package(gencpp QUIET)
+if(gencpp_FOUND AND gencpp_VERSION VERSION_GREATER_EQUAL 0.7.2)
+  set(GENCPP_HAS_ARRAY_PRINTERS 1)
+else()
+  set(GENCPP_HAS_ARRAY_PRINTERS 0)
+endif()
+add_compile_options(-DGENCPP_HAS_ARRAY_PRINTERS=${GENCPP_HAS_ARRAY_PRINTERS})
+
 generate_dynamic_reconfigure_options(
   cfg/FilterChain.cfg
 )

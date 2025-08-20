@@ -71,6 +71,7 @@ inline std::string to_string(const M& msg)
   ::std::string s = ss.str();
   if (!s.empty() && s[s.length() - 1] == '\n')
     s.erase(s.length()-1);
+  ::cras::replace(s, "\n\n", "\n");
   ::cras::replace(s, "\n", ", ");
   return s;
 }

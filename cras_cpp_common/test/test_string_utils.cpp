@@ -214,19 +214,31 @@ TEST(StringUtils, ToStringRos)  // NOLINT
   EXPECT_EQ("seq: 42, stamp: 42.000000042, frame_id: cras", to_string(h));
 
   std_msgs::MultiArrayLayout m;
+#ifdef GENCPP_HAS_ARRAY_PRINTERS
+  EXPECT_EQ("dim: [], data_offset: 0", to_string(m));
+#else
   EXPECT_EQ("dim[], data_offset: 0", to_string(m));
+#endif
   m.dim.resize(1);
+#ifdef GENCPP_HAS_ARRAY_PRINTERS
+  EXPECT_EQ("dim: ,   -,     label: ,     size: 0,     stride: 0, data_offset: 0", to_string(m));
+#else
   EXPECT_EQ("dim[],   dim[0]: ,     label: ,     size: 0,     stride: 0, data_offset: 0", to_string(m));
+#endif
   m.dim[0].size = 42;
   m.dim[0].label = "cras";
   m.dim[0].stride = 42;
+#ifdef GENCPP_HAS_ARRAY_PRINTERS
+  EXPECT_EQ("dim: ,   -,     label: cras,     size: 42,     stride: 42, data_offset: 0", to_string(m));
+#else
   EXPECT_EQ("dim[],   dim[0]: ,     label: cras,     size: 42,     stride: 42, data_offset: 0", to_string(m));
+#endif
   m.dim.resize(2);
   m.dim[1].size = 43;
   m.dim[1].label = "cras2";
   m.dim[1].stride = 44;
-  EXPECT_EQ("dim[],   dim[0]: ,     label: cras,     size: 42,     stride: 42,   "
-                     "dim[1]: ,     label: cras2,     size: 43,     stride: 44, data_offset: 0", to_string(m));
+  EXPECT_EQ("dim: ,   -,     label: cras,     size: 42,     stride: 42,   -,     label: cras2,     size: 43,     "
+            "stride: 44, data_offset: 0", to_string(m));
 }
 
 TEST(StringUtils, ToStringEigen)  // NOLINT
