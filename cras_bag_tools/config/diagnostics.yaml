@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Extracts only diagnostics and makes sure fast-publishing nodes do not hinder it.
+out_format: '{name}.diag{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include_topics:
+        - /diagnostics
+        - /diagnostics_agg
+  - Deduplicate:
+      ignore_seq: True
+      ignore_stamp: True
+      per_frame_id: True
+      max_ignored_duration: 1.0

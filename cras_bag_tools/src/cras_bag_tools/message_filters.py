@@ -20,6 +20,7 @@ from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from sensor_msgs.msg import CompressedImage, Image
+from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
 
 from .message_filter import DeserializedMessageFilter, RawMessageFilter, TopicSet
@@ -118,6 +119,71 @@ class FixHeader(DeserializedMessageFilter):
         if self.stamp_offset != rospy.Duration(0, 0):
             parts.append('stamp_offset=' + self.stamp_offset)
         parent_params = super(FixHeader, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class Deduplicate(RawMessageFilter):
+    """Discard all messages except each first changed."""
+
+    def __init__(self, ignore_seq=False, ignore_stamp=False, per_frame_id=False, max_ignored_duration=None,
+                 *args, **kwargs):
+        """
+        :param bool ignore_seq: If True, differing header.seq will not make a difference.
+        :param bool ignore_stamp: If True, differing header.stamp will not make a difference.
+        :param bool per_frame_id: If True, messages will be clustered by header.frame_id and comparisons will only be
+                                  made between messages with equal frame_id.
+        :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
+                                           message than the given duration (in seconds).
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(Deduplicate, self).__init__(*args, **kwargs)
+        self._ignore_seq = ignore_seq
+        self._ignore_stamp = ignore_stamp
+        self._per_frame_id = per_frame_id
+        self._max_ignored_duration = rospy.Duration(max_ignored_duration)
+        self._last_msgs = {}
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        has_header = pytype.__slots__[0] == 'header'
+        key = topic
+        if has_header and self._per_frame_id:
+            key = "%s@%s" % (topic, Header().deserialize(data).frame_id)
+
+        if key not in self._last_msgs:
+            self._last_msgs[key] = data, stamp
+            return topic, datatype, data, md5sum, pytype, stamp, header
+
+        last_msg, last_msg_stamp = self._last_msgs[key]
+
+        seq_ok = True
+        stamp_ok = True
+        stamp_diff_ok = True
+        compare_idx = 0
+
+        if has_header:
+            seq_ok = self._ignore_seq or data[0:4] == last_msg[0:4]
+            stamp_ok = self._ignore_stamp or data[4:12] == last_msg[4:12]
+            compare_idx = 12
+        if self._max_ignored_duration is not None:
+            stamp_diff_ok = stamp - last_msg_stamp < self._max_ignored_duration
+
+        self._last_msgs[key] = data, stamp
+
+        if seq_ok and stamp_ok and stamp_diff_ok and data[compare_idx:] == last_msg[compare_idx:]:
+            return None
+
+        return topic, datatype, data, md5sum, pytype, stamp, header
+
+    def _str_params(self):
+        parts = []
+        parts.append('ignore_seq=%r' % (self._ignore_seq,))
+        parts.append('ignore_stamp=%r' % (self._ignore_stamp,))
+        parts.append('per_frame_id=%r' % (self._per_frame_id,))
+        parts.append('max_ignored_duration=%r' % (self._max_ignored_duration,))
+        parent_params = super(Deduplicate, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
