@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+out_format: '{name}.anonymized{ext}'
+compression: lz4
+filters:
+  - BlurFaces:
+      threshold: 0.065
+      scale: [960, 960]
+      mask_scale: 1.3
+      replacewith: blur  # blur, solid, none, img, mosaic
+      ellipse: true
+      # backend: opencv  # auto, opencv, onnxrt
+      # replaceimg: replace_img.png
+      # mosaicsize: 20
+      exclude_time_ranges:
+        - [0, 190]
+        - [200, 235]

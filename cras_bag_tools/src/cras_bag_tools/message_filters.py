@@ -6,22 +6,27 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import os.path
+
 import matplotlib.cm as cmap
 import numpy as np
 import sys
 from typing import Dict
 
 import rospy
-from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, BGR8,\
+from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
+from dynamic_reconfigure.encoding import decode_config
+from dynamic_reconfigure.msg import Config
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from sensor_msgs.msg import CompressedImage, Image
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
+from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
 from .message_filter import DeserializedMessageFilter, RawMessageFilter, TopicSet
 
@@ -982,6 +987,250 @@ class DepthImagePreview(DeserializedMessageFilter):
         if self.colormap is not None:
             parts.append('colormap=%r' % (self.colormap,))
         parent_params = super(DepthImagePreview, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class BlurFaces(DeserializedMessageFilter):
+    """Blur faces in color/mono images using 'deface' library."""
+
+    def __init__(self, include_types=None, transport_params=None, ignore_transports=None, threshold=0.2, ellipse=True,
+                 scale=(960, 960), mask_scale=1.3, replacewith='blur', replaceimg=None, mosaicsize=20, backend='auto',
+                 publish_faces=True, *args, **kwargs):
+        """
+        :param list include_types: Types of messages to work on. The default is sensor_msgs/Image and CompressedImage.
+        :param dict transport_params: Parameters of image transport(s). Keys are transport names (e.g. 'compressed'),
+                                      values are the publisher dynamic reconfigure parameters.
+        :param list ignore_transports: List of transport names to ignore (defaults to`['compressedDepth']`).
+        :param float threshold: Threshold for face detection.
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        try:
+            import deface.centerface
+            import deface.deface
+        except ImportError:
+            cmds = [
+                'sudo apt install python3-numpy python3-skimage python3-pil python3-opencv python3-imageio',
+                'pip3 install --user --upgrade pip',
+            ]
+            accel_cmds = list()
+            pip_constraints = "'numpy~=1.17.0' 'pillow~=7.0.0' 'imageio~=2.4.0' 'scikit_image~=0.16.0'"
+            if os.path.exists('/etc/nv_tegra_release'):
+                # from https://elinux.org/Jetson_Zoo#ONNX_Runtime, version compatible with onnx 1.12, Py 3.8 and JP 5
+                url = 'https://nvidia.box.com/shared/static/v59xkrnvederwewo2f1jtv6yurl92xso.whl'
+                cmds += [
+                    "python3 -m pip install --user " + pip_constraints + " 'onnx~=1.12.0'",
+                ]
+                accel_cmds += [
+                    'wget ' + url + ' -O onnxruntime_gpu-1.12.0-cp38-cp38-linux_aarch64.whl',
+                    'python3 -m pip install --user onnxruntime_gpu-1.12.0-cp38-cp38-linux_aarch64.whl',
+                ]
+            else:
+                cmds += [
+                    "python3 -m pip install --user " + pip_constraints + " 'onnx~=1.12.0'",
+                ]
+                accel_cmds += [
+                    "python3 -m pip install --user 'onnxruntime-openvino~=1.12.0'",
+                ]
+            cmds += [
+                'python3 -m pip install --user --no-deps deface~=1.4.0',
+                'python3 -m pip uninstall pip',
+            ]
+
+            print('Error importing deface module. Please install it with the following commands:', file=sys.stderr)
+            for cmd in cmds:
+                print("\t" + cmd, file=sys.stderr)
+            print('To add HW acceleration, please run the following commands:', file=sys.stderr)
+            for cmd in accel_cmds:
+                print("\t" + cmd, file=sys.stderr)
+
+            raise
+
+        default_types = [Image._type, CompressedImage._type, Config._type]
+
+        super(BlurFaces, self).__init__(
+            include_types=include_types if include_types is not None else default_types, *args, **kwargs)
+
+        self.transport_params = transport_params if transport_params is not None else {}
+        self.received_transport_params = {}
+        self.ignore_transports = ['/' + t for t in ignore_transports] if ignore_transports is not None \
+            else ['/compressedDepth']
+        self.threshold = threshold
+        self.ellipse = ellipse
+        self.scale = scale
+        self.mask_scale = mask_scale
+        self.replacewith = replacewith
+        self.replaceimg = replaceimg
+        self.mosaicsize = mosaicsize
+        self.backend = backend
+        self.publish_faces = publish_faces
+
+        self._cv = CvBridge()
+        self._centerface = deface.centerface.CenterFace(in_shape=None, backend=self.backend)
+
+    def consider_message(self, topic, datatype, stamp, header):
+        if datatype == Config._type:
+            return True
+
+        if not super(BlurFaces, self).consider_message(topic, datatype, stamp, header):
+            return False
+
+        for t in self.ignore_transports:
+            if topic.endswith(t):
+                return False
+
+        return True
+
+    def process_transport_params(self, topic, msg, stamp, header):
+        if not topic.endswith('/parameter_updates'):
+            return topic, msg, stamp, header
+        transport_topic, _ = topic.rsplit('/', 1)
+        self.received_transport_params[transport_topic] = decode_config(msg)
+        return topic, msg, stamp, header
+
+    def filter(self, topic, msg, stamp, header):
+        if msg._type == Config._type:
+            return self.process_transport_params(topic, msg, stamp, header)
+
+        if msg._type == Image._type:
+            raw_msg = msg
+            raw_topic = topic
+            transport = 'raw'
+        else:
+            transport = None
+            if "/" in topic:
+                raw_topic, transport = topic.rsplit("/", 1)
+            if transport is None or len(transport) == 0:
+                print("Compressed image on a topic without suffix [%s]. Passing message." % (topic,), file=sys.stderr)
+                return topic, msg, stamp, header
+
+            raw_msg, err = decode(msg, topic, {})
+            if raw_msg is None:
+                print('Error converting image: ' + str(err), file=sys.stderr)
+                return topic, msg, stamp, header
+
+        enc = raw_msg.encoding
+        is_color = isColor(enc) or isMono(enc) or isBayer(enc) or enc == YUV422
+        if not is_color:
+            return topic, msg, stamp, header
+
+        img = self._cv.imgmsg_to_cv2(raw_msg)
+        if raw_msg.encoding == RGB8 or numChannels(raw_msg.encoding) == 1:
+            rgb_img = img
+        else:
+            rgb_img = self._cv.imgmsg_to_cv2(raw_msg, RGB8)
+
+        if self.scale is not None:
+            scale = min(
+                min(1.0, self.scale[0] / img.shape[0]),
+                min(1.0, self.scale[1] / img.shape[1]))
+            self._centerface.in_shape = (int(img.shape[0] * scale), int(img.shape[1] * scale))
+        else:
+            self._centerface.in_shape = None
+
+        dets, _ = self._centerface(rgb_img, threshold=self.threshold)
+
+        import deface.deface
+
+        bad_dets = list()
+        for i, det in enumerate(dets):
+            boxes, score = det[:4], det[4]
+            x1, y1, x2, y2 = boxes.astype(int)
+            x1, y1, x2, y2 = deface.deface.scale_bb(x1, y1, x2, y2, self.mask_scale)
+            w, h = x2 - x1, y2 - y1
+            if w >= 0.2 * img.shape[1] or h >= 0.2 * img.shape[0]:
+                bad_dets.append(i)
+        dets = np.delete(dets, bad_dets, axis=0)
+
+        if len(dets) == 0:
+            return topic, msg, stamp, header
+
+        img = img.copy()
+
+        if deface.__version__ >= "1.5.0":
+            deface.deface.anonymize_frame(
+                dets, img, self.mask_scale, self.replacewith, self.ellipse, False, self.replaceimg, self.mosaicsize)
+        else:
+            deface.deface.anonymize_frame(
+                dets, img, self.mask_scale, self.replacewith, self.ellipse, False, self.replaceimg)
+
+        raw_msg = self._cv.cv2_to_imgmsg(img, enc, msg.header)
+        if msg._type == Image._type:
+            msg = raw_msg
+        else:
+            msg, err = self.get_image_for_transport(msg, raw_msg, topic, transport)
+
+        if not self.publish_faces:
+            return topic, msg, stamp, header
+
+        dets_msg = self.dets_to_msg(dets, msg)
+        dets_header = copy.deepcopy(header)
+        dets_header["topic"] = raw_topic + '/anonymized_faces'  # The rest will be fixed by fix_connection_header()
+
+        return [
+            (topic, msg, stamp, header),
+            (dets_header["topic"], dets_msg, stamp, dets_header)
+        ]
+
+    def dets_to_msg(self, dets, msg):
+        dets_msg = Detection2DArray()
+        dets_msg.header = msg.header
+        for i, det in enumerate(dets):
+            boxes, score = det[:4], det[4]
+            x1, y1, x2, y2 = boxes.astype(float)
+            s = self.mask_scale - 1.0
+            h, w = y2 - y1, x2 - x1
+            y1 -= h * s
+            y2 += h * s
+            x1 -= w * s
+            x2 += w * s
+
+            det_msg = Detection2D()
+            det_msg.header = dets_msg.header
+            det_msg.bbox.center.x = (x1 + x2) / 2.0
+            det_msg.bbox.center.y = (y1 + y2) / 2.0
+            det_msg.bbox.size_x = w
+            det_msg.bbox.size_y = h
+            hyp = ObjectHypothesisWithPose()
+            hyp.id = i
+            hyp.score = score
+            hyp.pose.pose.orientation.w = 1.0
+            det_msg.results.append(hyp)
+            dets_msg.detections.append(det_msg)
+        return dets_msg
+
+    def get_image_for_transport(self, msg, raw_msg, compressed_topic, transport):
+        config = copy.deepcopy(self.received_transport_params.get(compressed_topic, {}))
+        config.update(self.transport_params.get(transport, {}))
+
+        compressed_fmt, compressed_depth_fmt, _ = guess_any_compressed_image_transport_format(msg)
+
+        if compressed_fmt is not None and "format" not in config:
+            config["format"] = compressed_fmt.format.value
+        elif compressed_depth_fmt is not None and "format" not in config:
+            config["format"] = compressed_depth_fmt.format.value
+
+        compressed_msg, err = encode(raw_msg, compressed_topic, config)
+
+        return compressed_msg, err
+
+    def _str_params(self):
+        parts = []
+        parts.append('threshold=%f' % (self.threshold,))
+        parts.append('ellipse=%r' % (self.ellipse,))
+        parts.append('scale=%r' % (self.scale,))
+        parts.append('mask_scale=%f' % (self.mask_scale,))
+        parts.append('replacewith=%s' % (self.replacewith,))
+        if self.replaceimg is not None:
+            parts.append('replaceimg=%s' % (self.replaceimg,))
+        parts.append('mosaicsize=%f' % (self.mosaicsize,))
+        parts.append('backend=%s' % (self.backend,))
+        parts.append('publish_faces=%r' % (self.publish_faces,))
+        if len(self.transport_params) > 0:
+            parts.append('transport_params=%r' % (self.transport_params,))
+        parent_params = super(BlurFaces, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
