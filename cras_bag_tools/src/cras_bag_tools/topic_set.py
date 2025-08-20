@@ -6,6 +6,7 @@
 The querying is done using expressions like `topic in set` or `topic not in set`.
 """
 
+from __future__ import print_function
 
 import sys
 from typing import AnyStr, Iterable
