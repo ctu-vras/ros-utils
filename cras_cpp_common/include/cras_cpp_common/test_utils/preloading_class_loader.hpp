@@ -11,10 +11,14 @@
 
 #include <string>
 
+#include <Poco/SharedLibrary.h>
+
 #include <class_loader/class_loader.hpp>
 #include <pluginlib/class_loader.hpp>
 
 #include <cras_cpp_common/type_utils.hpp>
+
+#include "cras_cpp_common/filter_utils/filter_chain.hpp"
 
 /*
  * In the classes where you need to use this classloader, insert the following code at the very beginning of the CPP
@@ -47,6 +51,12 @@ protected:
     const auto baseType = cras::getTypeName<Base>();
     auto metaObject = new class_loader::impl::MetaObject<Impl, Base>(implType, baseType);
     metaObject->addOwningClassLoader(this);
+    // The following block is needed since class_loader 0.5.1
+    {
+      metaObject->setAssociatedLibraryPath("");
+      auto& loaded = class_loader::impl::getLoadedLibraryVector();
+      loaded.emplace_back("", new Poco::SharedLibrary("linux-vdso.so.1"));
+    }
     class_loader::impl::getFactoryMapForBaseClass<Base>()[implType] = metaObject;
   }
 
@@ -56,6 +66,14 @@ public:
     const auto implType = cras::getTypeName<Impl>();
     auto metaObject = class_loader::impl::getFactoryMapForBaseClass<Base>()[implType];
     metaObject->removeOwningClassLoader(this);
+    // The following block is needed since class_loader 0.5.1
+    {
+      auto& loaded = class_loader::impl::getLoadedLibraryVector();
+      const auto it = std::find_if(loaded.begin(), loaded.end(),
+        [](const class_loader::impl::LibraryPair& pair) { return pair.first == ""; });
+      if (it != loaded.end())
+        loaded.erase(it);
+    }
     class_loader::impl::getFactoryMapForBaseClass<Base>().erase(implType);
     delete metaObject;
   }
