@@ -6,15 +6,15 @@
 import copy
 import sys
 
-if sys.version[0] == '2':
-    from Queue import Queue  # noqa
-else:
-    from queue import Queue  # noqa
-
 import rosbag.bag
 
 from .bag_utils import MultiBag
 from .message_filter import MessageFilter, Passthrough, filter_message
+
+if sys.version[0] == '2':
+    from Queue import Queue  # noqa
+else:
+    from queue import Queue  # noqa
 
 
 def filter_bag(bags, out, bag_filter=Passthrough(), params=None):
