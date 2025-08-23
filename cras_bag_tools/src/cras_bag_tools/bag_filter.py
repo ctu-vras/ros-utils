@@ -4,37 +4,53 @@
 """Filter a bag file using a MessageFilter."""
 
 import copy
-from queue import Queue
+import sys
+
+if sys.version[0] == '2':
+    from Queue import Queue  # noqa
+else:
+    from queue import Queue  # noqa
 
 import rosbag.bag
 
+from .bag_utils import MultiBag
 from .message_filter import MessageFilter, Passthrough, filter_message
 
 
-def filter_bag(bag, out, filter=Passthrough(), params=None):
+def filter_bag(bags, out, bag_filter=Passthrough(), params=None):
     """Filter the given bagfile 'bag' into bagfile 'out' using message filter 'filter'.
 
-    :param rosbag.bag.Bag bag: The input bag (open in read mode).
+    :param bags: The input bag (open in read mode).
+    :type bags: rosbag.bag.Bag or MultiBag
     :param rosbag.bag.Bag out: The output bag (open in write mode).
-    :param MessageFilter filter: The filter to apply.
+    :param MessageFilter bag_filter: The filter to apply.
     :param dict params: Loaded ROS parameters.
     """
-    filter.set_params(params)
-    filter.set_bag(bag)
+    bag_filter.set_params(params)
 
-    topics = [c.topic for c in bag._get_connections()]  # get all topics
-    topics = [t for t in topics if filter.topic_filter(t)]  # apply topic filters
-    topics = [c.topic for c in bag._get_connections(topics, filter.connection_filter)]  # apply connection filters
+    if isinstance(bags, MultiBag):
+        bag = bags.bags[0]
+    else:
+        bag = bags
+
+    bag_filter.set_bag(bag)
+
+    # get all topics
+    topics = [c.topic for c in bags._get_connections()]  # noqa
+    # apply topic filters
+    topics = [t for t in topics if bag_filter.topic_filter(t)]
+    # apply connection filters
+    topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
     queue = Queue()
-    connection_filter = filter.connection_filter
-    for topic, msg, stamp, connection_header in bag.read_messages(
-            topics=topics, return_connection_header=True, raw=filter.is_raw, connection_filter=connection_filter):
+    connection_filter = bag_filter.connection_filter
+    for topic, msg, stamp, connection_header in bags.read_messages(
+            topics=topics, return_connection_header=True, raw=bag_filter.is_raw, connection_filter=connection_filter):
         queue.put((topic, msg, stamp, connection_header))
         while not queue.empty():
             _topic, _msg, _stamp, _connection_header = queue.get()
             _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
-            ret = filter_message(_topic, _msg, _stamp, _connection_header, filter, True)
+            ret = filter_message(_topic, _msg, _stamp, _connection_header, bag_filter, True)
             if not isinstance(ret, list):
                 ret = [ret]
             for data in ret[1:]:
@@ -44,4 +60,4 @@ def filter_bag(bag, out, filter=Passthrough(), params=None):
             _topic, _raw_msg, _stamp, _connection_header = ret[0]
             out.write(_topic, _raw_msg, _stamp, connection_header=_connection_header, raw=True)
 
-    filter.reset()
+    bag_filter.reset()

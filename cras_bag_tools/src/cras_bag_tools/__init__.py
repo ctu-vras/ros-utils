@@ -3,7 +3,8 @@
 
 from .time_range import TimeRange
 from .topic_set import TopicSet
-from .tqdm_bag import TqdmBag
+from .bag_utils import *
+from .tqdm_bag import *
 from .message_filter import MessageFilter, DeserializedMessageFilter, RawMessageFilter, FilterChain, Passthrough, \
     filter_message, get_filters
 from .bag_filter import filter_bag

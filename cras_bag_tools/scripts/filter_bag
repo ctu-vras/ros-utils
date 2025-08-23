@@ -17,16 +17,11 @@ from argparse import ArgumentParser
 from glob import glob
 from shutil import copyfile
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
-
 import rosbag
 from cras import pretty_file_size
 from cras_bag_tools.bag_filter import filter_bag
 from cras_bag_tools.message_filter import FilterChain, MessageFilter, get_filters
-from cras_bag_tools.tqdm_bag import TqdmBag
+from cras_bag_tools.tqdm_bag import TqdmMultiBag
 
 
 def out_path(path, fmt):
@@ -47,63 +42,98 @@ def out_path(path, fmt):
     return out
 
 
-def copy_params_if_any(bag_path, out_bag_path):
+def copy_params_if_any(param_file, out_bag_path):
     """If the bagfile has a sidecar parameters file named $BAG.params, copy this file to the out path.
 
-    :param str bag_path: Source bag path.
+    :param str param_file: Path to the file with parameters (can be None).
     :param out_bag_path: Output bag path.
     """
+    if param_file is None:
+        return
     try:
-        copyfile(bag_path + '.params', out_bag_path + '.params')
-        print('Params: %s copied to %s.' % (bag_path + '.params', out_bag_path + '.params'))
+        copyfile(param_file, out_bag_path + '.params')
+        print('Params: %s copied to %s.' % (param_file, out_bag_path + '.params'))
     except (OSError, IOError) as ex:
-        print('Params: %s not found.' % (bag_path + '.params'))
+        print('Params: %s not found.' % (param_file,))
 
 
-def filter_bags(bags, out_format, compression, copy_params, filter):
+def filter_bags(bags, out_format, compression, copy_params, filter, default_params_file=None):
     """Filter all given bags using the given filter.
 
-    :param list bags: The bags to filter.
+    :param list bags: The bags to filter. If multiple bags should be read at once, add them as a single list item with
+                      paths separated by colon. One of the files can also be be a YAML file with ROS parameters.
     :param str out_format: Output path template.
     :param str compression: Output bag compression. One of 'rosbag.Compression.*' constants.
     :param bool copy_params: If True, copy parameters file along with the bag file if it exists.
     :param MessageFilter filter: The filter to apply.
+    :param str default_params_file: If nonempty, specifies the YAML file with ROS parameters that is used if no param
+                                    file is specified for the particular bag.
     """
     i = 0
-    for bag_path in bags:
+    for bags_path in bags:
         i += 1
-        out_bag_path = out_path(bag_path, out_format)
+        bag_path = bags_path
+        bags_paths = [bag_path]
+        if os.path.pathsep in bags_path:
+            bags_paths = bags_path.split(os.path.pathsep)
+            bag_path = bags_paths[0]
+
+        params_file = default_params_file
+        if params_file is None:
+            for b in bags_paths:
+                ext = os.path.splitext(b)[-1]
+                if ext in ('.params', '.yaml', '.yml'):
+                    params_file = b
+                    bags_paths.remove(b)
+                    bags_path = os.path.pathsep.join(bags_paths)
+                    break
+
+        if params_file is None:
+            for b in bags_paths:
+                param = b + '.params'
+                if os.path.exists(param):
+                    params_file = param
+                    break
+
         print()
         print("[{}/{}] Bag {}".format(i, len(bags), bag_path))
-        print('Source:      %s' % (os.path.abspath(bag_path),))
-        if not os.path.exists(bag_path):
-            print('Source bag does not exist', file=sys.stderr)
+
+        print('Source:      %s' % (",".join([os.path.abspath(b) for b in bags_paths]),))
+        bags_ok = True
+        for b in bags_paths:
+            if not os.path.exists(b):
+                print('Source bag %s does not exist' % (b,), file=sys.stderr)
+                bags_ok = False
+        if not bags_ok:
             continue
-        print('- Size: %s' % (pretty_file_size(os.path.getsize(bag_path)),))
-        print('Destination: %s' % (os.path.abspath(out_bag_path),))
-        print('- Compression: %s' % (compression,))
-        if copy_params:
-            copy_params_if_any(bag_path, out_bag_path)
-        print()
-        params_path = bag_path + '.params'
-        params = None
-        if os.path.exists(params_path):
-            try:
-                with open(params_path, "r") as f:
-                    params = yaml.safe_load(f)
-                print("Loaded ROS parameters from file " + bag_path + '.params')
-            except yaml.YAMLError as e:
-                print("Error parsing ROS parameters from file %s: %s" % (params_path, str(e)), file=sys.stderr)
-            except Exception as e:
-                print("Error loading ROS parameters from file %s: %s" % (params_path, str(e)), file=sys.stderr)
 
         try:
-            with TqdmBag(bag_path, skip_index=True) as bag:
+            with TqdmMultiBag(bags_path, skip_index=True) as bag:
+                print('- Size: %s' % (pretty_file_size(bag.size),))
+
+                out_bag_path = out_path(bag_path, out_format)
+                print('Destination: %s' % (os.path.abspath(out_bag_path),))
+                print('- Compression: %s' % (compression,))
+                if copy_params:
+                    copy_params_if_any(params_file, out_bag_path)
+                print()
+
+                params = None
+                if params_file is not None and os.path.exists(params_file):
+                    try:
+                        with open(params_file, "r") as f:
+                            params = yaml.safe_load(f)
+                        print("Loaded ROS parameters from file " + params_file)
+                    except yaml.YAMLError as e:
+                        print("Error parsing ROS parameters from file %s: %s" % (params_file, str(e)), file=sys.stderr)
+                    except Exception as e:
+                        print("Error loading ROS parameters from file %s: %s" % (params_file, str(e)), file=sys.stderr)
+
                 with rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
                     bag.read_index()
                     filter_bag(bag, out, filter, params)
         except Exception as e:
-            print('Error processing bag file %s: %s' % (bag_path, str(e)), file=sys.stderr)
+            print('Error processing bag file %s: %s' % (bags_path, str(e)), file=sys.stderr)
             import traceback
             traceback.print_exc()
 
@@ -191,14 +221,14 @@ def main():
         if hasattr(f, 'process_cli_args'):
             getattr(f, 'process_cli_args')(filters, args)
 
-    filter = FilterChain(filters) + MessageFilter.from_config(args.filters)
-    if len(filter.filters) == 0:
+    filter_chain = FilterChain(filters) + MessageFilter.from_config(args.filters)
+    if len(filter_chain.filters) == 0:
         print("No filters defined, exiting.", file=sys.stderr)
         sys.exit(1)
 
     print()
     print('Filters:')
-    print('\n'.join(str(f) for f in filter.filters))
+    print('\n - '.join(str(f) for f in filter_chain.filters))
 
     if args.compression is None:
         args.compression = rosbag.Compression.NONE
@@ -207,7 +237,7 @@ def main():
     if args.copy_params is None:
         args.copy_params = True
 
-    filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter)
+    filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter_chain)
 
 
 if __name__ == '__main__':

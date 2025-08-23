@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Generates robot model masks for cameras
+# Requires https://github.com/ctu-vras/robot_model_renderer in workspace.
+# Requires https://github.com/ctu-vras/cv_image_transport in workspace.
+out_format: '{name}.mask{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include_topics:
+        - /tf
+        - /tf_static
+        - /camera_front/camera_info
+        - /camera_rear/camera_info
+        - /camera_left/camera_info
+        - /camera_right/camera_info
+        - /camera_up/camera_info
+        - /camera_fisheye_front/camera_info
+        - /camera_fisheye_rear/camera_info
+  - RenderCameraMask:
+      camera_info_topic: /camera_front/camera_info
+      mask_topic: /camera_front/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_rear/camera_info
+      mask_topic: /camera_rear/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_left/camera_info
+      mask_topic: /camera_left/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_right/camera_info
+      mask_topic: /camera_right/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_up/camera_info
+      mask_topic: /camera_up/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_fisheye_front/camera_info
+      mask_topic: /camera_fisheye_front/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - RenderCameraMask:
+      camera_info_topic: /camera_fisheye_rear/camera_info
+      mask_topic: /camera_fisheye_rear/image_color/mask
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+  - CompressImages:
+      transport: cv
+      transport_params:
+        cv:
+          format: pbm
+  - Remap:
+      /camera_front/image_color/mask/cv: /camera_front/image_color/mask/compressed
+      /camera_rear/image_color/mask/cv: /camera_rear/image_color/mask/compressed
+      /camera_left/image_color/mask/cv: /camera_left/image_color/mask/compressed
+      /camera_right/image_color/mask/cv: /camera_right/image_color/mask/compressed
+      /camera_up/image_color/mask/cv: /camera_up/image_color/mask/compressed
+      /camera_fisheye_front/image_color/mask/cv: /camera_fisheye_front/image_color/mask/compressed
+      /camera_fisheye_rear/image_color/mask/cv: /camera_fisheye_rear/image_color/mask/compressed
+  - Drop:
+      include_topics:
+        - /tf
+        - /tf_static
+        - /camera_front/camera_info
+        - /camera_rear/camera_info
+        - /camera_left/camera_info
+        - /camera_right/camera_info
+        - /camera_up/camera_info
+        - /camera_fisheye_front/camera_info
+        - /camera_fisheye_rear/camera_info

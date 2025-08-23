@@ -27,8 +27,8 @@ loaded_filters = None
 def get_filters():
     """Get all defined message filters.
 
-    :return: The list of message filters.
-    :rtype: list of MessageFilter
+    :return: The dictionary of (filter name => filter).
+    :rtype: dict
     """
     global loaded_filters
     if loaded_filters is not None:

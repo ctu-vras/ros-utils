@@ -3,6 +3,7 @@
 
 # Generates robot model masks for cameras
 # Requires https://github.com/ctu-vras/robot_model_renderer in workspace.
+# Requires https://github.com/ctu-vras/cv_image_transport in workspace.
 out_format: '{name}.mask{ext}'
 compression: lz4
 filters:
@@ -45,6 +46,13 @@ filters:
       transport_params:
         cv:
           format: pbm
+  - Remap:
+      /viz/camera_0/image/mask/cv: /viz/camera_0/image/mask/compressed
+      /viz/camera_1/image/mask/cv: /viz/camera_1/image/mask/compressed
+      /viz/camera_2/image/mask/cv: /viz/camera_2/image/mask/compressed
+      /viz/camera_3/image/mask/cv: /viz/camera_3/image/mask/compressed
+      /viz/camera_4/image/mask/cv: /viz/camera_4/image/mask/compressed
+      /viz/camera_5/image/mask/cv: /viz/camera_5/image/mask/compressed
   - Drop:
       include_topics:
         - /tf
