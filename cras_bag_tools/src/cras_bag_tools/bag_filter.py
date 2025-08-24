@@ -6,10 +6,12 @@
 import copy
 import sys
 
+import genpy
 import rosbag.bag
 
-from .bag_utils import MultiBag
+from .bag_utils import BagWrapper, MultiBag
 from .message_filter import MessageFilter, Passthrough, filter_message
+from .time_range import TimeRange, TimeRanges
 
 if sys.version[0] == '2':
     from Queue import Queue  # noqa
@@ -17,7 +19,7 @@ else:
     from queue import Queue  # noqa
 
 
-def filter_bag(bags, out, bag_filter=Passthrough(), params=None):
+def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None, end_time=None, time_ranges=None):
     """Filter the given bagfile 'bag' into bagfile 'out' using message filter 'filter'.
 
     :param bags: The input bag (open in read mode).
@@ -25,15 +27,34 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None):
     :param rosbag.bag.Bag out: The output bag (open in write mode).
     :param MessageFilter bag_filter: The filter to apply.
     :param dict params: Loaded ROS parameters.
+    :param genpy.Time start_time: Time from which the bag filtering should be started.
+    :param genpy.Time end_time: Time to which the bag filtering should be stopped.
+    :param TimeRanges time_ranges: Time ranges of the bag file to process. If start_time and end_time are specified,
+                                   they are merged with these ranges. Relative time ranges will be evaluated relative
+                                   to each individual bag.
     """
     bag_filter.set_params(params)
 
     if isinstance(bags, MultiBag):
         bag = bags.bags[0]
+    elif not isinstance(bags, BagWrapper):
+        bag = bags = BagWrapper(bags)  # support passing TimeRanges as start_time
     else:
         bag = bags
 
     bag_filter.set_bag(bag)
+
+    if start_time is not None or end_time is not None:
+        if time_ranges is None:
+            time_ranges = TimeRanges([])
+        if start_time is None:
+            start_time = genpy.Time(bags.get_start_time())
+        if end_time is None:
+            end_time = genpy.Time(bags.get_end_time())
+        time_ranges.append(TimeRange(start_time, end_time))
+
+    if time_ranges is not None:
+        time_ranges.set_base_time(genpy.Time(bags.get_start_time()))
 
     # get all topics
     topics = [c.topic for c in bags._get_connections()]  # noqa
@@ -45,7 +66,8 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None):
     queue = Queue()
     connection_filter = bag_filter.connection_filter
     for topic, msg, stamp, connection_header in bags.read_messages(
-            topics=topics, return_connection_header=True, raw=bag_filter.is_raw, connection_filter=connection_filter):
+            topics=topics, start_time=time_ranges, return_connection_header=True, raw=bag_filter.is_raw,
+            connection_filter=connection_filter):
         queue.put((topic, msg, stamp, connection_header))
         while not queue.empty():
             _topic, _msg, _stamp, _connection_header = queue.get()

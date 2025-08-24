@@ -13,7 +13,7 @@ import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
 
-from .time_range import TimeRange
+from .time_range import TimeRange, TimeRanges
 from .topic_set import TopicSet
 
 
@@ -74,10 +74,12 @@ class MessageFilter(object):
         :param list exclude_types: If nonempty, the filter will skip these message types (but pass them further).
         :param rospy.Time min_stamp: If set, the filter will only work on messages after this timestamp.
         :param rospy.Time max_stamp: If set, the filter will only work on messages before this timestamp.
-        :param list include_time_ranges: Time ranges that specify which regions of the bag should be processed.
-                                         List of pairs (start, end_or_duration).
-        :param list exclude_time_ranges: Time ranges that specify which regions of the bag should be skipped.
-                                         List of pairs (start, end_or_duration).
+        :param include_time_ranges: Time ranges that specify which regions of the bag should be processed.
+                                    List of pairs (start, end_or_duration) or a TimeRanges object.
+        :type include_time_ranges: list or TimeRanges
+        :param exclude_time_ranges: Time ranges that specify which regions of the bag should be skipped.
+                                    List of pairs (start, end_or_duration) or a TimeRanges object.
+        :type exclude_time_ranges: list or TimeRanges
         """
         self.is_raw = is_raw
         """Whether the filter works on raw or deserialized messages."""
@@ -106,8 +108,8 @@ class MessageFilter(object):
     @staticmethod
     def _parse_time_ranges(ranges):
         if ranges is None:
-            return ()
-        return tuple([TimeRange(start, end) for start, end in ranges])
+            return None
+        return TimeRanges(TimeRange(start, end) for start, end in ranges)
 
     def set_bag(self, bag):
         """If this filter is working on a bag, it should be set here before the filter starts being used on the bag.
@@ -117,10 +119,10 @@ class MessageFilter(object):
         self._bag = bag
 
         start_time = bag.get_start_time()
-        for time_range in self._include_time_ranges:
-            time_range.set_base_time(start_time)
-        for time_range in self._exclude_time_ranges:
-            time_range.set_base_time(start_time)
+        if self._include_time_ranges is not None:
+            self._include_time_ranges.set_base_time(start_time)
+        if self._exclude_time_ranges is not None:
+            self._exclude_time_ranges.set_base_time(start_time)
 
     def set_params(self, params):
         """Set the ROS parameters recorded for the currently open bag file.
@@ -197,9 +199,9 @@ class MessageFilter(object):
             return False
         if self._exclude_types and datatype in self._exclude_types:
             return False
-        if self._include_time_ranges and not(any([stamp in r for r in self._include_time_ranges])):
+        if self._include_time_ranges and stamp not in self._include_time_ranges:
             return False
-        if self._exclude_time_ranges and any([stamp in r for r in self._exclude_time_ranges]):
+        if self._exclude_time_ranges and stamp in self._exclude_time_ranges:
             return False
         return True
 
