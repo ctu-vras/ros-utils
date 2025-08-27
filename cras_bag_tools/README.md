@@ -86,6 +86,7 @@ Process bag files with a configured set of filters.
 #### Usage
 
     usage: filter_bag [-h] [-c CONFIG [CONFIG ...]] [-o OUT_FORMAT] [--lz4] [--bz2] [--no-copy-params] [--list-yaml-keys] [--list-filters] [--merge-initial-static-tf [DURATION]]
+                      [--start-time START_TIME] [--end-time END_TIME] [--time-ranges START_TIME END_TIME [START_TIME END_TIME ...]] [-l]
                       [--throttle TOPIC RATE [TOPIC RATE ...]] [-i INCLUDE_TOPICS [INCLUDE_TOPICS ...]] [-e EXCLUDE_TOPICS [EXCLUDE_TOPICS ...]] [--include-types INCLUDE_TYPES [INCLUDE_TYPES ...]]
                       [--exclude-types EXCLUDE_TYPES [EXCLUDE_TYPES ...]] [--include-tf-parents INCLUDE_TF_PARENTS [INCLUDE_TF_PARENTS ...]]
                       [--exclude-tf-parents EXCLUDE_TF_PARENTS [EXCLUDE_TF_PARENTS ...]] [--include-tf-children INCLUDE_TF_CHILDREN [INCLUDE_TF_CHILDREN ...]]
@@ -95,12 +96,20 @@ Process bag files with a configured set of filters.
 
 Positional arguments:
 
-* `bags`: The list of bags to process.
+* `bags`: The list of bags to process. Each bag can be a colon-delimited list of bags (*multibag*), in which case all of
+  these bags will be read at the same time. One of the items can also be a path to a `.yaml` or `.params` file from
+  which the ROS parameters will be read. If no params file is given, each bag is tried with `.yaml` and `.params`
+  extensions appended. The first YAML file found in this way will be loaded as the parameters file. The first bag file
+  in each *multibag* has a special meaning which can be triggered by `--limit-to-first-bag`.
 
 Optional arguments:
 * `--list-yaml-keys`: Print a list of all available YAML top-level keys provided by filters.
 * `--list-filters`: Print a list of all available filters.
 * `--no-copy-params`: If set, no .params file will be copied
+* `--start-time START_TIME`: Time from which the bag filtering should be started.
+* `--end-time END_TIME`: Time to which the bag filtering should be stopped.
+* `--time-ranges START_TIME END_TIME [START_TIME END_TIME ...]`: Time ranges of bags that should be processed.
+* `-l`, `--limit-to-first-bag`: Read duration only from the first bag of each multibag.
 * `-i INCLUDE_TOPICS [INCLUDE_TOPICS ...]`, `--include-topics INCLUDE_TOPICS [INCLUDE_TOPICS ...]`: Retain only
   these topics
 * `-e EXCLUDE_TOPICS [EXCLUDE_TOPICS ...]`, `--exclude-topics EXCLUDE_TOPICS [EXCLUDE_TOPICS ...]`: Remove these topics

@@ -17,6 +17,7 @@ from argparse import ArgumentParser
 from glob import glob
 from shutil import copyfile
 
+import genpy
 import rosbag
 from cras import pretty_file_size
 from cras_bag_tools.bag_filter import filter_bag
@@ -59,7 +60,7 @@ def copy_params_if_any(param_file, out_bag_path):
 
 
 def filter_bags(bags, out_format, compression, copy_params, filter, default_params_file=None,
-                start_time=None, end_time=None, time_ranges=None):
+                start_time=None, end_time=None, time_ranges=None, limit_to_first_bag=False):
     """Filter all given bags using the given filter.
 
     :param list bags: The bags to filter. If multiple bags should be read at once, add them as a single list item with
@@ -75,6 +76,9 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
     :param TimeRanges time_ranges: Time ranges of the bag files to process. If start_time and end_time are specified,
                                    they are merged with these ranges. Relative time ranges will be evaluated relative
                                    to each individual bag.
+    :param bool limit_to_first_bag: If True, each multibag will report its start and end to be equal to the
+                                    first open bag. If False, the start and end correspond to the earliest and latest
+                                    stamp in all bags.
     """
     i = 0
     for bags_path in bags:
@@ -115,7 +119,7 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
             continue
 
         try:
-            with TqdmMultiBag(bags_path, skip_index=True) as bag:
+            with TqdmMultiBag(bags_path, skip_index=True, limit_to_first_bag=limit_to_first_bag) as bag:
                 print('- Size: %s' % (pretty_file_size(bag.size),))
 
                 out_bag_path = out_path(bag_path, out_format)
@@ -157,7 +161,7 @@ class TimeRangesAction(argparse.Action):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('bags', nargs='*', help="The bag files to filter.")
+    parser.add_argument('bags', nargs='*', help="The (multi)bag files to filter.")
     parser.add_argument('-c', '--config', nargs='+', help="YAML configs of filters")
     parser.add_argument('-o', '--out-format', default=argparse.SUPPRESS,
                         help='Template for naming the output bag. Defaults to "{name}.proc{ext}"')
@@ -181,6 +185,8 @@ def main():
                         help="Time to which the bag filtering should be stopped.")
     parser.add_argument("--time-ranges", dest="time_ranges", nargs='+', action=TimeRangesAction, default=None,
                         help="Time ranges of bags that should be processed.", metavar='START_TIME END_TIME')
+    parser.add_argument("-l", "--limit-to-first-bag", dest="limit_to_first_bag", action="store_true",
+                        help="Read duration only from the first bag of each multibag.")
 
     loaded_filters = get_filters()
     unique_filters = set(loaded_filters.values())
@@ -272,7 +278,9 @@ def main():
         args.copy_params = True
 
     filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter_chain, args.default_params_file,
-                args.start_time, args.end_time, args.time_ranges)
+                genpy.Time(args.start_time) if args.start_time is not None else None,
+                genpy.Time(args.end_time) if args.end_time is not None else None, args.time_ranges,
+                args.limit_to_first_bag)
 
 
 if __name__ == '__main__':

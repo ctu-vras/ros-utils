@@ -56,6 +56,13 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     if time_ranges is not None:
         time_ranges.set_base_time(genpy.Time(bags.get_start_time()))
 
+    extra_time_ranges = None
+    # If time_ranges is None, we read the whole bags, so we don't need any extra time ranges
+    if time_ranges is not None:
+        extra_time_ranges = bag_filter.extra_time_ranges(bags)
+        if extra_time_ranges is not None:
+            extra_time_ranges.set_base_time(genpy.Time(bags.get_start_time()))
+
     # get all topics
     topics = [c.topic for c in bags._get_connections()]  # noqa
     # apply topic filters
@@ -66,13 +73,16 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     queue = Queue()
     connection_filter = bag_filter.connection_filter
     for topic, msg, stamp, connection_header in bags.read_messages(
-            topics=topics, start_time=time_ranges, return_connection_header=True, raw=bag_filter.is_raw,
-            connection_filter=connection_filter):
+            topics=topics, start_time=time_ranges, end_time=extra_time_ranges, return_connection_header=True,
+            raw=bag_filter.is_raw, connection_filter=connection_filter):
         queue.put((topic, msg, stamp, connection_header))
         while not queue.empty():
             _topic, _msg, _stamp, _connection_header = queue.get()
             _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
-            ret = filter_message(_topic, _msg, _stamp, _connection_header, bag_filter, True)
+            is_from_extra_time_ranges = False
+            if extra_time_ranges is not None and time_ranges is not None:
+                is_from_extra_time_ranges = _stamp in extra_time_ranges and _stamp not in time_ranges
+            ret = filter_message(_topic, _msg, _stamp, _connection_header, bag_filter, True, is_from_extra_time_ranges)
             if not isinstance(ret, list):
                 ret = [ret]
             for data in ret[1:]:

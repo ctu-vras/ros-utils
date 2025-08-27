@@ -371,6 +371,10 @@ class Drop(RawMessageFilter):
     """Drop matching messages. The difference between Topics and Drop is that Drop acts locally, i.e. can be used in the
      middle of a filter chain."""
 
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_range=False):
+        # Drop also messages from extra time ranges
+        return super(Drop, self).consider_message(topic, datatype, stamp, header, False)
+
     def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
         return None
 
@@ -492,10 +496,11 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
             for tf in msg.transforms:
                 self.merged_transforms[tf.child_frame_id] = tf
 
-    def consider_message(self, topic, datatype, stamp, header):
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_ranges=False):
         if self.end_time is None or self.end_time <= stamp:
             return False
-        return super(MergeInitialStaticTf, self).consider_message(topic, datatype, stamp, header)
+        return super(MergeInitialStaticTf, self).consider_message(
+            topic, datatype, stamp, header, is_from_extra_time_ranges)
 
     def filter(self, topic, msg, stamp, header):
         if self.merged_message_published:
@@ -1070,11 +1075,11 @@ class BlurFaces(DeserializedMessageFilter):
         self._cv = CvBridge()
         self._centerface = deface.centerface.CenterFace(in_shape=None, backend=self.backend)
 
-    def consider_message(self, topic, datatype, stamp, header):
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_ranges=False):
         if datatype == Config._type:
             return True
 
-        if not super(BlurFaces, self).consider_message(topic, datatype, stamp, header):
+        if not super(BlurFaces, self).consider_message(topic, datatype, stamp, header, is_from_extra_time_ranges):
             return False
 
         for t in self.ignore_transports:

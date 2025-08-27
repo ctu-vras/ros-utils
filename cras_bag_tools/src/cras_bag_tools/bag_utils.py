@@ -48,38 +48,54 @@ class BagWrapper(object):
         return getattr(self.bag, item)
 
     def _get_entries(self, connections=None, start_time=None, end_time=None):
+        all_ranges = None
+        if start_time is not None and isinstance(start_time, TimeRanges):
+            all_ranges = copy.copy(start_time)
+        if end_time is not None and isinstance(end_time, TimeRanges):
+            if all_ranges is None:
+                all_ranges = copy.copy(end_time)
+            else:
+                all_ranges.append(end_time.ranges)
+
         for entry in heapq.merge(*self.bag._get_indexes(connections), key=lambda x: x.time.to_nsec()):  # noqa
-            if start_time is not None:
-                if isinstance(start_time, TimeRanges):
-                    time_ranges = start_time
-                    if time_ranges > entry.time:
-                        continue
-                    elif time_ranges < entry.time:
-                        return
-                    elif entry.time not in time_ranges:
-                        continue
-                elif entry.time < start_time:
+            if all_ranges is not None:
+                if all_ranges > entry.time:
                     continue
-            if end_time is not None and entry.time > end_time:
-                return
+                elif all_ranges < entry.time:
+                    return
+                elif entry.time not in all_ranges:
+                    continue
+            else:
+                if start_time is not None and isinstance(start_time, genpy.Time) and entry.time < start_time:
+                    continue
+                if end_time is not None and isinstance(end_time, genpy.Time) and entry.time > end_time:
+                    return
             yield entry
 
     def _get_entries_reverse(self, connections=None, start_time=None, end_time=None):
+        all_ranges = None
+        if start_time is not None and isinstance(start_time, TimeRanges):
+            all_ranges = copy.copy(start_time)
+        if end_time is not None and isinstance(end_time, TimeRanges):
+            if all_ranges is None:
+                all_ranges = copy.copy(end_time)
+            else:
+                all_ranges.append(end_time.ranges)
+
         for entry in heapq.merge(*(reversed(index) for index in self._get_indexes(connections)),
                                  key=lambda x: x.time.to_nsec(), reverse=True):
-            if start_time is not None:
-                if isinstance(start_time, TimeRanges):
-                    time_ranges = start_time
-                    if time_ranges > entry.time:
-                        return
-                    elif time_ranges < entry.time:
-                        continue
-                    elif entry.time not in time_ranges:
-                        continue
-                elif entry.time < start_time:
+            if all_ranges is not None:
+                if all_ranges > entry.time:
                     return
-            if end_time is not None and entry.time > end_time:
-                continue
+                elif all_ranges < entry.time:
+                    continue
+                elif entry.time not in all_ranges:
+                    continue
+            else:
+                if start_time is not None and isinstance(start_time, genpy.Time) and entry.time < start_time:
+                    return
+                if end_time is not None and isinstance(end_time, genpy.Time) and entry.time > end_time:
+                    continue
             yield entry
 
 
@@ -91,12 +107,24 @@ class MultiBag(object):
                  mode='r',  # type: STRING_TYPE
                  compression=rosbag.Compression.NONE,  # type: rosbag.Compression
                  options=None,  # type: Dict[STRING_TYPE, Any]
-                 skip_index=False  # type: bool
+                 skip_index=False,  # type: bool
+                 limit_to_first_bag=False,  # type: bool
                  ):
+        """
+        :param bag_files: The paths to bags to open (either a sequence of colon-separated string of paths).
+        :param mode: Open mode (r/w/a).
+        :param compression: Compression (used for write mode).
+        :param options: Bag options (compression, chunk threshold, ...).
+        :param skip_index: Whether index should be read right away. Otherwise, call read_index() when you need it.
+        :param limit_to_first_bag: If True, the multibag will report its start and end to be equal to the
+                                   first open bag. If False, the start and end correspond to the earliest and latest
+                                   stamp in all bags.
+        """
 
         if isinstance(bag_files, STRING_TYPE):
             bag_files = bag_files.split(os.path.pathsep)
         self.bags = [self.open_bag(b, compression, mode, options, skip_index) for b in bag_files]
+        self._limit_to_first_bag = limit_to_first_bag
 
     def open_bag(self, b, compression, mode, options, skip_index):
         return rosbag.Bag(b, mode, compression, options=options, skip_index=skip_index)
@@ -115,6 +143,8 @@ class MultiBag(object):
 
     @property
     def size(self):
+        if self._limit_to_first_bag:
+            return self.bags[0].size
         return sum(b.size for b in self.bags)
 
     def close(self):
@@ -122,16 +152,24 @@ class MultiBag(object):
             for b in self.bags:
                 b.close()
 
-    def get_message_count(self, topic_filters=None, start_time=None, end_time=None):
-        # type: (Optional[Sequence[STRING_TYPE]], Optional[Union[genpy.Time, TimeRanges]], Optional[genpy.Time]) -> int
+    def get_message_count(self,
+                          topic_filters=None,  # type: Optional[Sequence[STRING_TYPE]]
+                          start_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
+                          end_time=None  # type: Optional[Union[genpy.Time, TimeRanges]]
+                          ):
+        # type: (...) -> int
         connections = dict(self._get_connections(topic_filters, with_bag=True))
         entries = self._get_entries(connections, start_time, end_time)
         return sum(1 for _ in entries)
 
     def get_start_time(self):  # type: () -> float
+        if self._limit_to_first_bag:
+            return self.bags[0].get_start_time()
         return min(b.get_start_time() for b in self.bags)
 
     def get_end_time(self):  # type: () -> float
+        if self._limit_to_first_bag:
+            return self.bags[0].get_end_time()
         return max(b.get_end_time() for b in self.bags)
 
     def read_index(self):
@@ -151,7 +189,7 @@ class MultiBag(object):
     def _get_entries(self,
                      connections=None,  # type: Optional[Dict[rosbag.Bag, Iterable[ConnectionInfo]]]
                      start_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
-                     end_time=None,  # type: Optional[genpy.Time]
+                     end_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
                      ):
         # type: (...) -> Iterator[Tuple[rosbag.Bag, ConnectionEntry, ConnectionInfo]]
         all_indexes = []
@@ -160,6 +198,11 @@ class MultiBag(object):
             indexes = bag._get_indexes(conns)  # noqa
             for conn, index in zip(conns, indexes):
                 all_indexes.append([(bag, entry, conn) for entry in index])
+
+        if start_time is None and self._limit_to_first_bag:
+            start_time = genpy.Time(self.get_start_time())
+        if end_time is None and self._limit_to_first_bag:
+            end_time = genpy.Time(self.get_end_time())
 
         time_ranges = None
         if start_time is not None and isinstance(start_time, TimeRanges):
@@ -170,7 +213,20 @@ class MultiBag(object):
                 time_ranges[bag] = time_range
             start_time = None  # Simplify the check in the next loop
 
+        extra_time_ranges = None
+        if end_time is not None and isinstance(end_time, TimeRanges):
+            extra_time_ranges = {}
+            for bag in self.bags:
+                time_range = copy.copy(end_time)
+                time_range.set_base_time(genpy.Time(bag.get_start_time()))
+                extra_time_ranges[bag] = time_range
+            end_time = None  # Simplify the check in the next loop
+
         for bag, entry, conn in heapq.merge(*all_indexes, key=lambda x: x[1].time.to_nsec()):
+            if extra_time_ranges is not None and entry.time in extra_time_ranges[bag]:
+                yield bag, entry, conn
+                continue
+
             if start_time is not None and entry.time < start_time:
                 continue
             if end_time is not None and entry.time > end_time:
@@ -189,7 +245,7 @@ class MultiBag(object):
     def _read_messages(self,
                        topics=None,  # type: Optional[Sequence[STRING_TYPE]]
                        start_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
-                       end_time=None,  # type: Optional[genpy.Time]
+                       end_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
                        connection_filter=None,  # type: Optional[ConnectionFilter]
                        raw=False,  # type: bool
                        return_connection_header=False,  # type: bool
@@ -204,7 +260,7 @@ class MultiBag(object):
     def read_messages(self,
                       topics=None,  # type: Optional[Sequence[STRING_TYPE]]
                       start_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
-                      end_time=None,  # type: Optional[genpy.Time]
+                      end_time=None,  # type: Optional[Union[genpy.Time, TimeRanges]]
                       connection_filter=None,  # type: Optional[ConnectionFilter]
                       raw=False,  # type: bool
                       return_connection_header=False,  # type: bool

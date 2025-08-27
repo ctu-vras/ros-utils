@@ -13,6 +13,7 @@ import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
 
+from .bag_utils import MultiBag
 from .time_range import TimeRange, TimeRanges
 from .topic_set import TopicSet
 
@@ -61,6 +62,12 @@ class MessageFilter(object):
        one message or a list of messages. The first (or only) message is considered to be the "direct followup" of the
        input message and continues going through the filter (or stops the filter if it is None). The other messages
        in the returned list should be fed into this filter again as new input messages.
+
+    The filter can also override extra_time_ranges(). The "extra" time ranges are time ranges of the bagfile that
+    should be read regardless of the normal start/end/min_stamp/max_stamp time ranges. Data from "extra" time ranges
+    are not considered by default, so the filter has to override consider_message() to actually receive them.
+    This mechanism is meant to support e.g. reading latched static TFs from the start of the bag file even when
+    working just on a part of the bag that does not start at the bag beginning.
     """
 
     def __init__(self, is_raw, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
@@ -176,7 +183,7 @@ class MessageFilter(object):
         """
         raise NotImplementedError()
 
-    def consider_message(self, topic, datatype, stamp, header):
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_range=False):
         """This function should be called before calling filter(). If it returns False, filter() should not be called
         and the original message should be used instead.
 
@@ -184,9 +191,13 @@ class MessageFilter(object):
         :param str datatype:
         :param Time stamp:
         :param dict header:
-        :return: Whether filter() should be called.
+        :param bool is_from_extra_time_range: If True, this message comes from extra time range.
+        :return: Whether filter() should be called. If False, the message is passed to the next filter (not discarded).
         :rtype: bool
         """
+        # Filters have to explicitly opt-in to reading messages from extra time ranges.
+        if is_from_extra_time_range:
+            return False
         if self._min_stamp is not None and stamp < self._min_stamp:
             return False
         if self._max_stamp is not None and stamp > self._max_stamp:
@@ -226,6 +237,19 @@ class MessageFilter(object):
         :rtype: bool
         """
         return True
+
+    def extra_time_ranges(self, bags):
+        """If this filter requires that certain time ranges are read from the bagfiles in any case (like the static
+        TFs at the beginning), it should return the requested time range here. Such parts of the bag will be always
+        passed to the filter regardless of the include/exclude time ranges of this filter and the start/end times
+        of the whole bag.
+
+        :param bags: The bags that are going to be processed.
+        :type bags: rosbag.Bag or MultiBag
+        :return: The time ranges of the input bags that should always be read. If None, no extra ranges are required.
+        :rtype: TimeRanges or None
+        """
+        return None
 
     def reset(self):
         """Reset the filter. This should be called e.g. before starting a new bag."""
@@ -384,6 +408,36 @@ class DeserializedMessageFilter(MessageFilter):
         raise NotImplementedError
 
 
+class DeserializedMessageFilterWithTF(DeserializedMessageFilter):
+    """Filter for deserialized messages that always correctly reads static TFs from the bag start."""
+
+    def __init__(self, include_topics=None, include_types=None, tf_topics=("/tf",), tf_static_topics=("/tf_static",),
+                 initial_bag_part_duration=genpy.Duration(2), *args, **kwargs):
+        self._tf_static_topics = tf_static_topics
+        self._initial_bag_part_duration = initial_bag_part_duration
+
+        if include_topics is not None:
+            for t in tf_topics + tf_static_topics:
+                if t not in include_topics:
+                    include_topics.append(t)
+        if include_types is not None:
+            if "tf2_msgs/TFMessage" not in include_types:
+                include_types.append("tf2_msgs/TFMessage")
+        super(DeserializedMessageFilterWithTF, self).__init__(
+            include_topics=include_topics, include_types=include_types, *args, **kwargs)
+
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_ranges=False):
+        # /tf has standard rules for being considered, but tf_static needs to be always accepted
+        if topic in self._tf_static_topics:
+            return True
+        return super(DeserializedMessageFilterWithTF, self).consider_message(
+            topic, datatype, stamp, header, is_from_extra_time_ranges)
+
+    def extra_time_ranges(self, bags):
+        # Require the beginnings of all bag files where static TFs can be stored
+        return TimeRanges([TimeRange(0, self._initial_bag_part_duration)])
+
+
 class Passthrough(RawMessageFilter):
     """
     Just pass all messages through.
@@ -407,17 +461,23 @@ class FilterChain(RawMessageFilter):
         super(FilterChain, self).__init__()
         self.filters = filters
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_range=False):
+        return True  # actual considering is done in the filter() loop
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, is_from_extra_time_range=False):
         msg = None
         last_was_raw = True
         additional_msgs = []
         for f in self.filters:
-            if not f.consider_message(topic, datatype, stamp, header):
+            if not f.consider_message(topic, datatype, stamp, header, is_from_extra_time_range):
                 continue
             if f.is_raw:
                 if not last_was_raw:
                     datatype, data, md5sum, pytype = msg_to_raw(msg)
-                ret = f(topic, datatype, data, md5sum, pytype, stamp, header)
+                if isinstance(f, FilterChain):
+                    ret = f(topic, datatype, data, md5sum, pytype, stamp, header, is_from_extra_time_range)
+                else:
+                    ret = f(topic, datatype, data, md5sum, pytype, stamp, header)
                 if not isinstance(ret, list):
                     ret = [ret]
                 if ret[0] is None:
@@ -470,6 +530,16 @@ class FilterChain(RawMessageFilter):
             f.set_params(params)
         super(FilterChain, self).set_params(params)
 
+    def extra_time_ranges(self, bags):
+        time_ranges = None
+        for f in self.filters:
+            extra_ranges = f.extra_time_ranges(bags)
+            if extra_ranges is not None:
+                if time_ranges is None:
+                    time_ranges = TimeRanges([])
+                time_ranges.append(extra_ranges.ranges)
+        return time_ranges
+
     def reset(self):
         for f in self.filters:
             f.reset()
@@ -506,7 +576,7 @@ def fix_connection_header(header, topic, datatype, md5sum, pytype):
     return header
 
 
-def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True):
+def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True, is_from_extra_time_range=False):
     """Apply the given filter to a message.
 
     :param str topic: The message topic.
@@ -516,6 +586,7 @@ def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True
     :param dict connection_header: Connection header.
     :param MessageFilter filter: The filter to apply.
     :param bool raw_output: Whether to output a raw message or a deserialized one.
+    :param bool is_from_extra_time_range: If True, this message comes from extra time range.
     :return: None if the message should be discarded, or a message.
     :rtype: tuple or None
     """
@@ -526,8 +597,11 @@ def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True
             datatype, data, md5sum, _, pytype = msg
         except (ValueError, TypeError):
             datatype, data, md5sum, pytype = msg_to_raw(msg)
-        if filter.consider_message(topic, datatype, stamp, connection_header):
-            ret = filter(topic, datatype, data, md5sum, pytype, stamp, connection_header)
+        if filter.consider_message(topic, datatype, stamp, connection_header, is_from_extra_time_range):
+            if isinstance(filter, FilterChain):
+                ret = filter(topic, datatype, data, md5sum, pytype, stamp, connection_header, is_from_extra_time_range)
+            else:
+                ret = filter(topic, datatype, data, md5sum, pytype, stamp, connection_header)
             if not isinstance(ret, list):
                 ret = [ret]
             if ret[0] is None:
@@ -540,7 +614,7 @@ def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True
         if not isinstance(msg, genpy.Message):
             datatype, data, md5sum, _, pytype = msg
             msg = raw_to_msg(datatype, data, md5sum, pytype)
-        if filter.consider_message(topic, msg.__class__._type, stamp, connection_header):
+        if filter.consider_message(topic, msg.__class__._type, stamp, connection_header, is_from_extra_time_range):
             ret = filter(topic, msg, stamp, connection_header)
             if not isinstance(ret, list):
                 ret = [ret]
@@ -562,3 +636,15 @@ def filter_message(topic, msg, stamp, connection_header, filter, raw_output=True
     if len(additional_msgs) == 0:
         return ret
     return [ret] + additional_msgs
+
+
+__all__ = [
+    DeserializedMessageFilter.__name__,
+    DeserializedMessageFilterWithTF.__name__,
+    FilterChain.__name__,
+    MessageFilter.__name__,
+    Passthrough.__name__,
+    RawMessageFilter.__name__,
+    filter_message.__name__,
+    get_filters.__name__,
+]

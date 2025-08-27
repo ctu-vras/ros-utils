@@ -5,6 +5,7 @@
 
 from typing import Iterable, Union
 
+import cras
 import genpy
 
 
@@ -15,6 +16,12 @@ def is_time_relative(stamp):
     :return: Whether the time is relative or absolute.
     """
     return stamp.secs < 1600000000
+
+
+def to_str(time):  # type: (genpy.Time) -> cras.string_utils.STRING_TYPE
+    if time.nsecs == 0:
+        return str(time.secs)
+    return cras.to_str(time)
 
 
 class TimeRange(object):
@@ -45,6 +52,7 @@ class TimeRange(object):
         self.abs_end = self.end
         if is_time_relative(self.end) and not is_time_relative(self.start):
             self.end += genpy.Duration(self.start.secs, self.start.nsecs)
+            self.abs_end = self.end
 
         self._base_time = None
         self._base_time_duration = None
@@ -91,10 +99,12 @@ class TimeRange(object):
         return max_range.abs_start in min_range
 
     def get_merged(self, other):  # type: (TimeRange) -> TimeRange
-        base_time = self._base_time if self._base_time is not None else other._base_time  # noqa
+        base_time = self._base_time if self._base_time is not None else other._base_time
+        base_time_duration = self._base_time_duration if self._base_time_duration is not None \
+            else other._base_time_duration  # noqa
 
         def get_rel_time(t):
-            return t if is_time_relative(t) or base_time is None or t <= base_time else t - base_time
+            return t if is_time_relative(t) or base_time is None or t <= base_time else t - base_time_duration
 
         start = min(get_rel_time(self.start), get_rel_time(other.start))
         end = max(get_rel_time(self.end), get_rel_time(other.end))
@@ -118,9 +128,9 @@ class TimeRange(object):
             self.abs_end = self.end + self._base_time_duration
 
     def __str__(self):
-        if self._base_time is None:
-            return "%s - %s" % (str(self.start), str(self.end))
-        return "%s - %s (since %s)" % (str(self.start), str(self.end), str(self._base_time))
+        if self._base_time is None or not is_time_relative(self.start):
+            return "%s - %s" % (to_str(self.start), to_str(self.end))
+        return "%s - %s (since %s)" % (to_str(self.start), to_str(self.end), to_str(self._base_time))
 
     def __repr__(self):
         return self.__str__()
@@ -170,6 +180,13 @@ class TimeRanges(object):
         if isinstance(other, genpy.Time):
             return all(r > other for r in self.ranges)
         return NotImplemented
+
+    def __eq__(self, other):
+        if not isinstance(other, TimeRanges):
+            return NotImplemented
+        if len(self.ranges) != len(other.ranges):
+            return False
+        return all([self.ranges[i] == other.ranges[i] for i in range(len(self.ranges))])
 
     def __str__(self):
         return "(%s)" % (", ".join(map(str, self.ranges)),)
