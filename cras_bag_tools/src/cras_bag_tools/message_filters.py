@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 import os.path
+from collections import deque
 
 import matplotlib.cm as cmap
 import numpy as np
@@ -14,6 +15,7 @@ import sys
 from typing import Dict
 
 import rospy
+from cras import to_str
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
@@ -23,12 +25,23 @@ from dynamic_reconfigure.msg import Config
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
-from sensor_msgs.msg import CompressedImage, Image
+from kdl_parser_py.urdf import treeFromUrdfModel
+from sensor_msgs.msg import CompressedImage, Image, JointState
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
+from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
 from .message_filter import DeserializedMessageFilter, RawMessageFilter, TopicSet
+
+
+def urdf_error(message):
+    if "selfCollide" in message:
+        return
+    print(message, file=sys.stderr)
+
+
+xml_reflection.core.on_error = urdf_error
 
 
 def dict_to_str(d, sep='='):
@@ -480,6 +493,8 @@ class Transforms(DeserializedMessageFilter):
 
 
 class MergeInitialStaticTf(DeserializedMessageFilter):
+    """Merge all /tf_static messages from the beginning of bag files into a single message."""
+
     def __init__(self, delay=5.0):
         super(MergeInitialStaticTf, self).__init__(include_topics=["/tf_static"], include_types=["tf2_msgs/TFMessage"])
         self.delay = rospy.Duration(delay)
@@ -539,6 +554,189 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
                     filters.append(MergeInitialStaticTf())
             else:
                 filters.append(MergeInitialStaticTf(args.merge_initial_static_tf))
+
+
+def set_transform_from_KDL_frame(transform, frame):
+    translation = frame.p
+    rotation = frame.M.GetQuaternion()
+    transform.translation.x = translation.x()
+    transform.translation.y = translation.y()
+    transform.translation.z = translation.z()
+    transform.rotation.x = rotation[0]
+    transform.rotation.y = rotation[1]
+    transform.rotation.z = rotation[2]
+    transform.rotation.w = rotation[3]
+
+
+class RecomputeTFFromJointStates(DeserializedMessageFilter):
+    """Recompute some TFs from the URDF model and joint states."""
+
+    def __init__(self, include_topics=None, description_param=None, description_file=None, joint_state_cache_size=100,
+                 include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), *args, **kwargs):
+        """
+        :param list include_topics: Topics to handle. It should contain both the JointState and TF topics. If no TF
+                                    topic is given, /tf and /tf_static are added automatically.
+        :param str description_param: Name of the ROS parameter that hold the URDF model.
+        :param str description_file: Path to a file with the URDF model (has precedence over description_param).
+        :param joint_state_cache_size: Number of JointState messages that will be cached to be searchable when a TF
+                                       message comes and needs to figure out the JointState message it was created
+                                       from.
+        :param list include_parents: If nonempty, only TFs with one of the listed frames as parent will be retained.
+        :param list exclude_parents: If nonempty, TFs with one of the listed frames as parent will be dropped.
+        :param list include_children: If nonempty, only TFs with one of the listed frames as child will be retained.
+        :param list exclude_children: If nonempty, TFs with one of the listed frames as child will be dropped.
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        if include_topics is None:
+            include_topics = ("/joint_states",)
+        has_tf = False
+        for topic in include_topics:
+            if "tf" in topic:
+                has_tf = True
+                break
+        if not has_tf:
+            include_topics = list(include_topics)
+            include_topics.append("/tf")
+            include_topics.append("/tf_static")
+
+        super(RecomputeTFFromJointStates, self).__init__(
+            include_topics=include_topics, include_types=(TFMessage._type, JointState._type), *args, **kwargs)  # noqa
+
+        self._urdf_model = None
+        self._kdl_model = None
+        self._mimic_joints = {}
+        self._segments = {}
+        self._segments_fixed = {}
+        self._child_to_joint_map = {}
+        self._joint_state_cache = deque(maxlen=joint_state_cache_size)
+
+        self.include_parents = TopicSet(include_parents)
+        self.exclude_parents = TopicSet(exclude_parents)
+        self.include_children = TopicSet(include_children)
+        self.exclude_children = TopicSet(exclude_children)
+
+        self.description_param = description_param
+
+        self._model_from_file = None
+        if description_file is not None:
+            if os.path.exists(description_file):
+                try:
+                    with open(description_file, "r") as f:
+                        self._model_from_file = f.read()
+                    print("Loaded URDF model from file " + description_file)
+                except Exception as e:
+                    print('Could not read URDF model from file %s: %s' % (description_file, str(e)), file=sys.stderr)
+            else:
+                print('URDF model file "%s" does not exist.' % (description_file,), file=sys.stderr)
+
+    def set_bag(self, bag):
+        super(RecomputeTFFromJointStates, self).set_bag(bag)
+
+        model = self._model_from_file
+        if model is None:
+            if self.description_param is None:
+                self.description_param = "robot_description"
+            model = self._get_param(self.description_param)
+            if model is not None:
+                print("Read URDF model from ROS parameter " + self.description_param)
+
+        if model is None:
+            raise RuntimeError("RecomputeTFFromJointStates requires robot URDF either as a file or ROS parameter.")
+
+        self._urdf_model = urdf.URDF.from_xml_string(model)
+        ok, self._kdl_model = treeFromUrdfModel(self._urdf_model, quiet=True)
+        if not ok:
+            self._kdl_model = None
+            print('Could not parse URDF model into KDL model.', file=sys.stderr)
+
+        self._mimic_joints = {}
+        for joint_name, joint in self._urdf_model.joint_map.items():
+            if joint.mimic is not None:
+                self._mimic_joints[joint_name] = joint.mimic
+
+        self._segments = {}
+        self._segments_fixed = {}
+        self._child_to_joint_map = {}
+        for child, (joint_name, parent) in self._urdf_model.parent_map.items():
+            segment = self._kdl_model.getChain(parent, child).getSegment(0)
+            joint = segment.getJoint()
+            self._child_to_joint_map[child] = joint_name
+            if joint.getTypeName() == "None":
+                self._segments_fixed[child] = segment
+            else:
+                self._segments[child] = segment
+
+    def filter(self, topic, msg, stamp, header):
+        if self._kdl_model is None:
+            return topic, msg, stamp, header
+
+        if msg.__class__._type == TFMessage._type:  # noqa
+            for transform in msg.transforms:
+                if self.include_parents and transform.header.frame_id not in self.include_parents:
+                    continue
+                if self.exclude_parents and transform.header.frame_id in self.exclude_parents:
+                    continue
+                if self.include_children and transform.child_frame_id not in self.include_children:
+                    continue
+                if self.exclude_children and transform.child_frame_id in self.exclude_children:
+                    continue
+
+                is_dynamic = transform.child_frame_id in self._segments
+                is_static = transform.child_frame_id in self._segments_fixed
+                if not is_static and not is_dynamic:
+                    continue  # not a TF from the robot model
+
+                if is_static:
+                    success = self._recompute_static_transform(transform)
+                else:
+                    success = self._recompute_dynamic_transform(transform)
+                if not success:
+                    print("Could not recompute transform %s -> %s at time %s." % (
+                        transform.header.frame_id, transform.child_frame_id, to_str(stamp)), file=sys.stderr)
+            return topic, msg, stamp, header
+
+        else:  # the message is a joint state
+            self._joint_state_cache.append(msg)
+            return topic, msg, stamp, header
+
+    def _recompute_static_transform(self, transform):
+        if transform.child_frame_id not in self._segments_fixed:
+            return False
+        segment = self._segments_fixed[transform.child_frame_id]
+        frame = segment.pose(0.0)
+        set_transform_from_KDL_frame(transform.transform, frame)
+        return True
+
+    def _recompute_dynamic_transform(self, transform):
+        if transform.child_frame_id not in self._child_to_joint_map or transform.child_frame_id not in self._segments:
+            return False
+        if transform.child_frame_id not in self._segments:
+            return False
+
+        stamp = transform.header.stamp
+        joint_name = self._child_to_joint_map[transform.child_frame_id]
+        mimic = None
+        if joint_name in self._mimic_joints:
+            mimic = self._mimic_joints[joint_name]
+            joint_name = mimic.joint
+        for msg in reversed(self._joint_state_cache):
+            if msg.header.stamp != stamp:
+                continue
+            if len(msg.position) == 0:
+                continue
+            for i in range(len(msg.name)):
+                if len(msg.position) < i - 1:
+                    break
+                if msg.name[i] == joint_name:
+                    pos = msg.position[i]
+                    if mimic is not None:
+                        pos = pos * float(mimic.multiplier) + float(mimic.offset)
+                    segment = self._segments[transform.child_frame_id]
+                    frame = segment.pose(pos)
+                    set_transform_from_KDL_frame(transform.transform, frame)
+                    return True
+        return False
 
 
 class FixSpotCams(RawMessageFilter):

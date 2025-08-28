@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Recomputes TF from robot model and joint states
+out_format: '{name}.tf_recomputed{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include_topics:
+        - /marv/joint_states
+        - /tf
+        - /tf_static
+  - RecomputeTFFromJointStates:
+      include_topics: ["/marv/joint_states"]
+      description_param: marv/robot_description
+#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
