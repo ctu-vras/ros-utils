@@ -5,6 +5,7 @@
 
 import copy
 import sys
+from collections import deque
 
 import genpy
 import rosbag.bag
@@ -12,11 +13,6 @@ import rosbag.bag
 from .bag_utils import BagWrapper, MultiBag
 from .message_filter import MessageFilter, Passthrough, filter_message
 from .time_range import TimeRange, TimeRanges
-
-if sys.version[0] == '2':
-    from Queue import Queue  # noqa
-else:
-    from queue import Queue  # noqa
 
 
 def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None, end_time=None, time_ranges=None):
@@ -70,14 +66,14 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # apply connection filters
     topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
-    queue = Queue()
+    queue = deque()
     connection_filter = bag_filter.connection_filter
     for topic, msg, stamp, connection_header in bags.read_messages(
             topics=topics, start_time=time_ranges, end_time=extra_time_ranges, return_connection_header=True,
             raw=bag_filter.is_raw, connection_filter=connection_filter):
-        queue.put((topic, msg, stamp, connection_header))
-        while not queue.empty():
-            _topic, _msg, _stamp, _connection_header = queue.get()
+        queue.append((topic, msg, stamp, connection_header))
+        while len(queue) > 0:
+            _topic, _msg, _stamp, _connection_header = queue.popleft()
             _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
             is_from_extra_time_ranges = False
             if extra_time_ranges is not None and time_ranges is not None:
@@ -86,7 +82,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
             if not isinstance(ret, list):
                 ret = [ret]
             for data in ret[1:]:
-                queue.put(data)
+                queue.append(data)
             if ret[0] is None:
                 continue
             _topic, _raw_msg, _stamp, _connection_header = ret[0]
