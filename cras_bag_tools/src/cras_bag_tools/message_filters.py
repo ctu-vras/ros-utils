@@ -8,16 +8,18 @@ from __future__ import absolute_import, division, print_function
 import copy
 import os.path
 from collections import deque
+from enum import Enum
+from typing import Dict, Optional
 
 import matplotlib.cm as cmap
 import numpy as np
 import sys
-from typing import Dict
+from typing import Any, Dict
 
 import rospy
-from cras import to_str
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
+from cras.string_utils import to_str, STRING_TYPE
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.encoding import decode_config
@@ -45,7 +47,8 @@ xml_reflection.core.on_error = urdf_error
 
 
 def dict_to_str(d, sep='='):
-    return ', '.join('%s%s%s' % (k, sep, v) for k, v in d.items())
+    return '{' + ', '.join('%s%s%s' % (
+        k, sep, str(v) if not isinstance(v, dict) else dict_to_str(v, sep)) for k, v in d.items()) + "}"
 
 
 class SetFields(DeserializedMessageFilter):
@@ -467,7 +470,7 @@ class Transforms(DeserializedMessageFilter):
         if self.exclude_children:
             parts.append('exclude_children=' + str(self.exclude_children))
         if len(self.change) > 0:
-            parts.append('change=%r' % (self.change,))
+            parts.append('change=' + dict_to_str(self.change))
         parent_params = super(Transforms, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
@@ -572,7 +575,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
     """Recompute some TFs from the URDF model and joint states."""
 
     def __init__(self, include_topics=None, description_param=None, description_file=None, joint_state_cache_size=100,
-                 include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), *args, **kwargs):
+                 include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), include_joints=(),
+                 exclude_joints=(), *args, **kwargs):
         """
         :param list include_topics: Topics to handle. It should contain both the JointState and TF topics. If no TF
                                     topic is given, /tf and /tf_static are added automatically.
@@ -581,10 +585,12 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         :param joint_state_cache_size: Number of JointState messages that will be cached to be searchable when a TF
                                        message comes and needs to figure out the JointState message it was created
                                        from.
-        :param list include_parents: If nonempty, only TFs with one of the listed frames as parent will be retained.
-        :param list exclude_parents: If nonempty, TFs with one of the listed frames as parent will be dropped.
-        :param list include_children: If nonempty, only TFs with one of the listed frames as child will be retained.
-        :param list exclude_children: If nonempty, TFs with one of the listed frames as child will be dropped.
+        :param list include_parents: If nonempty, only TFs with one of the listed frames as parent will be processed.
+        :param list exclude_parents: If nonempty, TFs with one of the listed frames as parent will not be processed.
+        :param list include_children: If nonempty, only TFs with one of the listed frames as child will be processed.
+        :param list exclude_children: If nonempty, TFs with one of the listed frames as child will not be processed.
+        :param list include_joints: If nonempty, only joints with the listed named will be processed.
+        :param list exclude_joints: If nonempty, joints with one of the listed names will not be processed.
         :param args: Standard include/exclude topics/types and min/max stamp args.
         :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
         """
@@ -615,6 +621,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self.exclude_parents = TopicSet(exclude_parents)
         self.include_children = TopicSet(include_children)
         self.exclude_children = TopicSet(exclude_children)
+        self.include_joints = TopicSet(include_joints)
+        self.exclude_joints = TopicSet(exclude_joints)
 
         self.description_param = description_param
 
@@ -659,6 +667,10 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self._segments_fixed = {}
         self._child_to_joint_map = {}
         for child, (joint_name, parent) in self._urdf_model.parent_map.items():
+            if self.include_joints and joint_name not in self.include_joints:
+                continue
+            if self.exclude_joints and joint_name in self.exclude_joints:
+                continue
             segment = self._kdl_model.getChain(parent, child).getSegment(0)
             joint = segment.getJoint()
             self._child_to_joint_map[child] = joint_name
@@ -737,6 +749,124 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
                     set_transform_from_KDL_frame(transform.transform, frame)
                     return True
         return False
+
+    def _str_params(self):
+        parts = []
+        if self.include_parents:
+            parts.append('include_parents=' + str(self.include_parents))
+        if self.exclude_parents:
+            parts.append('exclude_parents=' + str(self.exclude_parents))
+        if self.include_children:
+            parts.append('include_children=' + str(self.include_children))
+        if self.exclude_children:
+            parts.append('exclude_children=' + str(self.exclude_children))
+        if self.include_joints:
+            parts.append('include_joints=' + str(self.include_joints))
+        if self.exclude_joints:
+            parts.append('exclude_joints=' + str(self.exclude_joints))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class FixJointStates(DeserializedMessageFilter):
+    """Adjust some joint states. If TFs are computed from them, use RecomputeTFFromJointStates to recompute TF."""
+
+    class _JointStateType(Enum):
+        POSITION = 1
+        VELOCITY = 2
+        EFFORT = 3
+
+    class _OperationType(Enum):
+        VALUE = 1
+        MULTIPLIER = 2
+        OFFSET = 3
+
+    def __init__(self, changes=None, *args, **kwargs):
+        # type: (Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, Dict[STRING_TYPE, float]]]], Any, Any) -> None
+        """
+        :param changes: Dict specifying what should be changed. Keys are joint names. Values are dicts with possible
+                        keys "position", "velocity", "effort". Values of each of these dicts can be
+                        "value" (set absolute value), "offset" (add offset) and "multiplier" (multiply value).
+                        If "value" is specified, then "offset" and "multiplier" are ignored. Otherwise, "multiplier" is
+                        applied first and "offset" is added to the result.
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(FixJointStates, self).__init__(include_types=(JointState._type,), *args, **kwargs)  # noqa
+
+        JointStateType = FixJointStates._JointStateType
+        OperationType = FixJointStates._OperationType
+
+        def convert_operations(operations):  # type: (Dict[STRING_TYPE, float]) -> Dict[OperationType, float]
+            result = {}
+            if "value" in operations:
+                result[OperationType.VALUE] = float(operations["value"])
+            if "multiplier" in operations:
+                result[OperationType.MULTIPLIER] = float(operations["multiplier"])
+            if "offset" in operations:
+                result[OperationType.OFFSET] = float(operations["offset"])
+            return result
+
+        self._changes = {}
+        if changes is not None:
+            for joint_name, change in changes.items():
+                self._changes[joint_name] = {}
+                if "position" in change:
+                    self._changes[joint_name][JointStateType.POSITION] = convert_operations(change["position"])
+                if "velocity" in change:
+                    self._changes[joint_name][JointStateType.VELOCITY] = convert_operations(change["velocity"])
+                if "effort" in change:
+                    self._changes[joint_name][JointStateType.EFFORT] = convert_operations(change["effort"])
+        self._changed_joint_names = TopicSet(self._changes.keys())  # for efficient filtering
+
+    def filter(self, topic, msg, stamp, header):
+        JointStateType = FixJointStates._JointStateType
+
+        for i in range(len(msg.name)):
+            name = msg.name[i]
+            if name not in self._changed_joint_names:
+                continue
+            changes = self._changes[name]
+
+            if len(msg.position) >= i - 1 and JointStateType.POSITION in changes:
+                if isinstance(msg.position, tuple):
+                    msg.position = list(msg.position)
+                msg.position[i] = self._apply_changes(msg.position[i], changes[JointStateType.POSITION])
+
+            if len(msg.velocity) >= i - 1 and JointStateType.VELOCITY in changes:
+                if isinstance(msg.velocity, tuple):
+                    msg.velocity = list(msg.velocity)
+                msg.velocity[i] = self._apply_changes(msg.velocity[i], changes[JointStateType.VELOCITY])
+
+            if len(msg.effort) >= i - 1 and JointStateType.EFFORT in changes:
+                if isinstance(msg.effort, tuple):
+                    msg.effort = list(msg.effort)
+                msg.effort[i] = self._apply_changes(msg.effort[i], changes[JointStateType.EFFORT])
+
+        return topic, msg, stamp, header
+
+    def _apply_changes(self, value, changes):
+        if len(changes) == 0:
+            return value
+
+        OperationType = FixJointStates._OperationType
+
+        result = value
+        if OperationType.VALUE in changes:
+            result = changes[OperationType.VALUE]
+        else:
+            result = result * changes.get(OperationType.MULTIPLIER, 1.0) + changes.get(OperationType.OFFSET, 0.0)
+        return result
+
+    def _str_params(self):
+        parts = []
+        parts.append('changes=' + dict_to_str(self._changes))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
 
 
 class FixSpotCams(RawMessageFilter):

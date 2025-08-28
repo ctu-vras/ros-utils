@@ -269,7 +269,8 @@ def main():
 
     print()
     print('Filters:')
-    print('\n - '.join(str(f) for f in filter_chain.filters))
+    for f in filter_chain.filters:
+        print(' - ' + str(f))
 
     if args.compression is None:
         args.compression = rosbag.Compression.NONE

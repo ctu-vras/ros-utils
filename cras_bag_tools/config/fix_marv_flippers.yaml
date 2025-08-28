@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Recomputes TF from robot model and joint states
+out_format: '{name}.flippers_fixed{ext}'
+compression: lz4
+filters:
+  - Topics:
+      include_topics:
+        - /marv/joint_states
+        - /tf
+        - /tf_static
+  - FixJointStates:
+      changes:
+        front_left_flipper_j:
+          position:
+            offset: 0.3
+  - RecomputeTFFromJointStates:
+      include_topics: ["/marv/joint_states"]
+      include_joints: ["front_left_flipper_j"]
+      description_param: marv/robot_description

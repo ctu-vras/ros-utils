@@ -12,6 +12,7 @@ import genpy
 import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
+from cras.string_utils import to_str
 
 from .bag_utils import MultiBag
 from .time_range import TimeRange, TimeRanges
@@ -335,7 +336,8 @@ class MessageFilter(object):
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self._str_params())
 
-    def _str_params(self):
+    def _default_str_params(self, include_topics=True, exclude_topics=True, include_types=True, exclude_types=True,
+                            min_stamp=True, max_stamp=True, include_time_ranges=True, exclude_time_ranges=True):
         """Parameters to be printed when stringifying this instance. This is called by __str__().
 
         :return: The parameters to print.
@@ -344,23 +346,31 @@ class MessageFilter(object):
         parts = []
         if self.is_raw:
             parts.append('raw')
-        if self._include_topics:
+        if self._include_topics and include_topics:
             parts.append('include_topics=%s' % str(self._include_topics))
-        if self._exclude_topics:
+        if self._exclude_topics and exclude_topics:
             parts.append('exclude_topics=%s' % str(self._exclude_topics))
-        if self._include_types:
+        if self._include_types and include_types:
             parts.append('include_types=%s' % str(self._include_types))
-        if self._exclude_types:
+        if self._exclude_types and exclude_types:
             parts.append('exclude_types=%s' % str(self._exclude_types))
-        if self._min_stamp:
-            parts.append('min_stamp=%s' % str(self._min_stamp))
-        if self._max_stamp:
-            parts.append('max_stamp=%s' % str(self._max_stamp))
-        if self._include_time_ranges:
+        if self._min_stamp and min_stamp:
+            parts.append('min_stamp=%s' % to_str(self._min_stamp))
+        if self._max_stamp and max_stamp:
+            parts.append('max_stamp=%s' % to_str(self._max_stamp))
+        if self._include_time_ranges and include_time_ranges:
             parts.append('include_time_ranges=%s' % str(self._include_time_ranges))
-        if self._exclude_time_ranges:
+        if self._exclude_time_ranges and exclude_time_ranges:
             parts.append('exclude_time_ranges=%s' % str(self._exclude_time_ranges))
         return ",".join(parts)
+
+    def _str_params(self):
+        """Parameters to be printed when stringifying this instance. This is called by __str__().
+
+        :return: The parameters to print.
+        :rtype: str
+        """
+        return self._default_str_params()
 
 
 class RawMessageFilter(MessageFilter):
