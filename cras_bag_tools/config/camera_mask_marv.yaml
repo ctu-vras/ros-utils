@@ -4,6 +4,7 @@
 # Generates robot model masks for cameras
 # Requires https://github.com/ctu-vras/robot_model_renderer in workspace.
 # Requires https://github.com/ctu-vras/cv_image_transport in workspace.
+# This config contains specific settings for processing bag marv_2024-10-05-12-34-53.bag from ROUGH dataset.
 out_format: '{name}.mask{ext}'
 compression: lz4
 filters:
@@ -11,6 +12,7 @@ filters:
       include_topics:
         - /tf
         - /tf_static
+        - /marv/joint_states
         - /camera_front/camera_info
         - /camera_rear/camera_info
         - /camera_left/camera_info
@@ -18,41 +20,106 @@ filters:
         - /camera_up/camera_info
         - /camera_fisheye_front/camera_info
         - /camera_fisheye_rear/camera_info
+
+  # Flippers on the robot were decalibrated
+  - FixJointStates:
+      changes:
+        front_left_flipper_j:
+          position:
+            offset: 0.7
+        front_right_flipper_j:
+          position:
+            offset: 0.45
+        rear_left_flipper_j:
+          position:
+            offset: 1.25
+  - RecomputeTFFromJointStates:
+      include_topics: ["/marv/joint_states"]
+      include_joints: ["front_left_flipper_j", "front_right_flipper_j", "rear_left_flipper_j"]
+      description_param: marv/robot_description
+      joint_state_cache_size: 250
+
   - RenderCameraMask:
       camera_info_topic: /camera_front/camera_info
       mask_topic: /camera_front/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
   - RenderCameraMask:
       camera_info_topic: /camera_rear/camera_info
       mask_topic: /camera_rear/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
+      shapeInflationRegistry:
+        perShape:
+          rear_left_flipper:
+            padding: 0.03
+          rear_right_flipper:
+            padding: 0.02
   - RenderCameraMask:
       camera_info_topic: /camera_left/camera_info
       mask_topic: /camera_left/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
+        ignoreShapes: ["base_link"]
+      shapeInflationRegistry:
+        perShape:
+          rear_left_flipper:
+            padding: 0.03
   - RenderCameraMask:
       camera_info_topic: /camera_right/camera_info
       mask_topic: /camera_right/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
+        ignoreShapes: ["base_link"]
+      shapeInflationRegistry:
+        perShape:
+          rear_right_flipper:
+            padding: 0.02
   - RenderCameraMask:
       camera_info_topic: /camera_up/camera_info
       mask_topic: /camera_up/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+#      renderedImageIsStatic: True
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
   - RenderCameraMask:
       camera_info_topic: /camera_fisheye_front/camera_info
       mask_topic: /camera_fisheye_front/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      staticMaskImage: "$(find marv_description)/textures/camera_fisheye_front_mask.png"
+      staticMaskImageEncoding: rgba8
+      staticMaskImageIsBackground: False
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
+      shapeInflationRegistry:
+        perShape:
+          front_left_flipper:
+            padding: 0.02
+          front_right_flipper:
+            padding: 0.02
   - RenderCameraMask:
       camera_info_topic: /camera_fisheye_rear/camera_info
       mask_topic: /camera_fisheye_rear/image_color/mask
       description_param: marv/robot_description
-#      description_file: /media/data/cras/common/src/robot_model_renderer/test/robot.urdf
+      shapeFilter:
+        visualAllowed: False
+        collisionAllowed: True
+      shapeInflationRegistry:
+        perShape:
+          rear_left_flipper:
+            padding: 0.05
+          rear_right_flipper:
+            padding: 0.03
   - CompressImages:
       transport: cv
       transport_params:
@@ -70,6 +137,7 @@ filters:
       include_topics:
         - /tf
         - /tf_static
+        - /marv/joint_states
         - /camera_front/camera_info
         - /camera_rear/camera_info
         - /camera_left/camera_info

@@ -12,4 +12,10 @@ filters:
       changes:
         front_left_flipper_j:
           position:
-            offset: 0.3
+            offset: 0.7
+        front_right_flipper_j:
+          position:
+            offset: 0.45
+        rear_left_flipper_j:
+          position:
+            offset: 1.25
