@@ -20,8 +20,9 @@ from shutil import copyfile
 import genpy
 import rosbag
 from cras import pretty_file_size
+
 from cras_bag_tools.bag_filter import filter_bag
-from cras_bag_tools.message_filter import FilterChain, MessageFilter, get_filters
+from cras_bag_tools.message_filter import FilterChain, MessageFilter, Passthrough, get_filters
 from cras_bag_tools.time_range import TimeRange, TimeRanges
 from cras_bag_tools.tqdm_bag import TqdmMultiBag
 
@@ -263,8 +264,8 @@ def main():
 
     filter_chain = FilterChain(filters) + MessageFilter.from_config(args.filters)
     if len(filter_chain.filters) == 0:
-        print("No filters defined, exiting.", file=sys.stderr)
-        sys.exit(1)
+        filter_chain = FilterChain([Passthrough()])
+        print("No filters defined, using Passthrough.")
 
     print()
     print('Filters:')
