@@ -97,7 +97,7 @@ filters:
       description_param: marv/robot_description
       staticMaskImage: "$(find marv_description)/textures/camera_fisheye_front_mask.png"
       staticMaskImageEncoding: rgba8
-      staticMaskImageIsBackground: False
+      staticMaskIsBackground: False
       shapeFilter:
         visualAllowed: False
         collisionAllowed: True
@@ -111,6 +111,9 @@ filters:
       camera_info_topic: /camera_fisheye_rear/camera_info
       mask_topic: /camera_fisheye_rear/image_color/mask
       description_param: marv/robot_description
+      staticMaskImage: "$(find marv_description)/textures/camera_fisheye_rear_mask.png"
+      staticMaskImageEncoding: rgba8
+      staticMaskIsBackground: False
       shapeFilter:
         visualAllowed: False
         collisionAllowed: True
