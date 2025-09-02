@@ -35,7 +35,7 @@ filters:
             offset: 1.25
   - RecomputeTFFromJointStates:
       include_topics: ["/marv/joint_states"]
-      include_joints: ["front_left_flipper_j", "front_right_flipper_j", "rear_left_flipper_j"]
+      include_joints: ["front_left_flipper_j", "front_right_flipper_j", "rear_left_flipper_j", "camera_up_j"]
       description_param: marv/robot_description
       joint_state_cache_size: 250
 
@@ -87,7 +87,7 @@ filters:
       camera_info_topic: /camera_up/camera_info
       mask_topic: /camera_up/image_color/mask
       description_param: marv/robot_description
-#      renderedImageIsStatic: True
+      renderedImageIsStatic: True
       shapeFilter:
         visualAllowed: False
         collisionAllowed: True
