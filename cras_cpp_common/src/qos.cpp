@@ -47,9 +47,13 @@ bool configureQoSProfile(rclcpp::QoS& profile, const std::optional<int>& depth,
   const std::optional<std::string>& durability, const std::optional<std::string>& liveliness,
   const std::optional<double>& livelinessLeaseDurationSeconds)
 {
-  if (depth.value_or(0) < 0)
-    return false;
-  std::optional<size_t> depthValue {static_cast<size_t>(*depth)};
+  std::optional<size_t> depthValue;
+  if (depth.has_value())
+  {
+    if (*depth < 0)
+      return false;
+    depthValue = static_cast<size_t>(*depth);
+  }
 
   std::optional<rmw_qos_history_policy_t> historyValue;
   if (history.has_value())
