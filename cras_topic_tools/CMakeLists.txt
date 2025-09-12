@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20.2)
 project(cras_topic_tools)
 
+find_package(cxxopts REQUIRED)
+
 find_package(ament_cmake REQUIRED)
 find_package(cras_cpp_common REQUIRED)
 find_package(cras_msgs REQUIRED)
@@ -28,7 +30,7 @@ target_include_directories(cras_count_messages PUBLIC
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_count_messages PUBLIC rclcpp::rclcpp)
 target_link_libraries(cras_count_messages PRIVATE
-  rclcpp_components::component ${cras_cpp_common_TARGETS})
+  rclcpp_components::component cxxopts::cxxopts ${cras_cpp_common_TARGETS})
 rclcpp_components_register_node(cras_count_messages PLUGIN cras::CountMessagesComponent EXECUTABLE count_messages)
 add_dependencies(count_messages cras_count_messages)  # workaround https://github.com/ros2/rclcpp/issues/2868
 

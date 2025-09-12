@@ -10,6 +10,8 @@
 #include <functional>
 #include <mutex>
 
+#include <cxxopts.hpp>
+
 #include <rclcpp/generic_subscription.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/serialized_message.hpp>
@@ -117,9 +119,7 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
   this->useParams = this->declare_parameter("use_parameters", this->useParams);
   this->intraprocessComms = this->declare_parameter("intraprocess_comms", this->intraprocessComms);
   this->topicStats = this->declare_parameter("topic_statistics", this->topicStats);
-  const auto reportIntervalDouble = this->declare_parameter("report_interval", 0.0);
-  const auto reportInterval = std::chrono::round<std::chrono::nanoseconds>(
-    std::chrono::duration<float>(reportIntervalDouble));
+  auto reportIntervalDouble = this->declare_parameter("report_interval", 0.0);
 
   auto qosProfileStr = this->declare_parameter("qos_profile", "");
   auto qosDepthParam = maybeParam<int>(this->declare_parameter("qos_depth", rclcpp::PARAMETER_INTEGER));
@@ -136,12 +136,35 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
   // Support direct command-line usage
   if (options.arguments().size() > 1)
   {
-    if (options.arguments().size() > 3)
-      throw std::invalid_argument("Usage: count_messages [<topic_name> [<qos_profile>]]");
-    this->topic = options.arguments()[1];
-    if (options.arguments().size() > 2)
-      qosProfileStr = options.arguments()[2];
+    cxxopts::Options parser("count_messages", "Count ROS messages");
+    parser.add_options()
+      ("topic", "Topic", cxxopts::value<std::string>()->default_value("input"))
+      ("qos-profile,p", "QoS Profile", cxxopts::value<std::string>()->default_value(""))
+      ("report,r", "Reporting interval", cxxopts::value<double>()->default_value("0")->implicit_value("1"))
+      ("help,h", "Help");
+    parser.parse_positional({"topic", "qos-profile"});
+    parser.positional_help("[TOPIC [QOS-PROFILE]]");
+    parser.show_positional_help();
+
+    std::vector<const char*> argv;
+    for (const auto& arg : options.arguments())
+      argv.push_back(arg.c_str());
+    const auto args = parser.parse(argv.size(), argv.data());
+
+    if (args.count("help"))
+      throw std::invalid_argument(parser.help());
+
+    this->topic = args["topic"].as<std::string>();
+
+    if (args.count("qos-profile") == 1 && !args["qos-profile"].as<std::string>().empty())
+      qosProfileStr = args["qos-profile"].as<std::string>();
+
+    if (args.count("report") == 1)
+      reportIntervalDouble = args["report"].as<double>();
   }
+
+  const auto reportInterval = std::chrono::round<std::chrono::nanoseconds>(
+    std::chrono::duration<float>(reportIntervalDouble));
 
   const auto defaultQoS = rclcpp::BestAvailableQoS().keep_last(1000);
   this->qosProfile = qosProfileStr.empty() ? defaultQoS : parseQoSPreset(qosProfileStr);
