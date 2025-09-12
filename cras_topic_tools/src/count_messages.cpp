@@ -143,7 +143,8 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
       qosProfileStr = options.arguments()[2];
   }
 
-  this->qosProfile = qosProfileStr.empty() ? rclcpp::QoS(qosDepthParam.value_or(1000)) : parseQoSPreset(qosProfileStr);
+  const auto defaultQoS = rclcpp::BestAvailableQoS().keep_last(1000);
+  this->qosProfile = qosProfileStr.empty() ? defaultQoS : parseQoSPreset(qosProfileStr);
   cras::configureQoSProfile(this->qosProfile, qosDepthParam, qosHistoryParam, qosReliabilityParam, qosDurabilityParam,
     qosLivelinessParam, qosLivelinessLeaseDurationSecondsParam);
 
