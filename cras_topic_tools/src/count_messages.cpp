@@ -12,6 +12,7 @@
 
 #include <cxxopts.hpp>
 
+#include <rclcpp/utilities.hpp>
 #include <rclcpp/generic_subscription.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/serialized_message.hpp>
@@ -138,29 +139,38 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
   {
     cxxopts::Options parser("count_messages", "Count ROS messages");
     parser.add_options()
-      ("topic", "Topic", cxxopts::value<std::string>()->default_value("input"))
-      ("qos-profile,p", "QoS Profile", cxxopts::value<std::string>()->default_value(""))
-      ("report,r", "Reporting interval", cxxopts::value<double>()->default_value("0")->implicit_value("1"))
-      ("help,h", "Help");
+    ("topic", "Topic", cxxopts::value<std::string>()->default_value("input"))
+    ("qos-profile,p", "QoS Profile", cxxopts::value<std::string>()->default_value(""))
+    ("report,r", "Reporting interval", cxxopts::value<double>()->default_value("0")->implicit_value("1"))
+    ("help,h", "Help");
     parser.parse_positional({"topic", "qos-profile"});
     parser.positional_help("[TOPIC [QOS-PROFILE]]");
     parser.show_positional_help();
 
+    // Convert all args to argc/argv, remove ROS-specific args and convert to argc/argv again
     std::vector<const char*> argv;
     for (const auto& arg : options.arguments())
       argv.push_back(arg.c_str());
-    const auto args = parser.parse(argv.size(), argv.data());
+    const auto tmpArgs = rclcpp::remove_ros_arguments(argv.size(), argv.data());
+    argv.clear();
+    for (const auto& arg : tmpArgs)
+      argv.push_back(arg.c_str());
 
-    if (args.count("help"))
-      throw std::invalid_argument(parser.help());
+    if (argv.size() > 0)
+    {
+      const auto args = parser.parse(argv.size(), argv.data());
 
-    this->topic = args["topic"].as<std::string>();
+      if (args.count("help"))
+        throw std::invalid_argument(parser.help());
 
-    if (args.count("qos-profile") == 1 && !args["qos-profile"].as<std::string>().empty())
-      qosProfileStr = args["qos-profile"].as<std::string>();
+      this->topic = args["topic"].as<std::string>();
 
-    if (args.count("report") == 1)
-      reportIntervalDouble = args["report"].as<double>();
+      if (args.count("qos-profile") == 1 && !args["qos-profile"].as<std::string>().empty())
+        qosProfileStr = args["qos-profile"].as<std::string>();
+
+      if (args.count("report") == 1)
+        reportIntervalDouble = args["report"].as<double>();
+    }
   }
 
   const auto reportInterval = std::chrono::round<std::chrono::nanoseconds>(
