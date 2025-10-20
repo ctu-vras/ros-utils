@@ -240,6 +240,39 @@ class Remap(RawMessageFilter):
             filters.append(Remap(**dict(zip(topics_from, topics_to))))
 
 
+class Copy(RawMessageFilter):
+    """Copy topics to other topics."""
+
+    def __init__(self, **kwargs):
+        """
+        :param dict kwargs: The mapping to use. Keys are topics to be copied, values are their new names.
+        """
+        super(Copy, self).__init__(include_topics=kwargs.keys())
+        self.copy = kwargs
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+        return [
+            (topic, datatype, data, md5sum, pytype, stamp, header),
+            (self.copy.get(topic, topic), datatype, data, md5sum, pytype, stamp, header),
+        ]
+
+    def _str_params(self):
+        return dict_to_str(self.copy, '=>')
+
+    @staticmethod
+    def add_cli_args(parser):
+        parser.add_argument(
+            '--copy', nargs='+', metavar="FROM TO",
+            help="Copy topics. This argument should be an even-sized list of pairs [FROM TO].")
+
+    @staticmethod
+    def process_cli_args(filters, args):
+        if args.remap:
+            topics_from = args.remap[0::2]
+            topics_to = args.remap[1::2]
+            filters.append(Copy(**dict(zip(topics_from, topics_to))))
+
+
 class Throttle(RawMessageFilter):
     """Throttle messages on topics."""
 
