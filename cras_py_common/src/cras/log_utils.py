@@ -3,13 +3,17 @@
 
 """Utilities for working with rospy logging."""
 
+import ctypes
 import inspect
 import logging
+from enum import IntEnum
 from hashlib import md5
 
 import rospy
 
 from rosgraph_msgs.msg import Log
+
+from .ctypes_utils import load_library
 
 
 log_levels = {
@@ -267,3 +271,33 @@ log_once_identical_functions = {
     Log.FATAL: logfatal_once_identical,
 }
 """The once-only-identical logging functions accessible by their ROS logging level index."""
+
+
+rosconsole_py = load_library("rosconsole_py")
+
+
+class RosconsoleLevel(IntEnum):
+    """The roscpp logging levels."""
+    DEBUG = ctypes.c_int.in_dll(rosconsole_py, "ROSCONSOLE_LEVEL_DEBUG").value
+    INFO = ctypes.c_int.in_dll(rosconsole_py, "ROSCONSOLE_LEVEL_INFO").value
+    WARN = ctypes.c_int.in_dll(rosconsole_py, "ROSCONSOLE_LEVEL_WARN").value
+    ERROR = ctypes.c_int.in_dll(rosconsole_py, "ROSCONSOLE_LEVEL_ERROR").value
+    FATAL = ctypes.c_int.in_dll(rosconsole_py, "ROSCONSOLE_LEVEL_FATAL").value
+
+
+def rosconsole_notifyLoggerLevelsChanged():
+    """Call the roscpp ros::console::notifyLoggerLevelsChanged()
+
+    :return:
+    """
+    fn = rosconsole_py.ros_console_notifyLoggerLevelsChanged
+    fn.restype = None
+    fn.argtypes = []
+    fn()
+
+
+def rosconsole_set_logger_level(logger_name, level):
+    fn = rosconsole_py.ros_console_set_logger_level
+    fn.restype = ctypes.c_bool
+    fn.argtypes = [ctypes.c_char_p, ctypes.c_int]
+    fn(logger_name.encode('utf-8'), level)

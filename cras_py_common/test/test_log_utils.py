@@ -239,6 +239,11 @@ class LogUtils(unittest.TestCase):
                 cras.log_throttle_identical(Log.FATAL, period, "%s %s %i" % ("Fatal", "test", i))
                 time.sleep(sleep_times[0])
 
+    def test_rosconsole_interop(self):
+        # We don't have many options to test it here, so we just test that calling the functions doesn't fail
+        if cras.log_utils.rosconsole_set_logger_level("ros.cras_py_common", cras.log_utils.RosconsoleLevel.WARN):
+            cras.log_utils.rosconsole_notifyLoggerLevelsChanged()
+
 
 if __name__ == '__main__':
     rostest.rosrun("cras_py_common", "test_log_utils", LogUtils)

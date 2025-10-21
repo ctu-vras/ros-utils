@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 project(cras_py_common)
 
-find_package(catkin REQUIRED COMPONENTS sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs)
 
 catkin_python_setup()
 
@@ -11,7 +11,11 @@ add_library(sensor_msgs_py src/distortion_models.cpp src/image_encodings.cpp)
 target_include_directories(sensor_msgs_py PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(sensor_msgs_py ${catkin_LIBRARIES})
 
-install(TARGETS sensor_msgs_py
+add_library(rosconsole_py src/rosconsole.cpp)
+target_include_directories(rosconsole_py PRIVATE ${catkin_INCLUDE_DIRS})
+target_link_libraries(rosconsole_py ${catkin_LIBRARIES})
+
+install(TARGETS rosconsole_py sensor_msgs_py
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
