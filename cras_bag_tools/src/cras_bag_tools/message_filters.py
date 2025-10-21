@@ -909,18 +909,21 @@ class FixJointStates(DeserializedMessageFilter):
 class FixCameraCalibration(DeserializedMessageFilter):
     """Adjust some camera calibrations."""
 
-    def __init__(self, calibrations=None, *args, **kwargs):
-        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], Any, Any) -> None
+    def __init__(self, calibrations=None, warn_size_change=True, *args, **kwargs):
+        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], bool, Any, Any) -> None
         """
         :param calibrations: Dictionary with camera_info topic names as keys and YAML files with calibrations as values.
                              If the calibration is in kalibr format and the camera is not cam0, then pass a tuple
                              (YAML file, cam_name) instead of just directly YAML file
+        :param warn_size_change: If True (default), warn if the fixed camera info has different width or height than the
+                                 original.
         :param args: Standard include/exclude topics/types and min/max stamp args.
         :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
         """
         super(FixCameraCalibration, self).__init__(include_topics=list(calibrations.keys()) if calibrations else None,
                                                    include_types=(CameraInfo._type,), *args, **kwargs)  # noqa
 
+        self.warn_size_change = warn_size_change
         self._calibrations = {}
         self._cam_names = {}
 
@@ -958,13 +961,37 @@ class FixCameraCalibration(DeserializedMessageFilter):
         with open(calib_file, 'r') as f:
             calib_data = yaml.safe_load(f)
 
-        if "Intrinsics" in calib_data:  # ikalibr format
-            data = calib_data["Intrinsics"]["ptr_wrapper"]["data"]
-            cam_type = calib_data["Intrinsics"]["polymorphic_name"]
+        if "Intrinsics" in calib_data or "CalibParam" in calib_data:  # ikalibr format
+            data = None
+            cam_type = None
+
+            if "Intrinsics" in calib_data:  # single-camera intrinsics file
+                data = calib_data["Intrinsics"]["ptr_wrapper"]["data"]
+                cam_type = calib_data["Intrinsics"]["polymorphic_name"]
+            else:  # ikalibr_param.yaml file with the overall result of calibration
+                data_all = calib_data["CalibParam"]["INTRI"]["Camera"]
+                polymorphic_map = ["pinhole_brown_t2"]
+                for item in data_all:
+                    if "polymorphic_name" in item["value"]:
+                        polymorphic_map.append(item["value"]["polymorphic_name"])
+                        cam_type = item["value"]["polymorphic_name"]
+                    else:
+                        polymorphic_id = int(item["value"]["polymorphic_id"])
+                        if len(polymorphic_map) >= polymorphic_id - 1:
+                            cam_type = polymorphic_map[polymorphic_id]
+                    if item["key"] == cam_name:
+                        data = item["value"]["ptr_wrapper"]["data"]
+                        break
+
+            if data is None or cam_type is None:
+                raise RuntimeError("Could not find camera %s in calibration file %s." % (cam_name, calib_file))
+
             w = data["img_width"]
             h = data["img_height"]
 
             msg = CameraInfo()
+            msg.width = w
+            msg.height = h
             msg.D = data["disto_param"]
             msg.distortion_model = \
                 EQUIDISTANT if cam_type == "pinhole_fisheye" else (PLUMB_BOB if len(msg.D) < 6 else RATIONAL_POLYNOMIAL)
@@ -994,6 +1021,8 @@ class FixCameraCalibration(DeserializedMessageFilter):
             cam_type = data["distortion_model"]
 
             msg = CameraInfo()
+            msg.width = w
+            msg.height = h
             msg.D = data["distortion_coeffs"]
             msg.distortion_model = \
                 EQUIDISTANT if cam_type == "equidistant" else (PLUMB_BOB if len(msg.D) < 6 else RATIONAL_POLYNOMIAL)
@@ -1026,6 +1055,9 @@ class FixCameraCalibration(DeserializedMessageFilter):
 
         if topic in self._calibrations:
             calib = copy.deepcopy(self._calibrations[topic])
+            if self.warn_size_change and (calib.width != msg.width or calib.height != msg.height):
+                print("Fixed camera info size (%i, %i) differs from original camera info (%i, %i)" % (
+                    calib.width, calib.height, msg.width, msg.height))
             msg.distortion_model = calib.distortion_model
             msg.D = calib.D
             msg.R = calib.R

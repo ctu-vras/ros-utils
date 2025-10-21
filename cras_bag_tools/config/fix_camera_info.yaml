@@ -7,6 +7,7 @@ compression: lz4
 filters:
   - FixCameraCalibration:
       calibrations:
-        "/camera_front/camera_info": "/media/data/bags/outdoor-dataset/calib/marv/intrinsic/camera_front/2025-09-18-19-11-11-camchain.yaml"
+#        "/camera_front/camera_info": "/media/data/bags/outdoor-dataset/calib/marv/intrinsic/camera_front/2025-09-18-19-11-11-camchain.yaml"
 #        "/camera_front/camera_info": "/media/data/bags/outdoor-dataset/calib/marv/extrinsic/camera_front-final.yaml"
+        "/camera_front/camera_info": ["/media/data/bags/outdoor-dataset/calib/marv/extrinsic/ikalibr_param-final.yaml", "/camera_front/image_color/compressed"]
 #        "/camera_front/camera_info": "/media/data/cras/drivers/src/cras_basler_camera/calibrations/40095523.yaml"
