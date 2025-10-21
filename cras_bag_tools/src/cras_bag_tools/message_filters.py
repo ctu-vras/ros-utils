@@ -9,7 +9,8 @@ import copy
 import os.path
 from collections import deque
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, Tuple
+import yaml
 
 import matplotlib.cm as cmap
 import numpy as np
@@ -17,8 +18,11 @@ import sys
 from typing import Any, Dict
 
 import rospy
+from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
+from cras.log_utils import rosconsole_notifyLoggerLevelsChanged, rosconsole_set_logger_level, RosconsoleLevel
+from camera_calibration_parsers import readCalibration
 from cras.string_utils import to_str, STRING_TYPE
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
@@ -28,7 +32,7 @@ from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from kdl_parser_py.urdf import treeFromUrdfModel
-from sensor_msgs.msg import CompressedImage, Image, JointState
+from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
 from urdf_parser_py import urdf, xml_reflection
@@ -896,6 +900,143 @@ class FixJointStates(DeserializedMessageFilter):
     def _str_params(self):
         parts = []
         parts.append('changes=' + dict_to_str(self._changes))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class FixCameraCalibration(DeserializedMessageFilter):
+    """Adjust some camera calibrations."""
+
+    def __init__(self, calibrations=None, *args, **kwargs):
+        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], Any, Any) -> None
+        """
+        :param calibrations: Dictionary with camera_info topic names as keys and YAML files with calibrations as values.
+                             If the calibration is in kalibr format and the camera is not cam0, then pass a tuple
+                             (YAML file, cam_name) instead of just directly YAML file
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(FixCameraCalibration, self).__init__(include_topics=list(calibrations.keys()) if calibrations else None,
+                                                   include_types=(CameraInfo._type,), *args, **kwargs)  # noqa
+
+        self._calibrations = {}
+        self._cam_names = {}
+
+        if calibrations is None:
+            return
+        for camera_info, calib_file in calibrations.items():
+            calib_file, cam_name = (calib_file, "cam0") if isinstance(calib_file, STRING_TYPE) else calib_file
+
+            calib = None
+            try:
+                calib = self.interpret_calibration(calib_file, cam_name)
+            except AssertionError as e:
+                print("Could not interpret the given calibration file for camera %s: %s." % (camera_info, str(e)))
+                continue
+            if calib is None:
+                print("Could not interpret the given calibration file for camera %s." % (camera_info,))
+                continue
+
+            self._calibrations[camera_info] = calib
+
+    def interpret_calibration(self, calib_file, cam_name):
+        msg = None
+        try:
+            if rosconsole_set_logger_level("ros.camera_calibration_parsers", RosconsoleLevel.FATAL):
+                rosconsole_notifyLoggerLevelsChanged()
+            _, msg = readCalibration(calib_file)  # camera_info_manager format
+            print("Interpreted calibration file %s using camera_info_manager format." % (calib_file,))
+
+        except Exception:
+            pass
+
+        if msg is not None:
+            return msg
+
+        with open(calib_file, 'r') as f:
+            calib_data = yaml.safe_load(f)
+
+        if "Intrinsics" in calib_data:  # ikalibr format
+            data = calib_data["Intrinsics"]["ptr_wrapper"]["data"]
+            cam_type = calib_data["Intrinsics"]["polymorphic_name"]
+            w = data["img_width"]
+            h = data["img_height"]
+
+            msg = CameraInfo()
+            msg.D = data["disto_param"]
+            msg.distortion_model = \
+                EQUIDISTANT if cam_type == "pinhole_fisheye" else (PLUMB_BOB if len(msg.D) < 6 else RATIONAL_POLYNOMIAL)
+            msg.K = [
+                data["focal_length"][0], 0.0, data["principal_point"][0],
+                0.0, data["focal_length"][1], data["principal_point"][1],
+                0.0, 0.0, 1.0,
+            ]
+            msg.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+
+            K = np.array(msg.K).reshape((3, 3))
+            R = np.array(msg.R).reshape((3, 3))
+            D = np.array(msg.D)
+            if msg.distortion_model != EQUIDISTANT:
+                P, _ = cv2.getOptimalNewCameraMatrix(K, D, (w, h), 0.0)
+            else:
+                P = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K, D, (w, h), R, balance=0.0)
+            msg.P = [
+                P[0, 0], P[0, 1], P[0, 2], 0.0,
+                P[1, 0], P[1, 1], P[1, 2], 0.0,
+                P[2, 0], P[2, 1], P[2, 2], 0.0,
+            ]
+            print("Interpreted calibration file %s using ikalibr format." % (calib_file,))
+        elif len(calib_data) > 0 and "cam_overlaps" in calib_data[list(calib_data.keys())[0]]:  # kalibr format
+            data = calib_data[cam_name]
+            w, h = data["resolution"]
+            cam_type = data["distortion_model"]
+
+            msg = CameraInfo()
+            msg.D = data["distortion_coeffs"]
+            msg.distortion_model = \
+                EQUIDISTANT if cam_type == "equidistant" else (PLUMB_BOB if len(msg.D) < 6 else RATIONAL_POLYNOMIAL)
+            msg.K = [
+                data["intrinsics"][0], 0.0, data["intrinsics"][2],
+                0.0, data["intrinsics"][1], data["intrinsics"][3],
+                0.0, 0.0, 1.0,
+            ]
+            msg.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+
+            K = np.array(msg.K).reshape((3, 3))
+            R = np.array(msg.R).reshape((3, 3))  # TODO T_cn_cnm1
+            D = np.array(msg.D)
+            if msg.distortion_model != EQUIDISTANT:
+                P, _ = cv2.getOptimalNewCameraMatrix(K, D, (w, h), 0.0)
+            else:
+                P = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K, D, (w, h), R, balance=0.0)
+            msg.P = [
+                P[0, 0], P[0, 1], P[0, 2], 0.0,
+                P[1, 0], P[1, 1], P[1, 2], 0.0,
+                P[2, 0], P[2, 1], P[2, 2], 0.0,
+            ]
+            print("Interpreted calibration file %s using kalibr format." % (calib_file,))
+        else:
+            raise RuntimeError("Unsupported camera calibration format: " + calib_file)
+
+        return msg
+
+    def filter(self, topic, msg, stamp, header):
+
+        if topic in self._calibrations:
+            calib = copy.deepcopy(self._calibrations[topic])
+            msg.distortion_model = calib.distortion_model
+            msg.D = calib.D
+            msg.R = calib.R
+            msg.K = calib.K
+            msg.P = calib.P
+
+        return topic, msg, stamp, header
+
+    def _str_params(self):
+        parts = []
+        parts.append('calibrations=' + ",".join(self._calibrations.keys()))
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
