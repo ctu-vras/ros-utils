@@ -48,6 +48,7 @@ if (CATKIN_ENABLE_TESTING)
 
   catkin_add_nosetests(test/test_ctypes_utils.py)
   catkin_add_nosetests(test/test_geometry_utils.py)
+  catkin_add_nosetests(test/test_heap.py)
   catkin_add_nosetests(test/test_image_encodings.py)
   catkin_add_nosetests(test/test_message_utils.py)
   catkin_add_nosetests(test/test_python_utils.py)
