@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+out_format: '{name}.subs{ext}'
+compression: lz4
+filters:
+  - AddSubtitles:
+      subtitles_file: '/media/data/bags/outdoor-dataset/marv_2024-10-05-12-34-53.small.bag.srt'
+      topic: /events

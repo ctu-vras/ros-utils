@@ -37,13 +37,14 @@ from image_transport_codecs.parse_compressed_format import guess_any_compressed_
 from kdl_parser_py.urdf import treeFromUrdfModel
 from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState
-from std_msgs.msg import Header
+from std_msgs.msg import Header, String
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
-from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, RawMessageFilter, TopicSet
+from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, Passthrough, RawMessageFilter, \
+    TopicSet
 
 
 def urdf_error(message):
@@ -1245,6 +1246,105 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
+
+
+class AddSubtitles(Passthrough):
+    """Read subtitles from a text file and add them to the output as std_msgs/String messages."""
+
+    def __init__(self, subtitles_file, topic, latch=False, time_offset=0.0):
+        """
+        :param subtitles_file: The file to read subtitles from.
+        :param topic: The topic to put the subtitles on.
+        :param latch: Whether the topic should be latched.
+        :param time_offset: Relative time offset to add to the absolute subtitle time.
+        """
+        super(AddSubtitles, self).__init__()
+        self._subtitles_file = subtitles_file
+        self._topic = topic
+        self._start_time = None
+        self._latch = latch
+        self._time_offset = rospy.Duration(time_offset)
+
+        self._subtitles = self._parse_subtitles(subtitles_file)
+
+    def _parse_subtitles(self, subtitles_file):
+        if subtitles_file.endswith(".srt"):
+            return self._parse_srt(subtitles_file)
+        raise RuntimeError("Unsupported subtitles type. Only SRT is supported so far.")
+
+    def _parse_srt(self, subtitles_file):
+        class State(Enum):
+            INIT = 0
+            COUNTER_READ = 1
+            TIME_READ = 2
+
+        state = State.INIT
+        start_time = None
+        end_time = None
+        lines = list()
+
+        subtitles = list()
+
+        def parse_time_str(time_str):
+            h, m, s = time_str.split(':')
+            s, ss = s.split(',')
+            return rospy.Duration(
+                int(h, base=10) * 3600 + int(m, base=10) * 60 + int(s, base=10),
+                int(float('0.' + ss) * 1e9))
+
+        with open(subtitles_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if state == State.INIT:
+                    _ = int(line)
+                    state = State.COUNTER_READ
+                elif state == State.COUNTER_READ:
+                    start_time_str, end_time_str = line.split(" --> ")
+                    start_time = parse_time_str(start_time_str)
+                    end_time = parse_time_str(end_time_str)
+                    state = State.TIME_READ
+                elif state == State.TIME_READ:
+                    if len(line) == 0:
+                        subtitles.append((start_time, end_time, "\n".join(lines)))
+                        lines = list()
+                        state = State.INIT
+                    else:
+                        lines.append(line)
+
+        # in case the last empty line is missing
+        if len(lines) > 0:
+            subtitles.append((start_time, end_time, "\n".join(lines)))
+
+        return subtitles
+
+    def set_bag(self, bag):
+        super(AddSubtitles, self).set_bag(bag)
+        self._start_time = rospy.Time(bag.get_start_time()) + self._time_offset
+
+    def extra_initial_messages(self):
+        connection_header = {
+            "callerid": "/bag_filter",
+            "topic": self._topic,
+            "message_definition": String._full_text,
+            "type": String._type,
+            "md5sum": String._md5sum,
+        }
+        if self._latch:
+            connection_header["latching"] = "1"
+
+        for start_time, end_time, subtitle in self._subtitles:
+            msg = String(data=subtitle)
+            abs_time = self._start_time + start_time
+            yield self._topic, msg, abs_time, connection_header
+
+    def _str_params(self):
+        params = ["topic=" + self._topic, "subtitles_file=" + self._subtitles_file]
+        if self._time_offset != rospy.Duration(0, 0):
+            params.append("time_offset=%f" % (self._time_offset.to_sec(),))
+        parent_params = super(AddSubtitles, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
 
 
 class FixSpotCams(RawMessageFilter):
