@@ -915,7 +915,7 @@ class FixCameraCalibration(DeserializedMessageFilter):
     """Adjust some camera calibrations."""
 
     def __init__(self, calibrations=None, warn_size_change=True, *args, **kwargs):
-        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], bool, Any, Any) -> None
+        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], bool, Any, Any) -> None  # noqa
         """
         :param calibrations: Dictionary with camera_info topic names as keys and YAML files with calibrations as values.
                              If the calibration is in kalibr format and the camera is not cam0, then pass a tuple
@@ -1131,7 +1131,7 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
     """Apply extrinsic calibrations from IKalibr."""
 
     def __init__(self, param_file, ref_imu_frame="imu", frames=None, *args, **kwargs):
-        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None
+        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None  # noqa
         """
         :param param_file: Path to ikalibr_param.yaml file - the result of extrinsic calibration.
         :param ref_imu_frame: Frame of the reference IMU towards which everything is calibrated.
