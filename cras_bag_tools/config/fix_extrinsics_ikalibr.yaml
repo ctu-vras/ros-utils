@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Recomputes TF from robot model and joint states
+out_format: '{name}.caminfo_fixed{ext}'
+compression: lz4
+filters:
+  - MergeInitialStaticTf: {}
+  - FixStaticTF:
+      transforms:
+        - frame_id: camera_fisheye_front
+          child_frame_id: pylon_camera_fisheye_front
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_fisheye_rear
+          child_frame_id: pylon_camera_fisheye_rear
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_front
+          child_frame_id: pylon_camera_front
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_left
+          child_frame_id: pylon_camera_left
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_rear
+          child_frame_id: pylon_camera_rear
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_right
+          child_frame_id: pylon_camera_right
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+        - frame_id: camera_up
+          child_frame_id: pylon_camera_up
+          transform: [0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.5]
+  - FixExtrinsicsFromIKalibr:
+      param_file: "/media/data/bags/outdoor-dataset/calib/marv/extrinsic/ikalibr_param-final.yaml"
+      ref_imu_frame: "imu"
+      frames:
+        "/camera_fisheye_front/image_color/compressed":
+          sensor_frame: "pylon_camera_fisheye_front"
+          adjust_frame: "camera_fisheye_front"
+        "/camera_fisheye_rear/image_color/compressed":
+          sensor_frame: "pylon_camera_fisheye_rear"
+          adjust_frame: "camera_fisheye_rear"
+        "/camera_front/image_color/compressed":
+          sensor_frame: "pylon_camera_front"
+          adjust_frame: "camera_front"
+        "/camera_left/image_color/compressed":
+          sensor_frame: "pylon_camera_left"
+          adjust_frame: "camera_left"
+        "/camera_rear/image_color/compressed":
+          sensor_frame: "pylon_camera_rear"
+          adjust_frame: "camera_rear"
+        "/camera_right/image_color/compressed":
+          sensor_frame: "pylon_camera_right"
+          adjust_frame: "camera_right"
+        "/camera_up/image_color/compressed":
+          sensor_frame: "pylon_camera_up"
+          adjust_frame: "camera_up"
+        "/os_cloud_node/points":
+          sensor_frame: "os_lidar"
+          adjust_frame: "os_calib"
+  # These transforms depend on the previous ones, so they have to be processed later; if there is an unfortunate order
+  # of tf_static messages, you would even need to recompute some of the transforms again; thus, it is better to merge
+  # initial static TFs to have all static TFs in one message.
+  - FixExtrinsicsFromIKalibr:
+      param_file: "/media/data/bags/outdoor-dataset/calib/marv/extrinsic/ikalibr_param-final.yaml"
+      ref_imu_frame: "imu"
+      frames:
+        "/camera_front_thermo/image8/compressed":
+          sensor_frame: "camera_front_thermo"
+        "/os_cloud_node/imu":
+          sensor_frame: "os_imu"

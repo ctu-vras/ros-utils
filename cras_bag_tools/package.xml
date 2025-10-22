@@ -21,6 +21,7 @@
   <exec_depend>cras_py_common</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>genpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>image_transport_codecs</exec_depend>
   <exec_depend>kdl_parser_py</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-imageio</exec_depend>
@@ -43,8 +44,10 @@
   <exec_depend>rosbag</exec_depend>
   <exec_depend>roslib</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>ros_numpy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
+  <exec_depend>tf2_py</exec_depend>
   <exec_depend>urdfdom_py</exec_depend>
   <exec_depend>vision_msgs</exec_depend>
 

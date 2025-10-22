@@ -9,16 +9,18 @@ import copy
 import os.path
 from collections import deque
 from enum import Enum
-from typing import Dict, Optional, Union, Tuple
+from typing import Dict, Optional, Union, Tuple, Sequence
 import yaml
 
 import matplotlib.cm as cmap
 import numpy as np
 import sys
+from numpy.linalg import inv
 from typing import Any, Dict
 
 import rospy
 from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
+from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 from cras.log_utils import rosconsole_notifyLoggerLevelsChanged, rosconsole_set_logger_level, RosconsoleLevel
@@ -28,17 +30,20 @@ import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Je
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.encoding import decode_config
 from dynamic_reconfigure.msg import Config
+from geometry_msgs.msg import Quaternion, Transform, TransformStamped, Vector3
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from kdl_parser_py.urdf import treeFromUrdfModel
+from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
+from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
-from .message_filter import DeserializedMessageFilter, RawMessageFilter, TopicSet
+from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, RawMessageFilter, TopicSet
 
 
 def urdf_error(message):
@@ -1069,6 +1074,173 @@ class FixCameraCalibration(DeserializedMessageFilter):
     def _str_params(self):
         parts = []
         parts.append('calibrations=' + ",".join(self._calibrations.keys()))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class FixStaticTF(DeserializedMessageFilterWithTF):
+    """Adjust some static transforms."""
+
+    def __init__(self, transforms=None, *args, **kwargs):
+        # type: (Optional[Sequence[Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None
+        """
+        :param transforms: The new transforms. The dicts have to contain keys "frame_id", "child_frame_id", "transform".
+                           The transform has to be a 6-tuple (x, y, z, roll, pitch, yaw)
+                           or 7-tuple (x, y, z, qx, qy, qz, qw).
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(FixStaticTF, self).__init__(
+            include_topics=["tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
+
+        self._transforms = dict()
+        for t in (transforms if transforms is not None else list()):
+            frame_id = t["frame_id"]
+            child_frame_id = t["child_frame_id"]
+            data = t["transform"]
+            if len(data) == 7:
+                transform = Transform(Vector3(*data[:3]), Quaternion(*data[3:]))
+            elif len(data) == 6:
+                transform = Transform(Vector3(*data[:3]), quat_msg_from_rpy(*data[3:]))
+            else:
+                raise RuntimeError("'transform' has to be either a 6-tuple or 7-tuple.")
+
+            self._transforms[(frame_id, child_frame_id)] = transform
+
+    def filter(self, topic, msg, stamp, header):
+        for transform in msg.transforms:
+            key = (transform.header.frame_id, transform.child_frame_id)
+            if key in self._transforms:
+                transform.transform = self._transforms[key]
+                print("Adjusted transform %s->%s." % (key[0], key[1]))
+
+        return topic, msg, stamp, header
+
+    def _str_params(self):
+        parts = []
+        parts.append('transforms=' + repr(list(self._transforms.keys())))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
+    """Apply extrinsic calibrations from IKalibr."""
+
+    def __init__(self, param_file, ref_imu_frame="imu", frames=None, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None
+        """
+        :param param_file: Path to ikalibr_param.yaml file - the result of extrinsic calibration.
+        :param ref_imu_frame: Frame of the reference IMU towards which everything is calibrated.
+        :param frames: The TF frames to fix. Keys are the topic names used in iKalibr. Values are dicts with keys
+                       "sensor_frame" and optionally "adjust_frame" (if not specified, "sensor_frame" is used).
+                       "adjust_frame" specifies the frame whose transform should be changed, which can be useful
+                       if you want to change a transform somewhere in the middle of the TF chain and not the last one.
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(FixExtrinsicsFromIKalibr, self).__init__(
+            include_topics=["tf", "tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
+
+        self._ref_imu_frame = ref_imu_frame
+        self._frames = frames if frames is not None else dict()
+        self._param_file = param_file
+
+        with open(param_file, 'r') as f:
+            self._params = yaml.safe_load(f)
+
+        extri = self._params["CalibParam"]["EXTRI"]
+        tfs = dict()
+        for key, values in extri.items():
+            for item in values:
+                ikalibr_name = item["key"]
+                value = item["value"]
+                if ikalibr_name not in tfs:
+                    tfs[ikalibr_name] = Transform()
+                if key.startswith("POS_"):
+                    msg = Vector3(value["r0c0"], value["r1c0"], value["r2c0"])
+                    tfs[ikalibr_name].translation = msg
+                elif key.startswith("SO3_"):
+                    msg = Quaternion(value["qx"], value["qy"], value["qz"], value["qw"])
+                    tfs[ikalibr_name].rotation = msg
+
+        print("Read %i transforms from %s." % (len(tfs), param_file))
+
+        self._sensor_to_adjust_frame = dict()
+        self._adjust_frame_to_sensor = dict()
+        self._sensor_transforms = dict()
+        for ikalibr_name, item in self._frames.items():
+            sensor_frame = item["sensor_frame"]
+            adjust_frame = item.get("adjust_frame", sensor_frame)
+
+            if adjust_frame in self._adjust_frame_to_sensor:
+                raise RuntimeError(
+                    "Duplicate appearance of adjust frame %s. This is invalid configuration!" % (adjust_frame,))
+
+            self._sensor_transforms[sensor_frame] = tfs[ikalibr_name]
+            self._sensor_to_adjust_frame[sensor_frame] = adjust_frame
+            self._adjust_frame_to_sensor[adjust_frame] = sensor_frame
+
+        self._tf = BufferCore()
+
+    @staticmethod
+    def fix_transform_type(t):
+        """Convert from the ad-hoc rosbag type to true Transform type (needed by ros_numpy)."""
+        return Transform(
+            Vector3(t.translation.x, t.translation.y, t.translation.z),
+            Quaternion(t.rotation.x, t.rotation.y, t.rotation.z, t.rotation.w))
+
+    @staticmethod
+    def fix_transform_stamped_type(t):
+        """Convert from the ad-hoc rosbag type to true TransformStamped type (needed by tf2_py)."""
+        return TransformStamped(
+            Header(t.header.seq, t.header.stamp, t.header.frame_id),
+            t.child_frame_id,
+            FixExtrinsicsFromIKalibr.fix_transform_type(t.transform))
+
+    def filter(self, topic, msg, stamp, header):
+        if topic in self._tf_static_topics:
+            for transform in msg.transforms:
+                self._tf.set_transform_static(self.fix_transform_stamped_type(transform), "filter_bag")
+        else:
+            for transform in msg.transforms:
+                self._tf.set_transform(self.fix_transform_stamped_type(transform), "filter_bag")
+
+        latest = rospy.Time(0)
+        for transform in msg.transforms:
+            if transform.child_frame_id in self._adjust_frame_to_sensor:
+                adjust_frame = transform.child_frame_id
+                sensor_frame = self._adjust_frame_to_sensor[adjust_frame]
+                parent_frame = transform.header.frame_id
+
+                sensor_tf = numpify(self._sensor_transforms[sensor_frame])
+                t_parent_imu = numpify(
+                    self._tf.lookup_transform_core(self._ref_imu_frame, parent_frame, latest).transform)
+                t_adjust_parent = numpify(self.fix_transform_type(transform.transform))
+                t_sensor_adjust = numpify(self._tf.lookup_transform_core(adjust_frame, sensor_frame, latest).transform)
+
+                t_correction = \
+                    np.matmul(np.matmul(inv(np.matmul(t_parent_imu, t_adjust_parent)), sensor_tf), inv(t_sensor_adjust))
+                t_adjust_parent = np.matmul(t_adjust_parent, t_correction)
+                transform.transform = msgify(Transform, t_adjust_parent)
+
+                print("Adjusted transform %s->%s by %.3f m (for sensor %s)." % (
+                      parent_frame, adjust_frame, np.linalg.norm(t_correction[:3, 3]), sensor_frame))
+
+        return topic, msg, stamp, header
+
+    def reset(self):
+        self._tf.clear()
+        super(FixExtrinsicsFromIKalibr, self).reset()
+
+    def _str_params(self):
+        parts = []
+        parts.append('param_file=' + self._param_file)
+        parts.append('ref_imu_frame=' + self._ref_imu_frame)
+        parts.append('frames=' + ",".join(self._frames.keys()))
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
