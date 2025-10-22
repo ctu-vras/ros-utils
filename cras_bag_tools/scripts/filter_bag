@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 import argparse
+import copy
 
 import os
 import sys
@@ -141,9 +142,20 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
                     except Exception as e:
                         print("Error loading ROS parameters from file %s: %s" % (params_file, str(e)), file=sys.stderr)
 
+                orig_params = copy.deepcopy(params) if params is not None else None
                 with rosbag.Bag(out_bag_path, 'w', compression=compression) as out:
                     bag.read_index()
                     filter_bag(bag, out, filter, params, start_time, end_time, time_ranges)
+
+                if copy_params and params != orig_params:
+                    print('Saving ROS parameters to', out_bag_path + '.params')
+                    try:
+                        with open(out_bag_path + '.params', 'w+') as f:
+                            yaml.safe_dump(params, f)
+                    except Exception as ex:
+                        print('Error saving ROS params to %s: %s' % (out_bag_path + '.params', str(ex)),
+                              file=sys.stderr)
+
         except Exception as e:
             print('Error processing bag file %s: %s' % (bags_path, str(e)), file=sys.stderr)
             import traceback

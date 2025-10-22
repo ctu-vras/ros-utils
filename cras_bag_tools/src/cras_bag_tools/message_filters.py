@@ -7,14 +7,14 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 import os.path
-from collections import deque
-from enum import Enum
-from typing import Dict, Optional, Union, Tuple, Sequence
-import yaml
-
 import matplotlib.cm as cmap
 import numpy as np
 import sys
+import yaml
+from collections import deque
+from enum import Enum
+from typing import Dict, Optional, Union, Tuple, Sequence
+from lxml import etree
 from numpy.linalg import inv
 from typing import Any, Dict
 
@@ -43,8 +43,8 @@ from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
-from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, Passthrough, RawMessageFilter, \
-    TopicSet
+from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, NoMessageFilter, Passthrough, \
+    RawMessageFilter, TopicSet
 
 
 def urdf_error(message):
@@ -1248,7 +1248,7 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
         return ", ".join(parts)
 
 
-class AddSubtitles(Passthrough):
+class AddSubtitles(NoMessageFilter):
     """Read subtitles from a text file and add them to the output as std_msgs/String messages."""
 
     def __init__(self, subtitles_file, topic, latch=False, time_offset=0.0):
@@ -1265,7 +1265,14 @@ class AddSubtitles(Passthrough):
         self._latch = latch
         self._time_offset = rospy.Duration(time_offset)
 
+        self._subtitles = None
+
+    def on_filtering_start(self):
+        super(AddSubtitles, self).on_filtering_start()
+        self._start_time = rospy.Time(self._bag.get_start_time()) + self._time_offset
+        subtitles_file = self.resolve_file(self._subtitles_file)
         self._subtitles = self._parse_subtitles(subtitles_file)
+        print("Read", len(self._subtitles), "subtitles from file", subtitles_file)
 
     def _parse_subtitles(self, subtitles_file):
         if subtitles_file.endswith(".srt"):
@@ -1317,10 +1324,6 @@ class AddSubtitles(Passthrough):
 
         return subtitles
 
-    def set_bag(self, bag):
-        super(AddSubtitles, self).set_bag(bag)
-        self._start_time = rospy.Time(bag.get_start_time()) + self._time_offset
-
     def extra_initial_messages(self):
         connection_header = {
             "callerid": "/bag_filter",
@@ -1338,10 +1341,101 @@ class AddSubtitles(Passthrough):
             yield self._topic, msg, abs_time, connection_header
 
     def _str_params(self):
-        params = ["topic=" + self._topic, "subtitles_file=" + self._subtitles_file]
+        params = ["topic=" + self._topic, "subtitles_file=" + self.resolve_file(self._subtitles_file)]
         if self._time_offset != rospy.Duration(0, 0):
             params.append("time_offset=%f" % (self._time_offset.to_sec(),))
         parent_params = super(AddSubtitles, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
+
+
+class DumpRobotModel(NoMessageFilter):
+    """Read robot model URDF from ROS params and store it in a file."""
+
+    def __init__(self, urdf_file, param="robot_description", remove_comments=False, pretty_print=False,
+                 run_on_start=True):
+        """
+        :param urdf_file: Path to the URDF file. If relative, it will be resolved relative to the bag set by set_bag.
+        :param param: The parameter where robot model should be read.
+        :param remove_comments: Whether comments should be removed from the output URDF file.
+        :param pretty_print: Whether to pretty-print the URDF file (if False, the original layout is preserved).
+        :param run_on_start: If true, the model will be exported before messages are processed. If false, the model will
+                             be exported after processing all messages.
+        """
+        super(DumpRobotModel, self).__init__()
+        self._urdf_file = urdf_file
+        self._param = param
+        self._remove_comments = remove_comments
+        self._pretty_print = pretty_print
+        self._run_on_start = run_on_start
+
+    def on_filtering_start(self):
+        super(DumpRobotModel, self).on_filtering_start()
+
+        if self._run_on_start:
+            self.dump_model()
+
+    def on_filtering_end(self):
+        super(DumpRobotModel, self).on_filtering_end()
+
+        if not self._run_on_start:
+            self.dump_model()
+
+    def dump_model(self):
+        urdf = self._get_param(self._param)
+        if urdf is None:
+            print('Robot model not found on parameter', self._param, file=sys.stderr)
+            return
+
+        if self._remove_comments or self._pretty_print:
+            parser = etree.XMLParser(remove_comments=self._remove_comments, encoding='utf-8')
+            tree = etree.fromstring(urdf.encode('utf-8'), parser=parser)
+            urdf = etree.tostring(tree, encoding='utf-8', xml_declaration=True,
+                                  pretty_print=self._pretty_print).decode('utf-8')
+
+        dest = self.resolve_file(self._urdf_file)
+        with open(dest, 'w+') as f:
+            print(urdf, file=f)
+        print("Robot model from parameter", self._param, "exported to", dest)
+
+    def _str_params(self):
+        params = ["param=" + self._param, "urdf_file=" + self.resolve_file(self._urdf_file)]
+        parent_params = super(DumpRobotModel, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
+
+
+class UpdateRobotModel(NoMessageFilter):
+    """Read robot model from URDF file and update it in the ROS parameters."""
+
+    def __init__(self, urdf_file, param="robot_description"):
+        """
+        :param urdf_file: Path to the URDF file. If relative, it will be resolved relative to the bag set by set_bag.
+        :param param: The parameter where robot model should be stored.
+        """
+        super(UpdateRobotModel, self).__init__()
+        self._urdf_file = urdf_file
+        self._param = param
+
+    def on_filtering_start(self):
+        super(UpdateRobotModel, self).on_filtering_start()
+
+        src = self.resolve_file(self._urdf_file)
+        if not os.path.exists(src):
+            print('Cannot find robot URDF file', src, file=sys.stderr)
+            return
+
+        with open(src, 'r', encoding='utf-8') as f:
+            urdf = f.read()
+
+        self._set_param(self._param, urdf)
+        print('Robot model from %s set to parameter %s' % (src, self._param))
+
+    def _str_params(self):
+        params = ["param=" + self._param, "urdf_file=" + self.resolve_file(self._urdf_file)]
+        parent_params = super(UpdateRobotModel, self)._str_params()
         if len(parent_params) > 0:
             params.append(parent_params)
         return ",".join(params)

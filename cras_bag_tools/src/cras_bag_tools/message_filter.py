@@ -5,10 +5,13 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os.path
+import re
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import genpy
+import rospkg
 import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
@@ -113,6 +116,8 @@ class MessageFilter(object):
         self._exclude_time_ranges = self._parse_time_ranges(exclude_time_ranges)
         """Time ranges that specify which regions of the bag should be skipped (but passed further)."""
 
+        self.__rospack = None
+
     @staticmethod
     def _parse_time_ranges(ranges):
         if ranges is None:
@@ -160,6 +165,25 @@ class MessageFilter(object):
             return default
         key, rest = param.split("/", 1)
         return self.__get_param(params.get(key, None), rest, default)
+
+    def _set_param(self, param, value):
+        """Set parameter `param` to the parameters set by :meth:`set_params`.
+
+        :param str param: Name of the parameter.
+        :param value: The value to set.
+        """
+        self.__set_param(self._params, param, value)
+
+    def __set_param(self, params, param, value):
+        if param.startswith("/"):
+            param = param[1:]
+        if "/" in param:
+            key, rest = param.split("/", 1)
+            if key not in params:
+                params[key] = {}
+            self.__set_param(params[key], rest, value)
+        else:
+            params[param] = value
 
     def __call__(self, *args, **kwargs):
         """Do the filtering.
@@ -277,6 +301,39 @@ class MessageFilter(object):
         :rtype: TimeRanges or None
         """
         return None
+
+    def __get_rospack(self):
+        if self.__rospack is None:
+            self.__rospack = rospkg.RosPack()
+        return self.__rospack
+
+    def resolve_file(self, filename):
+        """Resolve `filename` relative to the bag set by :meth:`set_bag`.
+
+        :note: This is ideally called from :meth:`on_filtering_start` or :meth:`filter` because earlier, the `_bag`
+               member variable is not set.
+        """
+        matches = re.match(r'\$\(find ([^)]+)\)', filename)
+        if matches is not None:
+            package_path = self.__get_rospack().get_path(matches[1])
+            filename = filename.replace('$(find %s)' % (matches[1],), package_path)
+
+        if self._bag is None or os.path.isabs(filename) or len(self._bag.filename) == 0:
+            return filename
+
+        return os.path.join(os.path.dirname(self._bag.filename), filename)
+
+    def on_filtering_start(self):
+        """This function is called right before the first message is passed to filter().
+
+        :note: Specifically, :meth:`set_params` and :meth:`set_bag` are already called at this stage.
+        :note: :meth:`extra_initial_messages` will be called after calling this method.
+        """
+        pass
+
+    def on_filtering_end(self):
+        """This function is called right after the last message is processed by filter()."""
+        pass
 
     def reset(self):
         """Reset the filter. This should be called e.g. before starting a new bag."""
@@ -483,6 +540,15 @@ class Passthrough(RawMessageFilter):
         return topic, datatype, data, md5sum, pytype, stamp, header
 
 
+class NoMessageFilter(RawMessageFilter):
+    """
+    Ignore all messages. Good base for message generators or other helpers.
+    """
+
+    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_range=False):
+        return False
+
+
 class FilterChain(RawMessageFilter):
     """
     A chain of message filters.
@@ -585,6 +651,16 @@ class FilterChain(RawMessageFilter):
         for f in self.filters:
             for m in f.extra_final_messages():
                 yield m
+
+    def on_filtering_start(self):
+        for f in self.filters:
+            f.on_filtering_start()
+        super(FilterChain, self).on_filtering_start()
+
+    def on_filtering_end(self):
+        for f in self.filters:
+            f.on_filtering_end()
+        super(FilterChain, self).on_filtering_end()
 
     def reset(self):
         for f in self.filters:

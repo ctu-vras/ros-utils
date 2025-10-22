@@ -67,6 +67,8 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # apply connection filters
     topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
+    bag_filter.on_filtering_start()
+
     # get stamp from the tuple
     def get_stamp_fn(x):
         return x[2]
@@ -115,5 +117,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
             continue
         _topic, _raw_msg, _stamp, _connection_header = ret[0]
         out.write(_topic, _raw_msg, _stamp, connection_header=_connection_header, raw=True)
+
+    bag_filter.on_filtering_end()
 
     bag_filter.reset()

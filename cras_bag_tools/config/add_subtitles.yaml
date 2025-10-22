@@ -4,6 +4,14 @@
 out_format: '{name}.subs{ext}'
 compression: lz4
 filters:
+  - UpdateRobotModel:
+      urdf_file: "marv.urdf"
+      param: "marv/robot_description"
+  - DumpRobotModel:
+      urdf_file: "marv2.urdf"
+      param: "marv/robot_description"
+      remove_comments: True
+      pretty_print: True
   - AddSubtitles:
-      subtitles_file: '/media/data/bags/outdoor-dataset/marv_2024-10-05-12-34-53.small.bag.srt'
-      topic: /events
+      subtitles_file: 'marv_2024-10-05-12-34-53.small.bag.srt'
+      topic: /commentary
