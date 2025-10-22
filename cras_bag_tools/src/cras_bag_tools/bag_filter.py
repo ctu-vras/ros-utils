@@ -5,10 +5,11 @@
 
 import copy
 import sys
-from collections import deque
 
 import genpy
 import rosbag.bag
+import rospy
+from cras import Heap
 
 from .bag_utils import BagWrapper, MultiBag
 from .message_filter import MessageFilter, Passthrough, filter_message
@@ -66,14 +67,18 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # apply connection filters
     topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
-    queue = deque()
+    get_stamp_fn = lambda x: x[2]  # get stamp from the tuple
+    heap = Heap(initial=list(bag_filter.extra_initial_messages()), key=get_stamp_fn)
+
     connection_filter = bag_filter.connection_filter
+    _stamp = rospy.Time(0)
     for topic, msg, stamp, connection_header in bags.read_messages(
             topics=topics, start_time=time_ranges, end_time=extra_time_ranges, return_connection_header=True,
             raw=bag_filter.is_raw, connection_filter=connection_filter):
-        queue.append((topic, msg, stamp, connection_header))
-        while len(queue) > 0:
-            _topic, _msg, _stamp, _connection_header = queue.popleft()
+        heap.push((topic, msg, stamp, connection_header))
+        # For each bag message, process the whole heap up to the stamp of the bag message
+        while len(heap) > 0 and _stamp <= stamp:
+            _topic, _msg, _stamp, _connection_header = heap.pop()
             _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
             is_from_extra_time_ranges = False
             if extra_time_ranges is not None and time_ranges is not None:
@@ -82,10 +87,31 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
             if not isinstance(ret, list):
                 ret = [ret]
             for data in ret[1:]:
-                queue.append(data)
+                heap.push(data)
             if ret[0] is None:
                 continue
             _topic, _raw_msg, _stamp, _connection_header = ret[0]
             out.write(_topic, _raw_msg, _stamp, connection_header=_connection_header, raw=True)
+
+    # Push all final messages before processing the rest of the heap
+    for m in bag_filter.extra_final_messages():
+        heap.push(m)
+
+    # Finish the rest of the heap if there is something left (messages with stamp higher than last message from bag)
+    while len(heap) > 0:
+        _topic, _msg, _stamp, _connection_header = heap.pop()
+        _connection_header = copy.copy(_connection_header)  # Prevent modifying connection records from in bag
+        is_from_extra_time_ranges = False
+        if extra_time_ranges is not None and time_ranges is not None:
+            is_from_extra_time_ranges = _stamp in extra_time_ranges and _stamp not in time_ranges
+        ret = filter_message(_topic, _msg, _stamp, _connection_header, bag_filter, True, is_from_extra_time_ranges)
+        if not isinstance(ret, list):
+            ret = [ret]
+        for data in ret[1:]:
+            heap.push(data)
+        if ret[0] is None:
+            continue
+        _topic, _raw_msg, _stamp, _connection_header = ret[0]
+        out.write(_topic, _raw_msg, _stamp, connection_header=_connection_header, raw=True)
 
     bag_filter.reset()

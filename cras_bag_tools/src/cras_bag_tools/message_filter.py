@@ -6,13 +6,13 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import genpy
 import rospy
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
-from cras.string_utils import to_str
+from cras.string_utils import to_str, STRING_TYPE
 
 from .bag_utils import MultiBag
 from .time_range import TimeRange, TimeRanges
@@ -238,6 +238,32 @@ class MessageFilter(object):
         :rtype: bool
         """
         return True
+
+    def extra_initial_messages(self):
+        # type: () -> Iterable[Tuple[STRING_TYPE, Any, rospy.Time, Optional[Dict[STRING_TYPE, STRING_TYPE]]]]
+        """Get extra messages that should be passed to the filter before the iteration over bag messages starts.
+
+        This can be used e.g. by filters that are more generators the actual filters (i.e. they do not operate on
+        existing messages, but instead create new ones based on other information).
+
+        :note: :py:meth:`set_bag` should be called before calling this method.
+        :note: Do not generate very large data. All initial messages will be stored in RAM at once.
+        :return: A list or iterator of the message 4-tuples `(topic, message, stamp, connection_header)`.
+        """
+        return []
+
+    def extra_final_messages(self):
+        # type: () -> Iterable[Tuple[STRING_TYPE, Any, rospy.Time, Optional[Dict[STRING_TYPE, STRING_TYPE]]]]
+        """Get extra messages that should be passed to the filter after the iteration over bag messages stops.
+
+        This can be used e.g. by filters that are more generators the actual filters (i.e. they do not operate on
+        existing messages, but instead create new ones based on other information).
+
+        :note: :py:meth:`set_bag` should be called before calling this method.
+        :note: Do not generate very large data. All final messages will be stored in RAM at once.
+        :return: A list or iterator of the message 4-tuples `(topic, message, stamp, connection_header)`.
+        """
+        return []
 
     def extra_time_ranges(self, bags):
         """If this filter requires that certain time ranges are read from the bagfiles in any case (like the static
@@ -549,6 +575,16 @@ class FilterChain(RawMessageFilter):
                     time_ranges = TimeRanges([])
                 time_ranges.append(extra_ranges.ranges)
         return time_ranges
+
+    def extra_initial_messages(self):
+        for f in self.filters:
+            for m in f.extra_initial_messages():
+                yield m
+
+    def extra_final_messages(self):
+        for f in self.filters:
+            for m in f.extra_final_messages():
+                yield m
 
     def reset(self):
         for f in self.filters:
