@@ -67,7 +67,9 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # apply connection filters
     topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
-    get_stamp_fn = lambda x: x[2]  # get stamp from the tuple
+    # get stamp from the tuple
+    def get_stamp_fn(x):
+        return x[2]
     heap = Heap(initial=list(bag_filter.extra_initial_messages()), key=get_stamp_fn)
 
     connection_filter = bag_filter.connection_filter
