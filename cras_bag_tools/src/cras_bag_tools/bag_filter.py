@@ -65,7 +65,8 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # apply topic filters
     topics = [t for t in topics if bag_filter.topic_filter(t)]
     # apply connection filters
-    topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
+    if len(topics) > 0:
+        topics = [c.topic for c in bags._get_connections(topics, bag_filter.connection_filter)]  # noqa
 
     bag_filter.on_filtering_start()
 

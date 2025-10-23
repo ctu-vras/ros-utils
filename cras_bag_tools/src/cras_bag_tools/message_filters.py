@@ -30,7 +30,7 @@ import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Je
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.encoding import decode_config
 from dynamic_reconfigure.msg import Config
-from geometry_msgs.msg import Quaternion, Transform, TransformStamped, Vector3
+from geometry_msgs.msg import Quaternion, Transform, TransformStamped, Twist, TwistStamped, Vector3
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
@@ -59,6 +59,19 @@ xml_reflection.core.on_error = urdf_error
 def dict_to_str(d, sep='='):
     return '{' + ', '.join('%s%s%s' % (
         k, sep, str(v) if not isinstance(v, dict) else dict_to_str(v, sep)) for k, v in d.items()) + "}"
+
+
+def create_connection_header(topic, msg_type, latch=False):
+    header = {
+        "callerid": "/bag_filter",
+        "topic": topic,
+        "message_definition": msg_type._full_text,  # noqa
+        "type": msg_type._type,  # noqa
+        "md5sum": msg_type._md5sum,  # noqa
+    }
+    if latch:
+        header["latching"] = "1"
+    return header
 
 
 class SetFields(DeserializedMessageFilter):
@@ -1128,6 +1141,46 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
         return ", ".join(parts)
 
 
+class StampTwist(DeserializedMessageFilter):
+    """Adjust some static transforms."""
+
+    def __init__(self, source_topic, stamped_topic=None, frame_id="base_link", *args, **kwargs):
+        # type: (STRING_TYPE, Optional[STRING_TYPE], STRING_TYPE, Any, Any) -> None
+        """
+        :param source_topic: The Twist topic to stamp.
+        :param stamped_topic: The stamped Twist topic to create.
+        :param frame_id: The frame_id to use in the stamped messages.
+        :param args: Standard include/exclude topics/types and min/max stamp args.
+        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        """
+        super(StampTwist, self).__init__(include_topics=[source_topic], *args, **kwargs)
+
+        self._source_topic = source_topic
+        self._stamped_topic = stamped_topic if stamped_topic is not None else (source_topic + "_stamped")
+        self._frame_id = frame_id
+
+        self._connection_header = create_connection_header(self._stamped_topic, TwistStamped)
+
+    def filter(self, topic, msg, stamp, header):
+        stamped_msg = TwistStamped()
+        stamped_msg.header.frame_id = self._frame_id
+        stamped_msg.header.stamp = stamp
+        stamped_msg.twist = msg
+
+        return [
+            (topic, msg, stamp, header),
+            (self._stamped_topic, stamped_msg, stamp, self._connection_header)
+        ]
+
+    def _str_params(self):
+        parts = []
+        parts.append('%s=>%s (frame %s)' % (self._source_topic, self._stamped_topic, self._frame_id))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
     """Apply extrinsic calibrations from IKalibr."""
 
@@ -1325,16 +1378,7 @@ class AddSubtitles(NoMessageFilter):
         return subtitles
 
     def extra_initial_messages(self):
-        connection_header = {
-            "callerid": "/bag_filter",
-            "topic": self._topic,
-            "message_definition": String._full_text,
-            "type": String._type,
-            "md5sum": String._md5sum,
-        }
-        if self._latch:
-            connection_header["latching"] = "1"
-
+        connection_header = create_connection_header(self._topic, String, self._latch)
         for start_time, end_time, subtitle in self._subtitles:
             msg = String(data=subtitle)
             abs_time = self._start_time + start_time

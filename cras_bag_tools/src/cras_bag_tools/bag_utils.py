@@ -47,6 +47,12 @@ class BagWrapper(object):
     def __getattr__(self, item):
         return getattr(self.bag, item)
 
+    def read_messages(self, topics, start_time, end_time, topic_filter, raw, return_connection_header=False):
+        if topics is not None and len(topics) == 0:
+            return
+        for msg in self.bag.read_messages(topics, start_time, end_time, topic_filter, raw, return_connection_header):
+            yield msg
+
     def _get_entries(self, connections=None, start_time=None, end_time=None):
         all_ranges = None
         if start_time is not None and isinstance(start_time, TimeRanges):
@@ -251,6 +257,8 @@ class MultiBag(object):
                        return_connection_header=False,  # type: bool
                        ):
         # type: (...) -> Iterator[Union[rosbag.bag.BagMessage, rosbag.bag.BagMessageWithConnectionHeader]]
+        if topics is not None and len(topics) == 0:
+            return
         connections = dict(self._get_connections(topics, connection_filter, True))
         for bag, entry, _ in self._get_entries(connections, start_time, end_time):
             msg = bag._reader.seek_and_read_message_data_record(  # noqa
