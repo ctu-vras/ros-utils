@@ -34,6 +34,8 @@ find_package(Boost REQUIRED COMPONENTS thread)
 
 find_package(Eigen3 REQUIRED)
 
+find_package(Iconv REQUIRED)
+
 find_package(urdfdom_headers REQUIRED)
 
 # Require https://github.com/ros/filters/pull/60 in the filters package (added in 1.8.3 and 1.9.2)
@@ -233,7 +235,7 @@ target_link_libraries(cras_tf2_utils
 add_library(cras_string_utils src/string_utils.cpp src/string_utils/from_chars.cpp src/string_utils/ros.cpp)
 add_dependencies(cras_string_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cras_string_utils
-  PUBLIC cras_time_utils cras_type_traits ${catkin_LIBRARIES})
+  PUBLIC cras_time_utils cras_type_traits ${catkin_LIBRARIES} Iconv::Iconv)
 if (HAS_FROM_CHARS_FLOAT)
   target_compile_definitions(cras_string_utils PRIVATE HAS_FROM_CHARS_FLOAT=1)
 endif()
