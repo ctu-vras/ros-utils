@@ -40,7 +40,11 @@ void setThreadName(const std::string& name)
     memcpy(nameBuf + 8, name.c_str() + (name.length() - 7), 7);
     nameBuf[15] = '\0';
   }
+#ifdef __APPLE__
+  pthread_setname_np(nameBuf);
+#else
   pthread_setname_np(pthread_self(), nameBuf);
+#endif
 }
 
 }
