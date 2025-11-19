@@ -1491,6 +1491,58 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         return ", ".join(parts)
 
 
+class OdomToTf(DeserializedMessageFilter):
+    """Convert odometry to TF."""
+
+    def __init__(self, odom_topic, tf_topic="tf", add_tags=None, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
+        """
+        :param odom_topic: Odometry topic to convert.
+        :param tf_topic: The TF topic.
+        :param add_tags: Tags to be added to the generated TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(OdomToTf, self).__init__(
+            include_topics=(odom_topic,), include_types=(Odometry._type,), *args, **kwargs)  # noqa
+
+        self._odom_topic = odom_topic
+        self._tf_topic = tf_topic
+        self._add_tags = add_tags
+        self._connection_header = create_connection_header(tf_topic, TFMessage, False)
+
+    def filter(self, topic, msg, stamp, header, tags):
+        odom_tf = TransformStamped()
+        odom_tf.header.frame_id = msg.header.frame_id
+        odom_tf.header.stamp = msg.header.stamp
+        odom_tf.child_frame_id = msg.child_frame_id
+        odom_tf.transform.translation = msg.pose.pose.position
+        odom_tf.transform.rotation = msg.pose.pose.orientation
+
+        tf_msg = TFMessage()
+        tf_msg.transforms.append(odom_tf)
+
+        tf_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            tf_tags = tf_tags.union(self._add_tags)
+
+        return [
+            (topic, msg, stamp, header, tags),
+            (self._tf_topic, tf_msg, stamp, self._connection_header, tf_tags),
+        ]
+
+    def _str_params(self):
+        parts = []
+        parts.append('odom_topic=' + self._odom_topic)
+        if self._tf_topic != "tf":
+            parts.append('tf_topic=' + self._tf_topic)
+
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 CalibrationYAMLType = Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]
 
 
