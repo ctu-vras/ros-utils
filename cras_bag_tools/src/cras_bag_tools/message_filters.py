@@ -850,9 +850,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
 
     def __init__(self, include_topics=None, description_param=None, description_file=None, joint_state_cache_size=100,
                  include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), include_joints=(),
-                 exclude_joints=(), *args, **kwargs):
-                 exclude_joints=(),
-                 add_tags=None, *args, **kwargs):
+                 exclude_joints=(), publish_new_tfs=False, add_tags=None, *args, **kwargs):
         """
         :param list include_topics: Topics to handle. It should contain both the JointState and TF topics. If no TF
                                     topic is given, /tf and /tf_static are added automatically.
@@ -867,8 +865,9 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         :param list exclude_children: If nonempty, TFs with one of the listed frames as child will not be processed.
         :param list include_joints: If nonempty, only joints with the listed named will be processed.
         :param list exclude_joints: If nonempty, joints with one of the listed names will not be processed.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param list publish_new_tfs: If true, the mode of operation is changed so that every joint_states message
+                                     will create a new TF message for the contained joints (i.e. new messages are added
+                                     to the bag).
         :param set add_tags: Add these tags to all modified TF messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -894,6 +893,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self._segments = {}
         self._segments_fixed = {}
         self._child_to_joint_map = {}
+        self._joint_to_child_map = {}
         self._joint_state_cache = deque(maxlen=joint_state_cache_size)
         self._add_tags = add_tags
 
@@ -903,6 +903,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self.exclude_children = TopicSet(exclude_children)
         self.include_joints = TopicSet(include_joints)
         self.exclude_joints = TopicSet(exclude_joints)
+        self.publish_new_tfs = publish_new_tfs
 
         self.description_param = description_param
 
@@ -946,6 +947,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self._segments = {}
         self._segments_fixed = {}
         self._child_to_joint_map = {}
+        self._joint_to_child_map = {}
         for child, (joint_name, parent) in self._urdf_model.parent_map.items():
             if self.include_joints and joint_name not in self.include_joints:
                 continue
@@ -954,6 +956,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
             segment = self._kdl_model.getChain(parent, child).getSegment(0)
             joint = segment.getJoint()
             self._child_to_joint_map[child] = joint_name
+            self._joint_to_child_map[joint_name] = child
             if joint.getTypeName() == "None":
                 self._segments_fixed[child] = segment
             else:
@@ -993,10 +996,40 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
             return topic, msg, stamp, header, tags
 
         else:  # the message is a joint state
-            self._joint_state_cache.append(msg)
-            return topic, msg, stamp, header
             self._joint_state_cache.append(copy.deepcopy(msg))
             result = [(topic, msg, stamp, header, tags)]
+
+            if self.publish_new_tfs:
+                tf_msg = TFMessage()
+                tf_static_msg = TFMessage()
+                for i in range(len(msg.name)):
+                    joint_name = msg.name[i]
+                    if len(msg.position) <= i or not math.isfinite(msg.position[i]):
+                        continue
+                    if joint_name not in self._joint_to_child_map:
+                        continue
+                    child_name = self._joint_to_child_map[joint_name]
+                    _, parent_name = self._urdf_model.parent_map[child_name]
+                    t = TransformStamped()
+                    t.header.frame_id = parent_name
+                    t.header.stamp = msg.header.stamp
+                    t.child_frame_id = child_name
+                    if child_name in self._segments:
+                        tf_msg.transforms.append(t)
+                    else:
+                        tf_static_msg.transforms.append(t)
+                    # Append just zero-initialized TF; it will be passed to this filter later and it will get recomputed
+
+                tf_tags = tags_for_generated_msg(tags)
+                if self._add_tags:
+                    tf_tags = tf_tags.union(self._add_tags)
+                if len(tf_msg.transforms) > 0:
+                    connection_header = create_connection_header("/tf", TFMessage, False)
+                    result.append(("/tf", tf_msg, stamp, connection_header, tf_tags))
+                if len(tf_static_msg.transforms) > 0:
+                    connection_header = create_connection_header("/tf_static", TFMessage, True)
+                    result.append(("/tf_static", tf_msg, stamp, connection_header, tf_tags))
+
             return result
 
     def _recompute_static_transform(self, transform):
@@ -1051,6 +1084,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
             parts.append('include_joints=' + str(self.include_joints))
         if self.exclude_joints:
             parts.append('exclude_joints=' + str(self.exclude_joints))
+        if self.publish_new_tfs:
+            parts.append("publish_new_tfs")
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
