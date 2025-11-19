@@ -2115,6 +2115,8 @@ class UpdateRobotModel(NoMessageFilter):
         if len(parent_params) > 0:
             params.append(parent_params)
         return ",".join(params)
+
+
 class RemovePasswordsFromParams(NoMessageFilter):
     """Search for passwords in the ROS parameters and remove them."""
 
@@ -2149,6 +2151,56 @@ class RemovePasswordsFromParams(NoMessageFilter):
         return ",".join(params)
 
 
+class UpdateParams(NoMessageFilter):
+    """Update ROS parameters."""
+
+    def __init__(self, update=None, remove=None):
+        super(UpdateParams, self).__init__()
+        self._update = update if update is not None else dict()
+        self._remove = remove if remove is not None else list()
+
+        self._updated_params = set()
+        self._removed_params = set()
+
+    def on_filtering_start(self):
+        super(UpdateParams, self).on_filtering_start()
+        self.update_params(self._params, self._update)
+        for param in self._remove:
+            self.remove_param(self._params, param)
+
+        if len(self._updated_params) > 0:
+            print("Updated %i ROS parameters." % (len(self._updated_params),))
+        if len(self._removed_params) > 0:
+            print("Removed %i ROS parameters." % (len(self._removed_params),))
+
+    def update_params(self, params, new_params, prefix=""):
+        if not isinstance(new_params, dict) or not isinstance(params, dict):
+            return
+        for k, v in new_params.items():
+            if k not in params:
+                params[k] = v
+                self._updated_params.add("/".join((prefix, k)))
+            else:
+                self.update_params(params[k], v, "/".join((prefix, k)))
+
+    def remove_param(self, params, param, prefix=""):
+        if isinstance(params, dict):
+            for key, val in params.items():
+                if key == param:
+                    del params[key]
+                    self._removed_params.add("/".join((prefix, key)))
+                    return
+                elif "/" in param:
+                    param_key, param_rest = param.split("/", maxsplits=1)
+                    if param_key == key:
+                        self.remove_param(val, param_rest, "/".join((prefix, key)))
+
+    def _str_params(self):
+        params = ["removed_params=" + repr(self._removed_params), "updated_params=" + repr(self._updated_params)]
+        parent_params = super(UpdateParams, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
 
 
 class FixSpotCams(RawMessageFilter):
