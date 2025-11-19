@@ -51,8 +51,10 @@ class StringUtils(unittest.TestCase):
         self.assertEqual("1.000000001", to_str(Duration(1, 1)))
         self.assertEqual("1.100000000", to_str(Duration(1, 100000000)))
         self.assertEqual("-1.000000000", to_str(-Duration(1)))
-        self.assertEqual("-1.000000001", to_str(Duration(-1, 1)))
-        self.assertEqual("-1.100000000", to_str(Duration(-1, 100000000)))
+        # negative durations mean "10e9 * secs + nsecs", so (-1, 1) is actually
+        # (-1 * 10e9 + 1) = -999999999
+        self.assertEqual("-0.999999999", to_str(Duration(-1, 1)))
+        self.assertEqual("-0.900000000", to_str(Duration(-1, 100000000)))
         self.assertEqual("1.000000000", to_str(Time(1)))
         self.assertEqual("1.000000001", to_str(Time(1, 1)))
         self.assertEqual("1.100000000", to_str(Time(1, 100000000)))

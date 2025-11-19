@@ -41,7 +41,11 @@ def __time_val_to_str(time):
     :return: The string representation.
     :rtype: str
     """
-    return "%i.%09i" % (time.secs, time.nsecs)
+    # We can't directly print .secs, .nsecs, as that would fail for negative durations
+    nsecs = time.to_nsec()
+    sign = '' if nsecs >= 0 else '-'
+    nsecs = abs(nsecs)
+    return "%s%i.%09i" % (sign, nsecs // 1000000000, nsecs % 1000000000)
 
 
 __to_str_functions = {
