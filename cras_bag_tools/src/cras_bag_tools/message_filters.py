@@ -2115,6 +2115,40 @@ class UpdateRobotModel(NoMessageFilter):
         if len(parent_params) > 0:
             params.append(parent_params)
         return ",".join(params)
+class RemovePasswordsFromParams(NoMessageFilter):
+    """Search for passwords in the ROS parameters and remove them."""
+
+    def __init__(self):
+        super(RemovePasswordsFromParams, self).__init__()
+        self._removed_passwords = set()
+
+    def on_filtering_start(self):
+        super(RemovePasswordsFromParams, self).on_filtering_start()
+        self.remove_passwords(self._params)
+
+    def remove_passwords(self, params, prefix=""):
+        if isinstance(params, dict):
+            keys_to_remove = set()
+            for key, val in params.items():
+                if key.tolower().strip().startswith("pass"):
+                    keys_to_remove.add(key)
+                else:
+                    self.remove_passwords(val, "/".join((prefix, key)))
+            for key in keys_to_remove:
+                del params[key]
+                self._removed_passwords.add("/".join((prefix, key)))
+        elif isinstance(params, list):
+            for i in range(len(params)):
+                self.remove_passwords(params[i], "%s[%i]" % (prefix, i))
+
+    def _str_params(self):
+        params = ["removed_passwords=" + repr(self._removed_passwords)]
+        parent_params = super(RemovePasswordsFromParams, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
+
+
 
 
 class FixSpotCams(RawMessageFilter):
