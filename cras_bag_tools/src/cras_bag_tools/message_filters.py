@@ -21,6 +21,7 @@ from numpy.linalg import inv
 from typing import Any, Dict
 
 import rospy
+from angles import normalize_angle, normalize_angle_positive
 from camera_calibration_parsers import readCalibration
 from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
 from cras.geometry_utils import quat_msg_from_rpy
@@ -1099,22 +1100,29 @@ class FixJointStates(DeserializedMessageFilter):
         POSITION = 1
         VELOCITY = 2
         EFFORT = 3
+        INTEGRATE_POSITION = 4
 
     class _OperationType(Enum):
         VALUE = 1
         MULTIPLIER = 2
         OFFSET = 3
+        NORMALIZE_ANGLE = 4
+        NORMALIZE_ANGLE_POSITIVE = 5
 
     def __init__(self, changes=None, add_tags=None, *args, **kwargs):
         # type: (Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, Dict[STRING_TYPE, Any]]]], Optional[Set[STRING_TYPE]], Any, Any) -> None  # noqa
         """
         :param changes: Dict specifying what should be changed. Keys are joint names. Values are dicts with possible
-                        keys "position", "velocity", "effort". Values of each of these dicts can be
-                        "value" (set absolute value), "offset" (add offset) and "multiplier" (multiply value).
+                        keys "position", "velocity", "effort", "integrate_position". Values of the first 3 dicts can be
+                        "value" (set absolute value), "offset" (add offset), "multiplier" (multiply value),
+                        "normalize_angle" (normalizes value to (-pi, pi)), "normalize_angle_positive" (normalizes
+                        value to (0, 2*pi)).
                         If "value" is specified, then "offset" and "multiplier" are ignored. Otherwise, "multiplier" is
                         applied first and "offset" is added to the result.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+                        "integrate_position" dict can contain keys "min_dt". "min_dt" specifies the minimum time delta
+                        between consecutive joint states to consider them an update. It defaults to 0.01 s.
+                        The first position when integrating position is the normal value contained in the message (it
+                        can be influenced by the specified "position" change (e.g. set to 0)).
         :param add_tags: Tags to be added to modified joint states messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -1132,6 +1140,10 @@ class FixJointStates(DeserializedMessageFilter):
                 result[OperationType.MULTIPLIER] = float(operations["multiplier"])
             if "offset" in operations:
                 result[OperationType.OFFSET] = float(operations["offset"])
+            if "normalize_angle" in operations:
+                result[OperationType.NORMALIZE_ANGLE] = bool(operations["normalize_angle"])
+            if "normalize_angle_positive" in operations:
+                result[OperationType.NORMALIZE_ANGLE_POSITIVE] = bool(operations["normalize_angle_positive"])
             return result
 
         self._changes = {}
@@ -1144,10 +1156,15 @@ class FixJointStates(DeserializedMessageFilter):
                     self._changes[joint_name][JointStateType.VELOCITY] = convert_operations(change["velocity"])
                 if "effort" in change:
                     self._changes[joint_name][JointStateType.EFFORT] = convert_operations(change["effort"])
+                if "integrate_position" in change:
+                    self._changes[joint_name][JointStateType.INTEGRATE_POSITION] = change["integrate_position"]
         self._changed_joint_names = TopicSet(self._changes.keys())  # for efficient filtering
 
-    def filter(self, topic, msg, stamp, header):
         self._add_tags = add_tags
+
+        self._integrated_positions = {}
+        self._last_velocities = {}
+        self._last_integration_stamps = {}
 
     def filter(self, topic, msg, stamp, header, tags):
         JointStateType = FixJointStates._JointStateType
@@ -1181,7 +1198,28 @@ class FixJointStates(DeserializedMessageFilter):
                 msg.effort[i] = self._apply_changes(msg.effort[i], changes[JointStateType.EFFORT])
                 tags = changed_tags
 
-        return topic, msg, stamp, header
+            if len(msg.position) > i and len(msg.velocity) > i and JointStateType.INTEGRATE_POSITION in changes:
+                if name not in self._last_integration_stamps:
+                    self._last_integration_stamps[name] = msg.header.stamp
+                    self._integrated_positions[name] = msg.position[i]
+                    self._last_velocities[name] = msg.velocity[i]
+                else:
+                    min_dt = changes[JointStateType.INTEGRATE_POSITION].get("min_dt", 0.01)
+                    dt = (msg.header.stamp - self._last_integration_stamps[name]).to_sec()
+                    if dt >= min_dt:
+                        vel = (msg.velocity[i] + self._last_velocities[name]) / 2.0
+                        distance = vel * dt
+                        self._integrated_positions[name] += distance
+                        if changes[JointStateType.INTEGRATE_POSITION].get("normalize_angle", False):
+                            self._integrated_positions[name] = normalize_angle(self._integrated_positions[name])
+                        if changes[JointStateType.INTEGRATE_POSITION].get("normalize_angle_positive", False):
+                            self._integrated_positions[name] = normalize_angle_positive(
+                                self._integrated_positions[name])
+                        self._last_velocities[name] = msg.velocity[i]
+                        self._last_integration_stamps[name] = msg.header.stamp
+                    msg.position[i] = self._integrated_positions[name]
+                    tags = changed_tags
+
         return topic, msg, stamp, header, tags
 
     def _apply_changes(self, value, changes):
@@ -1195,7 +1233,19 @@ class FixJointStates(DeserializedMessageFilter):
             result = changes[OperationType.VALUE]
         else:
             result = result * changes.get(OperationType.MULTIPLIER, 1.0) + changes.get(OperationType.OFFSET, 0.0)
+
+        if changes.get(OperationType.NORMALIZE_ANGLE, False):
+            result = normalize_angle(result)
+        if changes.get(OperationType.NORMALIZE_ANGLE_POSITIVE, False):
+            result = normalize_angle_positive(result)
+
         return result
+
+    def reset(self):
+        self._integrated_positions = {}
+        self._last_velocities = {}
+        self._last_integration_stamps = {}
+        super(FixJointStates, self).reset()
 
     def _str_params(self):
         parts = []
