@@ -38,6 +38,7 @@ from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from kdl_parser_py.urdf import treeFromUrdfModel
+from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState
 from std_msgs.msg import Header, String
@@ -1373,6 +1374,117 @@ class InterpolateJointStates(DeserializedMessageFilter):
         parts.append('joints=' + repr(self._joints))
         parts.append('max_dt=' + str(self._max_dt))
         parts.append('dt_tolerance=' + str(self._dt_tolerance))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class RecomputeAckermannOdometry(DeserializedMessageFilter):
+    """Adjust some joint states. If TFs are computed from them, use RecomputeTFFromJointStates to recompute TF."""
+
+    def __init__(self, wheel_radius, wheel_separation, traction_joint, steering_joint, joint_state_topic="joint_states",
+                 frame_id="base_link", odom_frame_id="odom", odom_topic="odom", min_dt=0.01, heading_change_coef=1.0,
+                 add_tags=None, *args, **kwargs):
+        """
+        :param float wheel_radius: Radius of the traction wheel [m].
+        :param float wheel_separation: Separation of the steering and traction axles (wheelbase) [m].
+        :param str traction_joint: Joint whose velocity will be used as traction velocity.
+        :param str steering_joint: Joint whose position will be used as steering angle.
+        :param str joint_state_topic: Topic with joint states.
+        :param str frame_id: Child frame ID of the odom messages.
+        :param str odom_frame_id: Parent frame ID of the odom messages.
+        :param str odom_topic: Odometry topic to publish.
+        :param float min_dt: If the computed dt is smaller than this, the joint state message is ignored for odometry.
+        :param float heading_change_coef: This is a hack. The angular distance added to yaw is multiplied by this number
+                                          after being computed from angular velocity and dt.
+        :param set add_tags: Tags to be added to the generated odometry messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(RecomputeAckermannOdometry, self).__init__(
+            include_topics=(joint_state_topic,), include_types=(JointState._type,), *args, **kwargs)  # noqa
+        self._wheel_radius = wheel_radius
+        self._wheel_separation = wheel_separation
+        self._traction_joint = traction_joint
+        self._steering_joint = steering_joint
+        self._frame_id = frame_id
+        self._odom_frame_id = odom_frame_id
+        self._odom_topic = odom_topic
+        self._min_dt = min_dt
+        self._heading_change_coef = heading_change_coef
+        self._add_tags = add_tags
+
+        self._connection_header = create_connection_header(self._odom_topic, Odometry, False)
+
+        self._x = 0.0
+        self._y = 0.0
+        self._yaw = 0.0
+        self._lin_vel = 0.0
+        self._ang_vel = 0.0
+
+        self._steering_angle = 0.0
+        self._last_time = None
+
+    def filter(self, topic, msg, stamp, header, tags):
+        result = [(topic, msg, stamp, header, tags)]
+
+        if self._steering_joint in msg.name:
+            i = msg.name.index(self._steering_joint)
+            self._steering_angle = msg.position[i]
+        if self._traction_joint in msg.name:
+            if self._last_time is None:
+                self._last_time = msg.header.stamp
+                result.append(self._construct_odom(msg.header.stamp, stamp, tags))
+            else:
+                i = msg.name.index(self._traction_joint)
+                wheel_ang_vel = msg.velocity[i]
+                dt = (msg.header.stamp - self._last_time).to_sec()
+                if dt > self._min_dt:
+                    self._last_time = msg.header.stamp
+
+                    self._lin_vel = wheel_ang_vel * self._wheel_radius
+                    linear = self._lin_vel * dt
+
+                    steering_angle = normalize_angle(self._steering_angle)
+                    angular = math.tan(steering_angle) * linear / self._wheel_separation
+                    self._ang_vel = angular / dt
+                    angular *= self._heading_change_coef
+
+                    direction = self._yaw + angular * 0.5
+                    self._x += linear * math.cos(direction)
+                    self._y += linear * math.sin(direction)
+                    self._yaw += angular
+
+                    result.append(self._construct_odom(msg.header.stamp, stamp, tags))
+
+        return result
+
+    def _construct_odom(self, header_stamp, receive_stamp, tags):
+        msg = Odometry()
+        msg.header.frame_id = self._odom_frame_id
+        msg.header.stamp = header_stamp
+        msg.child_frame_id = self._frame_id
+        msg.pose.pose.position.x = self._x
+        msg.pose.pose.position.y = self._y
+        msg.pose.pose.orientation = quat_msg_from_rpy(0, 0, self._yaw)
+        msg.twist.twist.linear.x = self._lin_vel
+        msg.twist.twist.angular.z = self._ang_vel
+        odom_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            odom_tags = odom_tags.union(self._add_tags)
+        return self._odom_topic, msg, receive_stamp, self._connection_header, odom_tags
+
+    def _str_params(self):
+        parts = []
+        parts.append('wheel_radius=' + str(self._wheel_radius))
+        parts.append('wheel_separation=' + str(self._wheel_separation))
+        parts.append('traction_joint=' + self._traction_joint)
+        parts.append('steering_joint=' + self._steering_joint)
+        parts.append('frame_id=' + self._frame_id)
+        parts.append('odom_frame_id=' + self._odom_frame_id)
+        parts.append('odom_topic=' + self._odom_topic)
+
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
