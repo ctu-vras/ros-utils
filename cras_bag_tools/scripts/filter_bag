@@ -11,6 +11,7 @@ import argparse
 import copy
 
 import os
+import re
 import sys
 
 import yaml
@@ -28,22 +29,53 @@ from cras_bag_tools.time_range import TimeRange, TimeRanges
 from cras_bag_tools.tqdm_bag import TqdmMultiBag
 
 
-def out_path(path, fmt):
-    """Resolve output path template.
+BAG_NAME_PATTERN = re.compile(r'^(.*)_([12]\d{3}-[012]\d-[0123]\d-[012]\d-[0-6]\d-[0-6]\d).?(.*)$')
 
-    :param str path: Path of the current bag file.
-    :param str fmt: The output name template.
-    :return: The output path.
+
+def resolve_path(path_format, reference_file):
+    """Resolve path template.
+
+    The following variables are available in path_format:
+
+    - dirname (absolute path of the reference file's directory)
+    - basename (base name of the reference file, with extension)
+    - name (base name of the reference file, without extension)
+    - ext (extension of the reference file (including the dot); empty if it has no extension)
+    - ext_no_dot (extension of the reference file (without the dot); empty if it has no extension)
+    - bag_prefix (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `PREFIX`; otherwise, it is `name`).
+    - bag_stamp (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `STAMP`; otherwise, it is `name`).
+    - bag_suffix (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `SUFFIX`; otherwise, it is `name`).
+    - bag_base (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `PREFIX_STAMP`; otherwise, it is `name`).
+
+    :param str path_format: The path template in the format :meth:`str.format()` accepts.
+    :param str reference_file: Path of the current bag file or another reference file.
+    :return: The absolute resolved path.
     :rtype: str
     """
-    dirname, basename = os.path.split(path)
+    dirname, basename = os.path.split(os.path.abspath(os.path.expanduser(reference_file)))
     name, ext = os.path.splitext(basename)
-    out = fmt.format(dirname=dirname, name=name, ext=ext)
-    try:
-        os.makedirs(os.path.dirname(out))
-    except OSError:
-        pass
-    return out
+
+    format_vars = {
+        'dirname': dirname,
+        'basename': basename,
+        'name': name,
+        'ext': ext,
+        'ext_no_dot': ext[1:] if len(ext) >= 1 and ext[0] == ':' else ext,
+        'bag_prefix': name,
+        'bag_stamp': name,
+        'bag_suffix': name,
+        'bag_base': name,
+    }
+
+    match = BAG_NAME_PATTERN.match(name)
+    if match is not None:
+        format_vars['bag_prefix'] = match.group(1)
+        format_vars['bag_stamp'] = match.group(2)
+        format_vars['bag_suffix'] = match.group(3)
+        format_vars['bag_base'] = match.group(1) + '_' + match.group(2)
+
+    resolved = path_format.format(**format_vars)
+    return os.path.abspath(os.path.expanduser(resolved))
 
 
 def copy_params_if_any(param_file, out_bag_path):
@@ -81,7 +113,10 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
     :param bool limit_to_first_bag: If True, each multibag will report its start and end to be equal to the
                                     first open bag. If False, the start and end correspond to the earliest and latest
                                     stamp in all bags.
+    :return: The number of bags that failed to be processed.
+    :rtype: int
     """
+    num_failed = 0
     i = 0
     for bags_path in bags:
         i += 1
@@ -118,14 +153,30 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
                 print('Source bag %s does not exist' % (b,), file=sys.stderr)
                 bags_ok = False
         if not bags_ok:
+            num_failed += 1
             continue
 
         try:
             with TqdmMultiBag(bags_path, skip_index=True, limit_to_first_bag=limit_to_first_bag) as bag:
                 print('- Size: %s' % (pretty_file_size(bag.size),))
 
-                out_bag_path = out_path(bag_path, out_format)
-                print('Destination: %s' % (os.path.abspath(out_bag_path),))
+                out_bag_path = resolve_path(out_format, bag_path)
+                out_bag_ok = True
+                for b in bags_paths:
+                    if os.path.realpath(b) == os.path.realpath(out_bag_path):
+                        print("Out bag path %s is the same file as input bag %s!" % (out_bag_path, b), file=sys.stderr)
+                        out_bag_ok = False
+                        break
+                if not out_bag_ok:
+                    num_failed += 1
+                    continue
+
+                try:
+                    os.makedirs(os.path.dirname(out_bag_path))
+                except OSError:
+                    pass
+                print('Destination: %s' % (out_bag_path,))
+
                 print('- Compression: %s' % (compression,))
                 if copy_params:
                     copy_params_if_any(params_file, out_bag_path)
@@ -158,8 +209,11 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
 
         except Exception as e:
             print('Error processing bag file %s: %s' % (bags_path, str(e)), file=sys.stderr)
+            num_failed += 1
             import traceback
             traceback.print_exc()
+
+    return num_failed
 
 
 class TimeRangesAction(argparse.Action):
@@ -291,10 +345,13 @@ def main():
     if args.copy_params is None:
         args.copy_params = True
 
-    filter_bags(args.bags, args.out_format, args.compression, args.copy_params, filter_chain, args.default_params_file,
-                genpy.Time(args.start_time) if args.start_time is not None else None,
-                genpy.Time(args.end_time) if args.end_time is not None else None, args.time_ranges,
-                args.limit_to_first_bag)
+    num_failed = filter_bags(
+        args.bags, args.out_format, args.compression, args.copy_params, filter_chain, args.default_params_file,
+        genpy.Time(args.start_time) if args.start_time is not None else None,
+        genpy.Time(args.end_time) if args.end_time is not None else None, args.time_ranges,
+        args.limit_to_first_bag)
+
+    sys.exit(num_failed)
 
 
 if __name__ == '__main__':
