@@ -6,25 +6,27 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import math
 import os.path
+
 import matplotlib.cm as cmap
 import numpy as np
 import sys
 import yaml
 from collections import deque
 from enum import Enum
-from typing import Dict, Optional, Union, Tuple, Sequence
+from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 from lxml import etree
 from numpy.linalg import inv
 from typing import Any, Dict
 
 import rospy
+from camera_calibration_parsers import readCalibration
 from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
 from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 from cras.log_utils import rosconsole_notifyLoggerLevelsChanged, rosconsole_set_logger_level, RosconsoleLevel
-from camera_calibration_parsers import readCalibration
 from cras.string_utils import to_str, STRING_TYPE
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
@@ -43,8 +45,8 @@ from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
-from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, NoMessageFilter, Passthrough, \
-    RawMessageFilter, TopicSet
+from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, \
+    RawMessageFilter, TopicSet, tags_for_generated_msg
 
 
 def urdf_error(message):
@@ -78,7 +80,8 @@ class SetFields(DeserializedMessageFilter):
     """Change values of some fields of a message (pass the fields to change as kwargs)."""
 
     def __init__(self, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
-                 min_stamp=None, max_stamp=None, **kwargs):
+                 min_stamp=None, max_stamp=None, include_time_ranges=None, exclude_time_ranges=None,
+                 include_tags=None, exclude_tags=None, **kwargs):
         """
         :param list include_topics: If nonempty, the filter will only work on these topics.
         :param list exclude_topics: If nonempty, the filter will skip these topics (but pass them further).
@@ -86,18 +89,28 @@ class SetFields(DeserializedMessageFilter):
         :param list exclude_types: If nonempty, the filter will skip these message types (but pass them further).
         :param rospy.Time min_stamp: If set, the filter will only work on messages after this timestamp.
         :param rospy.Time max_stamp: If set, the filter will only work on messages before this timestamp.
+        :param include_time_ranges: Time ranges that specify which regions of the bag should be processed.
+                                    List of pairs (start, end_or_duration) or a TimeRanges object.
+        :type include_time_ranges: list or TimeRanges
+        :param exclude_time_ranges: Time ranges that specify which regions of the bag should be skipped.
+                                    List of pairs (start, end_or_duration) or a TimeRanges object.
+        :type exclude_time_ranges: list or TimeRanges
+        :param list include_tags: If nonempty, the filter will only work on messages with these tags.
+        :param list exclude_tags: If nonempty, the filter will skip messages with these tags.
         :param dict kwargs: The fields to set. Keys are field name, values are the new values to set.
         """
         super(SetFields, self).__init__(
-            include_topics, exclude_topics, include_types, exclude_types, min_stamp, max_stamp)
+            include_topics, exclude_topics, include_types, exclude_types, min_stamp, max_stamp,
+            include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
         self.field_values = kwargs
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         for k, v in self.field_values.items():
             if k not in msg.__slots__:
                 continue
             setattr(msg, k, v)
-        return topic, msg, stamp, header
+            tags.add(MessageTags.CHANGED)
+        return topic, msg, stamp, header, tags
 
     def _str_params(self):
         parts = []
@@ -122,8 +135,8 @@ class FixHeader(DeserializedMessageFilter):
         :param bool stamp_from_receive_time: If true, set stamp from the connection header receive time.
         :param stamp_offset: If nonzero, offset the stamp by this duration (seconds).
         :type stamp_offset: float or rospy.Duration
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixHeader, self).__init__(*args, **kwargs)
         self.frame_id = frame_id
@@ -132,23 +145,31 @@ class FixHeader(DeserializedMessageFilter):
         self.stamp_from_receive_time = stamp_from_receive_time
         self.stamp_offset = rospy.Duration(stamp_offset)
 
-    def filter(self, topic, msg, stamp, header):
-        if len(msg.__slots__) == 0 or msg.__slots__[0] != 'header':
-            return topic, msg, stamp, header
+    def filter(self, topic, msg, stamp, header, tags):
+        if len(msg.__slots__) > 0 and msg.__slots__[0] == 'header':
+            self.fix_header(msg.header, stamp)
+            tags.add(MessageTags.CHANGED)
+        # Support for TF, Path and similar array-only messages
+        elif len(msg.__slots__) == 1 and msg._get_types()[0].endswith("[]"):
+            for m in getattr(msg, msg.__slots__[0]):
+                if len(m.__slots__) > 0 and m.__slots__[0] == 'header':
+                    self.fix_header(m.header, stamp)
+                    tags.add(MessageTags.CHANGED)
 
+        return topic, msg, stamp, header, tags
+
+    def fix_header(self, header, stamp):
         if len(self.frame_id) > 0:
-            msg.header.frame_id = self.frame_id
+            header.frame_id = self.frame_id
         else:
             if len(self.frame_id_prefix) > 0:
-                msg.header.frame_id = self.frame_id_prefix + msg.header.frame_id
+                header.frame_id = self.frame_id_prefix + header.frame_id
             if len(self.frame_id_suffix) > 0:
-                msg.header.frame_id += self.frame_id_suffix
+                header.frame_id += self.frame_id_suffix
 
         if self.stamp_from_receive_time:
-            msg.header.stamp = stamp
-        msg.header.stamp += self.stamp_offset
-
-        return topic, msg, stamp, header
+            header.stamp = stamp
+        header.stamp += self.stamp_offset
 
     def _str_params(self):
         parts = []
@@ -161,7 +182,7 @@ class FixHeader(DeserializedMessageFilter):
         if self.stamp_from_receive_time:
             parts.append('stamp_from_receive_time')
         if self.stamp_offset != rospy.Duration(0, 0):
-            parts.append('stamp_offset=' + self.stamp_offset)
+            parts.append('stamp_offset=' + str(self.stamp_offset.to_sec()))
         parent_params = super(FixHeader, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
@@ -180,17 +201,17 @@ class Deduplicate(RawMessageFilter):
                                   made between messages with equal frame_id.
         :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
                                            message than the given duration (in seconds).
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(Deduplicate, self).__init__(*args, **kwargs)
         self._ignore_seq = ignore_seq
         self._ignore_stamp = ignore_stamp
         self._per_frame_id = per_frame_id
-        self._max_ignored_duration = rospy.Duration(max_ignored_duration)
+        self._max_ignored_duration = rospy.Duration(max_ignored_duration) if max_ignored_duration is not None else None
         self._last_msgs = {}
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         has_header = pytype.__slots__[0] == 'header'
         key = topic
         if has_header and self._per_frame_id:
@@ -198,7 +219,7 @@ class Deduplicate(RawMessageFilter):
 
         if key not in self._last_msgs:
             self._last_msgs[key] = data, stamp
-            return topic, datatype, data, md5sum, pytype, stamp, header
+            return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
         last_msg, last_msg_stamp = self._last_msgs[key]
 
@@ -214,12 +235,12 @@ class Deduplicate(RawMessageFilter):
         if self._max_ignored_duration is not None:
             stamp_diff_ok = stamp - last_msg_stamp < self._max_ignored_duration
 
-        self._last_msgs[key] = data, stamp
-
         if seq_ok and stamp_ok and stamp_diff_ok and data[compare_idx:] == last_msg[compare_idx:]:
             return None
 
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        self._last_msgs[key] = data, stamp
+
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
     def _str_params(self):
         parts = []
@@ -236,15 +257,17 @@ class Deduplicate(RawMessageFilter):
 class Remap(RawMessageFilter):
     """Remap topics."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, min_stamp=None, max_stamp=None, include_time_ranges=None, exclude_time_ranges=None,
+                 include_tags=None, exclude_tags=None, **kwargs):
         """
         :param dict kwargs: The mapping to use. Keys are topics to be remapped, values are their new names.
         """
-        super(Remap, self).__init__(include_topics=kwargs.keys())
+        super(Remap, self).__init__(kwargs.keys(), None, None, None, min_stamp, max_stamp,
+                                    include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
         self.remap = kwargs
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
-        return self.remap.get(topic, topic), datatype, data, md5sum, pytype, stamp, header
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        return self.remap.get(topic, topic), datatype, data, md5sum, pytype, stamp, header, tags
 
     def _str_params(self):
         return dict_to_str(self.remap, '=>')
@@ -266,17 +289,24 @@ class Remap(RawMessageFilter):
 class Copy(RawMessageFilter):
     """Copy topics to other topics."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, min_stamp=None, max_stamp=None, include_time_ranges=None, exclude_time_ranges=None,
+                 include_tags=None, exclude_tags=None, add_tags=None, **kwargs):
         """
+        :param set add_tags: If set, these tags will be added to the copies of messages.
         :param dict kwargs: The mapping to use. Keys are topics to be copied, values are their new names.
         """
-        super(Copy, self).__init__(include_topics=kwargs.keys())
+        super(Copy, self).__init__(kwargs.keys(), None, None, None, min_stamp, max_stamp,
+                                   include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
+        self._add_tags = add_tags
         self.copy = kwargs
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        copy_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            copy_tags = copy_tags.union(self._add_tags)
         return [
-            (topic, datatype, data, md5sum, pytype, stamp, header),
-            (self.copy.get(topic, topic), datatype, data, md5sum, pytype, stamp, header),
+            (topic, datatype, data, md5sum, pytype, stamp, header, tags),
+            (self.copy.get(topic, topic), datatype, data, md5sum, pytype, stamp, header, copy_tags),
         ]
 
     def _str_params(self):
@@ -299,16 +329,18 @@ class Copy(RawMessageFilter):
 class Throttle(RawMessageFilter):
     """Throttle messages on topics."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, min_stamp=None, max_stamp=None, include_time_ranges=None, exclude_time_ranges=None,
+                 include_tags=None, exclude_tags=None, **kwargs):
         """
         :param kwargs: Keys are topics to be throttled, values are their maximum frequencies.
         :type kwargs: Dict[str, float]
         """
-        super(Throttle, self).__init__(include_topics=kwargs.keys())
+        super(Throttle, self).__init__(kwargs.keys(), None, None, None, min_stamp, max_stamp,
+                                       include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
         self.hz = kwargs
         self.prev_t = {}
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         t = stamp.to_sec()
         if topic in self.prev_t:
             period = t - self.prev_t[topic]
@@ -318,7 +350,7 @@ class Throttle(RawMessageFilter):
             if hz > self.hz[topic]:
                 return None
         self.prev_t[topic] = t
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
     def reset(self):
         self.prev_t = {}
@@ -365,9 +397,9 @@ class Topics(RawMessageFilter):
             return False
         return True
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         # The filtering is done in topic_filter()
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
     def _str_params(self):
         params = []
@@ -412,9 +444,9 @@ class TopicTypes(RawMessageFilter):
             return False
         return True
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         # The filtering is done in connection_filter()
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
     def _str_params(self):
         params = []
@@ -443,11 +475,11 @@ class Drop(RawMessageFilter):
     """Drop matching messages. The difference between Topics and Drop is that Drop acts locally, i.e. can be used in the
      middle of a filter chain."""
 
-    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_range=False):
+    def consider_message(self, topic, datatype, stamp, header, tags):
         # Drop also messages from extra time ranges
-        return super(Drop, self).consider_message(topic, datatype, stamp, header, False)
+        return super(Drop, self).consider_message(topic, datatype, stamp, header, tags)
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         return None
 
 
@@ -471,8 +503,8 @@ class Transforms(DeserializedMessageFilter):
         :param list exclude_topics: Do not operate on these topics.
         :param list include_types: Ignored.
         :param list exclude_types: Ignored.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(Transforms, self).__init__(
             include_topics=include_topics if include_topics is not None else ['/tf', '/tf_static'],
@@ -484,15 +516,28 @@ class Transforms(DeserializedMessageFilter):
         self.change = change if change is not None else {}
         self.changed_parents = TopicSet(self.change.keys())
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
+        num_tfs = len(msg.transforms)
         if self.include_parents:
             msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id in self.include_parents]
+            if len(msg.transforms) < num_tfs:
+                tags.add(MessageTags.CHANGED)
+                num_tfs = len(msg.transforms)
         if self.exclude_parents:
             msg.transforms = [tf for tf in msg.transforms if tf.header.frame_id not in self.exclude_parents]
+            if len(msg.transforms) < num_tfs:
+                tags.add(MessageTags.CHANGED)
+                num_tfs = len(msg.transforms)
         if self.include_children:
             msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id in self.include_children]
+            if len(msg.transforms) < num_tfs:
+                tags.add(MessageTags.CHANGED)
+                num_tfs = len(msg.transforms)
         if self.exclude_children:
             msg.transforms = [tf for tf in msg.transforms if tf.child_frame_id not in self.exclude_children]
+            if len(msg.transforms) < num_tfs:
+                tags.add(MessageTags.CHANGED)
+                num_tfs = len(msg.transforms)
         if len(self.change) > 0:
             for transform in msg.transforms:
                 if transform.header.frame_id in self.changed_parents:
@@ -502,18 +547,22 @@ class Transforms(DeserializedMessageFilter):
                             transform.translation.x = float(changes['translation'].get('x', transform.translation.x))
                             transform.translation.y = float(changes['translation'].get('y', transform.translation.y))
                             transform.translation.z = float(changes['translation'].get('z', transform.translation.z))
+                            tags.add(MessageTags.CHANGED)
                         if 'rotation' in changes:
                             transform.rotation.x = float(changes['rotation'].get('x', transform.rotation.x))
                             transform.rotation.y = float(changes['rotation'].get('y', transform.rotation.y))
                             transform.rotation.z = float(changes['rotation'].get('z', transform.rotation.z))
                             transform.rotation.w = float(changes['rotation'].get('w', transform.rotation.w))
+                            tags.add(MessageTags.CHANGED)
                         if 'frame_id' in changes:
                             transform.header.frame_id = changes['frame_id']
+                            tags.add(MessageTags.CHANGED)
                         if 'child_frame_id' in changes:
                             transform.child_frame_id = changes['child_frame_id']
+                            tags.add(MessageTags.CHANGED)
         if not msg.transforms:
             return None
-        return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
     def _str_params(self):
         parts = []
@@ -554,12 +603,13 @@ class Transforms(DeserializedMessageFilter):
 class MergeInitialStaticTf(DeserializedMessageFilter):
     """Merge all /tf_static messages from the beginning of bag files into a single message."""
 
-    def __init__(self, delay=5.0):
+    def __init__(self, delay=5.0, add_tags=None):
         super(MergeInitialStaticTf, self).__init__(include_topics=["/tf_static"], include_types=["tf2_msgs/TFMessage"])
         self.delay = rospy.Duration(delay)
         self.end_time = None
         self.merged_message_published = False
         self.merged_transforms = {}
+        self.add_tags = add_tags
 
     def set_bag(self, bag):
         super(MergeInitialStaticTf, self).set_bag(bag)
@@ -570,17 +620,19 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
             for tf in msg.transforms:
                 self.merged_transforms[tf.child_frame_id] = tf
 
-    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_ranges=False):
+    def consider_message(self, topic, datatype, stamp, header, tags):
         if self.end_time is None or self.end_time <= stamp:
             return False
-        return super(MergeInitialStaticTf, self).consider_message(
-            topic, datatype, stamp, header, is_from_extra_time_ranges)
+        return super(MergeInitialStaticTf, self).consider_message(topic, datatype, stamp, header, tags)
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         if self.merged_message_published:
             return None
         self.merged_message_published = True
-        return topic, TFMessage(list(self.merged_transforms.values())), stamp, header
+        merged_tags = tags_for_generated_msg(tags)
+        if self.add_tags:
+            merged_tags = merged_tags.union(self.add_tags)
+        return topic, TFMessage(list(self.merged_transforms.values())), stamp, header, merged_tags
 
     def reset(self):
         self.merged_message_published = False
@@ -633,6 +685,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
     def __init__(self, include_topics=None, description_param=None, description_file=None, joint_state_cache_size=100,
                  include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), include_joints=(),
                  exclude_joints=(), *args, **kwargs):
+                 exclude_joints=(),
+                 add_tags=None, *args, **kwargs):
         """
         :param list include_topics: Topics to handle. It should contain both the JointState and TF topics. If no TF
                                     topic is given, /tf and /tf_static are added automatically.
@@ -649,6 +703,9 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         :param list exclude_joints: If nonempty, joints with one of the listed names will not be processed.
         :param args: Standard include/exclude topics/types and min/max stamp args.
         :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param set add_tags: Add these tags to all modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         if include_topics is None:
             include_topics = ("/joint_states",)
@@ -672,6 +729,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self._segments_fixed = {}
         self._child_to_joint_map = {}
         self._joint_state_cache = deque(maxlen=joint_state_cache_size)
+        self._add_tags = add_tags
 
         self.include_parents = TopicSet(include_parents)
         self.exclude_parents = TopicSet(exclude_parents)
@@ -735,11 +793,11 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
             else:
                 self._segments[child] = segment
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         if self._kdl_model is None:
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
-        if msg.__class__._type == TFMessage._type:  # noqa
+        if msg._type == TFMessage._type:  # noqa
             for transform in msg.transforms:
                 if self.include_parents and transform.header.frame_id not in self.include_parents:
                     continue
@@ -762,11 +820,18 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
                 if not success:
                     print("Could not recompute transform %s -> %s at time %s." % (
                         transform.header.frame_id, transform.child_frame_id, to_str(stamp)), file=sys.stderr)
-            return topic, msg, stamp, header
+                else:
+                    tags.add(MessageTags.CHANGED)
+                    if self._add_tags:
+                        tags = tags.union(self._add_tags)
+            return topic, msg, stamp, header, tags
 
         else:  # the message is a joint state
             self._joint_state_cache.append(msg)
             return topic, msg, stamp, header
+            self._joint_state_cache.append(copy.deepcopy(msg))
+            result = [(topic, msg, stamp, header, tags)]
+            return result
 
     def _recompute_static_transform(self, transform):
         if transform.child_frame_id not in self._segments_fixed:
@@ -839,8 +904,8 @@ class FixJointStates(DeserializedMessageFilter):
         MULTIPLIER = 2
         OFFSET = 3
 
-    def __init__(self, changes=None, *args, **kwargs):
-        # type: (Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, Dict[STRING_TYPE, float]]]], Any, Any) -> None
+    def __init__(self, changes=None, add_tags=None, *args, **kwargs):
+        # type: (Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, Dict[STRING_TYPE, Any]]]], Optional[Set[STRING_TYPE]], Any, Any) -> None  # noqa
         """
         :param changes: Dict specifying what should be changed. Keys are joint names. Values are dicts with possible
                         keys "position", "velocity", "effort". Values of each of these dicts can be
@@ -849,6 +914,9 @@ class FixJointStates(DeserializedMessageFilter):
                         applied first and "offset" is added to the result.
         :param args: Standard include/exclude topics/types and min/max stamp args.
         :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param add_tags: Tags to be added to modified joint states messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixJointStates, self).__init__(include_types=(JointState._type,), *args, **kwargs)  # noqa
 
@@ -878,7 +946,15 @@ class FixJointStates(DeserializedMessageFilter):
         self._changed_joint_names = TopicSet(self._changes.keys())  # for efficient filtering
 
     def filter(self, topic, msg, stamp, header):
+        self._add_tags = add_tags
+
+    def filter(self, topic, msg, stamp, header, tags):
         JointStateType = FixJointStates._JointStateType
+
+        changed_tags = copy.deepcopy(tags)
+        changed_tags.add(MessageTags.CHANGED)
+        if self._add_tags:
+            changed_tags = changed_tags.union(self._add_tags)
 
         for i in range(len(msg.name)):
             name = msg.name[i]
@@ -886,22 +962,26 @@ class FixJointStates(DeserializedMessageFilter):
                 continue
             changes = self._changes[name]
 
-            if len(msg.position) >= i - 1 and JointStateType.POSITION in changes:
+            if len(msg.position) > i and JointStateType.POSITION in changes:
                 if isinstance(msg.position, tuple):
                     msg.position = list(msg.position)
                 msg.position[i] = self._apply_changes(msg.position[i], changes[JointStateType.POSITION])
+                tags = changed_tags
 
-            if len(msg.velocity) >= i - 1 and JointStateType.VELOCITY in changes:
+            if len(msg.velocity) > i and JointStateType.VELOCITY in changes:
                 if isinstance(msg.velocity, tuple):
                     msg.velocity = list(msg.velocity)
                 msg.velocity[i] = self._apply_changes(msg.velocity[i], changes[JointStateType.VELOCITY])
+                tags = changed_tags
 
-            if len(msg.effort) >= i - 1 and JointStateType.EFFORT in changes:
+            if len(msg.effort) > i and JointStateType.EFFORT in changes:
                 if isinstance(msg.effort, tuple):
                     msg.effort = list(msg.effort)
                 msg.effort[i] = self._apply_changes(msg.effort[i], changes[JointStateType.EFFORT])
+                tags = changed_tags
 
         return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
     def _apply_changes(self, value, changes):
         if len(changes) == 0:
@@ -925,19 +1005,22 @@ class FixJointStates(DeserializedMessageFilter):
         return ", ".join(parts)
 
 
+CalibrationYAMLType = Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]
+
+
 class FixCameraCalibration(DeserializedMessageFilter):
     """Adjust some camera calibrations."""
 
     def __init__(self, calibrations=None, warn_size_change=True, *args, **kwargs):
-        # type: (Optional[Dict[STRING_TYPE, Union[STRING_TYPE, Tuple[STRING_TYPE, STRING_TYPE]]]], bool, Any, Any) -> None  # noqa
+        # type: (Optional[Dict[STRING_TYPE, CalibrationYAMLType]], bool, Any, Any) -> None  # noqa
         """
         :param calibrations: Dictionary with camera_info topic names as keys and YAML files with calibrations as values.
                              If the calibration is in kalibr format and the camera is not cam0, then pass a tuple
                              (YAML file, cam_name) instead of just directly YAML file
         :param warn_size_change: If True (default), warn if the fixed camera info has different width or height than the
                                  original.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixCameraCalibration, self).__init__(include_topics=list(calibrations.keys()) if calibrations else None,
                                                    include_types=(CameraInfo._type,), *args, **kwargs)  # noqa
@@ -1070,7 +1153,7 @@ class FixCameraCalibration(DeserializedMessageFilter):
 
         return msg
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
 
         if topic in self._calibrations:
             calib = copy.deepcopy(self._calibrations[topic])
@@ -1082,8 +1165,9 @@ class FixCameraCalibration(DeserializedMessageFilter):
             msg.R = calib.R
             msg.K = calib.K
             msg.P = calib.P
+            tags.add(MessageTags.CHANGED)
 
-        return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
     def _str_params(self):
         parts = []
@@ -1097,19 +1181,22 @@ class FixCameraCalibration(DeserializedMessageFilter):
 class FixStaticTF(DeserializedMessageFilterWithTF):
     """Adjust some static transforms."""
 
-    def __init__(self, transforms=None, *args, **kwargs):
-        # type: (Optional[Sequence[Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None
+    def __init__(self, transforms=None, add_tags=None, *args, **kwargs):
+        # type: (Optional[Sequence[Dict[STRING_TYPE, STRING_TYPE]]], Optional[Set[STRING_TYPE]], Any, Any) -> None
         """
         :param transforms: The new transforms. The dicts have to contain keys "frame_id", "child_frame_id", "transform".
                            The transform has to be a 6-tuple (x, y, z, roll, pitch, yaw)
                            or 7-tuple (x, y, z, qx, qy, qz, qw).
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param add_tags: Tags to be added to the modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixStaticTF, self).__init__(
             include_topics=["tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
 
         self._transforms = dict()
+        self._add_tags = add_tags
+
         for t in (transforms if transforms is not None else list()):
             frame_id = t["frame_id"]
             child_frame_id = t["child_frame_id"]
@@ -1123,14 +1210,17 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
 
             self._transforms[(frame_id, child_frame_id)] = transform
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         for transform in msg.transforms:
             key = (transform.header.frame_id, transform.child_frame_id)
             if key in self._transforms:
                 transform.transform = self._transforms[key]
                 print("Adjusted transform %s->%s." % (key[0], key[1]))
+                tags.add(MessageTags.CHANGED)
+                if self._add_tags:
+                    tags = tags.union(self._add_tags)
 
-        return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
     def _str_params(self):
         parts = []
@@ -1150,8 +1240,8 @@ class StampTwist(DeserializedMessageFilter):
         :param source_topic: The Twist topic to stamp.
         :param stamped_topic: The stamped Twist topic to create.
         :param frame_id: The frame_id to use in the stamped messages.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(StampTwist, self).__init__(include_topics=[source_topic], *args, **kwargs)
 
@@ -1161,15 +1251,15 @@ class StampTwist(DeserializedMessageFilter):
 
         self._connection_header = create_connection_header(self._stamped_topic, TwistStamped)
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         stamped_msg = TwistStamped()
         stamped_msg.header.frame_id = self._frame_id
         stamped_msg.header.stamp = stamp
         stamped_msg.twist = msg
 
         return [
-            (topic, msg, stamp, header),
-            (self._stamped_topic, stamped_msg, stamp, self._connection_header)
+            (topic, msg, stamp, header, tags),
+            (self._stamped_topic, stamped_msg, stamp, self._connection_header, tags_for_generated_msg(tags))
         ]
 
     def _str_params(self):
@@ -1184,8 +1274,8 @@ class StampTwist(DeserializedMessageFilter):
 class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
     """Apply extrinsic calibrations from IKalibr."""
 
-    def __init__(self, param_file, ref_imu_frame="imu", frames=None, *args, **kwargs):
-        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, STRING_TYPE]]], Any, Any) -> None  # noqa
+    def __init__(self, param_file, ref_imu_frame="imu", frames=None, add_tags=None, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, STRING_TYPE]]], Optional[Set[STRING_TYPE]], Any, Any) -> None  # noqa
         """
         :param param_file: Path to ikalibr_param.yaml file - the result of extrinsic calibration.
         :param ref_imu_frame: Frame of the reference IMU towards which everything is calibrated.
@@ -1193,8 +1283,8 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
                        "sensor_frame" and optionally "adjust_frame" (if not specified, "sensor_frame" is used).
                        "adjust_frame" specifies the frame whose transform should be changed, which can be useful
                        if you want to change a transform somewhere in the middle of the TF chain and not the last one.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixExtrinsicsFromIKalibr, self).__init__(
             include_topics=["tf", "tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
@@ -1202,6 +1292,7 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
         self._ref_imu_frame = ref_imu_frame
         self._frames = frames if frames is not None else dict()
         self._param_file = param_file
+        self._add_tags = add_tags
 
         with open(param_file, 'r') as f:
             self._params = yaml.safe_load(f)
@@ -1255,7 +1346,7 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
             t.child_frame_id,
             FixExtrinsicsFromIKalibr.fix_transform_type(t.transform))
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         if topic in self._tf_static_topics:
             for transform in msg.transforms:
                 self._tf.set_transform_static(self.fix_transform_stamped_type(transform), "filter_bag")
@@ -1283,8 +1374,11 @@ class FixExtrinsicsFromIKalibr(DeserializedMessageFilterWithTF):
 
                 print("Adjusted transform %s->%s by %.3f m (for sensor %s)." % (
                       parent_frame, adjust_frame, np.linalg.norm(t_correction[:3, 3]), sensor_frame))
+                tags.add(MessageTags.CHANGED)
+                if self._add_tags:
+                    tags = tags.union(self._add_tags)
 
-        return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
     def reset(self):
         self._tf.clear()
@@ -1382,7 +1476,7 @@ class AddSubtitles(NoMessageFilter):
         for start_time, end_time, subtitle in self._subtitles:
             msg = String(data=subtitle)
             abs_time = self._start_time + start_time
-            yield self._topic, msg, abs_time, connection_header
+            yield self._topic, msg, abs_time, connection_header, {MessageTags.GENERATED}
 
     def _str_params(self):
         params = ["topic=" + self._topic, "subtitles_file=" + self.resolve_file(self._subtitles_file)]
@@ -1490,18 +1584,18 @@ class FixSpotCams(RawMessageFilter):
 
     def __init__(self, *args, **kwargs):
         """
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(FixSpotCams, self).__init__(*args, **kwargs)
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         header["message_definition"] = CompressedImage._full_text
         header["md5sum"] = md5sum = CompressedImage._md5sum
         header["type"] = datatype = CompressedImage._type
         pytype = CompressedImage
 
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
 
 class MaxMessageSize(RawMessageFilter):
@@ -1510,17 +1604,17 @@ class MaxMessageSize(RawMessageFilter):
     def __init__(self, size_limit, *args, **kwargs):
         """
         :param int size_limit: Maximum message size [B].
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(MaxMessageSize, self).__init__(*args, **kwargs)
         self.size_limit = size_limit
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         if len(data) > self.size_limit:
             return None
 
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
     def _str_params(self):
         params = ["size=%d B" % self.size_limit]
@@ -1548,14 +1642,14 @@ class MakeLatched(RawMessageFilter):
 
     def __init__(self, *args, **kwargs):
         """
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(MakeLatched, self).__init__(*args, **kwargs)
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header):
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         header["latching"] = "1"
-        return topic, datatype, data, md5sum, pytype, stamp, header
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
 
 
 class CompressImages(DeserializedMessageFilter):
@@ -1575,8 +1669,8 @@ class CompressImages(DeserializedMessageFilter):
                                        the default transport set by 'transport' arg or the autodetected one.
         :param dict format_mapping: Maps the message's 'encoding' field values encoder 'format's (i.e. 'jpg', 'png',
                                     'rvl' etc.).
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(CompressImages, self).__init__(
             include_types=include_types if include_types is not None else ['sensor_msgs/Image'], *args, **kwargs)
@@ -1591,13 +1685,13 @@ class CompressImages(DeserializedMessageFilter):
         # map of the raw images' encoding parameter to output image format
         self.format_mapping = format_mapping if format_mapping is not None else {}
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         enc = msg.encoding
         is_color = isColor(enc) or isMono(enc) or isBayer(enc) or enc == YUV422
         is_depth = isDepth(enc)
 
         if (self.only_color and not is_color) or (self.only_depth and not is_depth):
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
         transport = ("compressedDepth" if is_depth else "compressed") if self.transport is None else self.transport
         transport = self.transport_mapping.get(enc, transport)
@@ -1610,9 +1704,9 @@ class CompressImages(DeserializedMessageFilter):
 
         if compressed_msg is None:
             print('Error converting image: ' + str(err), file=sys.stderr)
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
-        return compressed_topic, compressed_msg, stamp, header
+        return compressed_topic, compressed_msg, stamp, header, tags_for_generated_msg(tags)
 
     def get_image_for_transport(self, msg, topic, transport):
         compressed_topic = rospy.names.ns_join(topic, transport)
@@ -1665,8 +1759,8 @@ class DecompressImages(DeserializedMessageFilter):
         :param str transport: If nonempty, overrides the autodetected image_transport.
         :param dict transport_params: Parameters of image transport(s). Keys are transport names (e.g. 'compressed'),
                                       values are the subscriber dynamic reconfigure parameters.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(DecompressImages, self).__init__(
             include_types=include_types if include_types is not None else ['sensor_msgs/CompressedImage'],
@@ -1679,7 +1773,7 @@ class DecompressImages(DeserializedMessageFilter):
         self.transport = transport
         self.transport_params = transport_params if transport_params is not None else {}
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         transport = self.transport
         raw_topic = topic
         if transport is None and "/" in topic:
@@ -1689,27 +1783,27 @@ class DecompressImages(DeserializedMessageFilter):
         raw_img, err = decode(msg, topic, params)
         if raw_img is None:
             print('Error converting image: ' + str(err), file=sys.stderr)
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
         desired_encoding = self.desired_encodings.get(topic, 'passthrough')
         if desired_encoding == 'passthrough':
-            return raw_topic, raw_img, stamp, header
+            return raw_topic, raw_img, stamp, header, tags_for_generated_msg(tags)
 
         compressed_fmt, compressed_depth_fmt, err = guess_any_compressed_image_transport_format(msg)
         if compressed_fmt is None and compressed_depth_fmt is None:
             print('Error converting image to desired encoding: ' + str(err), file=sys.stderr)
-            return raw_topic, raw_img, stamp, header
+            return raw_topic, raw_img, stamp, header, tags_for_generated_msg(tags)
 
         raw_encoding = compressed_fmt.rawEncoding if compressed_fmt is not None else compressed_depth_fmt.rawEncoding
         if desired_encoding == raw_encoding:
-            return raw_topic, raw_img, stamp, header
+            return raw_topic, raw_img, stamp, header, tags_for_generated_msg(tags)
 
         try:
             cv_img = self._cv.imgmsg_to_cv2(raw_img, desired_encoding)
             return raw_topic, self._cv.cv2_to_imgmsg(cv_img, desired_encoding, raw_img.header), stamp, header
         except CvBridgeError as e:
             print('Error converting image to desired encoding: ' + str(e), file=sys.stderr)
-            return raw_topic, raw_img, stamp, header
+            return raw_topic, raw_img, stamp, header, tags_for_generated_msg(tags)
 
     def _str_params(self):
         parts = []
@@ -1766,8 +1860,8 @@ class DepthImagePreview(DeserializedMessageFilter):
         :param str colormap: If None, the conversion will be into 8-bit grayscale. If not None, the passed string should
                              name an installed matplotlib colormap (e.g. 'jet') to use and the resulting images will be
                              3-channel BGR8 images.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         super(DepthImagePreview, self).__init__(
             include_types=include_types if include_types is not None else ['sensor_msgs/Image'],
@@ -1840,12 +1934,12 @@ class DepthImagePreview(DeserializedMessageFilter):
                     self.min_values[topic] = min(self.min_values[topic], np.min(msg_data))
                     self.max_values[topic] = max(self.max_values[topic], np.max(msg_data))
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         if msg.encoding != TYPE_16UC1 and msg.encoding != TYPE_32FC1:
             # If we encounter a non-depth topic, exclude it from this filter. So only the first message from non-depth
             # topics will be needlessly deserialized because of this filter.
             self._exclude_topics = TopicSet(list(self._exclude_topics) + [topic])
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
         in_bit_depth = 16 if msg.encoding == TYPE_16UC1 else 32
         new_bit_depth = 8
@@ -1909,7 +2003,7 @@ class DepthImagePreview(DeserializedMessageFilter):
 
             new_topic = topic + self.new_topic_suffix
             new_msg = self._cv.cv2_to_imgmsg(img, desired_encoding, msg.header)
-            new_image = new_topic, new_msg, stamp, header
+            new_image = new_topic, new_msg, stamp, header, tags_for_generated_msg(tags)
             if not self.keep_orig_image:
                 return new_image
             return [(topic, msg, stamp, header), new_image]
@@ -1946,15 +2040,16 @@ class BlurFaces(DeserializedMessageFilter):
 
     def __init__(self, include_types=None, transport_params=None, ignore_transports=None, threshold=0.2, ellipse=True,
                  scale=(960, 960), mask_scale=1.3, replacewith='blur', replaceimg=None, mosaicsize=20, backend='auto',
-                 publish_faces=True, *args, **kwargs):
+                 publish_faces=True, add_tags=None, *args, **kwargs):
         """
         :param list include_types: Types of messages to work on. The default is sensor_msgs/Image and CompressedImage.
         :param dict transport_params: Parameters of image transport(s). Keys are transport names (e.g. 'compressed'),
                                       values are the publisher dynamic reconfigure parameters.
         :param list ignore_transports: List of transport names to ignore (defaults to`['compressedDepth']`).
         :param float threshold: Threshold for face detection.
-        :param args: Standard include/exclude topics/types and min/max stamp args.
-        :param kwargs: Standard include/exclude topics/types and min/max stamp kwargs.
+        :param add_tags: Tags to be added to messages with some blurred faces.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
         """
         try:
             import deface.centerface
@@ -2015,15 +2110,16 @@ class BlurFaces(DeserializedMessageFilter):
         self.mosaicsize = mosaicsize
         self.backend = backend
         self.publish_faces = publish_faces
+        self.add_tags = add_tags
 
         self._cv = CvBridge()
         self._centerface = deface.centerface.CenterFace(in_shape=None, backend=self.backend)
 
-    def consider_message(self, topic, datatype, stamp, header, is_from_extra_time_ranges=False):
+    def consider_message(self, topic, datatype, stamp, header, tags):
         if datatype == Config._type:
             return True
 
-        if not super(BlurFaces, self).consider_message(topic, datatype, stamp, header, is_from_extra_time_ranges):
+        if not super(BlurFaces, self).consider_message(topic, datatype, stamp, header, tags):
             return False
 
         for t in self.ignore_transports:
@@ -2032,16 +2128,16 @@ class BlurFaces(DeserializedMessageFilter):
 
         return True
 
-    def process_transport_params(self, topic, msg, stamp, header):
+    def process_transport_params(self, topic, msg, stamp, header, tags):
         if not topic.endswith('/parameter_updates'):
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
         transport_topic, _ = topic.rsplit('/', 1)
         self.received_transport_params[transport_topic] = decode_config(msg)
-        return topic, msg, stamp, header
+        return topic, msg, stamp, header, tags
 
-    def filter(self, topic, msg, stamp, header):
+    def filter(self, topic, msg, stamp, header, tags):
         if msg._type == Config._type:
-            return self.process_transport_params(topic, msg, stamp, header)
+            return self.process_transport_params(topic, msg, stamp, header, tags)
 
         if msg._type == Image._type:
             raw_msg = msg
@@ -2053,17 +2149,17 @@ class BlurFaces(DeserializedMessageFilter):
                 raw_topic, transport = topic.rsplit("/", 1)
             if transport is None or len(transport) == 0:
                 print("Compressed image on a topic without suffix [%s]. Passing message." % (topic,), file=sys.stderr)
-                return topic, msg, stamp, header
+                return topic, msg, stamp, header, tags
 
             raw_msg, err = decode(msg, topic, {})
             if raw_msg is None:
                 print('Error converting image: ' + str(err), file=sys.stderr)
-                return topic, msg, stamp, header
+                return topic, msg, stamp, header, tags
 
         enc = raw_msg.encoding
         is_color = isColor(enc) or isMono(enc) or isBayer(enc) or enc == YUV422
         if not is_color:
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
         img = self._cv.imgmsg_to_cv2(raw_msg)
         if raw_msg.encoding == RGB8 or numChannels(raw_msg.encoding) == 1:
@@ -2094,9 +2190,16 @@ class BlurFaces(DeserializedMessageFilter):
         dets = np.delete(dets, bad_dets, axis=0)
 
         if len(dets) == 0:
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, tags
 
         img = img.copy()
+
+        img_tags = copy.deepcopy(tags)
+        img_tags.add(MessageTags.CHANGED)
+        if self.add_tags:
+            img_tags = img_tags.union(self.add_tags)
+
+        dets_tags = tags_for_generated_msg(tags)
 
         if deface.__version__ >= "1.5.0":
             deface.deface.anonymize_frame(
@@ -2112,15 +2215,15 @@ class BlurFaces(DeserializedMessageFilter):
             msg, err = self.get_image_for_transport(msg, raw_msg, topic, transport)
 
         if not self.publish_faces:
-            return topic, msg, stamp, header
+            return topic, msg, stamp, header, img_tags
 
         dets_msg = self.dets_to_msg(dets, msg)
         dets_header = copy.deepcopy(header)
         dets_header["topic"] = raw_topic + '/anonymized_faces'  # The rest will be fixed by fix_connection_header()
 
         return [
-            (topic, msg, stamp, header),
-            (dets_header["topic"], dets_msg, stamp, dets_header)
+            (topic, msg, stamp, header, img_tags),
+            (dets_header["topic"], dets_msg, stamp, dets_header, dets_tags)
         ]
 
     def dets_to_msg(self, dets, msg):
