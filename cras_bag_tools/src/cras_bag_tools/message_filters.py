@@ -192,11 +192,12 @@ class FixHeader(DeserializedMessageFilter):
 class Deduplicate(RawMessageFilter):
     """Discard all messages except each first changed."""
 
-    def __init__(self, ignore_seq=False, ignore_stamp=False, per_frame_id=False, max_ignored_duration=None,
-                 *args, **kwargs):
+    def __init__(self, ignore_seq=False, ignore_stamp=False, ignore_stamp_difference=None, per_frame_id=False,
+                 max_ignored_duration=None, *args, **kwargs):
         """
         :param bool ignore_seq: If True, differing header.seq will not make a difference.
         :param bool ignore_stamp: If True, differing header.stamp will not make a difference.
+        :param float ignore_stamp_difference: If set, stamps differing by up to this duration are considered equal.
         :param bool per_frame_id: If True, messages will be clustered by header.frame_id and comparisons will only be
                                   made between messages with equal frame_id.
         :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
@@ -207,6 +208,8 @@ class Deduplicate(RawMessageFilter):
         super(Deduplicate, self).__init__(*args, **kwargs)
         self._ignore_seq = ignore_seq
         self._ignore_stamp = ignore_stamp
+        self._ignore_stamp_difference = \
+            rospy.Duration(ignore_stamp_difference) if ignore_stamp_difference is not None else None
         self._per_frame_id = per_frame_id
         self._max_ignored_duration = rospy.Duration(max_ignored_duration) if max_ignored_duration is not None else None
         self._last_msgs = {}
@@ -214,8 +217,10 @@ class Deduplicate(RawMessageFilter):
     def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         has_header = pytype.__slots__[0] == 'header'
         key = topic
+        msg_header = None
         if has_header and self._per_frame_id:
-            key = "%s@%s" % (topic, Header().deserialize(data).frame_id)
+            msg_header = Header().deserialize(data)
+            key = "%s@%s" % (topic, msg_header.frame_id)
 
         if key not in self._last_msgs:
             self._last_msgs[key] = data, stamp
@@ -231,6 +236,14 @@ class Deduplicate(RawMessageFilter):
         if has_header:
             seq_ok = self._ignore_seq or data[0:4] == last_msg[0:4]
             stamp_ok = self._ignore_stamp or data[4:12] == last_msg[4:12]
+            if not self._ignore_stamp and self._ignore_stamp_difference is not None and not stamp_ok:
+                if msg_header is None:
+                    msg_header = Header().deserialize(data)
+                last_msg_header = Header().deserialize(last_msg)
+                diff = abs(msg_header.stamp - last_msg_header.stamp)
+                if diff < self._ignore_stamp_difference:
+                    stamp_ok = True
+
             compare_idx = 12
         if self._max_ignored_duration is not None:
             stamp_diff_ok = stamp - last_msg_stamp < self._max_ignored_duration
@@ -246,9 +259,162 @@ class Deduplicate(RawMessageFilter):
         parts = []
         parts.append('ignore_seq=%r' % (self._ignore_seq,))
         parts.append('ignore_stamp=%r' % (self._ignore_stamp,))
+        if self._ignore_stamp_difference is not None:
+            parts.append('ignore_stamp_difference=%s' % (to_str(self._ignore_stamp_difference),))
         parts.append('per_frame_id=%r' % (self._per_frame_id,))
         parts.append('max_ignored_duration=%r' % (self._max_ignored_duration,))
         parent_params = super(Deduplicate, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class DeduplicateJointStates(DeserializedMessageFilter):
+    """Discard all messages except each first changed."""
+
+    def __init__(self, max_ignored_duration=None, include_topics=None, ignore_stamp=False, ignore_stamp_difference=None,
+                 *args, **kwargs):
+        """
+        :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
+                                           joint state than the given duration (in seconds).
+        :param list include_topics: Topics to work on (defaults to 'joint_states').
+        :param bool ignore_stamp: If True, differing header.stamp will not make a difference.
+        :param float ignore_stamp_difference: If set, stamps differing by up to this duration are considered equal.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(DeduplicateJointStates, self).__init__(
+            include_topics=['joint_states'] if include_topics is None else include_topics,
+            include_types=[JointState._type], *args, **kwargs)  # noqa
+        self._ignore_stamp = ignore_stamp
+        self._ignore_stamp_difference = \
+            rospy.Duration(ignore_stamp_difference) if ignore_stamp_difference is not None else None
+        self._max_ignored_duration = rospy.Duration(max_ignored_duration) if max_ignored_duration is not None else None
+
+        self._last_states = {}
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if len(msg.name) == 0:
+            return topic, msg, stamp, header, tags
+
+        for i in reversed(range(len(msg.name))):
+            name = msg.name[i]
+
+            if name not in self._last_states:
+                self._last_states[name] = self._get_state(msg, i, stamp)
+                continue
+
+            last_state = self._last_states[name]
+
+            stamp_ok = msg.header.stamp == last_state[0]
+            if not stamp_ok and not self._ignore_stamp and self._ignore_stamp_difference is not None:
+                diff = abs(msg.header.stamp - last_state[0])
+                if diff < self._ignore_stamp_difference:
+                    stamp_ok = True
+
+            stamp_diff_ok = True
+            if self._max_ignored_duration is not None:
+                stamp_diff_ok = stamp - last_state[5] < self._max_ignored_duration
+
+            state = self._get_state(msg, i, stamp)
+            if stamp_ok and stamp_diff_ok:
+                if np.allclose(state[2:5], last_state[2:5], equal_nan=True):
+                    if isinstance(msg.name, tuple):
+                        msg.name = list(msg.name)
+                    del msg.name[i]
+                    if len(msg.position) > i:
+                        if isinstance(msg.position, tuple):
+                            msg.position = list(msg.position)
+                        del msg.position[i]
+                    if len(msg.velocity) > i:
+                        if isinstance(msg.velocity, tuple):
+                            msg.velocity = list(msg.velocity)
+                        del msg.velocity[i]
+                    if len(msg.effort) > i:
+                        if isinstance(msg.effort, tuple):
+                            msg.effort = list(msg.effort)
+                        del msg.effort[i]
+            else:
+                self._last_states[name] = state
+
+        if len(msg.name) == 0:
+            return None
+
+        return topic, msg, stamp, header, tags
+
+    def _get_state(self, msg, i, stamp):
+        return (
+            msg.header.stamp,
+            msg.name[i],
+            msg.position[i] if len(msg.position) > i else None,
+            msg.velocity[i] if len(msg.velocity) > i else None,
+            msg.effort[i] if len(msg.effort) > i else None,
+            stamp,
+        )
+
+    def _str_params(self):
+        parts = []
+        parts.append('ignore_stamp=%r' % (self._ignore_stamp,))
+        if self._ignore_stamp_difference is not None:
+            parts.append('ignore_stamp_difference=%s' % (to_str(self._ignore_stamp_difference),))
+        parts.append('max_ignored_duration=%r' % (self._max_ignored_duration,))
+        parent_params = super(DeduplicateJointStates, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class DeduplicateTF(DeserializedMessageFilter):
+    """Discard all messages except each first changed."""
+
+    def __init__(self, max_ignored_duration=None, include_topics=None, *args, **kwargs):
+        """
+        :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
+                                           message than the given duration (in seconds).
+        :param list include_topics: Topics to work on (defaults to standard TF topics).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(DeduplicateTF, self).__init__(
+            include_topics=['tf', 'tf_static'] if include_topics is None else include_topics,
+            include_types=[TFMessage._type], *args, **kwargs)  # noqa
+        self._max_ignored_duration = rospy.Duration(max_ignored_duration) if max_ignored_duration is not None else None
+        self._last_msgs = {}
+
+    def filter(self, topic, msg, stamp, header, tags):
+        tfs = msg.transforms
+        if len(tfs) == 0:
+            return topic, msg, stamp, header, tags
+
+        for i in reversed(range(len(tfs))):
+            key = "%s@%s@%s" % (topic, tfs[i].header.frame_id, tfs[i].child_frame_id)
+
+            if key not in self._last_msgs:
+                self._last_msgs[key] = tfs[i], stamp, copy.deepcopy(tags)
+                continue
+
+            last_msg, last_msg_stamp, last_tags = self._last_msgs[key]
+
+            stamp_ok = tfs[i].header.stamp == last_msg.header.stamp
+
+            stamp_diff_ok = True
+            if self._max_ignored_duration is not None:
+                stamp_diff_ok = stamp - last_msg_stamp < self._max_ignored_duration
+
+            if stamp_ok and stamp_diff_ok:
+                del tfs[i]
+            else:
+                self._last_msgs[key] = tfs[i], stamp, copy.deepcopy(tags)
+
+        if len(tfs) == 0:
+            return None
+
+        return topic, msg, stamp, header, tags
+
+    def _str_params(self):
+        parts = []
+        parts.append('max_ignored_duration=%r' % (self._max_ignored_duration,))
+        parent_params = super(DeduplicateTF, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
