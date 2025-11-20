@@ -835,6 +835,53 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
                 filters.append(MergeInitialStaticTf(args.merge_initial_static_tf))
 
 
+class RemoveInvalidTF(DeserializedMessageFilter):
+    """Remove all invalid TFs."""
+
+    def __init__(self, include_topics=None, *args, **kwargs):
+        """
+        :param list include_topics: Topics to work on (defaults to standard TF topics).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(RemoveInvalidTF, self).__init__(
+            include_topics=['tf', 'tf_static'] if include_topics is None else include_topics,
+            include_types=[TFMessage._type], *args, **kwargs)  # noqa
+
+    def filter(self, topic, msg, stamp, header, tags):
+        tfs = msg.transforms
+        if len(tfs) == 0:
+            return topic, msg, stamp, header, tags
+
+        for i in reversed(range(len(tfs))):
+            tf_msg = tfs[i]
+            valid = True
+
+            valid = valid and len(tf_msg.header.frame_id) > 0
+            valid = valid and len(tf_msg.child_frame_id) > 0
+
+            translation = tf_msg.transform.translation
+            valid = valid and math.isfinite(translation.x)
+            valid = valid and math.isfinite(translation.y)
+            valid = valid and math.isfinite(translation.z)
+
+            rot = tf_msg.transform.rotation
+            valid = valid and math.isfinite(rot.x)
+            valid = valid and math.isfinite(rot.y)
+            valid = valid and math.isfinite(rot.z)
+            valid = valid and math.isfinite(rot.w)
+
+            valid = valid and (abs(pow(rot.x, 2) + pow(rot.y, 2) + pow(rot.z, 2) + pow(rot.w, 2) - 1) < 1e-6)
+
+            if not valid:
+                del tfs[i]
+
+        if len(tfs) == 0:
+            return None
+
+        return topic, msg, stamp, header, tags
+
+
 def set_transform_from_KDL_frame(transform, frame):
     translation = frame.p
     rotation = frame.M.GetQuaternion()
