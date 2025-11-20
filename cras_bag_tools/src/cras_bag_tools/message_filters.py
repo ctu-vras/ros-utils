@@ -899,7 +899,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
 
     def __init__(self, include_topics=None, description_param=None, description_file=None, joint_state_cache_size=100,
                  include_parents=(), exclude_parents=(), include_children=(), exclude_children=(), include_joints=(),
-                 exclude_joints=(), publish_new_tfs=False, add_tags=None, *args, **kwargs):
+                 exclude_joints=(), publish_new_tfs=False, discard_failed_transforms=True, add_tags=None,
+                 *args, **kwargs):
         """
         :param list include_topics: Topics to handle. It should contain both the JointState and TF topics. If no TF
                                     topic is given, /tf and /tf_static are added automatically.
@@ -917,6 +918,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         :param list publish_new_tfs: If true, the mode of operation is changed so that every joint_states message
                                      will create a new TF message for the contained joints (i.e. new messages are added
                                      to the bag).
+        :param bool discard_failed_transforms: If true and a transform fails to get recomputed, it will be discarded.
+                                               If false, original transform is passed instead of the recomputed one.
         :param set add_tags: Add these tags to all modified TF messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -944,6 +947,7 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         self._child_to_joint_map = {}
         self._joint_to_child_map = {}
         self._joint_state_cache = deque(maxlen=joint_state_cache_size)
+        self._discard_failed_transforms = discard_failed_transforms
         self._add_tags = add_tags
 
         self.include_parents = TopicSet(include_parents)
@@ -1015,8 +1019,13 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         if self._kdl_model is None:
             return topic, msg, stamp, header, tags
 
+        changed_tags = {MessageTags.CHANGED}
+        if self._add_tags:
+            changed_tags = changed_tags.union(self._add_tags)
+
         if msg._type == TFMessage._type:  # noqa
-            for transform in msg.transforms:
+            for i in reversed(range(len(msg.transforms))):
+                transform = msg.transforms[i]
                 if self.include_parents and transform.header.frame_id not in self.include_parents:
                     continue
                 if self.exclude_parents and transform.header.frame_id in self.exclude_parents:
@@ -1038,10 +1047,15 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
                 if not success:
                     print("Could not recompute transform %s -> %s at time %s." % (
                         transform.header.frame_id, transform.child_frame_id, to_str(stamp)), file=sys.stderr)
+                    if self._discard_failed_transforms:
+                        del msg.transforms[i]
+                        tags = changed_tags
                 else:
-                    tags.add(MessageTags.CHANGED)
-                    if self._add_tags:
-                        tags = tags.union(self._add_tags)
+                    tags = changed_tags
+
+            if len(msg.transforms) == 0:
+                return None
+
             return topic, msg, stamp, header, tags
 
         else:  # the message is a joint state
@@ -1135,6 +1149,8 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
             parts.append('exclude_joints=' + str(self.exclude_joints))
         if self.publish_new_tfs:
             parts.append("publish_new_tfs")
+        if self._discard_failed_transforms:
+            parts.append("discard_failed_transforms")
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
