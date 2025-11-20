@@ -1384,8 +1384,8 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
     """Adjust some joint states. If TFs are computed from them, use RecomputeTFFromJointStates to recompute TF."""
 
     def __init__(self, wheel_radius, wheel_separation, traction_joint, steering_joint, joint_state_topic="joint_states",
-                 frame_id="base_link", odom_frame_id="odom", odom_topic="odom", min_dt=0.01, heading_change_coef=1.0,
-                 add_tags=None, *args, **kwargs):
+                 frame_id="base_link", odom_frame_id="odom", odom_topic="odom", cmd_vel_topic=None,
+                 cmd_vel_frame_id=None, min_dt=0.01, heading_change_coef=1.0, add_tags=None, *args, **kwargs):
         """
         :param float wheel_radius: Radius of the traction wheel [m].
         :param float wheel_separation: Separation of the steering and traction axles (wheelbase) [m].
@@ -1395,6 +1395,9 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         :param str frame_id: Child frame ID of the odom messages.
         :param str odom_frame_id: Parent frame ID of the odom messages.
         :param str odom_topic: Odometry topic to publish.
+        :param str cmd_vel_topic: If not None, the computed linear and angular velocities are published on this topic
+                                  as cmd_vel messages.
+        :param str cmd_vel_frame_id: If not None, the published cmd_vel is a stamped message with this frame_id.
         :param float min_dt: If the computed dt is smaller than this, the joint state message is ignored for odometry.
         :param float heading_change_coef: This is a hack. The angular distance added to yaw is multiplied by this number
                                           after being computed from angular velocity and dt.
@@ -1411,11 +1414,16 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         self._frame_id = frame_id
         self._odom_frame_id = odom_frame_id
         self._odom_topic = odom_topic
+        self._cmd_vel_topic = cmd_vel_topic
+        self._cmd_vel_frame_id = cmd_vel_frame_id
         self._min_dt = min_dt
         self._heading_change_coef = heading_change_coef
         self._add_tags = add_tags
 
         self._connection_header = create_connection_header(self._odom_topic, Odometry, False)
+        if self._cmd_vel_topic:
+            self._connection_header_cmd_vel = create_connection_header(
+                self._cmd_vel_topic, TwistStamped if self._cmd_vel_frame_id else Twist, False)
 
         self._x = 0.0
         self._y = 0.0
@@ -1457,6 +1465,8 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
                     self._yaw += angular
 
                     result.append(self._construct_odom(msg.header.stamp, stamp, tags))
+                    if self._cmd_vel_topic:
+                        result.append(self._construct_cmd_vel(msg.header.stamp, stamp, tags))
 
         return result
 
@@ -1474,6 +1484,25 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         if self._add_tags:
             odom_tags = odom_tags.union(self._add_tags)
         return self._odom_topic, msg, receive_stamp, self._connection_header, odom_tags
+
+    def _construct_cmd_vel(self, header_stamp, receive_stamp, tags):
+        twist = Twist()
+        twist.linear.x = self._lin_vel
+        twist.angular.z = self._ang_vel
+
+        if self._cmd_vel_frame_id:
+            msg = TwistStamped()
+            msg.header.frame_id = self._cmd_vel_frame_id
+            msg.header.stamp = header_stamp
+            msg.twist = twist
+        else:
+            msg = twist
+
+        cmd_vel_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            cmd_vel_tags = cmd_vel_tags.union(self._add_tags)
+
+        return self._cmd_vel_topic, msg, receive_stamp, self._connection_header_cmd_vel, cmd_vel_tags
 
     def _str_params(self):
         parts = []
