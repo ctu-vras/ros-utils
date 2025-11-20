@@ -22,6 +22,7 @@ from shutil import copyfile
 import genpy
 import rosbag
 from cras import pretty_file_size
+from cras.string_utils import STRING_TYPE
 
 from cras_bag_tools.bag_filter import filter_bag
 from cras_bag_tools.message_filter import FilterChain, MessageFilter, Passthrough, get_filters
@@ -94,17 +95,21 @@ def copy_params_if_any(param_file, out_bag_path):
 
 
 def filter_bags(bags, out_format, compression, copy_params, filter, default_params_file=None,
-                start_time=None, end_time=None, time_ranges=None, limit_to_first_bag=False):
+                start_time=None, end_time=None, time_ranges=None, limit_to_first_bag=False, extra_bags=None):
     """Filter all given bags using the given filter.
 
     :param list bags: The bags to filter. If multiple bags should be read at once, add them as a single list item with
                       paths separated by colon. One of the files can also be be a YAML file with ROS parameters.
-    :param str out_format: Output path template.
+                      All sub-bags except the first one can have their name formatted similar to `out_format`.
+    :param str out_format: Output path template in the format :meth:`str.format()` accepts. Available variables are:
+                           `dirname`, `basename`, `name`, `ext`, `ext_no_dot`, `bag_prefix`, `bag_stamp`, `bag_suffix`,
+                           `bag_base`. See :meth:`resolve_path()` for details.
     :param str compression: Output bag compression. One of 'rosbag.Compression.*' constants.
     :param bool copy_params: If True, copy parameters file along with the bag file if it exists.
     :param MessageFilter filter: The filter to apply.
     :param str default_params_file: If nonempty, specifies the YAML file with ROS parameters that is used if no param
-                                    file is specified for the particular bag.
+                                    file is specified for the particular bag. The path will be resolved similar to
+                                    out_format with the processed bag as reference file.
     :param genpy.Time start_time: Time from which the bag filtering should be started.
     :param genpy.Time end_time: Time to which the bag filtering should be stopped.
     :param TimeRanges time_ranges: Time ranges of the bag files to process. If start_time and end_time are specified,
@@ -113,6 +118,9 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
     :param bool limit_to_first_bag: If True, each multibag will report its start and end to be equal to the
                                     first open bag. If False, the start and end correspond to the earliest and latest
                                     stamp in all bags.
+    :param extra_bags: List of bag files that will be added to each of the processed bags. Names of these bags
+                       will be resolved similar to out_format with the processed bag as reference file.
+    :type extra_bags: list or str
     :return: The number of bags that failed to be processed.
     :rtype: int
     """
@@ -120,20 +128,30 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
     i = 0
     for bags_path in bags:
         i += 1
-        bag_path = bags_path
+        bag_path = os.path.abspath(os.path.expanduser(bags_path))
         bags_paths = [bag_path]
         if os.path.pathsep in bags_path:
             bags_paths = bags_path.split(os.path.pathsep)
-            bag_path = bags_paths[0]
+            bag_path = os.path.abspath(os.path.expanduser(bags_paths[0]))
 
-        params_file = default_params_file
+        for b in range(1, len(bags_paths)):
+            bags_paths[b] = resolve_path(bags_paths[b], bag_path)
+        required_bags = set(bags_paths)
+
+        if extra_bags is not None:
+            if isinstance(extra_bags, STRING_TYPE):
+                extra = extra_bags.split(os.path.pathsep)
+            else:
+                extra = list(extra_bags)
+            bags_paths += [resolve_path(b, bag_path) for b in extra]
+
+        params_file = resolve_path(default_params_file, bag_path) if default_params_file is not None else None
         if params_file is None:
             for b in bags_paths:
                 ext = os.path.splitext(b)[-1]
                 if ext in ('.params', '.yaml', '.yml'):
                     params_file = b
                     bags_paths.remove(b)
-                    bags_path = os.path.pathsep.join(bags_paths)
                     break
 
         if params_file is None:
@@ -146,18 +164,24 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
         print()
         print("[{}/{}] Bag {}".format(i, len(bags), bag_path))
 
-        print('Source:      %s' % (",".join([os.path.abspath(b) for b in bags_paths]),))
         bags_ok = True
+        bags_to_remove = []
         for b in bags_paths:
             if not os.path.exists(b):
-                print('Source bag %s does not exist' % (b,), file=sys.stderr)
-                bags_ok = False
+                if b in required_bags:
+                    print('Source bag %s does not exist' % (b,), file=sys.stderr)
+                    bags_ok = False
+                bags_to_remove.append(b)
         if not bags_ok:
             num_failed += 1
             continue
+        for b in bags_to_remove:
+            bags_paths.remove(b)
+
+        print('Source:      %s' % ("\n             ".join([os.path.abspath(b) for b in bags_paths]),))
 
         try:
-            with TqdmMultiBag(bags_path, skip_index=True, limit_to_first_bag=limit_to_first_bag) as bag:
+            with TqdmMultiBag(bags_paths, skip_index=True, limit_to_first_bag=limit_to_first_bag) as bag:
                 print('- Size: %s' % (pretty_file_size(bag.size),))
 
                 out_bag_path = resolve_path(out_format, bag_path)
@@ -208,7 +232,7 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
                               file=sys.stderr)
 
         except Exception as e:
-            print('Error processing bag file %s: %s' % (bags_path, str(e)), file=sys.stderr)
+            print('Error processing bag file %s: %s' % (bag_path, str(e)), file=sys.stderr)
             num_failed += 1
             import traceback
             traceback.print_exc()
@@ -228,10 +252,19 @@ class TimeRangesAction(argparse.Action):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('bags', nargs='*', help="The (multi)bag files to filter.")
+    parser.add_argument('bags', nargs='*', help="The (multi)bag files to filter. A multibag is a colon-separated list "
+                                                "of bag files that will be processed together (basically merged). "
+                                                "The multibag can also specify at most one YAML file with parameters."
+                                                "Except the first item, the names of all sub-bags in a multibag are "
+                                                "treated as templates for str.format().")
+    parser.add_argument('--extra-bags', dest='extra_bags', nargs='+', default=None,
+                        help="Bag files added to every (multi)bag from `bags`. If an extra bag doesn't exist, "
+                             "it will be ignored. The names of all extra bags are treated as templates for "
+                             "str.format().")
     parser.add_argument('-c', '--config', nargs='+', help="YAML configs of filters")
     parser.add_argument('-o', '--out-format', default=argparse.SUPPRESS,
-                        help='Template for naming the output bag. Defaults to "{name}.proc{ext}"')
+                        help='File name of the output bag. It is treated as a template for str.format(). '
+                             'Defaults to "{name}.proc{ext}".')
     parser.add_argument('--lz4', dest='compression', action='store_const', const=rosbag.Compression.LZ4,
                         help="Compress the bag via LZ4")
     parser.add_argument('--bz2', dest='compression', action='store_const', const=rosbag.Compression.BZ2,
@@ -241,7 +274,8 @@ def main():
                         help="If set, no .params file will be copied.")
     parser.add_argument('--default-params-file', dest='default_params_file', type=str, default=None,
                         help="If nonempty, specifies the YAML file with ROS parameters that is used if no param file "
-                             "is specified for the particular bag.")
+                             "is specified for the particular bag. The file name is treated as a template for "
+                             "str.format().")
     parser.add_argument("--list-yaml-keys", dest="list_yaml_keys", action="store_true",
                         help="Print a list of all available YAML top-level keys provided by filters.")
     parser.add_argument("--list-filters", dest="list_filters", action="store_true",
@@ -262,7 +296,8 @@ def main():
             getattr(f, 'add_cli_args')(parser)
 
     default_yaml_keys = [
-        'bags', 'out_format', 'compression', 'filters', 'copy_params', 'start_time', 'end_time', 'time_ranges',
+        'bags', 'extra_bags', 'out_format', 'compression', 'filters', 'copy_params', 'start_time', 'end_time',
+        'time_ranges',
     ]
 
     def default_process_cli_args(filters, args):
@@ -349,7 +384,7 @@ def main():
         args.bags, args.out_format, args.compression, args.copy_params, filter_chain, args.default_params_file,
         genpy.Time(args.start_time) if args.start_time is not None else None,
         genpy.Time(args.end_time) if args.end_time is not None else None, args.time_ranges,
-        args.limit_to_first_bag)
+        args.limit_to_first_bag, args.extra_bags)
 
     sys.exit(num_failed)
 
