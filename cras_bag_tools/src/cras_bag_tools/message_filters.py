@@ -129,7 +129,7 @@ class FixHeader(DeserializedMessageFilter):
     """Change the header of a message."""
 
     def __init__(self, frame_id="", frame_id_prefix="", frame_id_suffix="", stamp_from_receive_time=False,
-                 stamp_offset=0.0, *args, **kwargs):
+                 stamp_offset=0.0, receive_stamp_offset=0.0, receive_stamp_from_header=False, *args, **kwargs):
         """
         :param str frame_id: If nonempty, frame_id will be set to this value.
         :param str frame_id_prefix: If nonempty, header will be prefixed with this value.
@@ -137,6 +137,9 @@ class FixHeader(DeserializedMessageFilter):
         :param bool stamp_from_receive_time: If true, set stamp from the connection header receive time.
         :param stamp_offset: If nonzero, offset the stamp by this duration (seconds).
         :type stamp_offset: float or rospy.Duration
+        :param receive_stamp_offset: If nonzero, offset the receive stamp by this duration (seconds).
+        :type receive_stamp_offset: float or rospy.Duration
+        :param bool receive_stamp_from_header: If true, set the receive stamp in connection header from message stamp.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
         """
@@ -146,16 +149,20 @@ class FixHeader(DeserializedMessageFilter):
         self.frame_id_suffix = frame_id_suffix
         self.stamp_from_receive_time = stamp_from_receive_time
         self.stamp_offset = rospy.Duration(stamp_offset)
+        self.receive_stamp_from_header = receive_stamp_from_header
+        self.receive_stamp_offset = rospy.Duration(receive_stamp_offset)
 
     def filter(self, topic, msg, stamp, header, tags):
         if len(msg.__slots__) > 0 and msg.__slots__[0] == 'header':
             self.fix_header(msg.header, stamp)
+            stamp = self.fix_receive_stamp(msg.header, stamp)
             tags.add(MessageTags.CHANGED)
         # Support for TF, Path and similar array-only messages
         elif len(msg.__slots__) == 1 and msg._get_types()[0].endswith("[]"):
             for m in getattr(msg, msg.__slots__[0]):
                 if len(m.__slots__) > 0 and m.__slots__[0] == 'header':
                     self.fix_header(m.header, stamp)
+                    stamp = self.fix_receive_stamp(msg.header, stamp)
                     tags.add(MessageTags.CHANGED)
 
         return topic, msg, stamp, header, tags
@@ -173,6 +180,12 @@ class FixHeader(DeserializedMessageFilter):
             header.stamp = stamp
         header.stamp += self.stamp_offset
 
+    def fix_receive_stamp(self, header, stamp):
+        if self.receive_stamp_from_header:
+            stamp = header.stamp
+        stamp += self.receive_stamp_offset
+        return stamp
+
     def _str_params(self):
         parts = []
         if len(self.frame_id) > 0:
@@ -184,7 +197,11 @@ class FixHeader(DeserializedMessageFilter):
         if self.stamp_from_receive_time:
             parts.append('stamp_from_receive_time')
         if self.stamp_offset != rospy.Duration(0, 0):
-            parts.append('stamp_offset=' + str(self.stamp_offset.to_sec()))
+            parts.append('stamp_offset=' + to_str(self.stamp_offset).rstrip('0'))
+        if self.receive_stamp_from_header:
+            parts.append('receive_stamp_from_header')
+        if self.receive_stamp_offset != rospy.Duration(0, 0):
+            parts.append('receive_stamp_offset=' + to_str(self.receive_stamp_offset).rstrip('0'))
         parent_params = super(FixHeader, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
