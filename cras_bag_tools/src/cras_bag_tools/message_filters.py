@@ -1483,8 +1483,8 @@ class InterpolateJointStates(DeserializedMessageFilter):
     def _str_params(self):
         parts = []
         parts.append('joints=' + repr(self._joints))
-        parts.append('max_dt=' + str(self._max_dt))
-        parts.append('dt_tolerance=' + str(self._dt_tolerance))
+        parts.append('max_dt=' + to_str(self._max_dt).rstrip('0'))
+        parts.append('dt_tolerance=' + to_str(self._dt_tolerance).rstrip('0'))
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
@@ -1492,7 +1492,7 @@ class InterpolateJointStates(DeserializedMessageFilter):
 
 
 class RecomputeAckermannOdometry(DeserializedMessageFilter):
-    """Adjust some joint states. If TFs are computed from them, use RecomputeTFFromJointStates to recompute TF."""
+    """Compute Ackermann-style odometry from joint states."""
 
     def __init__(self, wheel_radius, wheel_separation, traction_joint, steering_joint, joint_state_topic="joint_states",
                  frame_id="base_link", odom_frame_id="odom", odom_topic="odom", cmd_vel_topic=None,
