@@ -1182,6 +1182,7 @@ class FixJointStates(DeserializedMessageFilter):
         VELOCITY = 2
         EFFORT = 3
         INTEGRATE_POSITION = 4
+        DERIVATE_VELOCITY = 5
 
     class _OperationType(Enum):
         VALUE = 1
@@ -1194,7 +1195,8 @@ class FixJointStates(DeserializedMessageFilter):
         # type: (Optional[Dict[STRING_TYPE, Dict[STRING_TYPE, Dict[STRING_TYPE, Any]]]], Optional[Set[STRING_TYPE]], Any, Any) -> None  # noqa
         """
         :param changes: Dict specifying what should be changed. Keys are joint names. Values are dicts with possible
-                        keys "position", "velocity", "effort", "integrate_position". Values of the first 3 dicts can be
+                        keys "position", "velocity", "effort", "integrate_position", "derivate_velocity".
+                        Values of the first 3 dicts can be
                         "value" (set absolute value), "offset" (add offset), "multiplier" (multiply value),
                         "normalize_angle" (normalizes value to (-pi, pi)), "normalize_angle_positive" (normalizes
                         value to (0, 2*pi)).
@@ -1204,6 +1206,7 @@ class FixJointStates(DeserializedMessageFilter):
                         between consecutive joint states to consider them an update. It defaults to 0.01 s.
                         The first position when integrating position is the normal value contained in the message (it
                         can be influenced by the specified "position" change (e.g. set to 0)).
+                        "derivate_velocity" behaves similar to "integrate_position", but does the opposite computation.
         :param add_tags: Tags to be added to modified joint states messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -1239,6 +1242,8 @@ class FixJointStates(DeserializedMessageFilter):
                     self._changes[joint_name][JointStateType.EFFORT] = convert_operations(change["effort"])
                 if "integrate_position" in change:
                     self._changes[joint_name][JointStateType.INTEGRATE_POSITION] = change["integrate_position"]
+                if "derivate_velocity" in change:
+                    self._changes[joint_name][JointStateType.DERIVATE_VELOCITY] = change["derivate_velocity"]
         self._changed_joint_names = TopicSet(self._changes.keys())  # for efficient filtering
 
         self._add_tags = add_tags
@@ -1246,6 +1251,10 @@ class FixJointStates(DeserializedMessageFilter):
         self._integrated_positions = {}
         self._last_velocities = {}
         self._last_integration_stamps = {}
+
+        self._last_positions = {}
+        self._derived_velocities = {}
+        self._last_derivation_stamps = {}
 
     def filter(self, topic, msg, stamp, header, tags):
         JointStateType = FixJointStates._JointStateType
@@ -1298,7 +1307,29 @@ class FixJointStates(DeserializedMessageFilter):
                                 self._integrated_positions[name])
                         self._last_velocities[name] = msg.velocity[i]
                         self._last_integration_stamps[name] = msg.header.stamp
+                    if isinstance(msg.position, tuple):
+                        msg.position = list(msg.position)
                     msg.position[i] = self._integrated_positions[name]
+                    tags = changed_tags
+
+            if len(msg.position) > i and len(msg.velocity) > i and JointStateType.DERIVATE_VELOCITY in changes:
+                if name not in self._last_derivation_stamps:
+                    if math.isfinite(msg.position[i]):
+                        self._last_derivation_stamps[name] = msg.header.stamp
+                        self._derived_velocities[name] = msg.velocity[i]
+                        self._last_positions[name] = msg.position[i]
+                else:
+                    min_dt = changes[JointStateType.DERIVATE_VELOCITY].get("min_dt", 0.01)
+                    dt = (msg.header.stamp - self._last_derivation_stamps[name]).to_sec()
+                    if dt >= min_dt:
+                        distance = msg.position[i] - self._last_positions[name]
+                        vel = distance / dt
+                        self._derived_velocities[name] = vel
+                        self._last_positions[name] = msg.position[i]
+                        self._last_derivation_stamps[name] = msg.header.stamp
+                    if isinstance(msg.velocity, tuple):
+                        msg.velocity = list(msg.velocity)
+                    msg.velocity[i] = self._derived_velocities[name]
                     tags = changed_tags
 
         return topic, msg, stamp, header, tags
