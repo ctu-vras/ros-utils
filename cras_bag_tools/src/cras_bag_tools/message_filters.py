@@ -1631,6 +1631,143 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         return ", ".join(parts)
 
 
+class EstimateJointStatesFromMotionModelAckermann(DeserializedMessageFilter):
+    """Take a linear and angular velocity source and compute the corresponding joint states via Ackermann-style
+    odometry."""
+
+    def __init__(self, wheel_radius, wheel_separation, traction_joints, steering_joints, linear_velocity_topic,
+                 linear_velocity_field, angular_velocity_topic, angular_velocity_field,
+                 joint_state_topic="joint_states", frame_id="base_link", separate_messages=False,
+                 min_linear_velocity=0.01, add_tags=None, *args, **kwargs):
+        """
+        :param float wheel_radius: Radius of the traction wheel [m].
+        :param float wheel_separation: Separation of the steering and traction axles (wheelbase) [m].
+        :param str traction_joints: Joints whose velocity will be used as traction velocity.
+        :param str steering_joints: Joints whose position will be used as steering angle.
+        :param str linear_velocity_topic: Topic from which linear velocity should be read.
+        :param str linear_velocity_field: Field in the linear velocity topic that specifies linear speed.
+        :param str angular_velocity_topic: Topic from which angular velocity should be read.
+        :param str angular_velocity_field: Field in the angular velocity topic that specifies angular speed.
+        :param str joint_state_topic: Topic with joint states.
+        :param str frame_id: Frame ID of the joint states messages.
+        :param bool separate_messages: If true, the steering and traction joints will each be published in a separate
+                                       message (on the same topic).
+        :param float min_linear_velocity: Minimum linear velocity to consider the robot non-static. If static, the
+                                          steering angle doesn't change (to avoid division by close to zero).
+        :param set add_tags: Tags to be added to the generated odometry messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(EstimateJointStatesFromMotionModelAckermann, self).__init__(
+            include_topics=(linear_velocity_topic, angular_velocity_topic), *args, **kwargs)  # noqa
+        self._wheel_radius = wheel_radius
+        self._wheel_separation = wheel_separation
+        self._traction_joints = list(traction_joints)
+        self._steering_joints = list(steering_joints)
+        self._linear_velocity_topic = TopicSet([linear_velocity_topic])
+        self._linear_velocity_field = linear_velocity_field
+        self._angular_velocity_topic = TopicSet([angular_velocity_topic])
+        self._angular_velocity_field = angular_velocity_field
+        self._joint_state_topic = joint_state_topic
+        self._frame_id = frame_id
+        self._separate_messages = separate_messages
+        self._min_linear_velocity = min_linear_velocity
+        self._add_tags = add_tags
+
+        self._connection_header = create_connection_header(self._joint_state_topic, JointState, False)
+
+        self._last_ang_vel = None
+        self._last_steering_angle = 0.0
+
+    def filter(self, topic, msg, stamp, header, tags):
+        result = [(topic, msg, stamp, header, tags)]
+
+        if topic in self._angular_velocity_topic:
+            ang_vel = float(self._get_field(msg, self._angular_velocity_field))
+            self._last_ang_vel = ang_vel
+            return result
+
+        if self._last_ang_vel is None:
+            return result
+
+        lin_vel = float(self._get_field(msg, self._linear_velocity_field))
+
+        wheel_ang_vel = lin_vel / self._wheel_radius
+        if abs(lin_vel) > self._min_linear_velocity:
+            steering_angle = math.atan(self._last_ang_vel * self._wheel_separation / lin_vel)
+        else:
+            steering_angle = self._last_steering_angle
+        self._last_steering_angle = steering_angle
+
+        msg_stamp = msg.header.stamp if "header" in msg.__slots__ else stamp
+
+        gen_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            gen_tags = gen_tags.union(self._add_tags)
+
+        traction_msg = JointState()
+        traction_msg.header.stamp = msg_stamp
+        traction_msg.header.frame_id = self._frame_id
+        traction_msg.name = list(self._traction_joints)
+        traction_msg.position = [float('nan')] * len(self._traction_joints)
+        traction_msg.velocity = [wheel_ang_vel] * len(self._traction_joints)
+        traction_msg.effort = [float('nan')] * len(self._traction_joints)
+
+        steering_msg = JointState()
+        steering_msg.header.stamp = msg_stamp
+        steering_msg.header.frame_id = self._frame_id
+        steering_msg.name = list(self._steering_joints)
+        steering_msg.position = [normalize_angle(steering_angle)] * len(self._steering_joints)
+        steering_msg.velocity = [float('nan')] * len(self._steering_joints)
+        steering_msg.effort = [float('nan')] * len(self._steering_joints)
+
+        if self._separate_messages:
+            traction_tags = gen_tags.union({"traction_joint"})
+            result += [(self._joint_state_topic, traction_msg, stamp, self._connection_header, traction_tags)]
+            steering_tags = gen_tags.union({"steering_joint"})
+            result += [(self._joint_state_topic, steering_msg, stamp, self._connection_header, steering_tags)]
+        else:
+            joints_msg = JointState()
+            joints_msg.header = traction_msg.header
+            joints_msg.name = traction_msg.name + steering_msg.name
+            joints_msg.position = traction_msg.position + steering_msg.position
+            joints_msg.velocity = traction_msg.velocity + steering_msg.velocity
+            joints_msg.effort = traction_msg.effort + steering_msg.effort
+            result += [(self._joint_state_topic, joints_msg, stamp, self._connection_header, gen_tags)]
+
+        return result
+
+    def _get_field(self, msg, field):
+        if '.' not in field:
+            if field in msg.__slots__:
+                return getattr(msg, field)
+            else:
+                raise RuntimeError("Invalid field '%s'" % (field,))
+        else:
+            attr, rest = field.split('.', maxsplit=1)
+            return self._get_field(getattr(msg, attr), rest)
+
+    def _str_params(self):
+        parts = []
+        parts.append('wheel_radius=' + str(self._wheel_radius))
+        parts.append('wheel_separation=' + str(self._wheel_separation))
+        parts.append('traction_joints=' + to_str(self._traction_joints))
+        parts.append('steering_joints=' + to_str(self._steering_joints))
+        parts.append('linear_velocity_topic=' + str(self._linear_velocity_topic))
+        parts.append('linear_velocity_field=' + self._linear_velocity_field)
+        parts.append('angular_velocity_topic=' + str(self._angular_velocity_topic))
+        parts.append('angular_velocity_field=' + self._angular_velocity_field)
+        parts.append('joint_state=' + self._joint_state_topic)
+        parts.append('frame_id=' + self._frame_id)
+        if self._separate_messages:
+            parts.append('separate_messages')
+
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class OdomToTf(DeserializedMessageFilter):
     """Convert odometry to TF."""
 
