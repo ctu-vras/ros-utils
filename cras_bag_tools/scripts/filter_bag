@@ -25,12 +25,9 @@ from cras import pretty_file_size
 from cras.string_utils import STRING_TYPE
 
 from cras_bag_tools.bag_filter import filter_bag
-from cras_bag_tools.message_filter import FilterChain, MessageFilter, Passthrough, get_filters
+from cras_bag_tools.message_filter import BAG_NAME_PATTERN, FilterChain, MessageFilter, Passthrough, get_filters
 from cras_bag_tools.time_range import TimeRange, TimeRanges
 from cras_bag_tools.tqdm_bag import TqdmMultiBag
-
-
-BAG_NAME_PATTERN = re.compile(r'^(.*)_([12]\d{3}-[012]\d-[0123]\d-[012]\d-[0-6]\d-[0-6]\d).?(.*)$')
 
 
 def resolve_path(path_format, reference_file):

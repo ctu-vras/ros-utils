@@ -29,6 +29,9 @@ def is_sequence(o):
     return isinstance(o, (list, tuple))
 
 
+BAG_NAME_PATTERN = re.compile(r'^(.*)_([12]\d{3}-[012]\d-[0123]\d-[012]\d-[0-6]\d-[0-6]\d).?(.*)$')
+
+
 loaded_filters = None
 
 
@@ -397,20 +400,62 @@ class MessageFilter(object):
         return self.__rospack
 
     def resolve_file(self, filename):
-        """Resolve `filename` relative to the bag set by :meth:`set_bag`.
+        """Resolve `filename` relative to the bag set by :meth:`set_bag`. `filename` can also contain some variables in
+        :meth:`str.format()` style.
+
+        The following variables are available in `filename`:
+
+        - dirname (absolute path of the reference file's directory)
+        - basename (base name of the reference file, with extension)
+        - name (base name of the reference file, without extension)
+        - ext (extension of the reference file (including the dot); empty if it has no extension)
+        - ext_no_dot (extension of the reference file (without the dot); empty if it has no extension)
+        - bag_prefix (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `PREFIX`; otherwise, it is `name`).
+        - bag_stamp (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `STAMP`; otherwise, it is `name`).
+        - bag_suffix (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `SUFFIX`; otherwise, it is `name`).
+        - bag_base (if `name` has the format `PREFIX_STAMP_SUFFIX`, this is `PREFIX_STAMP`; otherwise, it is `name`).
+
+        `filename` can also contain the special syntax `$(find package_name)` which is replaced with the absolute path
+        to the specified ROS package.
 
         :note: This is ideally called from :meth:`on_filtering_start` or :meth:`filter` because earlier, the `_bag`
                member variable is not set.
         """
-        matches = re.match(r'\$\(find ([^)]+)\)', filename)
-        if matches is not None:
-            package_path = self.__get_rospack().get_path(matches[1])
-            filename = filename.replace('$(find %s)' % (matches[1],), package_path)
+        match = re.match(r'\$\(find ([^)]+)\)', filename)
+        if match is not None:
+            package_path = self.__get_rospack().get_path(match[1])
+            filename = filename.replace('$(find %s)' % (match[1],), package_path)
 
-        if self._bag is None or os.path.isabs(filename) or len(self._bag.filename) == 0:
-            return filename
+        if self._bag is None or len(self._bag.filename) == 0:
+            return os.path.abspath(os.path.expanduser(filename))
 
-        return os.path.join(os.path.dirname(self._bag.filename), filename)
+        reference_file = self._bag.filename
+        dirname, basename = os.path.split(os.path.abspath(os.path.expanduser(reference_file)))
+        name, ext = os.path.splitext(basename)
+
+        format_vars = {
+            'dirname': dirname,
+            'basename': basename,
+            'name': name,
+            'ext': ext,
+            'ext_no_dot': ext[1:] if len(ext) >= 1 and ext[0] == ':' else ext,
+            'bag_prefix': name,
+            'bag_stamp': name,
+            'bag_suffix': name,
+            'bag_base': name,
+        }
+
+        match = BAG_NAME_PATTERN.match(name)
+        if match is not None:
+            format_vars['bag_prefix'] = match.group(1)
+            format_vars['bag_stamp'] = match.group(2)
+            format_vars['bag_suffix'] = match.group(3)
+            format_vars['bag_base'] = match.group(1) + '_' + match.group(2)
+
+        resolved = os.path.expanduser(filename.format(**format_vars))
+        if not os.path.isabs(resolved):
+            resolved = os.path.join(dirname, resolved)
+        return os.path.abspath(resolved)
 
     def on_filtering_start(self):
         """This function is called right before the first message is passed to filter().
