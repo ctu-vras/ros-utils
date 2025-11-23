@@ -40,7 +40,7 @@ from image_transport_codecs.parse_compressed_format import guess_any_compressed_
 from kdl_parser_py.urdf import treeFromUrdfModel
 from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
-from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState
+from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
 from std_msgs.msg import Header, String
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore
@@ -48,7 +48,7 @@ from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
 from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, \
-    RawMessageFilter, TopicSet, tags_for_generated_msg
+    RawMessageFilter, TopicSet, tags_for_changed_msg, tags_for_generated_msg
 
 
 def urdf_error(message):
@@ -897,6 +897,36 @@ class RemoveInvalidTF(DeserializedMessageFilter):
             return None
 
         return topic, msg, stamp, header, tags
+
+
+class MagnetometerGaussToTesla(DeserializedMessageFilter):
+    """Scale magnetometer data from Gauss to Tesla (e.g. XSens IMUs)."""
+
+    def __init__(self, scale_covariance=True, include_topics=None, add_tags=None, *args, **kwargs):
+        """
+        :param bool scale_covariance: If true, covariance will be also scaled by 10^-8.
+        :param list include_topics: Topics to work on (defaults to standard TF topics).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(MagnetometerGaussToTesla, self).__init__(
+            include_topics=['imu/mag'] if include_topics is None else include_topics,
+            include_types=[MagneticField._type], *args, **kwargs)  # noqa
+
+        self._scale_covariance = scale_covariance
+        self._add_tags = set(add_tags) if add_tags is not None else None
+
+    def filter(self, topic, msg, stamp, header, tags):
+        coef = 1e-4
+        msg.magnetic_field.x *= coef
+        msg.magnetic_field.y *= coef
+        msg.magnetic_field.z *= coef
+
+        if self._scale_covariance:
+            coef = pow(coef, 2)
+            msg.magnetic_field_covariance = [f * coef for f in msg.magnetic_field_covariance]
+
+        return topic, msg, stamp, header, tags_for_changed_msg(tags, self._add_tags)
 
 
 def set_transform_from_KDL_frame(transform, frame):

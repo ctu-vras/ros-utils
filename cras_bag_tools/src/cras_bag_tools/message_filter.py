@@ -80,13 +80,14 @@ class MessageTags(str, Enum):
     __format__ = str.__format__
 
 
-def tags_for_generated_msg(orig_tags):
-    # type: (Set[STRING_TYPE]) -> Set[STRING_TYPE]
+def tags_for_generated_msg(orig_tags, add_tags=None):
+    # type: (Set[STRING_TYPE], Optional[Set[STRING_TYPE]]) -> Set[STRING_TYPE]
     """Given message tags for an input message, creates tags for a derived message.
 
     This means ORIGINAL and CHANGED tags are removed (if present) and GENERATED tag is added (if not present).
 
     :param orig_tags: Tags of the original message.
+    :param add_tags: Additional tags to add.
     :return: Tags for the derived message.
     """
 
@@ -96,6 +97,26 @@ def tags_for_generated_msg(orig_tags):
     if MessageTags.CHANGED in new_tags:
         new_tags.remove(MessageTags.CHANGED)
     new_tags.add(MessageTags.GENERATED)
+    if add_tags:
+        new_tags = new_tags.union(add_tags)
+    return new_tags
+
+
+def tags_for_changed_msg(orig_tags, add_tags=None):
+    # type: (Set[STRING_TYPE], Optional[Set[STRING_TYPE]]) -> Set[STRING_TYPE]
+    """Given message tags for an input message, creates tags for a derived message.
+
+    This means ORIGINAL and CHANGED tags are removed (if present) and GENERATED tag is added (if not present).
+
+    :param orig_tags: Tags of the original message.
+    :param add_tags: Additional tags to add.
+    :return: Tags for the derived message.
+    """
+
+    new_tags = copy.deepcopy(orig_tags)
+    new_tags.add(MessageTags.CHANGED)
+    if add_tags:
+        new_tags = new_tags.union(add_tags)
     return new_tags
 
 
@@ -843,5 +864,6 @@ __all__ = [
     RawMessageFilter.__name__,
     filter_message.__name__,
     get_filters.__name__,
+    tags_for_changed_msg.__name__,
     tags_for_generated_msg.__name__,
 ]
