@@ -1496,7 +1496,8 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
 
     def __init__(self, wheel_radius, wheel_separation, traction_joint, steering_joint, joint_state_topic="joint_states",
                  frame_id="base_link", odom_frame_id="odom", odom_topic="odom", cmd_vel_topic=None,
-                 cmd_vel_frame_id=None, min_dt=0.01, heading_change_coef=1.0, add_tags=None, *args, **kwargs):
+                 cmd_vel_frame_id=None, min_dt=0.01, heading_change_coef=1.0, twist_covariance=None, add_tags=None,
+                 *args, **kwargs):
         """
         :param float wheel_radius: Radius of the traction wheel [m].
         :param float wheel_separation: Separation of the steering and traction axles (wheelbase) [m].
@@ -1512,6 +1513,7 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         :param float min_dt: If the computed dt is smaller than this, the joint state message is ignored for odometry.
         :param float heading_change_coef: This is a hack. The angular distance added to yaw is multiplied by this number
                                           after being computed from angular velocity and dt.
+        :param list twist_covariance: Covariance of twist used in the odometry message. A 36-element list of floats.
         :param set add_tags: Tags to be added to the generated odometry messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -1529,7 +1531,12 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         self._cmd_vel_frame_id = cmd_vel_frame_id
         self._min_dt = min_dt
         self._heading_change_coef = heading_change_coef
+        self._twist_covariance = list(twist_covariance) if twist_covariance is not None else [0.0] * 36
         self._add_tags = add_tags
+
+        if len(self._twist_covariance) != 36:
+            raise RuntimeError("Twist covariance should be a 36 element list, but %i elements were given!" %
+                               (len(self._twist_covariance,)))
 
         self._connection_header = create_connection_header(self._odom_topic, Odometry, False)
         if self._cmd_vel_topic:
@@ -1589,8 +1596,10 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         msg.pose.pose.position.x = self._x
         msg.pose.pose.position.y = self._y
         msg.pose.pose.orientation = quat_msg_from_rpy(0, 0, self._yaw)
+        # TODO pose covariance
         msg.twist.twist.linear.x = self._lin_vel
         msg.twist.twist.angular.z = self._ang_vel
+        msg.twist.covariance = self._twist_covariance
         odom_tags = tags_for_generated_msg(tags)
         if self._add_tags:
             odom_tags = odom_tags.union(self._add_tags)
@@ -1624,6 +1633,13 @@ class RecomputeAckermannOdometry(DeserializedMessageFilter):
         parts.append('frame_id=' + self._frame_id)
         parts.append('odom_frame_id=' + self._odom_frame_id)
         parts.append('odom_topic=' + self._odom_topic)
+        if self._cmd_vel_frame_id is not None:
+            parts.append('cmd_vel_frame_id=' + self._cmd_vel_frame_id)
+        if self._cmd_vel_topic is not None:
+            parts.append('cmd_vel_topic=' + self._cmd_vel_topic)
+        if self._twist_covariance != [0.0] * 36:
+            parts.append('twist_covariance=' + ','.join(map(str, self._twist_covariance)))
+        parts.append('min_dt=' + to_str(self._min_dt).rstrip('0'))
 
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
