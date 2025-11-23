@@ -2455,7 +2455,7 @@ class RemovePasswordsFromParams(NoMessageFilter):
         if isinstance(params, dict):
             keys_to_remove = set()
             for key, val in params.items():
-                if key.tolower().strip().startswith("pass"):
+                if key.lower().strip().startswith("pass"):
                     keys_to_remove.add(key)
                 else:
                     self.remove_passwords(val, "/".join((prefix, key)))
