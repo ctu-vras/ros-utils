@@ -162,7 +162,7 @@ class FixHeader(DeserializedMessageFilter):
             for m in getattr(msg, msg.__slots__[0]):
                 if len(m.__slots__) > 0 and m.__slots__[0] == 'header':
                     self.fix_header(m.header, stamp)
-                    stamp = self.fix_receive_stamp(msg.header, stamp)
+                    stamp = self.fix_receive_stamp(m.header, stamp)
                     tags.add(MessageTags.CHANGED)
 
         return topic, msg, stamp, header, tags
