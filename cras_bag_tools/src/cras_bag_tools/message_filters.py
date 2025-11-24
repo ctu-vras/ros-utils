@@ -1897,7 +1897,7 @@ class FixCameraCalibration(DeserializedMessageFilter):
 
             calib = None
             try:
-                calib = self.interpret_calibration(calib_file, cam_name)
+                calib = self.interpret_calibration(self.resolve_file(calib_file), cam_name)
             except AssertionError as e:
                 print("Could not interpret the given calibration file for camera %s: %s." % (camera_info, str(e)))
                 continue
