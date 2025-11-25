@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import csv
 import math
 import os.path
 
@@ -15,6 +16,7 @@ import sys
 import yaml
 from collections import deque
 from enum import Enum
+from functools import reduce
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 from lxml import etree
 from numpy.linalg import inv
@@ -28,7 +30,7 @@ from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 from cras.log_utils import rosconsole_notifyLoggerLevelsChanged, rosconsole_set_logger_level, RosconsoleLevel
-from cras.string_utils import to_str, STRING_TYPE
+from cras.string_utils import to_str, STRING_TYPE, to_valid_ros_name
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.encoding import decode_config
@@ -2152,6 +2154,223 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
         parts = []
         parts.append('transforms=' + repr(list(self._transforms.keys())))
         parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class DetectDamagedBaslerImages(DeserializedMessageFilter):
+    """Adjust some static transforms."""
+
+    def __init__(self, drop_damaged=True, min_correlation=0.7, max_entropy=0.75, output_csv=None, output_folder=None,
+                 add_tags=None, *args, **kwargs):
+        # type: (bool, float, float, STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
+        """
+        :param drop_damaged: If true, damaged images will be dropped.
+        :param min_correlation: Minimum cross-color-channel correlation of valid images.
+        :param max_entropy: Maximum entropy of valid images.
+        :param output_csv: Path to a CSV file where the info about damaged images should be saved.
+        :param output_folder: Path to a folder where the damaged images should be saved.
+        :param add_tags: Tags to be added to the modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(DetectDamagedBaslerImages, self).__init__(
+            include_types=(Image._type, CompressedImage._type), *args, **kwargs)  # noqa
+
+        self._drop_damaged = drop_damaged
+        self._min_correlation = min_correlation
+        self._max_entropy = max_entropy
+        self._output_csv = output_csv
+        self._output_folder = output_folder
+        self._add_tags = add_tags
+
+        self._output_csv_resolved = None
+        self._output_folder_resolved = None
+
+        self._damaged_images = []
+
+        self._cv = CvBridge()
+
+    def on_filtering_start(self):
+        if self._output_csv is not None:
+            self._output_csv_resolved = self.resolve_file(self._output_csv)
+        if self._output_folder is not None:
+            self._output_folder_resolved = self.resolve_file(self._output_folder)
+            if not os.path.exists(self._output_folder_resolved):
+                try:
+                    os.makedirs(self._output_folder_resolved)
+                except Exception as e:
+                    print(str(e), file=sys.stderr)
+                    self._output_folder_resolved = None
+
+    def on_filtering_end(self):
+        if self._output_csv_resolved:
+            with open(self._output_csv_resolved, 'w', newline='') as csvfile:
+                fieldnames = ['stamp_sec', 'stamp_nsec', 'topic', 'correlation', 'entropy']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                for stamp, topic, correlation, entropy in self._damaged_images:
+                    writer.writerow({
+                        'stamp_sec': stamp.secs,
+                        'stamp_nsec': stamp.nsecs,
+                        'topic': topic,
+                        'correlation': correlation,
+                        'entropy': entropy,
+                    })
+                print("Saved info about %i damaged images to %s" % (
+                    len(self._damaged_images), self._output_csv_resolved))
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if msg._type == Image._type:
+            cv_img = self._cv.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        else:
+            raw_img, err = decode(msg, topic)
+            if raw_img is None:
+                print(err, file=sys.stderr)
+                return topic, msg, stamp, header, tags
+
+            cv_img = self._cv.imgmsg_to_cv2(raw_img, desired_encoding='bgr8')
+
+        correlation = self.color_correlation(cv_img)
+        entropy = self.entropy(cv_img)
+
+        is_damaged = False
+        if (correlation < self._min_correlation and entropy > self._max_entropy) or correlation < 0.5:
+            is_damaged = True
+
+        if is_damaged:
+            print("Damaged image:", topic, to_str(msg.header.stamp), correlation, entropy)
+            self._damaged_images.append((msg.header.stamp, topic, correlation, entropy))
+            if self._output_folder_resolved:
+                self.save_damaged_image(cv_img, msg.header.stamp, topic)
+            if self._drop_damaged:
+                return None
+
+        return topic, msg, stamp, header, tags
+
+    def color_correlation(self, img):
+        """Calculate the correlation between the color channels.
+
+        :param img: Image message.
+        :return: The average correlation coefficient.
+        """
+        if len(img.shape) != 3 or img.shape[-1] != 3:
+            return 1.0
+
+        corr_bg = np.corrcoef(img[:, :, 0].flat, img[:, :, 1].flat)[0, 1]
+        corr_gr = np.corrcoef(img[:, :, 1].flat, img[:, :, 2].flat)[0, 1]
+        return (corr_bg + corr_gr) / 2.0
+
+    def entropy(self, img):
+        """Calculates Shannon Entropy of an image.
+
+        :param img: The image.
+        :return: A value between 0 (no information) and 8 (max randomness).
+        """
+        if len(img.shape) == 3:
+            img = img[:, :, 0]
+
+        hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+        hist_norm = hist.ravel() / hist.sum()
+        hist_norm = hist_norm[hist_norm > 0]
+
+        # Apply Shannon Entropy formula: -sum(p * log2(p))
+        entropy = -np.sum(hist_norm * np.log2(hist_norm))
+
+        return entropy
+
+    def save_damaged_image(self, cv_img, stamp, topic):
+        filename = "%s-%s.png" % (to_str(stamp), to_valid_ros_name(topic, base_name=True))
+        cv2.imwrite(os.path.join(self._output_folder_resolved, filename), cv_img)
+
+    def reset(self):
+        self._output_csv_resolved = None
+        self._output_folder_resolved = None
+        self._damaged_images = []
+
+    def _str_params(self):
+        parts = []
+        parts.append('drop_damaged=' + repr(self._drop_damaged))
+        parts.append('min_correlation=' + str(self._min_correlation))
+        parts.append('max_entropy=' + str(self._max_entropy))
+        if self._output_csv:
+            parts.append('output_csv=' + self._output_csv)
+        if self._output_folder:
+            parts.append('output_folder=' + self._output_folder)
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class DropMessagesFromCSV(RawMessageFilter):
+    """Drop messages listed in a CSV file with columns `stamp_sec`, `stamp_nsec` and `topic`."""
+
+    def __init__(self, csv_file, additional_topics=None, fail_if_file_not_found=True, *args, **kwargs):
+        """
+        :param str csv_file: Path to the CSV.
+        :param dict additional_topics: Dictionary mapping topics from CSV to a list of other topics whose messages
+                                       should also be dropped if header.stamp is the same.
+        :param bool fail_if_file_not_found: If true, the filter will fail if the CSV file is not found.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(DropMessagesFromCSV, self).__init__(*args, **kwargs)
+        self._csv_file = csv_file
+        self._additional_topics = additional_topics if additional_topics is not None else {}
+        self._fail_if_file_not_found = fail_if_file_not_found
+
+        self._to_drop = {}
+        self._to_drop_topics = TopicSet()
+
+    def on_filtering_start(self):
+        csv_file = self.resolve_file(self._csv_file)
+        if not os.path.exists(csv_file):
+            if self._fail_if_file_not_found:
+                raise RuntimeError("File " + csv_file + " does not exist.")
+            self._to_drop = {}
+        else:
+            with open(csv_file, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    stamp = rospy.Time(int(row['stamp_sec']), int(row['stamp_nsec']))
+                    topic = str(row['topic']).lstrip('/')
+                    topics = [topic] + [t.lstrip('/') for t in self._additional_topics.get(topic, [])]
+                    for t in topics:
+                        if t not in self._to_drop:
+                            self._to_drop[t] = set()
+                        self._to_drop[t].add(stamp)
+            print("Loaded CSV with", sum(map(len, self._to_drop.values())) , "messages to drop:", csv_file)
+
+        self._to_drop_topics = TopicSet(self._to_drop.keys())
+        if not self._include_topics:
+            self._include_topics = self._to_drop_topics
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        if topic not in self._to_drop_topics:
+            return topic, datatype, data, md5sum, pytype, stamp, header, tags
+
+        to_drop = self._to_drop[topic.lstrip('/')]
+
+        msg_header = self.deserialize_header(data, pytype)
+        if msg_header is None:
+            msg_stamp = stamp
+        else:
+            msg_stamp = msg_header.stamp
+
+        if msg_stamp in to_drop:
+            print("drop", topic, to_str(msg_stamp))
+            return None
+
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
+
+    def _str_params(self):
+        parts = []
+        parts.append('csv_file=%s' % (self._csv_file,))
+        parts.append('additional_topics=%r' % (repr(self._additional_topics),))
+        parts.append('fail_if_file_not_found=%s' % (repr(self._fail_if_file_not_found),))
+        parent_params = super(DropMessagesFromCSV, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
