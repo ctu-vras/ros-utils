@@ -15,11 +15,11 @@ import sys
 import yaml
 from collections import deque
 from enum import Enum
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 from lxml import etree
 from numpy.linalg import inv
-from typing import Any, Dict
 
+import genpy
 import rospy
 from angles import normalize_angle, normalize_angle_positive
 from camera_calibration_parsers import readCalibration
@@ -66,6 +66,7 @@ def dict_to_str(d, sep='='):
 
 
 def create_connection_header(topic, msg_type, latch=False):
+    # type: (STRING_TYPE, Type[genpy.Message], bool) -> Dict[STRING_TYPE, STRING_TYPE]
     header = {
         "callerid": "/bag_filter",
         "topic": topic,
@@ -238,7 +239,7 @@ class Deduplicate(RawMessageFilter):
         key = topic
         msg_header = None
         if has_header and self._per_frame_id:
-            msg_header = Header().deserialize(data)
+            msg_header = self.deserialize_header(data, pytype)
             key = "%s@%s" % (topic, msg_header.frame_id)
 
         if key not in self._last_msgs:
@@ -257,8 +258,8 @@ class Deduplicate(RawMessageFilter):
             stamp_ok = self._ignore_stamp or data[4:12] == last_msg[4:12]
             if not self._ignore_stamp and self._ignore_stamp_difference is not None and not stamp_ok:
                 if msg_header is None:
-                    msg_header = Header().deserialize(data)
-                last_msg_header = Header().deserialize(last_msg)
+                    msg_header = self.deserialize_header(data, pytype)
+                last_msg_header = self.deserialize_header(last_msg, pytype)
                 diff = abs(msg_header.stamp - last_msg_header.stamp)
                 if diff < self._ignore_stamp_difference:
                     stamp_ok = True
@@ -2034,6 +2035,70 @@ class FixCameraCalibration(DeserializedMessageFilter):
         parts = []
         parts.append('calibrations=' + ",".join(self._calibrations.keys()))
         parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class StaticImageMask(RawMessageFilter):
+    """Create static image masks."""
+
+    def __init__(self, source_topic, mask_topics, mask_file, format_field, add_tags=None, *args, **kwargs):
+        """
+        :param str source_topic: Topic which triggers generation of the mask images. This is usually the camera info or
+                                 the image topic.
+        :param list mask_topics: Topics for which the mask will be generated (if multiple topics are specified, the mask
+                                 is copied to all of them). Include the `/compressed` suffix to each topic.
+        :param str mask_file: Path to the file with the mask. It should be an imread()-compatible compressed image.
+        :param str format_field: The contents of the `format` field in the mask image. It should follow the pattern
+                                 '{raw_pixel_format}; {image_format} compressed {compressed_pixel_format}'. If the
+                                 compression uses the same pixel format as the raw image, leave out
+                                 `compressed_pixel_format`, but keep the preceding space.
+        :param set add_tags: Tags to be added to the modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(StaticImageMask, self).__init__(include_topics=(source_topic,), *args, **kwargs)
+        self._mask_topics = mask_topics
+        self._mask_file = mask_file
+        self._mask_msg = CompressedImage()
+        self._mask_msg.format = format_field
+        self._add_tags = add_tags
+
+        self._conn_headers = {}
+        for t in mask_topics:
+            self._conn_headers[t] = create_connection_header(t, CompressedImage)
+
+    def on_filtering_start(self):
+        mask_file = self.resolve_file(self._mask_file)
+        if not os.path.exists(mask_file):
+            raise RuntimeError("File " + mask_file + " does not exist.")
+        with open(mask_file, 'rb') as f:
+            self._mask_msg.data = f.read()
+        print("Loaded camera mask", mask_file)
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        msg_header = self.deserialize_header(data, pytype)
+        if msg_header is None:
+            raise RuntimeError("Message type doesn't have header: " + datatype)
+
+        self._mask_msg.header = msg_header
+
+        result = [(topic, datatype, data, md5sum, pytype, stamp, header, tags)]
+
+        gen_tags = tags_for_generated_msg(tags, self._add_tags)
+
+        for t in self._mask_topics:
+            result.append((t, self._mask_msg, stamp, self._conn_headers[t], gen_tags))
+
+        return result
+
+    def _str_params(self):
+        parts = []
+        parts.append('mask_topics=%r' % (self._mask_topics,))
+        parts.append('mask_file=%s' % (self._mask_file,))
+        parts.append('format_field=%s' % (self._mask_msg.format,))
+        parent_params = super(StaticImageMask, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)

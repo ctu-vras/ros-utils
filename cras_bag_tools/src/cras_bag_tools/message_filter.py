@@ -10,7 +10,7 @@ import os.path
 import re
 import sys
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 import genpy
 import rospkg
@@ -19,6 +19,7 @@ import rospy.names
 from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.plugin_utils import get_plugin_implementations
 from cras.string_utils import to_str, STRING_TYPE
+from std_msgs.msg import Header
 
 from .bag_utils import MultiBag
 from .time_range import TimeRange, TimeRanges
@@ -52,12 +53,18 @@ def get_filters():
     return loaded_filters
 
 
-RawMessageData = Tuple[str, str, bytes, str, type, rospy.Time, Dict[STRING_TYPE, STRING_TYPE], Set[STRING_TYPE]]
+ConnectionHeader = Dict[STRING_TYPE, STRING_TYPE]
+RawMessage = Tuple[str, bytes, str, type]
+"""datatype, data, md5sum, pytype"""
+RawMessageData = Tuple[str, str, bytes, str, type, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
 """topic, datatype, data, md5sum, pytype, stamp, connection_header, tags"""
-DeserializedMessageData = Tuple[str, genpy.Message, rospy.Time, Dict[STRING_TYPE, STRING_TYPE], Set[STRING_TYPE]]
+RawMessageDataShort = Tuple[str, RawMessage, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
+"""topic, (datatype, data, md5sum, pytype), stamp, connection_header, tags"""
+DeserializedMessageData = Tuple[str, genpy.Message, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
 """topic, msg, stamp, connection_header, tags"""
-RawFilterResult = Union[None, RawMessageData, List[RawMessageData]]
-DeserializedFilterResult = Union[None, DeserializedMessageData, List[DeserializedMessageData]]
+AnyMessageData = Union[RawMessageDataShort, DeserializedMessageData]
+RawFilterResult = Union[None, RawMessageData, List[Union[RawMessageData, DeserializedMessageData]]]
+DeserializedFilterResult = Union[None, DeserializedMessageData, List[Union[DeserializedMessageData, RawMessageData]]]
 
 
 class MessageTags(str, Enum):
@@ -619,6 +626,21 @@ class RawMessageFilter(MessageFilter):
         """
         raise NotImplementedError
 
+    def deserialize_header(self, data, pytype):
+        # type: (bytes, Type) -> Optional[Header]
+        """Deserializes the header from the given raw message.
+
+        This method deserializes only the header, not the rest of the message.
+
+        :param data: The raw message whose header should be deserialized.
+        :param pytype: The message type (as Python type).
+        :return: A deserialized Header instance. If the message type has no header, None is returned.
+        """
+        has_header = len(pytype.__slots__) > 0 and pytype.__slots__[0] == 'header'
+        if not has_header:
+            return None
+        return Header().deserialize(data)
+
 
 class DeserializedMessageFilter(MessageFilter):
     """
@@ -839,25 +861,31 @@ def normalize_topic(topic):
     return rospy.names.canonicalize_name('/' + topic)
 
 
-def filter_message(topic, msg, stamp, connection_header, tags, filter, raw_output=True):
+def filter_message(topic,  # type: STRING_TYPE
+                   msg,  # type: Union[RawMessage, genpy.Message]
+                   stamp,  # type: rospy.Time
+                   connection_header,  # type: ConnectionHeader
+                   tags,  # type: Set[STRING_TYPE]
+                   filter,  # type: MessageFilter
+                   raw_output=True  # type: bool
+                   ):
+    # type: (...) -> Optional[Union[AnyMessageData, List[AnyMessageData]]]
     """Apply the given filter to a message.
 
-    :param str topic: The message topic.
+    :param topic: The message topic.
     :param msg: The message (either a deserialized message or a raw message as 4-tuple).
-    :type msg: genpy.Message or tuple
-    :param rospy.Time stamp: Receive timestamp of the message.
-    :param dict connection_header: Connection header.
-    :param set tags: Message tags. You should pass at least {MessageTags.ORIGINAL} if the message is directly from bag.
-    :param MessageFilter filter: The filter to apply.
-    :param bool raw_output: Whether to output a raw message or a deserialized one.
-    :return: None if the message should be discarded, or a message.
-    :rtype: tuple or None
+    :param stamp: Receive timestamp of the message.
+    :param connection_header: Connection header.
+    :param tags: Message tags. You should pass at least {MessageTags.ORIGINAL} if the message is directly from bag.
+    :param filter: The filter to apply.
+    :param raw_output: Whether to output a raw message or a deserialized one.
+    :return: None if the message should be discarded, or a message, or a list of messages.
     """
     additional_msgs = []
     if filter.is_raw:
         # Convert to raw if decoded message was given
         try:
-            datatype, data, md5sum, _, pytype = msg
+            datatype, data, md5sum, pytype = msg
         except (ValueError, TypeError):
             datatype, data, md5sum, pytype = msg_to_raw(msg)
         if filter.consider_message(topic, datatype, stamp, connection_header, tags):
@@ -872,7 +900,7 @@ def filter_message(topic, msg, stamp, connection_header, tags, filter, raw_outpu
     else:
         # Decode the message if raw was given
         if not isinstance(msg, genpy.Message):
-            datatype, data, md5sum, _, pytype = msg
+            datatype, data, md5sum, pytype = msg
             msg = raw_to_msg(datatype, data, md5sum, pytype)
         if filter.consider_message(topic, msg.__class__._type, stamp, connection_header, tags):
             ret = filter(topic, msg, stamp, connection_header, tags)
