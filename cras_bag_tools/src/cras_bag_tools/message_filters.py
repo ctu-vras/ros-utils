@@ -2398,9 +2398,6 @@ class ExportMessageInfoToCSV(RawMessageFilter):
 
     def on_filtering_end(self):
         csv_file = self.resolve_file(self._csv_file)
-        if not os.path.exists(csv_file):
-            raise RuntimeError("File " + csv_file + " does not exist.")
-
         with open(csv_file, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=("stamp_sec", "stamp_nsec", "topic"))
             writer.writeheader()
