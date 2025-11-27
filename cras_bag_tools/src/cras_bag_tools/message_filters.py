@@ -2376,6 +2376,81 @@ class DropMessagesFromCSV(RawMessageFilter):
         return ", ".join(parts)
 
 
+class ExportMessageInfoToCSV(RawMessageFilter):
+    """Export message info in a CSV file with columns `stamp_sec`, `stamp_nsec` and `topic`."""
+
+    def __init__(self, csv_file, use_header_stamp=False, *args, **kwargs):
+        """
+        :param str csv_file: Path to the CSV.
+        :param bool use_header_stamp: If false, the receive timestamp will be used. Otherwise, header.stamp is used if
+                                      the message has a header (otherwise receive stamp is used).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportMessageInfoToCSV, self).__init__(*args, **kwargs)
+        self._csv_file = csv_file
+        self._use_header_stamp = use_header_stamp
+
+        self._message_info = []
+
+    def on_filtering_start(self):
+        self._message_info = []
+
+    def on_filtering_end(self):
+        csv_file = self.resolve_file(self._csv_file)
+        if not os.path.exists(csv_file):
+            raise RuntimeError("File " + csv_file + " does not exist.")
+
+        with open(csv_file, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=("stamp_sec", "stamp_nsec", "topic"))
+            writer.writeheader()
+            for row in self._message_info:
+                writer.writerow(row)
+
+        print("Saved CSV with", len(self._message_info), "rows:", csv_file)
+
+    def consider_message(self, topic, datatype, stamp, header, tags):
+        if not super(ExportMessageInfoToCSV, self).consider_message(topic, datatype, stamp, header, tags):
+            return False
+
+        # For increased efficiency, if using receive stamps, we never need to pass the message to filter()
+        if not self._use_header_stamp:
+            self._message_info.append({
+                'stamp_sec': stamp.secs,
+                'stamp_nsec': stamp.nsecs,
+                'topic': topic,
+            })
+            return False
+
+        # if using header.stamp, we have to look into the message
+        return True
+
+    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        # this is only called when self._use_header_stamp is True
+        msg_header = self.deserialize_header(data, pytype)
+        if msg_header is None:
+            msg_stamp = stamp
+        else:
+            msg_stamp = msg_header.stamp
+
+        self._message_info.append({
+            'stamp_sec': msg_stamp.secs,
+            'stamp_nsec': msg_stamp.nsecs,
+            'topic': topic,
+        })
+
+        return topic, datatype, data, md5sum, pytype, stamp, header, tags
+
+    def _str_params(self):
+        parts = []
+        parts.append('csv_file=%s' % (self._csv_file,))
+        parts.append('use_header_stamp=%r' % (self._use_header_stamp,))
+        parent_params = super(ExportMessageInfoToCSV, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class StampTwist(DeserializedMessageFilter):
     """Adjust some static transforms."""
 
