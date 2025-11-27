@@ -2341,7 +2341,7 @@ class DropMessagesFromCSV(RawMessageFilter):
                         if t not in self._to_drop:
                             self._to_drop[t] = set()
                         self._to_drop[t].add(stamp)
-            print("Loaded CSV with", sum(map(len, self._to_drop.values())) , "messages to drop:", csv_file)
+            print("Loaded CSV with", sum(map(len, self._to_drop.values())), "messages to drop:", csv_file)
 
         self._to_drop_topics = TopicSet(self._to_drop.keys())
         if not self._include_topics:
