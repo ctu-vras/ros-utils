@@ -494,7 +494,7 @@ class Copy(RawMessageFilter):
             copy_tags = copy_tags.union(self._add_tags)
         return [
             (topic, datatype, data, md5sum, pytype, stamp, header, tags),
-            (self.copy.get(topic, topic), datatype, data, md5sum, pytype, stamp, header, copy_tags),
+            (self.copy.get(topic, topic), (datatype, data, md5sum, pytype), stamp, header, copy_tags),
         ]
 
     def _str_params(self):
