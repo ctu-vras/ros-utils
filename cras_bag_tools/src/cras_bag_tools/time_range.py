@@ -33,7 +33,7 @@ class TimeRange(object):
 
     def __init__(self, start, end_or_duration):
         """
-        :param start: The start time of the time range.
+        :param start: The start time of the time range (can be both absolute and relative).
         :type start: genpy.Time or float
         :param end_or_duration: The end time of the time range, or a duration from start. If a rospy.Duration object is
                                 passed, it means relative duration from the given start time. If another type is passed
@@ -50,6 +50,7 @@ class TimeRange(object):
 
         self.abs_start = self.start
         self.abs_end = self.end
+        # If start is absolute and end is relative, treat end as duration instead of time point
         if is_time_relative(self.end) and not is_time_relative(self.start):
             self.end += genpy.Duration(self.start.secs, self.start.nsecs)
             self.abs_end = self.end

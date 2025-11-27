@@ -135,12 +135,16 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
             bags_paths[b] = resolve_path(bags_paths[b], bag_path)
         required_bags = set(bags_paths)
 
+        extra_bags_paths = set()
         if extra_bags is not None:
             if isinstance(extra_bags, STRING_TYPE):
                 extra = extra_bags.split(os.path.pathsep)
             else:
                 extra = list(extra_bags)
-            bags_paths += [resolve_path(b, bag_path) for b in extra]
+            for b in extra:
+                extra_bag_path = resolve_path(b, bag_path)
+                bags_paths.append(extra_bag_path)
+                extra_bags_paths.add(extra_bag_path)
 
         params_file = resolve_path(default_params_file, bag_path) if default_params_file is not None else None
         if params_file is None:
@@ -180,6 +184,13 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
         try:
             with TqdmMultiBag(bags_paths, skip_index=True, limit_to_first_bag=limit_to_first_bag) as bag:
                 print('- Size: %s' % (pretty_file_size(bag.size),))
+
+                ei = 0
+                for b in bag.bags:
+                    if b.filename in extra_bags_paths:
+                        bag.add_bag_tag(b, "extra_bag")
+                        bag.add_bag_tag(b, "extra_bag_" + str(ei))
+                        ei += 1
 
                 out_bag_path = resolve_path(out_format, bag_path)
                 out_bag_ok = True

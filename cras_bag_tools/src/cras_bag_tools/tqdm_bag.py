@@ -50,10 +50,11 @@ class TqdmMultiBag(MultiBag):
         return TqdmBag(b, mode, compression, options=options, skip_index=skip_index)
 
     def read_messages(self, topics=None, start_time=None, end_time=None, connection_filter=None, raw=False,
-                      return_connection_header=False):
+                      return_connection_header=False, return_bag_tags=False):
         msg_count = self.get_message_count(topics, start_time, end_time)
         basename = os.path.basename(self.bags[0].filename)
-        msg_iter = self._read_messages(topics, start_time, end_time, connection_filter, raw, return_connection_header)
+        msg_iter = self._read_messages(
+            topics, start_time, end_time, connection_filter, raw, return_connection_header,  return_bag_tags)
         return tqdm(msg_iter, total=msg_count, desc=basename, unit='msg')
 
 

@@ -3,6 +3,7 @@
 
 """Utilities for working with bag files."""
 
+import collections
 import copy
 import heapq
 import os
@@ -29,6 +30,18 @@ ConnectionInfo = rosbag.bag._ConnectionInfo  # noqa
 ConnectionEntry = rosbag.bag._IndexEntry  # noqa
 
 
+BagMessageWithTags = collections.namedtuple('BagMessageWithTags', rosbag.bag.BagMessage._fields + ('bag_tags',))
+BagMessageWithConnectionHeaderAndTags = collections.namedtuple(
+    'BagMessageWithConnectionHeaderAndTags', rosbag.bag.BagMessageWithConnectionHeader._fields + ('bag_tags',))
+
+ReadMessagesResult = Union[
+    rosbag.bag.BagMessage,
+    rosbag.bag.BagMessageWithConnectionHeader,
+    BagMessageWithTags,
+    BagMessageWithConnectionHeaderAndTags,
+]
+
+
 class BagWrapper(object):
     """Wrapper of already open rosbag.Bag that adds the ability to iterate messages with a TimeRanges filter."""
     def __init__(self, bag):  # type: (rosbag.Bag) -> None
@@ -40,6 +53,10 @@ class BagWrapper(object):
         self.bag._get_entries = self._get_entries
         self.bag._get_entries_reverse = self._get_entries_reverse
 
+        self._bag_tags = {"bag_0", "primary_bag"}
+        if bag.filename is not None:
+            self._bag_tags.add(bag.filename)
+
     def __del__(self):
         self.bag._get_entries = self._orig_get_entries
         self.bag._get_entries_reverse = self._orig_get_entries_reverse
@@ -47,10 +64,17 @@ class BagWrapper(object):
     def __getattr__(self, item):
         return getattr(self.bag, item)
 
-    def read_messages(self, topics, start_time, end_time, topic_filter, raw, return_connection_header=False):
+    def read_messages(self, topics, start_time, end_time, topic_filter, raw, return_connection_header=False,
+                      return_bag_tags=False):
         if topics is not None and len(topics) == 0:
             return
         for msg in self.bag.read_messages(topics, start_time, end_time, topic_filter, raw, return_connection_header):
+            if return_bag_tags:
+                if return_connection_header:
+                    msg = BagMessageWithConnectionHeaderAndTags(*msg, bag_tags=self._bag_tags)
+                else:
+                    msg = BagMessageWithTags(*msg, bag_tags=self._bag_tags)
+
             yield msg
 
     def _get_entries(self, connections=None, start_time=None, end_time=None):
@@ -117,7 +141,7 @@ class MultiBag(object):
                  limit_to_first_bag=False,  # type: bool
                  ):
         """
-        :param bag_files: The paths to bags to open (either a sequence of colon-separated string of paths).
+        :param bag_files: The paths to bags to open (either a sequence or a colon-separated string of paths).
         :param mode: Open mode (r/w/a).
         :param compression: Compression (used for write mode).
         :param options: Bag options (compression, chunk threshold, ...).
@@ -129,7 +153,20 @@ class MultiBag(object):
 
         if isinstance(bag_files, STRING_TYPE):
             bag_files = bag_files.split(os.path.pathsep)
+
         self.bags = [self.open_bag(b, compression, mode, options, skip_index) for b in bag_files]
+
+        self._bag_tags = dict((b, {"bag_" + str(i)}) for i, b in enumerate(self.bags))
+        for i, b in enumerate(self.bags):
+            if b.filename is not None:
+                self._bag_tags[b].add(b.filename)
+
+            if i == 0:
+                self._bag_tags[b].add("primary_bag")
+            else:
+                self._bag_tags[b].add("secondary_bag")
+                self._bag_tags[b].add("secondary_bag_" + str(i - 1))
+
         self._limit_to_first_bag = limit_to_first_bag
 
     def open_bag(self, b, compression, mode, options, skip_index):
@@ -157,6 +194,9 @@ class MultiBag(object):
         if hasattr(self, 'bags'):
             for b in self.bags:
                 b.close()
+
+    def add_bag_tag(self, bag, tag):
+        self._bag_tags[bag].add(tag)
 
     def get_message_count(self,
                           topic_filters=None,  # type: Optional[Sequence[STRING_TYPE]]
@@ -255,14 +295,22 @@ class MultiBag(object):
                        connection_filter=None,  # type: Optional[ConnectionFilter]
                        raw=False,  # type: bool
                        return_connection_header=False,  # type: bool
+                       return_bag_tags=False,  # type: bool
                        ):
-        # type: (...) -> Iterator[Union[rosbag.bag.BagMessage, rosbag.bag.BagMessageWithConnectionHeader]]
+        # type: (...) -> Iterator[ReadMessagesResult]
         if topics is not None and len(topics) == 0:
             return
         connections = dict(self._get_connections(topics, connection_filter, True))
         for bag, entry, _ in self._get_entries(connections, start_time, end_time):
             msg = bag._reader.seek_and_read_message_data_record(  # noqa
                 (entry.chunk_pos, entry.offset), raw, return_connection_header)
+
+            if return_bag_tags:
+                if return_connection_header:
+                    msg = BagMessageWithConnectionHeaderAndTags(*msg, bag_tags=self._bag_tags.get(bag, set()))
+                else:
+                    msg = BagMessageWithTags(*msg, bag_tags=self._bag_tags.get(bag, set()))
+
             yield msg
 
     def read_messages(self,
@@ -272,12 +320,17 @@ class MultiBag(object):
                       connection_filter=None,  # type: Optional[ConnectionFilter]
                       raw=False,  # type: bool
                       return_connection_header=False,  # type: bool
+                      return_bag_tags=False,  # type: bool
                       ):
-        # type: (...) -> Iterator[Union[rosbag.bag.BagMessage, rosbag.bag.BagMessageWithConnectionHeader]]
-        return self._read_messages(topics, start_time, end_time, connection_filter, raw, return_connection_header)
+        # type: (...) -> Iterator[ReadMessagesResult]
+        return self._read_messages(
+            topics, start_time, end_time, connection_filter, raw, return_connection_header, return_bag_tags)
 
 
 __all__ = [
     BagWrapper.__name__,
     MultiBag.__name__,
+    'BagMessageWithTags',
+    'BagMessageWithConnectionHeaderAndTags',
+    'ReadMessagesResult',
 ]

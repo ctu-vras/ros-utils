@@ -84,14 +84,14 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
 
     connection_filter = bag_filter.connection_filter
     _stamp = rospy.Time(0)
-    for topic, msg, stamp, connection_header in bags.read_messages(
+    for topic, msg, stamp, connection_header, bag_tags in bags.read_messages(
             topics=topics, start_time=time_ranges, end_time=extra_time_ranges, return_connection_header=True,
-            raw=bag_filter.is_raw, connection_filter=connection_filter):
+            raw=bag_filter.is_raw, connection_filter=connection_filter, return_bag_tags=True):
         if bag_filter.is_raw:
             # rosbag returns (connection_info.datatype, data, connection_info.md5sum, (chunk_pos, offset), msg_type)
             # convert it to our 4-tuple
             msg = (msg[0], msg[1], msg[2], msg[4])
-        heap.push((topic, msg, stamp, connection_header, {MessageTags.ORIGINAL}))
+        heap.push((topic, msg, stamp, connection_header, {MessageTags.ORIGINAL}.union(bag_tags)))
         # For each bag message, process the whole heap up to the stamp of the bag message
         while len(heap) > 0 and _stamp <= stamp:
             _topic, _msg, _stamp, _connection_header, tags = heap.pop()
