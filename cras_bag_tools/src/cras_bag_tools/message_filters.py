@@ -2160,15 +2160,18 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
-    """Adjust some static transforms."""
+    """Detect images from Basler cameras that are damaged by incomplete CompressionBeyond packets. These images are
+    mostly white noise with some flat parts. This is a statistical model that tries to find such images."""
 
-    def __init__(self, drop_damaged=True, min_correlation=0.7, max_entropy=0.75, output_csv=None, output_folder=None,
-                 add_tags=None, *args, **kwargs):
-        # type: (bool, float, float, STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
+    def __init__(self, drop_damaged=True, min_correlation=0.7, max_entropy=0.75, min_brightness=100, max_brightness=180,
+                 output_csv=None, output_folder=None, add_tags=None, *args, **kwargs):
+        # type: (bool, float, float, int, int, STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
         """
         :param drop_damaged: If true, damaged images will be dropped.
         :param min_correlation: Minimum cross-color-channel correlation of valid images.
         :param max_entropy: Maximum entropy of valid images.
+        :param min_brightness: Minimum average brightness of damaged images (usually is around 128).
+        :param max_brightness: Maximum average brightness of damaged images (usually is around 128).
         :param output_csv: Path to a CSV file where the info about damaged images should be saved.
         :param output_folder: Path to a folder where the damaged images should be saved.
         :param add_tags: Tags to be added to the modified TF messages.
@@ -2181,6 +2184,8 @@ class DetectDamagedBaslerImages(DeserializedMessageFilter):
         self._drop_damaged = drop_damaged
         self._min_correlation = min_correlation
         self._max_entropy = max_entropy
+        self._min_brightness = min_brightness
+        self._max_brightness = max_brightness
         self._output_csv = output_csv
         self._output_folder = output_folder
         self._add_tags = add_tags
@@ -2207,16 +2212,17 @@ class DetectDamagedBaslerImages(DeserializedMessageFilter):
     def on_filtering_end(self):
         if self._output_csv_resolved:
             with open(self._output_csv_resolved, 'w', newline='') as csvfile:
-                fieldnames = ['stamp_sec', 'stamp_nsec', 'topic', 'correlation', 'entropy']
+                fieldnames = ['stamp_sec', 'stamp_nsec', 'topic', 'correlation', 'entropy', 'brightness']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
-                for stamp, topic, correlation, entropy in self._damaged_images:
+                for stamp, topic, correlation, entropy, brightness in self._damaged_images:
                     writer.writerow({
                         'stamp_sec': stamp.secs,
                         'stamp_nsec': stamp.nsecs,
                         'topic': topic,
                         'correlation': correlation,
                         'entropy': entropy,
+                        'brightness': brightness,
                     })
                 print("Saved info about %i damaged images to %s" % (
                     len(self._damaged_images), self._output_csv_resolved))
@@ -2232,20 +2238,27 @@ class DetectDamagedBaslerImages(DeserializedMessageFilter):
 
             cv_img = self._cv.imgmsg_to_cv2(raw_img, desired_encoding='bgr8')
 
-        correlation = self.color_correlation(cv_img)
-        entropy = self.entropy(cv_img)
-
         is_damaged = False
-        if (correlation < self._min_correlation and entropy > self._max_entropy) or correlation < 0.5:
-            is_damaged = True
 
-        if is_damaged:
-            print("Damaged image:", topic, to_str(msg.header.stamp), correlation, entropy)
-            self._damaged_images.append((msg.header.stamp, topic, correlation, entropy))
-            if self._output_folder_resolved:
-                self.save_damaged_image(cv_img, msg.header.stamp, topic)
-            if self._drop_damaged:
-                return None
+        # First check if the average brightness is somewhere around the middle (it is white noise, so average color
+        # should be grey)
+        brightness = np.mean(cv_img)
+        if self._min_brightness <= brightness <= self._max_brightness:
+            correlation = self.color_correlation(cv_img)
+            if correlation < 0.5:
+                is_damaged = True
+            else:
+                entropy = self.entropy(cv_img)
+                if correlation < self._min_correlation and entropy > self._max_entropy:
+                    is_damaged = True
+
+            if is_damaged:
+                print("Damaged image:", topic, to_str(msg.header.stamp), correlation, entropy, brightness)
+                self._damaged_images.append((msg.header.stamp, topic, correlation, entropy, brightness))
+                if self._output_folder_resolved:
+                    self.save_damaged_image(cv_img, msg.header.stamp, topic)
+                if self._drop_damaged:
+                    return None
 
         return topic, msg, stamp, header, tags
 
@@ -2294,6 +2307,8 @@ class DetectDamagedBaslerImages(DeserializedMessageFilter):
         parts.append('drop_damaged=' + repr(self._drop_damaged))
         parts.append('min_correlation=' + str(self._min_correlation))
         parts.append('max_entropy=' + str(self._max_entropy))
+        parts.append('min_brightness=' + str(self._min_brightness))
+        parts.append('max_brightness=' + str(self._max_brightness))
         if self._output_csv:
             parts.append('output_csv=' + self._output_csv)
         if self._output_folder:
@@ -2307,12 +2322,13 @@ class DetectDamagedBaslerImages(DeserializedMessageFilter):
 class DropMessagesFromCSV(RawMessageFilter):
     """Drop messages listed in a CSV file with columns `stamp_sec`, `stamp_nsec` and `topic`."""
 
-    def __init__(self, csv_file, additional_topics=None, fail_if_file_not_found=True, *args, **kwargs):
+    def __init__(self, csv_file, additional_topics=None, fail_if_file_not_found=True, verbose=False, *args, **kwargs):
         """
         :param str csv_file: Path to the CSV.
         :param dict additional_topics: Dictionary mapping topics from CSV to a list of other topics whose messages
                                        should also be dropped if header.stamp is the same.
         :param bool fail_if_file_not_found: If true, the filter will fail if the CSV file is not found.
+        :param bool verbose: If True, every dropped message will be logged to console.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
         """
@@ -2320,6 +2336,7 @@ class DropMessagesFromCSV(RawMessageFilter):
         self._csv_file = csv_file
         self._additional_topics = additional_topics if additional_topics is not None else {}
         self._fail_if_file_not_found = fail_if_file_not_found
+        self._verbose = verbose
 
         self._to_drop = {}
         self._to_drop_topics = TopicSet()
@@ -2360,7 +2377,8 @@ class DropMessagesFromCSV(RawMessageFilter):
             msg_stamp = msg_header.stamp
 
         if msg_stamp in to_drop:
-            print("drop", topic, to_str(msg_stamp))
+            if self._verbose:
+                print("drop", topic, to_str(msg_stamp))
             return None
 
         return topic, datatype, data, md5sum, pytype, stamp, header, tags
