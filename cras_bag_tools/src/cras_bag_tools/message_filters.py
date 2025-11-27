@@ -433,6 +433,10 @@ class DeduplicateTF(DeserializedMessageFilter):
 
         return topic, msg, stamp, header, tags
 
+    def reset(self):
+        self._last_msgs.clear()
+        super(DeduplicateTF, self).reset()
+
     def _str_params(self):
         parts = []
         parts.append('max_ignored_duration=%r' % (self._max_ignored_duration,))
