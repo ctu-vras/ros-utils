@@ -796,21 +796,26 @@ class Transforms(DeserializedMessageFilter):
 class MergeInitialStaticTf(DeserializedMessageFilter):
     """Merge all /tf_static messages from the beginning of bag files into a single message."""
 
-    def __init__(self, delay=5.0, add_tags=None):
+    def __init__(self, delay=5.0, change_stamps=True, add_tags=None):
         super(MergeInitialStaticTf, self).__init__(include_topics=["/tf_static"], include_types=["tf2_msgs/TFMessage"])
         self.delay = rospy.Duration(delay)
+        self.start_time = None
         self.end_time = None
+        self.change_stamps = change_stamps
         self.merged_message_published = False
         self.merged_transforms = {}
         self.add_tags = add_tags
 
     def set_bag(self, bag):
         super(MergeInitialStaticTf, self).set_bag(bag)
-        start_time = rospy.Time(bag.get_start_time())
-        self.end_time = start_time + self.delay
+        self.start_time = rospy.Time(bag.get_start_time())
+        self.end_time = self.start_time + self.delay
         for topic, msg, stamp in bag.read_messages(
-                topics=['/tf_static'], start_time=start_time, end_time=self.end_time):
+                topics=['/tf_static'], start_time=self.start_time, end_time=self.end_time):
             for tf in msg.transforms:
+                if self.change_stamps:
+                    tf = copy.deepcopy(tf)
+                    tf.header.stamp = self.start_time
                 self.merged_transforms[tf.child_frame_id] = tf
 
     def consider_message(self, topic, datatype, stamp, header, tags):
@@ -825,16 +830,19 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
         merged_tags = tags_for_generated_msg(tags)
         if self.add_tags:
             merged_tags = merged_tags.union(self.add_tags)
+        if self.change_stamps:
+            stamp = self.start_time
         return topic, TFMessage(list(self.merged_transforms.values())), stamp, header, merged_tags
 
     def reset(self):
         self.merged_message_published = False
         self.merged_transforms.clear()
+        self.start_time = None
         self.end_time = None
         super(MergeInitialStaticTf, self).reset()
 
     def _str_params(self):
-        parts = ['delay=%f' % (self.delay.to_sec(),)]
+        parts = ['delay=%f' % (self.delay.to_sec(),), 'change_stamps=' + repr(self.change_stamps)]
         parent_params = super(MergeInitialStaticTf, self)._str_params()
         if len(parent_params) > 0:
             parts.append(parent_params)
