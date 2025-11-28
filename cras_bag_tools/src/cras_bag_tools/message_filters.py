@@ -868,6 +868,53 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
                 filters.append(MergeInitialStaticTf(args.merge_initial_static_tf))
 
 
+class CopyFirstTfToBagStart(NoMessageFilter):
+    """For dynamic TFs, copies the first transform of each frame to the very start of the bag."""
+
+    def __init__(self, max_delay=5.0, add_tags=None, tf_topic="/tf"):
+        super(CopyFirstTfToBagStart, self).__init__()
+
+        self.max_delay = rospy.Duration(max_delay)
+        self.start_time = None
+        self.max_time = None
+        self.tf_topic = tf_topic
+        self.merged_transforms = {}
+        self.add_tags = add_tags
+
+    def set_bag(self, bag):
+        super(CopyFirstTfToBagStart, self).set_bag(bag)
+        self.start_time = rospy.Time(bag.get_start_time())
+        self.max_time = self.start_time + self.max_delay
+        for topic, msg, stamp in bag.read_messages(
+                topics=[self.tf_topic], start_time=self.start_time, end_time=self.max_time):
+            for tf in msg.transforms:
+                if tf.child_frame_id in self.merged_transforms:
+                    continue
+                tf = copy.deepcopy(tf)
+                tf.header.stamp = self.start_time
+                self.merged_transforms[tf.child_frame_id] = tf
+
+    def extra_initial_messages(self):
+        merged_tags = {MessageTags.GENERATED}
+        if self.add_tags:
+            merged_tags = merged_tags.union(self.add_tags)
+        header = create_connection_header(self.tf_topic, TFMessage, latch=False)
+        return [(self.tf_topic, TFMessage(list(self.merged_transforms.values())), self.start_time, header, merged_tags)]
+
+    def reset(self):
+        self.merged_transforms.clear()
+        self.start_time = None
+        self.max_time = None
+        super(CopyFirstTfToBagStart, self).reset()
+
+    def _str_params(self):
+        parts = ['max_delay=%f' % (self.max_delay.to_sec(),), 'tf_topic=' + self.tf_topic]
+        parent_params = super(CopyFirstTfToBagStart, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class RemoveInvalidTF(DeserializedMessageFilter):
     """Remove all invalid TFs."""
 
