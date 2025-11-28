@@ -735,16 +735,17 @@ class Transforms(DeserializedMessageFilter):
                 if transform.header.frame_id in self.changed_parents:
                     if transform.child_frame_id in self.change[transform.header.frame_id]:
                         changes = self.change[transform.header.frame_id][transform.child_frame_id]
+                        t = transform.transform
                         if 'translation' in changes:
-                            transform.translation.x = float(changes['translation'].get('x', transform.translation.x))
-                            transform.translation.y = float(changes['translation'].get('y', transform.translation.y))
-                            transform.translation.z = float(changes['translation'].get('z', transform.translation.z))
+                            t.translation.x = float(changes['translation'].get('x', t.translation.x))
+                            t.translation.y = float(changes['translation'].get('y', t.translation.y))
+                            t.translation.z = float(changes['translation'].get('z', t.translation.z))
                             tags.add(MessageTags.CHANGED)
                         if 'rotation' in changes:
-                            transform.rotation.x = float(changes['rotation'].get('x', transform.rotation.x))
-                            transform.rotation.y = float(changes['rotation'].get('y', transform.rotation.y))
-                            transform.rotation.z = float(changes['rotation'].get('z', transform.rotation.z))
-                            transform.rotation.w = float(changes['rotation'].get('w', transform.rotation.w))
+                            t.rotation.x = float(changes['rotation'].get('x', t.rotation.x))
+                            t.rotation.y = float(changes['rotation'].get('y', t.rotation.y))
+                            t.rotation.z = float(changes['rotation'].get('z', t.rotation.z))
+                            t.rotation.w = float(changes['rotation'].get('w', t.rotation.w))
                             tags.add(MessageTags.CHANGED)
                         if 'frame_id' in changes:
                             transform.header.frame_id = changes['frame_id']
