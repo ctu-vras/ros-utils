@@ -7,6 +7,7 @@ import collections
 import copy
 import heapq
 import os
+import re
 from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, Tuple, Union
 
 import genpy
@@ -15,6 +16,9 @@ import rosbag
 from cras.string_utils import STRING_TYPE
 
 from .time_range import TimeRanges
+
+
+BAG_NAME_PATTERN = re.compile(r'^(.*)_([12]\d{3}-[012]\d-[0123]\d-[012]\d-[0-6]\d-[0-6]\d).?(.*)$')
 
 
 ConnectionFilter = Callable[
@@ -56,6 +60,22 @@ class BagWrapper(object):
         self._bag_tags = {"bag_0", "primary_bag"}
         if bag.filename is not None:
             self._bag_tags.add(bag.filename)
+
+            dirname, basename = os.path.split(os.path.abspath(bag.filename))
+            name, ext = os.path.splitext(basename)
+
+            self._bag_tags.add(basename)
+
+            self._bag_tags.add('dirname:' + dirname)
+            self._bag_tags.add('basename:' + basename)
+            self._bag_tags.add('name:' + name)
+
+            match = BAG_NAME_PATTERN.match(name)
+            if match is not None:
+                self._bag_tags.add('bag_prefix:' + match.group(1))
+                self._bag_tags.add('bag_stamp:' + match.group(2))
+                self._bag_tags.add('bag_suffix:' + match.group(3))
+                self._bag_tags.add('bag_base:' + match.group(1) + '_' + match.group(2))
 
     def __del__(self):
         self.bag._get_entries = self._orig_get_entries
@@ -160,6 +180,22 @@ class MultiBag(object):
         for i, b in enumerate(self.bags):
             if b.filename is not None:
                 self._bag_tags[b].add(b.filename)
+
+                dirname, basename = os.path.split(os.path.abspath(b.filename))
+                name, ext = os.path.splitext(basename)
+
+                self._bag_tags[b].add(basename)
+
+                self._bag_tags[b].add('dirname:' + dirname)
+                self._bag_tags[b].add('basename:' + basename)
+                self._bag_tags[b].add('name:' + name)
+
+                match = BAG_NAME_PATTERN.match(name)
+                if match is not None:
+                    self._bag_tags[b].add('bag_prefix:' + match.group(1))
+                    self._bag_tags[b].add('bag_stamp:' + match.group(2))
+                    self._bag_tags[b].add('bag_suffix:' + match.group(3))
+                    self._bag_tags[b].add('bag_base:' + match.group(1) + '_' + match.group(2))
 
             if i == 0:
                 self._bag_tags[b].add("primary_bag")

@@ -21,16 +21,13 @@ from cras.plugin_utils import get_plugin_implementations
 from cras.string_utils import to_str, STRING_TYPE
 from std_msgs.msg import Header
 
-from .bag_utils import MultiBag
+from .bag_utils import MultiBag, BAG_NAME_PATTERN
 from .time_range import TimeRange, TimeRanges
 from .topic_set import TopicSet
 
 
 def is_sequence(o):
     return isinstance(o, (list, tuple))
-
-
-BAG_NAME_PATTERN = re.compile(r'^(.*)_([12]\d{3}-[012]\d-[0123]\d-[012]\d-[0-6]\d-[0-6]\d).?(.*)$')
 
 
 loaded_filters = None
