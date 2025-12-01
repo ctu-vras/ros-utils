@@ -163,8 +163,10 @@ class MessageFilter(object):
         :param list exclude_topics: If nonempty, the filter will skip these topics (but pass them further).
         :param list include_types: If nonempty, the filter will only work on these message types.
         :param list exclude_types: If nonempty, the filter will skip these message types (but pass them further).
-        :param rospy.Time min_stamp: If set, the filter will only work on messages after this timestamp.
-        :param rospy.Time max_stamp: If set, the filter will only work on messages before this timestamp.
+        :param min_stamp: If set, the filter will only work on messages after this timestamp.
+        :type min_stamp: rospy.Time or float
+        :param max_stamp: If set, the filter will only work on messages before this timestamp.
+        :type max_stamp: rospy.Time or float
         :param include_time_ranges: Time ranges that specify which regions of the bag should be processed.
                                     List of pairs (start, end_or_duration) or a TimeRanges object.
         :type include_time_ranges: list or TimeRanges
@@ -188,9 +190,9 @@ class MessageFilter(object):
         """If nonempty, the filter will only work on these message types."""
         self._exclude_types = TopicSet(exclude_types)
         """If nonempty, the filter will skip these message types (but pass them further)."""
-        self._min_stamp = min_stamp
+        self._min_stamp = rospy.Time(min_stamp) if min_stamp is not None else None
         """If set, the filter will only work on messages after this timestamp."""
-        self._max_stamp = max_stamp
+        self._max_stamp = rospy.Time(max_stamp) if max_stamp is not None else None
         """If set, the filter will only work on messages before this timestamp."""
         self._bag = None
         """If this filter is working on a bag, it should be set here before the filter starts being used on the bag."""
