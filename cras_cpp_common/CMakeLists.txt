@@ -3,6 +3,8 @@ cmake_policy(SET CMP0022 NEW)
 
 project(cras_cpp_common)
 
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -12,25 +14,17 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-try_compile(HAS_FROM_CHARS_FLOAT
-  ${CMAKE_BINARY_DIR}/from_chars ${CMAKE_CURRENT_SOURCE_DIR}/cmake/from_chars_try_compile.cpp
-  CXX_STANDARD 17)
 try_compile(HAS_DESIGNATED_INITIALIZERS
   ${CMAKE_BINARY_DIR}/designated_initializers ${CMAKE_CURRENT_SOURCE_DIR}/cmake/designated_initializers_try_compile.cpp
-  CXX_STANDARD 17)
+  CXX_STANDARD 20)
 
 set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
 add_library(cras_expected INTERFACE)
 target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
-target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tl/expected.hpp>)
 
 add_library(cras_functional INTERFACE)
 target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/functional.hpp>)
-
-add_library(cras_span INTERFACE)
-target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/span.hpp>)
-target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tcb/span.hpp>)
 
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
@@ -109,16 +103,12 @@ target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/m
 
 add_library(cras_string_utils SHARED
   src/string_utils.cpp
-  src/string_utils/from_chars.cpp
   #src/string_utils/ros.cpp
 )
 target_include_directories(cras_string_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_string_utils PUBLIC cras_type_traits)
-if(HAS_FROM_CHARS_FLOAT)
-  target_compile_definitions(cras_string_utils PRIVATE HAS_FROM_CHARS_FLOAT=1)
-endif()
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
@@ -370,11 +360,7 @@ if(BUILD_TESTING)
     src/urdf_utils.cpp
     test/*
   )
-  cras_lint_cpp(EXCLUDE
-    include/${PROJECT_NAME}/external/fast_float/*
-    include/${PROJECT_NAME}/external/tcb/*
-    include/${PROJECT_NAME}/external/tl/*
-  )
+  cras_lint_cpp()
 #
 #  # GTEST tests (no rosmaster required)
 #
@@ -573,4 +559,5 @@ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp)
 ament_export_dependencies(rclcpp_components)
 ament_export_dependencies(Threads)
+
 ament_package()

@@ -6,19 +6,11 @@
  * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#if __has_include(<charconv>)
-#define HAS_FROM_CHARS 1
-#include <charconv>
-#else
-#define HAS_FROM_CHARS 0
-#include <cerrno>
-#include <cstdlib>
-#endif
-
 #include <iconv.h>
 
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <clocale>
 #include <cmath>
 #include <limits>
@@ -217,42 +209,6 @@ std::string toLower(const std::string& str)
   return result;
 }
 
-#if HAS_FROM_CHARS == 0
-template<typename T>
-inline void strtoint(const char* str, char** str_end, int base, T& result)
-{
-  auto tmp = std::strtol(str, str_end, base);
-  if (tmp < std::numeric_limits<T>::min() || tmp > std::numeric_limits<T>::max())
-    errno = ERANGE;
-  else
-    result = static_cast<T>(tmp);
-}
-
-template<>
-inline void strtoint(const char* str, char** str_end, int base, uint32_t& result)
-{
-  const auto tmp = std::strtoul(str, str_end, base);
-  if (str[0] == '-' || tmp > std::numeric_limits<uint32_t>::max())
-    errno = ERANGE;
-  else
-    result = static_cast<uint32_t>(tmp);
-}
-
-template<>
-inline void strtoint(const char* str, char** str_end, int base, int64_t& result)
-{
-  result = std::strtoll(str, str_end, base);
-}
-
-template<>
-inline void strtoint(const char* str, char** str_end, int base, uint64_t& result)
-{
-  result = std::strtoull(str, str_end, base);
-  if (str[0] == '-')
-    errno = ERANGE;
-}
-#endif
-
 template<typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
 inline T parseIntegralNumber(const std::string& string, const uint8_t base)
 {
@@ -273,23 +229,7 @@ inline T parseIntegralNumber(const std::string& string, const uint8_t base)
     cras::stripLeading(cleanString, '0');
   }
 
-#if HAS_FROM_CHARS == 1
   auto [ptr, ec] = std::from_chars(cleanString.data(), cleanString.data() + cleanString.size(), result, base);
-#else
-  char* ptr;
-  ::std::errc ec{};
-  errno = 0;
-  strtoint(cleanString.data(), &ptr, base, result);
-  if (errno == ERANGE)
-  {
-    ec = std::errc::result_out_of_range;
-  }
-  else if (errno != 0)
-  {
-    ec = std::errc::invalid_argument;
-  }
-#endif
-
   if (ec == std::errc())
   {
     if (ptr == cleanString.data() + cleanString.size())
