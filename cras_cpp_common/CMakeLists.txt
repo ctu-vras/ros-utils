@@ -23,9 +23,6 @@ set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 add_library(cras_expected INTERFACE)
 target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
 
-add_library(cras_functional INTERFACE)
-target_sources(cras_functional INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/functional.hpp>)
-
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
 
@@ -106,14 +103,12 @@ add_library(cras_string_utils SHARED
   #src/string_utils/ros.cpp
 )
 target_include_directories(cras_string_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_string_utils PUBLIC cras_type_traits)
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_thread_utils
   PRIVATE cras_string_utils Threads::Threads)
 
@@ -269,7 +264,6 @@ install(TARGETS
 #  cras_filter_base
 #  cras_filter_chain
 #  cras_filter_chain_nodelet
-  cras_functional
   cras_literal_sz
 #  cras_log_utils
   cras_math_utils
