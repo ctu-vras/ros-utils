@@ -16,7 +16,7 @@ function(cras_lint_common)
   endif()
 
   if(NOT ARG_SKIP_XMLLINT)
-    file(GLOB_RECURSE _source_files FOLLOW_SYMLINKS "*.xml")
+    file(GLOB_RECURSE _source_files FOLLOW_SYMLINKS "*.xml" "*.launch")
     if(_source_files)
       find_package(ament_cmake_xmllint REQUIRED)
       message(STATUS "Added test 'xmllint' to check XML markup files")
