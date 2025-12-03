@@ -1,3 +1,0 @@
-- builder: doxygen
-  file_patterns: '*.h *.hpp *.hh *.dox'
-  exclude_patterns: '*/external/* */cmake-build-*/* */deprecated/* */impl/*'
