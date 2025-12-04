@@ -13,6 +13,7 @@
 #include <cstdarg>
 #include <cstdint>
 #include <cstring>
+#include <format>
 #include <functional>
 #include <list>
 #include <map>
@@ -222,85 +223,6 @@ bool contains(const ::std::string& str, const ::std::string& needle);
 ::std::string toLower(const ::std::string& str);
 
 /**
- * printf-like support working with std::string and automatically managing memory.
- * \param[in] format The printf-like format string.
- * \param[in] args Arguments of the format string.
- * \return The formatted string.
- */
-__attribute__((format(printf, 1, 0)))
-inline ::std::string format(const char* format, ::va_list args)
-{
-  constexpr size_t BUF_LEN = 1024u;
-  char buf[BUF_LEN];
-
-  ::va_list argsCopy;
-  ::va_copy(argsCopy, args);
-
-  const auto len = ::vsnprintf(buf, BUF_LEN, format, args);
-
-  ::std::string result;
-  if (len < 0)
-  {
-    throw ::std::runtime_error(::std::string("Error formatting string '") + format + "': " + ::strerror(errno));
-  }
-  else if (len < BUF_LEN)
-  {
-    result = buf;
-  }
-  else
-  {
-    char* buf2 = new char[len + 1];
-    ::vsnprintf(buf2, len + 1, format, argsCopy);
-    result = buf2;
-    delete[] buf2;
-  }
-  ::va_end(argsCopy);
-  return result;
-}
-
-/**
- * printf-like support working with std::string and automatically managing memory.
- * \param[in] format The printf-like format string.
- * \param[in] ... Arguments of the format string.
- * \return The formatted string.
- */
-__attribute__((format(printf, 1, 2)))
-inline ::std::string format(const char* format, ...)
-{
-  ::va_list(args);
-  ::va_start(args, format);
-  const auto result = ::cras::format(format, args);
-  ::va_end(args);
-  return result;
-}
-
-/**
- * printf-like support working with std::string and automatically managing memory.
- * \param[in] format The printf-like format string.
- * \param[in] ... Arguments of the format string.
- * \return The formatted string.
- */
-inline ::std::string format(::std::string format, ...)
-{
-  ::va_list(args);
-  ::va_start(args, format);
-  const auto result = ::cras::format(format.c_str(), args);
-  ::va_end(args);
-  return result;
-}
-
-/**
- * printf-like support working with std::string and automatically managing memory.
- * \param[in] format The printf-like format string.
- * \param[in] args Arguments of the format string.
- * \return The formatted string.
- */
-inline ::std::string format(::std::string format, ::va_list args)
-{
-  return ::cras::format(format.c_str(), args);
-}
-
-/**
  * \brief Put `s` in double quotes if `T` is a string type (std::string or char*).
  * \tparam T The type to check.
  * \param[in] s The input string.
@@ -353,17 +275,17 @@ template<typename T> using ToStringFn = ::std::function<::std::string(const T&)>
 
 inline ::std::string to_string(const double& value)
 {
-  return ::cras::format("%g", value);
+  return ::std::format("{:g}", value);
 }
 
 inline ::std::string to_string(const float& value)
 {
-  return ::cras::format("%g", value);
+  return ::std::format("{:g}", value);
 }
 
 inline ::std::string to_string(const long double& value)
 {
-  return ::cras::format("%Lg", value);
+  return ::std::format("{:Lg}", value);
 }
 
 inline ::std::string to_string(const char* value)
@@ -404,13 +326,13 @@ inline ::std::string to_string(const ::std::string& value)
 #include "cras_cpp_common/string_utils/eigen.hpp"
 #endif
 
-// #if __has_include(<tf2/LinearMath/Vector3.h>)
-// #include "cras_cpp_common/string_utils/tf2.hpp"
-// #endif
+#if __has_include(<tf2/LinearMath/Vector3.hpp>)
+#include "cras_cpp_common/string_utils/tf2.hpp"
+#endif
 
-// #if __has_include(<ros/ros.h>)
-// #include "cras_cpp_common/string_utils/ros.hpp"
-// #endif
+#if __has_include(<rclcpp/time.hpp>)
+#include "cras_cpp_common/string_utils/rclcpp.hpp"
+#endif
 
 namespace cras
 {

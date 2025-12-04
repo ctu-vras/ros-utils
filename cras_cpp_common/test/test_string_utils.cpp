@@ -14,19 +14,41 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include <std_msgs/Bool.h>
-#include <std_msgs/Header.h>
-#include <std_msgs/MultiArrayLayout.h>
+#include <Eigen/Core>
 
 #include <cras_cpp_common/string_utils.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/header.hpp>
+#include <std_msgs/msg/multi_array_layout.hpp>
+#include <rclcpp/exceptions/exceptions.hpp>
+#include <rclcpp/time.hpp>
+#include <tf2/LinearMath/Vector3.hpp>
 
 using namespace cras;
+
+rclcpp::Clock::SharedPtr createTestClock()
+{
+  const auto clock = rclcpp::Clock::make_shared(RCL_ROS_TIME);
+  const auto ret = rcl_enable_ros_time_override(clock->get_clock_handle());
+  if (ret != RMW_RET_OK)
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Error creating clock");
+  return clock;
+}
+
+void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time)
+{
+  const auto ret = rcl_set_ros_time_override(
+    clock->get_clock_handle(), cras::convertTime<rcl_time_point_value_t>(time));
+  if (ret != RMW_RET_OK)
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Error setting time");
+}
 
 TEST(StringUtils, StripLeadingInplace)  // NOLINT
 {
@@ -184,49 +206,40 @@ TEST(StringUtils, ToStringBasic)  // NOLINT
 
 TEST(StringUtils, ToStringRos)  // NOLINT
 {
-  EXPECT_EQ("1.500000000", to_string(ros::Time(1, 500000000)));
-  EXPECT_EQ("1.500000000", to_string(ros::WallTime(1, 500000000)));
-  EXPECT_EQ("1.500000000", to_string(ros::SteadyTime(1, 500000000)));
-  EXPECT_EQ("1.500000000", to_string(ros::Duration(1, 500000000)));
-  EXPECT_EQ("1.500000000", to_string(ros::WallDuration(1, 500000000)));
+  EXPECT_EQ("1.500000000", to_string(rclcpp::Time(1, 500000000)));
+  EXPECT_EQ("1.500000000", to_string(rclcpp::Duration(1, 500000000)));
 
-  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::Time(1, 500000000)));
-  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::WallTime(1, 500000000)));
-  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(ros::SteadyTime(1, 500000000)));
+  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(rclcpp::Time(1, 500000000)));
 
-  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::Time(1731505444, 0)));
-  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::WallTime(1731505444, 0)));
-  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(ros::SteadyTime(1731505444, 0)));
+  EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(rclcpp::Time(1731505444, 0)));
 
-  std_msgs::Bool b;
-  EXPECT_EQ("data: 0", to_string(b));
+  std_msgs::msg::Bool b;
+  EXPECT_EQ("data: false", to_string(b));
   b.data = true;
-  EXPECT_EQ("data: 1", to_string(b));
+  EXPECT_EQ("data: true", to_string(b));
 
-  std_msgs::Header h;
-  EXPECT_EQ("seq: 0, stamp: 0.000000000, frame_id: ", to_string(h));
+  std_msgs::msg::Header h;
+  EXPECT_EQ("stamp:,   sec: 0,   nanosec: 0, frame_id: \"\"", to_string(h));
   h.frame_id = "cras";
-  EXPECT_EQ("seq: 0, stamp: 0.000000000, frame_id: cras", to_string(h));
+  EXPECT_EQ("stamp:,   sec: 0,   nanosec: 0, frame_id: \"cras\"", to_string(h));
   h.stamp.sec = 42;
-  h.stamp.nsec = 42;
-  EXPECT_EQ("seq: 0, stamp: 42.000000042, frame_id: cras", to_string(h));
-  h.seq = 42;
-  EXPECT_EQ("seq: 42, stamp: 42.000000042, frame_id: cras", to_string(h));
+  h.stamp.nanosec = 42;
+  EXPECT_EQ("stamp:,   sec: 42,   nanosec: 42, frame_id: \"cras\"", to_string(h));
 
-  std_msgs::MultiArrayLayout m;
-  EXPECT_EQ("dim[], data_offset: 0", to_string(m));
+  std_msgs::msg::MultiArrayLayout m;
+  EXPECT_EQ("dim: [], data_offset: 0", to_string(m));
   m.dim.resize(1);
-  EXPECT_EQ("dim[],   dim[0]: ,     label: ,     size: 0,     stride: 0, data_offset: 0", to_string(m));
+  EXPECT_EQ("dim:, -,   label: \"\",   size: 0,   stride: 0, data_offset: 0", to_string(m));
   m.dim[0].size = 42;
   m.dim[0].label = "cras";
   m.dim[0].stride = 42;
-  EXPECT_EQ("dim[],   dim[0]: ,     label: cras,     size: 42,     stride: 42, data_offset: 0", to_string(m));
+  EXPECT_EQ("dim:, -,   label: \"cras\",   size: 42,   stride: 42, data_offset: 0", to_string(m));
   m.dim.resize(2);
   m.dim[1].size = 43;
   m.dim[1].label = "cras2";
   m.dim[1].stride = 44;
-  EXPECT_EQ("dim[],   dim[0]: ,     label: cras,     size: 42,     stride: 42,   "
-                     "dim[1]: ,     label: cras2,     size: 43,     stride: 44, data_offset: 0", to_string(m));
+  EXPECT_EQ("dim:, -,   label: \"cras\",   size: 42,   stride: 42, -,   label: \"cras2\","
+            "   size: 43,   stride: 44, data_offset: 0", to_string(m));
 }
 
 TEST(StringUtils, ToStringEigen)  // NOLINT
@@ -261,58 +274,6 @@ TEST(StringUtils, ToStringTF2)  // NOLINT
   EXPECT_EQ("Transform(t=[0.000000, 0.000000, 0.000000], "
             "r=[x=0.000000, y=0.000000, z=0.000000, w=1.000000 (r=0.000, p=0.000, y=0.000)])",
             replace(to_string(tf2::Transform(tf2::Quaternion(0, 0, 0, 1))), "-0", "0"));
-}
-
-TEST(StringUtils, ToStringXmlRpcValue)  // NOLINT
-{
-  EXPECT_EQ("<value><double>2</double></value>", to_string(XmlRpc::XmlRpcValue(2.0)));
-  EXPECT_EQ("<value><i4>2</i4></value>", to_string(XmlRpc::XmlRpcValue(2)));
-  EXPECT_EQ("<value><boolean>0</boolean></value>", to_string(XmlRpc::XmlRpcValue(false)));
-  EXPECT_EQ("<value><boolean>1</boolean></value>", to_string(XmlRpc::XmlRpcValue(true)));
-  EXPECT_EQ("<value>aa</value>", to_string(XmlRpc::XmlRpcValue("aa")));
-
-  {
-    tm time;
-    time.tm_hour = 1;
-    time.tm_min = 2;
-    time.tm_sec = 3;
-    time.tm_mday = 4;
-    time.tm_mon = 5;
-    time.tm_year = 2006;
-    EXPECT_EQ("<value><dateTime.iso8601>20060504T01:02:03</dateTime.iso8601></value>",
-      to_string(XmlRpc::XmlRpcValue(&time)));
-  }
-  {
-    int offset = 0;
-    EXPECT_EQ("<value><double>2</double></value>",
-      to_string(XmlRpc::XmlRpcValue("<value><double>2.0</double></value>", &offset)));
-  }
-  {
-    char bytes[] = "123";
-    EXPECT_EQ("<value><base64>MTIz\n</base64></value>", to_string(XmlRpc::XmlRpcValue(bytes, 3)));
-  }
-  {
-    XmlRpc::XmlRpcValue v;
-    v[0] = 1;
-    v[1] = 2;
-    v[2] = 3;
-    EXPECT_EQ("<value><array><data>"
-                "<value><i4>1</i4></value>"
-                "<value><i4>2</i4></value>"
-                "<value><i4>3</i4></value>"
-              "</data></array></value>", to_string(v));
-  }
-  {
-    XmlRpc::XmlRpcValue v;
-    v["0"] = 1;
-    v["1"] = 2;
-    v["2"] = 3;
-    EXPECT_EQ("<value><struct>"
-                "<member><name>0</name><value><i4>1</i4></value></member>"
-                "<member><name>1</name><value><i4>2</i4></value></member>"
-                "<member><name>2</name><value><i4>3</i4></value></member>"
-              "</struct></value>", to_string(v));
-  }
 }
 
 TEST(StringUtils, StartsWith)  // NOLINT
@@ -589,70 +550,6 @@ TEST(StringUtils, ToLower)  // NOLINT
 //  EXPECT_EQ("ěščřžýáíéďťňúů", cras::toLower("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ"));  // not yet working
 }
 
-__attribute__((__format__(__printf__, 2, 3)))
-void test_va_format(const std::string& res, const char* format, ...)
-{
-  va_list(args);
-  va_start(args, format);
-  EXPECT_EQ(res, cras::format(format, args));
-  va_end(args);
-}
-
-TEST(StringUtils, FormatVaList)  // NOLINT
-{
-  {SCOPED_TRACE("1"); test_va_format("cras", "%s", "cras"); }
-  {SCOPED_TRACE("2"); test_va_format("-42", "%i", -42); }
-  {SCOPED_TRACE("3"); test_va_format("42", "%u", 42); }
-  {SCOPED_TRACE("4"); test_va_format("42", "%g", 42.0); }
-  {SCOPED_TRACE("5"); test_va_format("42.000000", "%f", 42.0); }
-  {SCOPED_TRACE("6"); test_va_format("3.14", "%g", 3.14); }
-  {SCOPED_TRACE("7"); test_va_format("cras -42 42 3.14", "%s %i %u %g", "cras", -42, 42, 3.14); }
-
-  std::string longString(300000, '*');  // generates a string of length 300.000 asterisks
-  {SCOPED_TRACE("8"); test_va_format(longString, "%s", longString.c_str()); }
-
-  // Try to make vsnprintf fail with error. This is an attempt at passing it an invalid multibyte character.
-  // However, not all systems must have such character. That's why we need to first check whether the conversion
-  // of our chosen character WEOF is actually invalid on the running system.
-  {
-    TempLocale l(LC_ALL, "C");
-    std::mbstate_t state;
-    char tmp[MB_LEN_MAX];
-    if (wcrtomb(tmp, WEOF, &state) == static_cast<size_t>(-1))
-      EXPECT_THROW(cras::format("%lc", WEOF), std::runtime_error);
-  }
-}
-
-TEST(StringUtils, FormatCharPtr)  // NOLINT
-{
-  EXPECT_EQ("cras", cras::format("%s", "cras"));
-  EXPECT_EQ("-42", cras::format("%i", -42));
-  EXPECT_EQ("42", cras::format("%u", 42));
-  EXPECT_EQ("42", cras::format("%g", 42.0));
-  EXPECT_EQ("42.000000", cras::format("%f", 42.0));
-  EXPECT_EQ("3.14", cras::format("%g", 3.14));
-  EXPECT_EQ("cras -42 42 3.14", cras::format("%s %i %u %g", "cras", -42, 42, 3.14));
-
-  std::string longString(300000, '*');  // generates a string of length 300.000 asterisks
-  EXPECT_EQ(longString, cras::format("%s", longString.c_str()));
-}
-
-TEST(StringUtils, FormatString)  // NOLINT
-{
-  using s = std::string;
-
-  EXPECT_EQ("cras", cras::format(s("%s"), "cras"));
-  EXPECT_EQ("-42", cras::format(s("%i"), -42));
-  EXPECT_EQ("42", cras::format(s("%u"), 42));
-  EXPECT_EQ("42", cras::format(s("%g"), 42.0));
-  EXPECT_EQ("42.000000", cras::format(s("%f"), 42.0));
-  EXPECT_EQ("3.14", cras::format(s("%g"), 3.14));
-  EXPECT_EQ("cras -42 42 3.14", cras::format(s("%s %i %u %g"), "cras", -42, 42, 3.14));
-
-  std::string longString(300000, '*');  // generates a string of length 300.000 asterisks
-  EXPECT_EQ(longString, cras::format(s("%s"), longString.c_str()));
-}
-
 TEST(StringUtils, QuoteIfStringType)  // NOLINT
 {
   const std::string s("a");
@@ -663,7 +560,7 @@ TEST(StringUtils, QuoteIfStringType)  // NOLINT
   EXPECT_EQ("cras", cras::quoteIfStringType("cras", 1));
   EXPECT_EQ("cras", cras::quoteIfStringType("cras", 1.0));
   EXPECT_EQ("cras", cras::quoteIfStringType("cras", false));
-  EXPECT_EQ("cras", cras::quoteIfStringType("cras", ros::DURATION_MAX));
+  EXPECT_EQ("cras", cras::quoteIfStringType("cras", rclcpp::Duration::max()));
 }
 
 TEST(StringUtils, Join)  // NOLINT
@@ -676,7 +573,7 @@ TEST(StringUtils, Join)  // NOLINT
   EXPECT_EQ("1,2,3", cras::join(std::list<int>({1, 2, 3}), ","));
   EXPECT_EQ("1,2,3", cras::join(std::set<int>({1, 2, 3}), ","));
   EXPECT_EQ("abc-def-ghi", cras::join(std::vector<std::string>({"abc", "def", "ghi"}), "-"));
-  EXPECT_EQ("0.000000000;1.000000000", cras::join(std::vector<ros::Duration>({{0, 0}, {1, 0}}), ";"));
+  EXPECT_EQ("0.000000000;1.000000000", cras::join(std::vector<rclcpp::Duration>({{0, 0}, {1, 0}}), ";"));
 }
 
 TEST(StringUtils, ParseInt8)  // NOLINT
@@ -1379,32 +1276,28 @@ TEST(StringUtils, ParseDouble)  // NOLINT
 
 TEST(StringUtils, ParseTimezoneOffset)  // NOLINT
 {
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("+000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("-000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("+0000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("-0000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("0000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset("Z"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseTimezoneOffset(""));
-  EXPECT_EQ(ros::WallDuration(0, 0), cras::parseTimezoneOffset<ros::WallDuration>(""));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("+000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("-000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("+0000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("-0000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("0000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset("Z"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseTimezoneOffset(""));
 
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+120"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+0120"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+1:20"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+01:20"));
-  EXPECT_EQ(ros::WallDuration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("+01:20"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+120"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+0120"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+1:20"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("+01:20"));
 
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("120"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("0120"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("1:20"));
-  EXPECT_EQ(ros::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("01:20"));
-  EXPECT_EQ(ros::WallDuration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("01:20"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("120"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("0120"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("1:20"));
+  EXPECT_EQ(rclcpp::Duration(1 * 3600 + 20 * 60, 0), cras::parseTimezoneOffset("01:20"));
 
-  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-120"));
-  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-0120"));
-  EXPECT_EQ(ros::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-1:20"));
-  EXPECT_EQ(ros::WallDuration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset<ros::WallDuration>("-01:20"));
+  EXPECT_EQ(rclcpp::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-120"));
+  EXPECT_EQ(rclcpp::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-0120"));
+  EXPECT_EQ(rclcpp::Duration(-1 * 3600 - 20 * 60, 0), cras::parseTimezoneOffset("-1:20"));
 
   EXPECT_THROW(cras::parseTimezoneOffset("+0"), std::invalid_argument);
   EXPECT_THROW(cras::parseTimezoneOffset("-0"), std::invalid_argument);
@@ -1423,69 +1316,57 @@ TEST(StringUtils, ParseTime)  // NOLINT
   const int HOUR = {60 * MINUTE};
   const int DAY = {24 * HOUR};
 
-  EXPECT_EQ(ros::Time(0, 0), cras::parseTime("0:0:0"));
-  EXPECT_EQ(ros::Time(0, 0), cras::parseTime("00:00:00"));
-  EXPECT_EQ(ros::Time(0, 0), cras::parseTime("000000"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("2:4:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02-04-50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02/04/50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02_04_50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450+0000"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("030450+0100"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("010450-0100"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+0130"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+130"));
-  EXPECT_NE(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("00:01:01 020450"));  // Year 00 is read as 2000
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 020450"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01t02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01_02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01-02:04:50"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 04:04:50+0200"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50Z"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:04:50-0200"));
-  EXPECT_EQ(ros::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T96:04:50-0200"));
-  EXPECT_EQ(ros::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:5764:50-0200"));
-  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37"));
-  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37Z"));
-  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37+00:00"));
-  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T17:22:37+01:00"));
-  EXPECT_EQ(ros::Time(1730478157, 0), cras::parseTime("2024-11-01T15:22:37-01:00"));
-  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("16:22:30", cras::nullopt, ros::Time(1730478157, 0)));
-  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("18:22:30", ros::Duration(2 * HOUR, 0), {1730478157, 0}));
-  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("14:22:30", ros::Duration(-2 * HOUR, 0), {1730478157, 0}));
-  EXPECT_EQ(ros::Time(1730478150, 0), cras::parseTime("2024-11-01 16:22:30", cras::nullopt, {1111111111, 0}));
+  EXPECT_EQ(rclcpp::Time(0, 0), cras::parseTime("0:0:0"));
+  EXPECT_EQ(rclcpp::Time(0, 0), cras::parseTime("00:00:00"));
+  EXPECT_EQ(rclcpp::Time(0, 0), cras::parseTime("000000"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("2:4:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02-04-50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02/04/50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("02_04_50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("020450+0000"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("030450+0100"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("010450-0100"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+0130"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("033450+130"));
+  // Year 00 is read as 2000
+  EXPECT_NE(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("00:01:01 020450"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 020450"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01t02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01_02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01-02:04:50"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 04:04:50+0200"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01 02:04:50Z"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:04:50-0200"));
+  EXPECT_EQ(rclcpp::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T96:04:50-0200"));
+  EXPECT_EQ(rclcpp::Time(4 * DAY + 2 * HOUR + 4 * MINUTE + 50, 0), cras::parseTime("1970:01:01T00:5764:50-0200"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37Z"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 0), cras::parseTime("2024-11-01T16:22:37+00:00"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 0), cras::parseTime("2024-11-01T17:22:37+01:00"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 0), cras::parseTime("2024-11-01T15:22:37-01:00"));
+  EXPECT_EQ(rclcpp::Time(1730478150, 0), cras::parseTime("16:22:30", std::nullopt, rclcpp::Time(1730478157, 0)));
+  EXPECT_EQ(rclcpp::Time(1730478150, 0), cras::parseTime("18:22:30", rclcpp::Duration(2 * HOUR, 0), {1730478157, 0}));
+  EXPECT_EQ(rclcpp::Time(1730478150, 0), cras::parseTime("14:22:30", rclcpp::Duration(-2 * HOUR, 0), {1730478157, 0}));
+  EXPECT_EQ(rclcpp::Time(1730478150, 0), cras::parseTime("2024-11-01 16:22:30", std::nullopt, {1111111111, 0}));
 
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("2:4:50.033"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("02:04:50.033"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("020450,033"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 333333333), cras::parseTime("020450.333333333"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 333333333), cras::parseTime("020450.3333333333"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 30303030), cras::parseTime("020450.0303030303"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("19700101 020450.033"));
-  EXPECT_EQ(ros::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("1970-01-01 02:04:50.033"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033Z"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033+0000"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37.033+200"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37,033+0200"));
-  EXPECT_EQ(ros::Time(1730478157, 33000000), cras::parseTime("2024-11-01T14:22:37.033-0200"));
-
-  EXPECT_EQ(ros::WallTime(1730478157, 33000000), cras::parseTime<ros::WallTime>("2024-11-01T18:22:37.033+0200"));
-  EXPECT_EQ(ros::SteadyTime(1730478157, 33000000), cras::parseTime<ros::SteadyTime>("2024-11-01T18:22:37.033+0200"));
-
-  EXPECT_EQ(ros::WallTime(1730478157, 33000000),
-    cras::parseTime<ros::WallTime>("2024-11-01T16:22:37.033", ros::WallDuration(0, 0)));
-  EXPECT_EQ(ros::WallTime(1730478157, 33000000),
-    cras::parseTime("2024-11-01T16:22:37.033", ros::WallDuration(0, 0), ros::WallTime(0, 0)));
-
-  EXPECT_EQ(ros::SteadyTime(1730478157, 33000000),
-    cras::parseTime<ros::SteadyTime>("2024-11-01T16:22:37.033", ros::WallDuration(0, 0)));
-  EXPECT_EQ(ros::SteadyTime(1730478157, 33000000),
-    cras::parseTime("2024-11-01T16:22:37.033", ros::WallDuration(0, 0), ros::SteadyTime(0, 0)));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("2:4:50.033"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("02:04:50.033"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("020450,033"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 333333333), cras::parseTime("020450.333333333"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 333333333), cras::parseTime("020450.3333333333"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 30303030), cras::parseTime("020450.0303030303"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("19700101 020450.033"));
+  EXPECT_EQ(rclcpp::Time(2 * HOUR + 4 * MINUTE + 50, 33000000), cras::parseTime("1970-01-01 02:04:50.033"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033Z"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T16:22:37.033+0000"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37.033+200"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T18:22:37,033+0200"));
+  EXPECT_EQ(rclcpp::Time(1730478157, 33000000), cras::parseTime("2024-11-01T14:22:37.033-0200"));
 
   EXPECT_THROW(cras::parseTime("2450"), std::invalid_argument);
   EXPECT_THROW(cras::parseTime("0:0:0 020450"), std::invalid_argument);  // Non-delimited format requires 0-padding
@@ -1499,11 +1380,9 @@ TEST(StringUtils, ParseTime)  // NOLINT
   EXPECT_THROW(cras::parseTime("ff:1:1 00:00:00"), std::invalid_argument);
   EXPECT_THROW(cras::parseTime("0xff:1:1 00:00:00"), std::invalid_argument);
 
-  ros::Time::init();
-  ros::Time::setNow({10, 0});
-  EXPECT_EQ(ros::Time(10, 0), cras::parseTime("now"));
-  EXPECT_LE(std::abs((cras::parseTime<ros::WallTime>("now") - ros::WallTime::now()).toSec()), 1.0);
-  EXPECT_LE(std::abs((cras::parseTime<ros::SteadyTime>("now") - ros::SteadyTime::now()).toSec()), 1.0);
+  const auto clk = createTestClock();
+  setTime(clk, {10, 0});
+  EXPECT_EQ(rclcpp::Time(10, 0, clk->get_clock_type()), cras::parseTime("now", {}, rclcpp::Time(), clk));
 }
 
 TEST(StringUtils, ParseDuration)  // NOLINT
@@ -1511,41 +1390,41 @@ TEST(StringUtils, ParseDuration)  // NOLINT
   const int MINUTE {60};
   const int HOUR = {60 * MINUTE};
 
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("0"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("0:0"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("0:0:0"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("00:00:00"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("0000:0000:0000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("000000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("+0"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("-0"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("0.000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("-0.000"));
-  EXPECT_EQ(ros::Duration(0, 0), cras::parseDuration("+0.000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("0"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("0:0"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("0:0:0"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("00:00:00"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("0000:0000:0000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("000000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("+0"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("-0"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("0.000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("-0.000"));
+  EXPECT_EQ(rclcpp::Duration(0, 0), cras::parseDuration("+0.000"));
 
-  EXPECT_EQ(ros::Duration(12, 0), cras::parseDuration("12"));
-  EXPECT_EQ(ros::Duration(12, 0), cras::parseDuration("+12"));
-  EXPECT_EQ(ros::Duration(-12, 0), cras::parseDuration("-12"));
-  EXPECT_EQ(ros::Duration(12, 123456789), cras::parseDuration("12.123456789"));
-  EXPECT_EQ(ros::Duration(12, 123456789), cras::parseDuration("+12.123456789"));
-  EXPECT_EQ(ros::Duration(-12, 123456789), cras::parseDuration("-12.123456789"));
+  EXPECT_EQ(rclcpp::Duration(12, 0), cras::parseDuration("12"));
+  EXPECT_EQ(rclcpp::Duration(12, 0), cras::parseDuration("+12"));
+  EXPECT_EQ(rclcpp::Duration(-12, 0), cras::parseDuration("-12"));
+  EXPECT_EQ(rclcpp::Duration(12, 123456789), cras::parseDuration("12.123456789"));
+  EXPECT_EQ(rclcpp::Duration(12, 123456789), cras::parseDuration("+12.123456789"));
+  EXPECT_EQ(rclcpp::Duration(-12, 123456789), cras::parseDuration("-12.123456789"));
 
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("5:42.123456789"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("05:42.123456789"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("05:042.123456789"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123000000), cras::parseDuration("05:042.123"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123000000), cras::parseDuration("+05:42.123"));
-  EXPECT_EQ(ros::Duration(-(5 * MINUTE + 42), 123000000), cras::parseDuration("-05:42.123"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 0), cras::parseDuration("05:42"));
-  EXPECT_EQ(ros::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("342.123456789"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("5:42.123456789"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("05:42.123456789"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("05:042.123456789"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123000000), cras::parseDuration("05:042.123"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123000000), cras::parseDuration("+05:42.123"));
+  EXPECT_EQ(rclcpp::Duration(-(5 * MINUTE + 42), 123000000), cras::parseDuration("-05:42.123"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 0), cras::parseDuration("05:42"));
+  EXPECT_EQ(rclcpp::Duration(5 * MINUTE + 42, 123456789), cras::parseDuration("342.123456789"));
 
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("3:5:42.123456789"));
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("03:05:42.123456789"));
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("03:05:042.123456789"));
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("+03:05:042.123456789"));
-  EXPECT_EQ(ros::Duration(-(3 * HOUR + 5 * MINUTE + 42), 123456789), cras::parseDuration("-03:05:42.123456789"));
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("+03:00:342.123456789"));
-  EXPECT_EQ(ros::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("00:00:11142.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("3:5:42.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("03:05:42.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("03:05:042.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("+03:05:042.123456789"));
+  EXPECT_EQ(rclcpp::Duration(-(3 * HOUR + 5 * MINUTE + 42), 123456789), cras::parseDuration("-03:05:42.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("+03:00:342.123456789"));
+  EXPECT_EQ(rclcpp::Duration(3 * HOUR + 5 * MINUTE + 42, 123456789), cras::parseDuration("00:00:11142.123456789"));
 }
 
 TEST(StringUtils, TempLocale)  // NOLINT
@@ -1569,65 +1448,65 @@ TEST(StringUtils, TempLocale)  // NOLINT
 
 TEST(StringUtils, IconvConvert)  // NOLINT
 {
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"test"), "test");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "test"), "test");
 
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"ťěšť", true), "test");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", true), "atestz");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"ťěšť", false, true), "");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", false, true), "az");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťz", true, false, 1, 2, "C"), "a????z");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, false), "atest?z");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, false, 1, 2, "C"), "a?????z");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, true), "atest?z");
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"aťěšťかz", true, true, 1, 2, "C"), "a?????z");
-  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"ťěšť", false), std::invalid_argument);
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "ťěšť", true), "test");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťz", true), "atestz");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "ťěšť", false, true), "");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťz", false, true), "az");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťz", true, false, 1, 2, "C"), "a????z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťかz", true, false), "atest?z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťかz", true, false, 1, 2, "C"), "a?????z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťかz", true, true), "atest?z");
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "aťěšťかz", true, true, 1, 2, "C"), "a?????z");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", "ťěšť", false), std::invalid_argument);
 
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"tägelîch", true), "tagelich");
-  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"tägelîch", false), std::invalid_argument);
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "tägelîch", true), "tagelich");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", "tägelîch", false), std::invalid_argument);
 
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", true), "30 km/h");
-  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), std::invalid_argument);
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "30 \U0001d5c4\U0001d5c6/\U0001d5c1", true), "30 km/h");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", "30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), std::invalid_argument);
 
-  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", u8"かな漢字", true), "????");
-  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", u8"かな漢字", false), std::invalid_argument);
+  EXPECT_EQ(iconvConvert("ASCII", "UTF-8", "かな漢字", true), "????");
+  EXPECT_THROW(iconvConvert("ASCII", "UTF-8", "かな漢字", false), std::invalid_argument);
 
-  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 2.0), u8"ťěšť");
-  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 1.0), u8"ťěšť");
-  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 4.0), u8"ťěšť");
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 2.0), "ťěšť");
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 1.0), "ťěšť");
+  EXPECT_EQ(iconvConvert("UTF-8", "ISO-8859-2", "\xbb\xec\xb9\xbb", false, false, 4.0), "ťěšť");
 
-  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ", true), "\xbb\xec\xb9\xbb" "C");
-  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ", false, true), "\xbb\xec\xb9\xbb");
-  EXPECT_THROW(iconvConvert("ISO-8859-2", "UTF-8", u8"ťěšťĊ"), std::invalid_argument);
+  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", "ťěšťĊ", true), "\xbb\xec\xb9\xbb" "C");
+  EXPECT_EQ(iconvConvert("ISO-8859-2", "UTF-8", "ťěšťĊ", false, true), "\xbb\xec\xb9\xbb");
+  EXPECT_THROW(iconvConvert("ISO-8859-2", "UTF-8", "ťěšťĊ"), std::invalid_argument);
 
-  EXPECT_THROW(iconvConvert("UNKNOWN", "UTF-8", u8"ťěšť"), std::invalid_argument);
+  EXPECT_THROW(iconvConvert("UNKNOWN", "UTF-8", "ťěšť"), std::invalid_argument);
 }
 
 TEST(StringUtils, TransliterateToAscii)  // NOLINT
 {
-  EXPECT_EQ(transliterateToAscii(u8"test"), "test");
-  EXPECT_EQ(transliterateToAscii(u8"ťěšť"), "test");
-  EXPECT_EQ(transliterateToAscii(u8"tägelîch"), "tagelich");
-  EXPECT_EQ(transliterateToAscii(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "30 km/h");
-  EXPECT_EQ(transliterateToAscii(u8"かな漢字"), "????");
+  EXPECT_EQ(transliterateToAscii("test"), "test");
+  EXPECT_EQ(transliterateToAscii("ťěšť"), "test");
+  EXPECT_EQ(transliterateToAscii("tägelîch"), "tagelich");
+  EXPECT_EQ(transliterateToAscii("30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "30 km/h");
+  EXPECT_EQ(transliterateToAscii("かな漢字"), "????");
 }
 
 TEST(StringUtils, ToValidRosName)  // NOLINT
 {
-  EXPECT_EQ(toValidRosName(u8"test"), "test");
-  EXPECT_EQ(toValidRosName(u8"Top Box"), "Top_Box");
-  EXPECT_EQ(toValidRosName(u8"ťěšť"), "test");
-  EXPECT_EQ(toValidRosName(u8"tägelîch"), "tagelich");
-  EXPECT_EQ(toValidRosName(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "km_h");
-  EXPECT_THROW(toValidRosName(u8"かな漢字"), std::invalid_argument);
-  EXPECT_EQ(toValidRosName(u8"かな漢字", true, "test"), "test");
-  EXPECT_EQ(toValidRosName(u8"333", true, "test"), "test");
-  EXPECT_EQ(toValidRosName(u8"a/b", true, "test"), "a_b");
-  EXPECT_EQ(toValidRosName(u8"a/b", false), "a/b");
-  EXPECT_EQ(toValidRosName(u8"/3/b", false), "/b");
-  EXPECT_EQ(toValidRosName(u8"a/ťěšť", false), "a/test");
-  EXPECT_EQ(toValidRosName(u8"a/ťěšť/b", false), "a/test/b");
-  EXPECT_EQ(toValidRosName(u8"a/ťěšť/tägelîch", false), "a/test/tagelich");
-  EXPECT_EQ(toValidRosName(u8"30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), "km/h");
+  EXPECT_EQ(toValidRosName("test"), "test");
+  EXPECT_EQ(toValidRosName("Top Box"), "Top_Box");
+  EXPECT_EQ(toValidRosName("ťěšť"), "test");
+  EXPECT_EQ(toValidRosName("tägelîch"), "tagelich");
+  EXPECT_EQ(toValidRosName("30 \U0001d5c4\U0001d5c6/\U0001d5c1"), "km_h");
+  EXPECT_THROW(toValidRosName("かな漢字"), std::invalid_argument);
+  EXPECT_EQ(toValidRosName("かな漢字", true, "test"), "test");
+  EXPECT_EQ(toValidRosName("333", true, "test"), "test");
+  EXPECT_EQ(toValidRosName("a/b", true, "test"), "a_b");
+  EXPECT_EQ(toValidRosName("a/b", false), "a/b");
+  EXPECT_EQ(toValidRosName("/3/b", false), "/b");
+  EXPECT_EQ(toValidRosName("a/ťěšť", false), "a/test");
+  EXPECT_EQ(toValidRosName("a/ťěšť/b", false), "a/test/b");
+  EXPECT_EQ(toValidRosName("a/ťěšť/tägelîch", false), "a/test/tagelich");
+  EXPECT_EQ(toValidRosName("30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), "km/h");
 }
 
 int main(int argc, char **argv)

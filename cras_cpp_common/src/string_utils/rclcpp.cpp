@@ -7,26 +7,23 @@
  * \author Martin Pecka
  */
 
-#include <ctime>
+#include <chrono>
 #include <limits>
 #include <regex>
 #include <string>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-
-#include <ros/duration.h>
-#include <ros/time.h>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 
 #include <cras_cpp_common/string_utils.hpp>
-#include <cras_cpp_common/string_utils/ros.hpp>
+#include <cras_cpp_common/string_utils/rclcpp.hpp>
 #include <cras_cpp_common/time_utils.hpp>
+#include <rclcpp/exceptions/exceptions.hpp>
 
 namespace cras
 {
 
-template<>
-ros::Duration parseTimezoneOffset(const std::string& s)
+rclcpp::Duration parseTimezoneOffset(const std::string& s)
 {
   if (s.empty() || s == "Z")
   {
@@ -46,17 +43,14 @@ ros::Duration parseTimezoneOffset(const std::string& s)
   // *INDENT-ON*
 }
 
-template<>
-ros::WallDuration parseTimezoneOffset(const std::string& s)
-{
-  return cras::convertDuration<ros::WallDuration>(parseTimezoneOffset<ros::Duration>(s));
-}
-
-template<> ros::Time parseTime(
-  const std::string& s, const cras::optional<ros::Duration>& timezoneOffset, const ros::Time& referenceDate)
+rclcpp::Time parseTime(const std::string& s, const std::optional<rclcpp::Duration>& timezoneOffset,
+  const rclcpp::Time& referenceDate, const ::rclcpp::Clock::ConstSharedPtr& clock)
 {
   if (s.length() == 3 && cras::toLower(s) == "now")
-    return ros::Time::now();
+  {
+    const auto& cl = clock != nullptr ? *clock : ::rclcpp::Clock(RCL_SYSTEM_TIME);
+    return cl.now();
+  }
 
   // Check if the string contains delimiters. If so, do not require zero-padding of all numbers.
   // *INDENT-OFF*
@@ -74,7 +68,13 @@ template<> ros::Time parseTime(
       throw std::invalid_argument("Invalid time format");
   }
 
-  const auto& boostDateRef = referenceDate.toBoost().date();
+  std::chrono::seconds referenceSeconds(static_cast<int64_t>(referenceDate.seconds()));
+  std::chrono::sys_seconds tp{referenceSeconds};
+  std::chrono::year_month_day ymd = std::chrono::floor<std::chrono::days>(tp);
+
+  uint16_t refYear = static_cast<uint16_t>(static_cast<int>(ymd.year()));
+  uint16_t refMonth = static_cast<uint16_t>(static_cast<unsigned>(ymd.month()));
+  uint16_t refDay = static_cast<uint16_t>(static_cast<unsigned>(ymd.day()));
 
   std::string yearStr;
   if (matches[1].matched)
@@ -85,17 +85,15 @@ template<> ros::Time parseTime(
     else
       yearStr = str;
   }
-  const uint16_t year = yearStr.empty() ? static_cast<uint16_t>(boostDateRef.year()) : cras::parseUInt16(yearStr, 10);
+  const uint16_t year = yearStr.empty() ? refYear : cras::parseUInt16(yearStr, 10);
   if (year < 1970)
     throw std::invalid_argument("Years before 1970 cannot be parsed to ros time.");
 
-  const auto month = matches[2].matched ?
-    cras::parseUInt16(matches[2].str(), 10) : static_cast<uint16_t>(boostDateRef.month());
+  const auto month = matches[2].matched ? cras::parseUInt16(matches[2].str(), 10) : refMonth;
   if (month <= 0)
     throw std::invalid_argument("Month has to be a positive number (i.e. non-zero).");
 
-  const auto day = matches[3].matched ?
-    cras::parseUInt16(matches[3].str(), 10) : static_cast<uint16_t>(boostDateRef.day());
+  const auto day = matches[3].matched ? cras::parseUInt16(matches[3].str(), 10) : refDay;
   if (day <= 0)
     throw std::invalid_argument("Day has to be a positive number (i.e. non-zero).");
 
@@ -103,7 +101,7 @@ template<> ros::Time parseTime(
   const auto minute = cras::parseUInt16(matches[5].str(), 10);
   const auto second = cras::parseUInt16(matches[6].str(), 10);
   const auto zoneOffset = matches[8].matched ?
-    cras::parseTimezoneOffset(matches[8].str()) : timezoneOffset.value_or(ros::Duration{});
+    cras::parseTimezoneOffset(matches[8].str()) : timezoneOffset.value_or(rclcpp::Duration{0, 0});
 
   tm t{};
   t.tm_year = year - 1900;
@@ -115,48 +113,26 @@ template<> ros::Time parseTime(
 
   const auto maybeTime = cras::fromStructTm(t);
   if (!maybeTime.has_value())
-    throw std::invalid_argument(cras::format("Invalid time format (%s).", maybeTime.error().c_str()));
+    throw std::invalid_argument(std::format("Invalid time format ({}).", maybeTime.error()));
 
   uint32_t fracNsec = 0;
   if (matches[7].matched)
   {
     auto paddedNsec = matches[7].str();
+    // pad with zeros to 9 decimals
     if (paddedNsec.length() < 9)
-      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
+      paddedNsec = std::format("{:0<9}", paddedNsec);
     else if (paddedNsec.length() > 9)
       // We could correctly round here, but who cares about one ns?
       paddedNsec = paddedNsec.substr(0, 9);
     fracNsec = cras::parseUInt32(paddedNsec, 10);
   }
 
-  return {maybeTime->sec - zoneOffset.sec, fracNsec};
+  const auto clockType = clock != nullptr ? clock->get_clock_type() : RCL_SYSTEM_TIME;
+  return {static_cast<int32_t>((*maybeTime - zoneOffset).seconds()), fracNsec, clockType};
 }
 
-template<> ros::WallTime parseTime(
-  const std::string& s, const cras::optional<ros::WallDuration>& timezoneOffset, const ros::WallTime& referenceTime)
-{
-  if (s.length() == 3 && cras::toLower(s) == "now")
-    return ros::WallTime::now();
-
-  return convertTime<ros::WallTime>(parseTime(
-    s,
-    timezoneOffset.has_value() ? cras::optional{convertDuration<ros::Duration>(*timezoneOffset)} : cras::nullopt,
-    convertTime<ros::Time>(referenceTime)));
-}
-
-template<> ros::SteadyTime parseTime(
-  const std::string& s, const cras::optional<ros::WallDuration>& timezoneOffset, const ros::SteadyTime& referenceTime)
-{
-  if (s.length() == 3 && cras::toLower(s) == "now")
-    return ros::SteadyTime::now();
-
-  return convertTime<ros::SteadyTime>(parseTime(
-    s,
-    timezoneOffset.has_value() ? cras::optional{convertDuration<ros::Duration>(*timezoneOffset)} : cras::nullopt,
-    convertTime<ros::Time>(referenceTime)));
-}
-
-template<> ros::Duration parseDuration(const std::string& s)
+rclcpp::Duration parseDuration(const std::string& s)
 {
   // Check if the string contains delimiters. If so, do not require zero-padding of all numbers.
   const std::regex secondsOnlyRegex {R"(([+-]?)(\d+)(?:[.,](\d+))?)"};
@@ -190,16 +166,16 @@ template<> ros::Duration parseDuration(const std::string& s)
 
   const int8_t sign = signString == "-" ? -1 : 1;
 
-  int32_t fracNsec = 0;
+  uint32_t fracNsec = 0;
   if (!nsecString.empty())
   {
     auto paddedNsec = nsecString;
     if (paddedNsec.length() < 9)
-      paddedNsec = cras::format("%s%0*d", paddedNsec.c_str(), static_cast<int>(9 - paddedNsec.length()), 0);
+      paddedNsec = std::format("{:0<9}", paddedNsec);
     else if (paddedNsec.length() > 9)
       // We could correctly round here, but who cares about one ns?
       paddedNsec = paddedNsec.substr(0, 9);
-    fracNsec = cras::parseInt32(paddedNsec, 10);
+    fracNsec = cras::parseUInt32(paddedNsec, 10);
   }
 
   int64_t allSecs {0};  // Accumulate to int64_t to check for overflow
@@ -214,27 +190,29 @@ template<> ros::Duration parseDuration(const std::string& s)
   return {static_cast<int32_t>(allSecs), fracNsec};
 }
 
-template<> ros::WallDuration parseDuration(const std::string& s)
+std::string to_string(const rclcpp::Time& value)
 {
-  return cras::convertDuration<ros::WallDuration>(parseDuration<ros::Duration>(s));
+  const auto secNsec = cras::secNsec(value);
+  return std::format("{}.{:09}", secNsec.first, secNsec.second);
+}
+
+std::string to_string(const rclcpp::Duration& value)
+{
+  const auto secNsec = cras::secNsec(value);
+  return std::format("{}.{:09}", secNsec.first, secNsec.second);
 }
 
 template<>
-std::string to_pretty_string(const ros::Time& value)
+std::string to_pretty_string(const rclcpp::Time& value)
 {
-  return boost::posix_time::to_iso_extended_string(value.toBoost()) + "Z";
-}
-
-template<>
-std::string to_pretty_string(const ros::WallTime& value)
-{
-  return to_pretty_string(cras::convertTime<ros::Time>(value));
-}
-
-template<>
-std::string to_pretty_string(const ros::SteadyTime& value)
-{
-  return to_pretty_string(cras::convertTime<ros::Time>(value));
+  const auto now = cras::convertTime<std::chrono::system_clock::time_point>(value);
+  const auto [sec, nsec] = cras::secNsec(value);
+  std::string secStr = std::format("{0:%S}", now);
+  if (nsec != 0)
+    secStr = secStr.substr(0, 9);
+  else
+    secStr = secStr.substr(0, 2);
+  return std::format("{0:%F}T{0:%R}:{1}Z", now, secStr);
 }
 
 }

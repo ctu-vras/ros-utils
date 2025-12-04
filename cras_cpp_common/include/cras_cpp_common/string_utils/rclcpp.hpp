@@ -13,30 +13,30 @@
 #include <string>
 #include <type_traits>
 
-#include <ros/duration.h>
-#include <ros/rate.h>
-#include <ros/time.h>
-#include <ros/message_traits.h>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/rate.hpp>
+#include <rclcpp/time.hpp>
 
-#include <cras_cpp_common/optional.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
 {
 
-template<typename T, typename ::std::enable_if_t<
-    ::std::is_same<T, ::ros::Time>::value ||
-    ::std::is_same<T, ::ros::WallTime>::value ||
-    ::std::is_same<T, ::ros::SteadyTime>::value ||
-    ::std::is_same<T, ::ros::Duration>::value ||
-    ::std::is_same<T, ::ros::WallDuration>::value
-  >* = nullptr>
+::std::string to_string(const ::rclcpp::Time& value);
+
+template<typename T, typename ::std::enable_if_t<::cras::TimeType<T>::value>* = nullptr>
 inline ::std::string to_string(const T& value)
 {
-  ::std::stringstream ss;
-  ss << value;
-  return ss.str();
+  return to_string(::cras::convertTime<::rclcpp::Time>(value));
+}
+
+::std::string to_string(const ::rclcpp::Duration& value);
+
+template<typename T, typename ::std::enable_if_t<::cras::DurationType<T>::value>* = nullptr>
+inline ::std::string to_string(const T& value)
+{
+  return to_string(::cras::convertDuration<::rclcpp::Duration>(value));
 }
 
 /**
@@ -45,16 +45,15 @@ inline ::std::string to_string(const T& value)
  * \param value The time to convert.
  * \return Human-readable date-time representation.
  */
-template<typename T, typename ::std::enable_if_t<
-    ::std::is_same<T, ::ros::Time>::value ||
-    ::std::is_same<T, ::ros::WallTime>::value ||
-    ::std::is_same<T, ::ros::SteadyTime>::value
-  >* = nullptr>
-::std::string to_pretty_string(const T& value);
+template<typename T, typename ::std::enable_if_t<::cras::TimeType<T>::value>* = nullptr>
+::std::string to_pretty_string(const T& value) = delete;
+
+template<>
+::std::string to_pretty_string(const ::rclcpp::Time& value);
 
 template<typename T, typename ::std::enable_if_t<
-    ::std::is_same<T, ::ros::Rate>::value ||
-    ::std::is_same<T, ::ros::WallRate>::value
+    ::std::is_same<T, ::rclcpp::Rate>::value ||
+    ::std::is_same<T, ::rclcpp::WallRate>::value
   >* = nullptr>
 inline ::std::string to_string(const T& value)
 {
@@ -63,14 +62,12 @@ inline ::std::string to_string(const T& value)
   return ss.str();
 }
 
-template<typename M, ::std::enable_if_t<::ros::message_traits::IsMessage<M>::value>* = nullptr>
+template<typename M, ::std::enable_if_t<::rosidl_generator_traits::is_message<M>::value>* = nullptr>
 inline std::string to_string(const M& msg)
 {
-  ::std::stringstream ss;
-  ss << msg;
-  ::std::string s = ss.str();
+  ::std::string s = to_yaml(msg);
   if (!s.empty() && s[s.length() - 1] == '\n')
-    s.erase(s.length()-1);
+    s.erase(s.length() - 1);
   ::cras::replace(s, "\n", ", ");
   return s;
 }
@@ -85,15 +82,10 @@ inline std::string to_string(const M& msg)
  *
  * \note This function does not support textual timezones like CET.
  *
- * \tparam D Duration type.
  * \param[in] s The string to parse.
  * \return The duration corresponding to the timezone offset.
  */
-template<typename D = ::ros::Duration, typename ::std::enable_if_t<
-    ::std::is_same<D, ::ros::Duration>::value ||
-    ::std::is_same<D, ::ros::WallDuration>::value
-  >* = nullptr>
-D parseTimezoneOffset(const ::std::string& s);
+::rclcpp::Duration parseTimezoneOffset(const ::std::string& s);
 
 /**
  * \brief Parse the given string as time.
@@ -118,16 +110,14 @@ D parseTimezoneOffset(const ::std::string& s);
  * \param[in] s The string to parse.
  * \param[in] timezoneOffset Optional timezone offset to use if no offset is specified in the string.
  * \param[in] referenceDate If the date part is missing in the string, the date from this argument will be used.
+ * \param[in] clock The clock to be used in case "now" is passed. Also, the type of the clock defines the type of the
+ *                  result (defaults to RCL_SYSTEM_TIME if this clock is nullptr). If the clock is null, current system
+ *                  clock will be used.
  * \return The parsed time as seconds from epoch.
  * \throws std::invalid_argument If the string does not represent a date with time.
  */
-template<typename T = ::ros::Time, typename ::std::enable_if_t<
-    ::std::is_same<T, ::ros::Time>::value ||
-    ::std::is_same<T, ::ros::WallTime>::value ||
-    ::std::is_same<T, ::ros::SteadyTime>::value
-  >* = nullptr>
-T parseTime(const ::std::string& s,
-  const ::cras::optional<typename ::cras::DurationType<T>::value>& timezoneOffset = {}, const T& referenceDate = {});
+::rclcpp::Time parseTime(const ::std::string& s, const ::std::optional<::rclcpp::Duration>& timezoneOffset = {},
+  const ::rclcpp::Time& referenceDate = ::rclcpp::Time(), const ::rclcpp::Clock::ConstSharedPtr& clock = nullptr);
 
 /**
  * \brief Parse the given string as duration.
@@ -147,10 +137,6 @@ T parseTime(const ::std::string& s,
  * \return The parsed duration.
  * \throws std::invalid_argument If the string does not represent a duration.
  */
-template<typename D = ::ros::Duration, typename ::std::enable_if_t<
-    ::std::is_same<D, ::ros::Duration>::value ||
-    ::std::is_same<D, ::ros::WallDuration>::value
-  >* = nullptr>
-D parseDuration(const ::std::string& s);
+::rclcpp::Duration parseDuration(const ::std::string& s);
 
 }

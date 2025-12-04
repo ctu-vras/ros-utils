@@ -27,10 +27,14 @@
   <build_depend>libboost-dev</build_depend>
 
   <exec_depend>backward_ros</exec_depend>
+  <exec_depend>language-pack-en</exec_depend>  <!-- Needed to get en_US.UTF-8 locale -->
   <exec_depend>libboost-dev</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>cras_lint</test_depend>
+  <test_depend>eigen</test_depend>
+  <test_depend>std_msgs</test_depend>
+  <test_depend>tf2</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

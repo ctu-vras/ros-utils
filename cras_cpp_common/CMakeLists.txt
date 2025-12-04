@@ -117,11 +117,11 @@ target_link_libraries(cras_rate_limiter
 
 add_library(cras_string_utils SHARED
   src/string_utils.cpp
-  #src/string_utils/ros.cpp
+  src/string_utils/rclcpp.cpp
 )
 target_include_directories(cras_string_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_string_utils PUBLIC cras_type_traits)
+target_link_libraries(cras_string_utils PUBLIC cras_type_traits rclcpp::rclcpp)
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
@@ -334,8 +334,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/node_utils/*
     include/${PROJECT_NAME}/nodelet_utils/*
     include/${PROJECT_NAME}/nodelet_utils/impl/*
-    include/${PROJECT_NAME}/string_utils/ros.hpp
-    include/${PROJECT_NAME}/string_utils/tf2.hpp
     include/${PROJECT_NAME}/test_utils/*
     include/${PROJECT_NAME}/tf2_utils/*
     include/${PROJECT_NAME}/cloud.hpp
@@ -355,7 +353,6 @@ if(BUILD_TESTING)
     src/log_utils/*
     src/node_utils/*
     src/nodelet_utils/*
-    src/string_utils/ros.cpp
     src/tf2_utils/interruptible_buffer.cpp
     src/time_utils/*
     src/cloud.cpp
@@ -371,6 +368,10 @@ if(BUILD_TESTING)
   cras_lint_cpp()
 
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(tf2 REQUIRED)
+
+  find_package(Eigen3 REQUIRED)
 #
 #  # GTEST tests (no rosmaster required)
 #
@@ -399,8 +400,11 @@ if(BUILD_TESTING)
 #  catkin_add_gtest(test_cras_set_utils test/test_set_utils.cpp)
 #  target_link_libraries(test_cras_set_utils cras_set_utils)
 #
-#  catkin_add_gtest(test_cras_string_utils test/test_string_utils.cpp)
-#  target_link_libraries(test_cras_string_utils cras_string_utils ${catkin_LIBRARIES})
+  ament_add_gtest(test_cras_string_utils test/test_string_utils.cpp)
+  target_link_libraries(test_cras_string_utils
+    cras_string_utils cras_time_utils
+    ${std_msgs_TARGETS} Eigen3::Eigen rclcpp::rclcpp tf2::tf2
+  )
 #
 #  catkin_add_gtest(test_cras_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
 #  target_link_libraries(test_cras_tf2_sensor_msgs cras_tf2_sensor_msgs ${catkin_LIBRARIES})
