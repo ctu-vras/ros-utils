@@ -15,10 +15,21 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>builtin_interfaces</depend>
   <depend>libexpected-dev</depend>
+  <depend>rcl</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>rcutils</depend>
+  <depend>rmw</depend>
 
+  <build_depend>backward_ros</build_depend>
+  <build_depend>libboost-dev</build_depend>
+
+  <exec_depend>backward_ros</exec_depend>
+  <exec_depend>libboost-dev</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>cras_lint</test_depend>
 
   <export>

@@ -1,13 +1,23 @@
 cmake_minimum_required(VERSION 3.20.2)
 cmake_policy(SET CMP0022 NEW)
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)  # if boost installs Find module, use it
+endif()
 
 project(cras_cpp_common)
 
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(ament_cmake REQUIRED)
+find_package(backward_ros REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rcutils REQUIRED)
+find_package(rmw REQUIRED)
+
+find_package(Boost REQUIRED)
 
 # find pthread and provide it as Threads::Threads imported target
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -78,12 +88,17 @@ add_library(cras_math_utils INTERFACE)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils.hpp>)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats.hpp>)
 
-#add_library(cras_time_utils
-#  src/time_utils.cpp
-#  src/time_utils/interruptible_sleep_interface.cpp)
-#target_link_libraries(cras_time_utils
-#  PUBLIC ${catkin_LIBRARIES}
-#  PRIVATE cras_semaphore Boost::boost)
+add_library(cras_time_utils SHARED
+  src/time_utils.cpp
+#  src/time_utils/interruptible_sleep_interface.cpp
+)
+target_include_directories(cras_time_utils PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_time_utils
+  PUBLIC rclcpp::rclcpp
+  PRIVATE Boost::boost
+  # cras_semaphore
+)
 
 #add_library(cras_rate_limiter src/rate_limiter.cpp)
 #target_link_libraries(cras_rate_limiter
@@ -283,7 +298,7 @@ install(TARGETS
 #  cras_tf2_sensor_msgs
 #  cras_tf2_utils
   cras_thread_utils
-#  cras_time_utils
+  cras_time_utils
   cras_type_traits
   cras_type_utils
 #  cras_urdf_utils
@@ -321,7 +336,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/string_utils/tf2.hpp
     include/${PROJECT_NAME}/test_utils/*
     include/${PROJECT_NAME}/tf2_utils/*
-    include/${PROJECT_NAME}/time_utils/*
     include/${PROJECT_NAME}/cloud.hpp
     include/${PROJECT_NAME}/diag_utils.hpp
     include/${PROJECT_NAME}/filter_chain_nodelet.hpp
@@ -334,7 +348,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/resettable.h
     include/${PROJECT_NAME}/tf2_sensor_msgs.h
     include/${PROJECT_NAME}/tf2_utils.hpp
-    include/${PROJECT_NAME}/time_utils.hpp
     include/${PROJECT_NAME}/urdf_utils.h
     nodes/*
     src/diag_utils/*
@@ -350,11 +363,14 @@ if(BUILD_TESTING)
     src/resettable.cpp
     src/tf2_sensor_msgs.cpp
     src/tf2_utils.cpp
-    src/time_utils.cpp
+    src/time_utils/interruptible_sleep_interface.cpp
     src/urdf_utils.cpp
     test/*
   )
+  set(ament_cmake_cpplint_EXTRA_FILTERS "-build/include_order")
   cras_lint_cpp()
+
+  find_package(ament_cmake_gtest REQUIRED)
 #
 #  # GTEST tests (no rosmaster required)
 #
@@ -400,8 +416,8 @@ if(BUILD_TESTING)
 #  catkin_add_gtest(test_cras_thread_utils test/test_thread_utils.cpp)
 #  target_link_libraries(test_cras_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)
 #
-#  catkin_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
-#  target_link_libraries(test_cras_time_utils cras_time_utils ${catkin_LIBRARIES})
+  ament_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
+  target_link_libraries(test_cras_time_utils cras_time_utils)
 #
 #  catkin_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
 #  target_link_libraries(test_cras_type_utils cras_type_utils)
@@ -544,14 +560,18 @@ ament_export_libraries(cras_string_utils)
 #ament_export_libraries(cras_tf2_sensor_msgs)
 #ament_export_libraries(cras_tf2_utils)
 ament_export_libraries(cras_thread_utils)
-#ament_export_libraries(cras_time_utils)
+ament_export_libraries(cras_time_utils)
 ament_export_libraries(cras_type_utils)
 #ament_export_libraries(cras_urdf_utils)
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
+ament_export_dependencies(builtin_interfaces)
+ament_export_dependencies(rcl)
 ament_export_dependencies(rclcpp)
 ament_export_dependencies(rclcpp_components)
+ament_export_dependencies(rcutils)
+ament_export_dependencies(rmw)
 ament_export_dependencies(Threads)
 
 ament_package()
