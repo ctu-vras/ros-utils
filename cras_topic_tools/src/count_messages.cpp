@@ -12,10 +12,10 @@
 
 #include <cxxopts.hpp>
 
-#include <rclcpp/utilities.hpp>
 #include <rclcpp/generic_subscription.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/serialized_message.hpp>
+#include <rclcpp/utilities.hpp>
 
 #include <cras_cpp_common/param_utils.hpp>
 #include <cras_cpp_common/qos.hpp>
@@ -150,11 +150,15 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
     // Convert all args to argc/argv, remove ROS-specific args and convert to argc/argv again
     std::vector<const char*> argv;
     for (const auto& arg : options.arguments())
+    {
       argv.push_back(arg.c_str());
+    }
     const auto tmpArgs = rclcpp::remove_ros_arguments(argv.size(), argv.data());
     argv.clear();
     for (const auto& arg : tmpArgs)
+    {
       argv.push_back(arg.c_str());
+    }
 
     if (argv.size() > 0)
     {
