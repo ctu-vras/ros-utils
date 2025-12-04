@@ -6,9 +6,9 @@ name: CI
 # This determines when this workflow is run
 on:
   - push:
-      branches: [master]
+      branches: [ros2]
   - pull_request:
-      branches: [master]
+      branches: [ros2]
   - workflow_dispatch: {}
 
 jobs:
@@ -16,13 +16,13 @@ jobs:
     strategy:
       matrix:
         env:
-          - {ROS_DISTRO: melodic, ROS_REPO: testing, DOCKER_IMAGE: "ros:melodic-perception-bionic"}
-          - {ROS_DISTRO: noetic, ROS_REPO: testing, DOCKER_IMAGE: "ros:noetic-perception-focal"}
+          - {ROS_DISTRO: jazzy, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:jazzy-perception"}
+          - {ROS_DISTRO: kilted, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:kilted-perception"}
         os: ["ubuntu-24.04", "ubuntu-24.04-arm"]
     name: "${{ matrix.env.ROS_DISTRO }}-${{ matrix.os }}"
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
-      AFTER_SETUP_TARGET_WORKSPACE: 'cd $BASEDIR/target_ws/src/ros-utils; for d in *; do if [[ "$d" != "cras_docs_common" ]] && [[ "$d" != "cras_cpp_common" ]] && [[ "$d" != "cras_py_common" ]] && [[ "$d" != "cras_topic_tools" ]] && [[ "$d" != "cras_bag_tools" ]] && [[ "$d" != "image_transport_codecs" ]]; then rm -rf "$d"; fi; done'
+      AFTER_SETUP_TARGET_WORKSPACE: 'cd $BASEDIR/target_ws/src/ros-utils; for d in *; do if [[ "$d" != "cras_cpp_common" ]] && [[ "$d" != "cras_topic_tools" ]]; then rm -rf "$d"; fi; done'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
