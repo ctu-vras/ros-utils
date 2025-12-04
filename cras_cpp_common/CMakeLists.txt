@@ -100,10 +100,12 @@ target_link_libraries(cras_time_utils
   # cras_semaphore
 )
 
-#add_library(cras_rate_limiter src/rate_limiter.cpp)
-#target_link_libraries(cras_rate_limiter
-#  PUBLIC ${catkin_LIBRARIES}
-#  PRIVATE cras_time_utils)
+add_library(cras_rate_limiter SHARED src/rate_limiter.cpp)
+target_include_directories(cras_rate_limiter PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_rate_limiter
+  PUBLIC rcl::rcl rclcpp::rclcpp
+  PRIVATE cras_time_utils)
 
 #add_library(cras_tf2_utils
 #  src/tf2_utils.cpp
@@ -289,7 +291,7 @@ install(TARGETS
 #  cras_nodelet_utils
   cras_param_utils
   cras_qos_utils
-#  cras_rate_limiter
+  cras_rate_limiter
 #  cras_resettable
   cras_semaphore
   cras_set_utils
@@ -344,7 +346,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/message_utils.hpp
     include/${PROJECT_NAME}/node_utils.hpp
     include/${PROJECT_NAME}/nodelet_utils.hpp
-    include/${PROJECT_NAME}/rate_limiter.h
     include/${PROJECT_NAME}/resettable.h
     include/${PROJECT_NAME}/tf2_sensor_msgs.h
     include/${PROJECT_NAME}/tf2_utils.hpp
@@ -359,7 +360,6 @@ if(BUILD_TESTING)
     src/time_utils/*
     src/cloud.cpp
     src/log_utils.cpp
-    src/rate_limiter.cpp
     src/resettable.cpp
     src/tf2_sensor_msgs.cpp
     src/tf2_utils.cpp
@@ -393,8 +393,8 @@ if(BUILD_TESTING)
 #  catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
 #  target_link_libraries(test_pool_allocator cras_pool_allocator)
 #
-#  catkin_add_gtest(test_cras_rate_limiter test/test_rate_limiter.cpp)
-#  target_link_libraries(test_cras_rate_limiter cras_rate_limiter ${catkin_LIBRARIES})
+  ament_add_gtest(test_cras_rate_limiter test/test_rate_limiter.cpp)
+  target_link_libraries(test_cras_rate_limiter cras_rate_limiter cras_time_utils)
 #
 #  catkin_add_gtest(test_cras_set_utils test/test_set_utils.cpp)
 #  target_link_libraries(test_cras_set_utils cras_set_utils)
@@ -553,7 +553,7 @@ ament_export_libraries(cras_c_api)
 #ament_export_libraries(cras_nodelet_manager_sharing_tf_buffer)
 #ament_export_libraries(cras_nodelet_utils)
 ament_export_libraries(cras_qos_utils)
-#ament_export_libraries(cras_rate_limiter)
+ament_export_libraries(cras_rate_limiter)
 #ament_export_libraries(cras_resettable)
 ament_export_libraries(cras_semaphore)
 ament_export_libraries(cras_string_utils)
