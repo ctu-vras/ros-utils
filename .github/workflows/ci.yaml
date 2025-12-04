@@ -5,11 +5,11 @@ name: CI
 
 # This determines when this workflow is run
 on:
-  - push:
-      branches: [master]
-  - pull_request:
-      branches: [master]
-  - workflow_dispatch: {}
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
 
 jobs:
   industrial_ci:
