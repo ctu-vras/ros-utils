@@ -181,10 +181,12 @@ target_link_libraries(cras_type_utils
   PUBLIC cras_type_traits cras_literal_sz
   PRIVATE cras_string_utils)
 
-#add_library(cras_test_utils INTERFACE)
+add_library(cras_test_utils INTERFACE)
 #target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils/preloading_class_loader.hpp>)
-#target_link_libraries(cras_test_utils
-#  INTERFACE cras_type_utils ${catkin_LIBRARIES})
+target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils.hpp>)
+target_include_directories(cras_expected INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp)
 
 add_library(cras_param_utils INTERFACE)
 target_sources(cras_param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param_utils.hpp>)
@@ -296,7 +298,7 @@ install(TARGETS
   cras_semaphore
   cras_set_utils
   cras_string_utils
-#  cras_test_utils
+  cras_test_utils
 #  cras_tf2_sensor_msgs
 #  cras_tf2_utils
   cras_thread_utils
