@@ -1,6 +1,13 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+
 # cras\_docs\_common
 
 Common configuration for CRAS packages documentation.
+
+Not yet available for ROS 2.
+
+<!--
 
 For Python code, it can generate nice documentation using a custom Sphinx template looking like this:
 
@@ -90,3 +97,4 @@ You can try e.g. ``:roswiki:`cras_py_common` ``, ``:rosdep:`rosdep2_api.html` ``
 ``:class:`tf2_msgs.msg.TFMessage` ``.
 
 It also automatically loads the catkin_sphinx extensions [ShLexer](https://github.com/ros-infrastructure/catkin-sphinx/#using-an-improved-shell-prompt-highlighting) and [cmake](https://github.com/ros-infrastructure/catkin-sphinx/#using-the-cmake-sphinx-domain).
+-->

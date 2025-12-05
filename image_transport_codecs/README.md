@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<!-- SPDX-FileCopyrightText: Czech Technical University in Prague -->
+
 # image_transport_codecs
 
 Image transport plugins available as direct APIs in C, C++ and Python.
@@ -5,6 +8,10 @@ Image transport plugins available as direct APIs in C, C++ and Python.
 This library extends the ideas of [image_transport](http://wiki.ros.org/image_transport) to also provide C, C++ and Python APIs, as not all use-cases involving `image_transport` automatically involve a running ROS system (e.g. bag file postprocessing).
 
 With this library, you can decode and encode the compressed messages directly in your code with no need for a separate node just for this mundane work.
+
+_This library is not yet available in ROS 2_
+
+<!--
 
 ## Example C++ usage
 
@@ -106,3 +113,4 @@ Thus, each input compressed message is serialized before decoding, and each fres
 The same limitation applies to the C and Python APIs.
 
 The direct C++ APIs (but only the C++ ones) mitigate this performance bottle-neck and are the only APIs that provide full performance.
+-->
