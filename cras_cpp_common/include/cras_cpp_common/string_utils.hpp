@@ -223,6 +223,85 @@ bool contains(const ::std::string& str, const ::std::string& needle);
 ::std::string toLower(const ::std::string& str);
 
 /**
+ * printf-like support working with std::string and automatically managing memory.
+ * \param[in] format The printf-like format string.
+ * \param[in] args Arguments of the format string.
+ * \return The formatted string.
+ */
+__attribute__((format(printf, 1, 0)))
+inline ::std::string snprintf(const char* format, ::va_list args)
+{
+  constexpr size_t BUF_LEN = 1024u;
+  char buf[BUF_LEN];
+
+  ::va_list argsCopy;
+  ::va_copy(argsCopy, args);
+
+  const auto len = ::vsnprintf(buf, BUF_LEN, format, args);
+
+  ::std::string result;
+  if (len < 0)
+  {
+    throw ::std::runtime_error(::std::string("Error formatting string '") + format + "': " + ::strerror(errno));
+  }
+  else if (len < BUF_LEN)
+  {
+    result = buf;
+  }
+  else
+  {
+    char* buf2 = new char[len + 1];
+    ::vsnprintf(buf2, len + 1, format, argsCopy);
+    result = buf2;
+    delete[] buf2;
+  }
+  ::va_end(argsCopy);
+  return result;
+}
+
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * \param[in] format The printf-like format string.
+ * \param[in] ... Arguments of the format string.
+ * \return The formatted string.
+ */
+__attribute__((format(printf, 1, 2)))
+inline ::std::string snprintf(const char* format, ...)
+{
+  ::va_list(args);
+  ::va_start(args, format);
+  const auto result = ::cras::snprintf(format, args);
+  ::va_end(args);
+  return result;
+}
+
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * \param[in] format The printf-like format string.
+ * \param[in] ... Arguments of the format string.
+ * \return The formatted string.
+ */
+inline ::std::string snprintf(::std::string format, ...)
+{
+  ::va_list(args);
+  ::va_start(args, format);
+  const auto result = ::cras::snprintf(format.c_str(), args);
+  ::va_end(args);
+  return result;
+}
+
+/**
+ * printf-like support working with std::string and automatically managing memory.
+ * \param[in] format The printf-like format string.
+ * \param[in] args Arguments of the format string.
+ * \return The formatted string.
+ */
+inline ::std::string snprintf(::std::string format, ::va_list args)
+{
+  return ::cras::snprintf(format.c_str(), args);
+}
+
+/**
  * \brief Put `s` in double quotes if `T` is a string type (std::string or char*).
  * \tparam T The type to check.
  * \param[in] s The input string.

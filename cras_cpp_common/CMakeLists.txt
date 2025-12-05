@@ -127,7 +127,7 @@ add_library(cras_string_utils SHARED
 )
 target_include_directories(cras_string_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_string_utils PUBLIC cras_type_traits rclcpp::rclcpp)
+target_link_libraries(cras_string_utils PUBLIC cras_time_utils cras_type_traits rclcpp::rclcpp)
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
