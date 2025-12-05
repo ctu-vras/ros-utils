@@ -21,6 +21,7 @@
 #include <cras_cpp_common/expected.hpp>
 #include <rcl/time.h>
 #include <rclcpp/duration.hpp>
+#include <rclcpp/node_interfaces/node_clock_interface.hpp>
 #include <rclcpp/rate.hpp>
 #include <rclcpp/time.hpp>
 #include <rmw/time.h>
@@ -147,6 +148,19 @@ template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* 
 uint32_t nanosec(const T1& t)
 {
   return ::cras::secNsec(t).second;
+}
+
+/**
+ * Get the time converted to float seconds.
+ *
+ * \tparam T1 Time type.
+ * \param t Time to convert.
+ * \return The float seconds.
+ */
+template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
+double float_secs(const T1& t)
+{
+  return ::cras::convertTime<::rclcpp::Time>(t).seconds();
 }
 
 // *INDENT-OFF*
@@ -342,6 +356,32 @@ int getYear(const ::rclcpp::Time& time);
  * \return The year.
  */
 int getYear(const ::std::chrono::system_clock::time_point& time);
+
+/**
+ * \brief Trivial NodeClockInterface that just gives access to the given clock instance.
+ */
+class SimpleClockInterface : public ::rclcpp::node_interfaces::NodeClockInterface
+{
+public:
+  RCLCPP_SMART_PTR_ALIASES_ONLY(SimpleClockInterface)
+
+  explicit SimpleClockInterface(const ::rclcpp::Clock::SharedPtr& clock) : clock(clock)
+  {
+  }
+
+  ::rclcpp::Clock::SharedPtr get_clock() override
+  {
+    return this->clock;
+  }
+
+  ::rclcpp::Clock::ConstSharedPtr get_clock() const override
+  {
+    return this->clock;
+  }
+
+protected:
+  ::rclcpp::Clock::SharedPtr clock;
+};
 
 }
 
