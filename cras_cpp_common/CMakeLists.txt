@@ -19,6 +19,7 @@ find_package(rmw REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tl-expected REQUIRED)
 
 find_package(Boost REQUIRED)
 
@@ -35,6 +36,9 @@ set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
 add_library(cras_expected INTERFACE)
 target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
+target_include_directories(cras_expected INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_expected INTERFACE tl::expected)
 
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
@@ -589,5 +593,6 @@ ament_export_dependencies(rmw)
 ament_export_dependencies(tf2)
 ament_export_dependencies(tf2_ros)
 ament_export_dependencies(Threads)
+ament_export_dependencies(tl-expected)
 
 ament_package()
