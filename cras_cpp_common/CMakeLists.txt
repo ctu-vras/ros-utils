@@ -139,9 +139,18 @@ target_include_directories(cras_thread_utils PUBLIC
 target_link_libraries(cras_thread_utils
   PRIVATE cras_string_utils Threads::Threads)
 
-#add_library(cras_log_utils src/log_utils.cpp src/log_utils/memory.cpp src/log_utils/node.cpp src/log_utils/nodelet.cpp)
-#target_link_libraries(cras_log_utils
-#  PUBLIC cras_string_utils ${catkin_LIBRARIES} PRIVATE cras_time_utils)
+add_library(cras_log_utils SHARED
+  src/log_utils.cpp
+  src/log_utils/memory.cpp
+  #src/log_utils/node.cpp
+  #src/log_utils/nodelet.cpp
+)
+target_include_directories(cras_log_utils PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_log_utils
+  PUBLIC ${rcl_interfaces_TARGETS} cras_string_utils rcl::rcl rclcpp::rclcpp
+  PRIVATE cras_time_utils
+)
 
 # Detect compiler SIMD support. We'll need it for cras_tf2_sensor_msgs target.
 include(CheckCXXCompilerFlag)
@@ -294,7 +303,7 @@ install(TARGETS
 #  cras_filter_chain
 #  cras_filter_chain_nodelet
   cras_literal_sz
-#  cras_log_utils
+  cras_log_utils
   cras_math_utils
 #  cras_message_utils
 #  cras_node_utils
@@ -341,8 +350,8 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/diagnostics/*
     include/${PROJECT_NAME}/filter_utils/*
     include/${PROJECT_NAME}/filter_utils/impl/*
-    include/${PROJECT_NAME}/log_utils/*
-    include/${PROJECT_NAME}/log_utils/deprecated/*
+    include/${PROJECT_NAME}/log_utils/node.h
+    include/${PROJECT_NAME}/log_utils/nodelet.h
     include/${PROJECT_NAME}/node_utils/*
     include/${PROJECT_NAME}/nodelet_utils/*
     include/${PROJECT_NAME}/nodelet_utils/impl/*
@@ -352,7 +361,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/diag_utils.hpp
     include/${PROJECT_NAME}/filter_chain_nodelet.hpp
     include/${PROJECT_NAME}/filter_utils.hpp
-    include/${PROJECT_NAME}/log_utils.h
     include/${PROJECT_NAME}/message_utils.hpp
     include/${PROJECT_NAME}/node_utils.hpp
     include/${PROJECT_NAME}/nodelet_utils.hpp
@@ -361,13 +369,13 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/urdf_utils.h
     nodes/*
     src/diag_utils/*
-    src/log_utils/*
+    src/log_utils/node.cpp
+    src/log_utils/nodelet.cpp
     src/node_utils/*
     src/nodelet_utils/*
     src/tf2_utils/interruptible_buffer.cpp
     src/time_utils/*
     src/cloud.cpp
-    src/log_utils.cpp
     src/resettable.cpp
     src/tf2_sensor_msgs.cpp
     src/time_utils/interruptible_sleep_interface.cpp
@@ -396,9 +404,8 @@ if(BUILD_TESTING)
 #  catkin_add_gtest(test_cras_filter_chain test/test_filter_chain.cpp)
 #  target_link_libraries(test_cras_filter_chain cras_filter_chain ${catkin_LIBRARIES})
 #
-#  catkin_add_gtest(test_cras_log_utils test/test_log_utils.cpp)
-#  target_link_libraries(test_cras_log_utils cras_log_utils ${catkin_LIBRARIES})
-#  target_compile_options(test_cras_log_utils PRIVATE -save-temps)
+  ament_add_gtest(test_cras_log_utils test/test_log_utils.cpp)
+  target_link_libraries(test_cras_log_utils cras_log_utils cras_type_utils)
 #
 #  catkin_add_gtest(test_cras_math_utils test/test_math_utils.cpp)
 #  target_link_libraries(test_cras_math_utils cras_math_utils ${catkin_LIBRARIES})
@@ -436,9 +443,9 @@ if(BUILD_TESTING)
 #
   ament_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
   target_link_libraries(test_cras_time_utils cras_time_utils)
-#
-#  catkin_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
-#  target_link_libraries(test_cras_type_utils cras_type_utils)
+
+  ament_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
+  target_link_libraries(test_cras_type_utils cras_type_utils cras_string_utils cras_time_utils)
 #
 #  catkin_add_gtest(test_cras_urdf_utils test/test_urdf_utils.cpp)
 #  target_link_libraries(test_cras_urdf_utils cras_urdf_utils)

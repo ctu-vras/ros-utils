@@ -10,62 +10,84 @@
 #include <list>
 #include <string>
 
-#include <ros/console.h>
-
+#include <cras_cpp_common/log_utils.h>
 #include <cras_cpp_common/log_utils/memory.h>
+
+#include <rcl_interfaces/msg/log.hpp>
+#include <rclcpp/time.hpp>
 
 namespace cras
 {
 
-void MemoryLogHelper::initializeImpl() const
+static MemoryLoggingInterface* g_currentLoggingInterface {nullptr};
+
+MemoryLoggingInterface::MemoryLoggingInterface(const std::string& name, const RCUTILS_LOG_SEVERITY severity)
+  : name(name)
+{
+  this->prevLoggingInterface = g_currentLoggingInterface;
+  g_currentLoggingInterface = this;
+
+  auto ret = rcutils_logging_initialize();
+  if (ret != RCUTILS_RET_OK)
+    rclcpp::exceptions::throw_from_rcl_error(ret, "");
+
+  this->prevLogLevel = static_cast<RCUTILS_LOG_SEVERITY>(rcutils_logging_get_default_logger_level());
+  rcutils_logging_set_default_logger_level(severity);
+
+  const auto handler = [](const rcutils_log_location_t* location, const int level,
+    const char* name, const rcutils_time_point_value_t timestamp, const char* format, va_list* args)
+  {
+    if (g_currentLoggingInterface == nullptr)
+      return;
+
+    rcl_interfaces::msg::Log msg;
+    msg.name = name;
+    msg.file = location->file_name;
+    msg.function = location->function_name;
+    msg.line = location->line_number;
+    msg.level = cras::logLevelToMsgLevel(static_cast<RCUTILS_LOG_SEVERITY>(level));
+    msg.msg = cras::snprintf(format, *args);
+    msg.stamp = rclcpp::Time(timestamp);
+    g_currentLoggingInterface->addLogMessage(msg);
+  };
+
+  this->prevHandler = rcutils_logging_get_output_handler();
+  rcutils_logging_set_output_handler(handler);
+}
+
+MemoryLoggingInterface::~MemoryLoggingInterface()
+{
+  rcutils_logging_set_output_handler(this->prevHandler);
+  rcutils_logging_set_default_logger_level(this->prevLogLevel);
+  const auto _ = rcutils_logging_shutdown();
+}
+
+rclcpp::Logger MemoryLoggingInterface::get_logger() const
+{
+  return rclcpp::get_logger(this->name);
+}
+
+const char* MemoryLoggingInterface::get_logger_name() const
+{
+  return this->name.c_str();
+}
+
+void MemoryLoggingInterface::create_logger_services(
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services)
 {
 }
 
-void MemoryLogHelper::initializeLogLocationImpl(ros::console::LogLocation* loc, const std::string& name,
-  ros::console::Level level) const
+void MemoryLoggingInterface::addLogMessage(const rcl_interfaces::msg::Log& msg)
 {
-  // Store the logger name in the logger_ variable. It has to be a pointer, so we store a list of known logger names
-  // and return a pointer to an element in this list.
-  this->loggerNames.emplace_back(name);
-  loc->logger_ = &this->loggerNames.back();
-  loc->logger_enabled_ = true;
-  loc->level_ = level;
-  loc->initialized_ = true;
+  this->messages.push_back(msg);
 }
 
-void MemoryLogHelper::setLogLocationLevel(ros::console::LogLocation* loc, ros::console::Level level) const
-{
-  loc->level_ = level;
-}
-
-void MemoryLogHelper::checkLogLocationEnabled(ros::console::LogLocation* loc) const
-{
-  loc->logger_enabled_ = true;
-}
-
-void MemoryLogHelper::logString(void* logger, ros::console::Level level, const std::string& str, const char* file,
-  uint32_t line, const char* function) const
-{
-  const auto& loggerName = (logger != nullptr) ?
-    *reinterpret_cast<std::string*>(logger) : ROSCONSOLE_DEFAULT_NAME; // NOLINT
-
-  auto message = rosgraph_msgs::Log{};
-  message.header.stamp = this->getTimeNow();
-  message.name = loggerName;
-  message.level = cras::logLevelToRosgraphMsgLevel(level);
-  message.msg = str;
-  message.file = file;
-  message.function = function;
-  message.line = line;
-  this->messages.push_back(message);
-}
-
-const std::list<rosgraph_msgs::Log>& MemoryLogHelper::getMessages() const
+const std::list<rcl_interfaces::msg::Log>& MemoryLoggingInterface::getMessages() const
 {
   return this->messages;
 }
 
-void MemoryLogHelper::clear() const
+void MemoryLoggingInterface::clear()
 {
   this->messages.clear();
 }

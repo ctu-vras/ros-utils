@@ -12,47 +12,50 @@
 #include <list>
 #include <string>
 
-#include <ros/console.h>
-#include <ros/time.h>
-#include <rosgraph_msgs/Log.h>
-
-#include <cras_cpp_common/log_utils.h>
+#include <rcl_interfaces/msg/log.hpp>
+#include <rclcpp/node_interfaces/node_logging_interface.hpp>
 
 namespace cras
 {
 
 /**
- * Log helper redirecting the logging calls to ROS_ macros.
+ * Log helper redirecting storing logged messages in memory.
  */
-class MemoryLogHelper : public ::cras::LogHelper
+class MemoryLoggingInterface : public ::rclcpp::node_interfaces::NodeLoggingInterface
 {
 public:
-  void initializeImpl() const override;
+  RCLCPP_SMART_PTR_ALIASES_ONLY(MemoryLoggingInterface)
 
-  void initializeLogLocationImpl(::ros::console::LogLocation* loc, const ::std::string& name,
-    ::ros::console::Level level) const override;
+  explicit MemoryLoggingInterface(const std::string& name = "log",
+    RCUTILS_LOG_SEVERITY severity = RCUTILS_LOG_SEVERITY_DEBUG);
 
-  void setLogLocationLevel(::ros::console::LogLocation* loc, ::ros::console::Level level) const override;
+  ~MemoryLoggingInterface() override;
 
-  void checkLogLocationEnabled(::ros::console::LogLocation* loc) const override;
+  rclcpp::Logger get_logger() const override;
+  const char* get_logger_name() const override;
+  void create_logger_services(rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services) override;
 
-  void logString(void* logger, ::ros::console::Level level, const std::string& str, const char* file, uint32_t line,
-    const char* function) const override;
+  virtual void addLogMessage(const rcl_interfaces::msg::Log& msg);
 
   /**
    * \brief Return all messages logged so far.
    * \return The messages.
    */
-  const ::std::list<::rosgraph_msgs::Log>& getMessages() const;
+  virtual const ::std::list<::rcl_interfaces::msg::Log>& getMessages() const;
 
   /**
    * \brief Delete all messages logged so far.
    */
-  void clear() const;
+  void clear();
 
 protected:
-  mutable ::std::list<::rosgraph_msgs::Log> messages;  //!< \brief The list of logged messages.
-  mutable ::std::list<::std::string> loggerNames;  //!< \brief Cache of names of known loggers. Do not ever erase items.
+  ::std::list<::rcl_interfaces::msg::Log> messages;  //!< \brief The list of logged messages.
+
+  ::std::string name;
+
+  ::RCUTILS_LOG_SEVERITY prevLogLevel {RCUTILS_LOG_SEVERITY_UNSET};
+  ::rcutils_logging_output_handler_t prevHandler {nullptr};
+  ::cras::MemoryLoggingInterface* prevLoggingInterface {nullptr};
 };
 
 }
