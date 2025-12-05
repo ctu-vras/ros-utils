@@ -14,6 +14,7 @@ on:
 jobs:
   industrial_ci:
     strategy:
+      fail-fast: false
       matrix:
         env:
           - {ROS_DISTRO: jazzy, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:jazzy-perception", ALLOW_FAIL: no}
