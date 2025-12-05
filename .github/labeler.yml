@@ -22,6 +22,10 @@ cras_topic_tools:
   - changed-files:
       - any-glob-to-any-file: cras_topic_tools/**
 
+cras_lint:
+  - changed-files:
+      - any-glob-to-any-file: cras_lint/**
+
 image_transport_codecs:
   - changed-files:
       - any-glob-to-any-file: image_transport_codecs/**
