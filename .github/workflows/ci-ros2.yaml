@@ -16,8 +16,9 @@ jobs:
     strategy:
       matrix:
         env:
-          - {ROS_DISTRO: jazzy, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:jazzy-perception"}
-          - {ROS_DISTRO: kilted, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:kilted-perception"}
+          - {ROS_DISTRO: jazzy, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:jazzy-perception", ALLOW_FAIL: no}
+          - {ROS_DISTRO: kilted, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:kilted-perception", ALLOW_FAIL: no}
+          - {ROS_DISTRO: rolling, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:rolling-perception", ALLOW_FAIL: yes}
         os: ["ubuntu-24.04", "ubuntu-24.04-arm"]
     name: "${{ matrix.env.ROS_DISTRO }}-${{ matrix.os }}"
     env:
@@ -30,6 +31,7 @@ jobs:
       # This step will fetch/store the directory used by ccache before/after the ci run
       - name: Cache ccache
         uses: rhaschke/cache@main
+        continue-on-error: ${{ matrix.env.ALLOW_FAIL }}
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.os }}-${{ matrix.env.ROS_DISTRO }}-${{ matrix.env.ROS_REPO }}-${{ github.sha }}-${{ github.run_id }}
