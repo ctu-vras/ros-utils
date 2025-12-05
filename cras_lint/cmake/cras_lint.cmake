@@ -166,6 +166,7 @@ function(cras_lint_cpp)
 
       set(_all_filters "-build/header_guard;-readability/namespace;-whitespace/braces;-runtime/references;-build/c++11")
       list(APPEND _all_filters "-legal/copyright;-whitespace/newline;-readability/nolint;-readability/todo")
+      list(APPEND _all_filters "-build/include_order")
       if(DEFINED ament_cmake_cpplint_FILTERS)
         set(_all_filters ${ament_cmake_cpplint_FILTERS})
       endif()
