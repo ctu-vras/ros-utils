@@ -10,7 +10,7 @@
  */
 
 #include <geometry_msgs/msg/quaternion.hpp>
-#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.hpp>
 
 namespace cras
 {
