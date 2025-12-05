@@ -1,14 +1,15 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for working with transforms.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
-#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 
 namespace cras
@@ -30,7 +31,7 @@ void getRPY(const ::tf2::Quaternion& quat, double& roll, double& pitch, double& 
  * \param[out] pitch Pitch in radians.
  * \param[out] yaw Yaw in radians.
  */
-void getRPY(const ::geometry_msgs::Quaternion& quat, double& roll, double& pitch, double& yaw);
+void getRPY(const ::geometry_msgs::msg::Quaternion& quat, double& roll, double& pitch, double& yaw);
 
 /**
  * \brief Get roll from the given quaternion.
@@ -44,7 +45,7 @@ double getRoll(const ::tf2::Quaternion& quat);
  * \param[in] quat The quaternion to convert.
  * \return Roll in radians.
  */
-double getRoll(const ::geometry_msgs::Quaternion& quat);
+double getRoll(const ::geometry_msgs::msg::Quaternion& quat);
 
 /**
  * \brief Get pitch from the given quaternion.
@@ -58,7 +59,7 @@ double getPitch(const ::tf2::Quaternion& quat);
  * \param[in] quat The quaternion to convert.
  * \return Pitch in radians.
  */
-double getPitch(const ::geometry_msgs::Quaternion& quat);
+double getPitch(const ::geometry_msgs::msg::Quaternion& quat);
 
 /**
  * \brief Get yaw from the given quaternion.
@@ -72,6 +73,6 @@ double getYaw(const ::tf2::Quaternion& quat);
  * \param[in] quat The quaternion to convert.
  * \return Yaw in radians.
  */
-double getYaw(const ::geometry_msgs::Quaternion& quat);
+double getYaw(const ::geometry_msgs::msg::Quaternion& quat);
 
 }

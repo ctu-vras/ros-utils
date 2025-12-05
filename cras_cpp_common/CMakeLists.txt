@@ -16,6 +16,9 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 find_package(Boost REQUIRED)
 
@@ -107,13 +110,16 @@ target_link_libraries(cras_rate_limiter
   PUBLIC rcl::rcl rclcpp::rclcpp
   PRIVATE cras_time_utils)
 
-#add_library(cras_tf2_utils
-#  src/tf2_utils.cpp
-#  src/tf2_utils/interruptible_buffer.cpp)
-#target_sources(cras_tf2_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/tf2_utils/message_filter.hpp>)
-#add_dependencies(cras_tf2_utils ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(cras_tf2_utils
-#  PUBLIC cras_log_utils cras_thread_utils cras_time_utils ${catkin_LIBRARIES})
+add_library(cras_tf2_utils SHARED
+  src/tf2_utils.cpp
+#  src/tf2_utils/interruptible_buffer.cpp
+)
+target_include_directories(cras_tf2_utils PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_tf2_utils
+  PUBLIC ${geometry_mgs_TARGETS} tf2::tf2
+  PRIVATE tf2_geometry_msgs::tf2_geometry_msgs
+)
 
 add_library(cras_string_utils SHARED
   src/string_utils.cpp
@@ -300,7 +306,7 @@ install(TARGETS
   cras_string_utils
   cras_test_utils
 #  cras_tf2_sensor_msgs
-#  cras_tf2_utils
+  cras_tf2_utils
   cras_thread_utils
   cras_time_utils
   cras_type_traits
@@ -337,7 +343,7 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/nodelet_utils/*
     include/${PROJECT_NAME}/nodelet_utils/impl/*
     include/${PROJECT_NAME}/test_utils/*
-    include/${PROJECT_NAME}/tf2_utils/*
+    include/${PROJECT_NAME}/tf2_utils/interruptible_buffer.h
     include/${PROJECT_NAME}/cloud.hpp
     include/${PROJECT_NAME}/diag_utils.hpp
     include/${PROJECT_NAME}/filter_chain_nodelet.hpp
@@ -348,7 +354,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/nodelet_utils.hpp
     include/${PROJECT_NAME}/resettable.h
     include/${PROJECT_NAME}/tf2_sensor_msgs.h
-    include/${PROJECT_NAME}/tf2_utils.hpp
     include/${PROJECT_NAME}/urdf_utils.h
     nodes/*
     src/diag_utils/*
@@ -361,7 +366,6 @@ if(BUILD_TESTING)
     src/log_utils.cpp
     src/resettable.cpp
     src/tf2_sensor_msgs.cpp
-    src/tf2_utils.cpp
     src/time_utils/interruptible_sleep_interface.cpp
     src/urdf_utils.cpp
     test/*
@@ -370,6 +374,8 @@ if(BUILD_TESTING)
   cras_lint_cpp()
 
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_ros REQUIRED)
+  find_package(geometry_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(tf2 REQUIRED)
 
@@ -412,7 +418,9 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_cras_tf2_sensor_msgs cras_tf2_sensor_msgs ${catkin_LIBRARIES})
 #
 #  add_rostest_gtest(test_cras_tf2_utils test/test_tf2_utils.test test/test_tf2_utils.cpp)
-#  target_link_libraries(test_cras_tf2_utils cras_tf2_utils ${catkin_LIBRARIES})
+  ament_add_ros_isolated_gtest(test_cras_tf2_utils test/test_tf2_utils.cpp)
+  target_link_libraries(test_cras_tf2_utils
+    cras_tf2_utils tf2_geometry_msgs::tf2_geometry_msgs ${geometry_msgs_TARGETS})
 #
 #  catkin_add_gtest(test_cras_thread_name_updating_nodelet test/test_thread_name_updating_nodelet.cpp)
 #  target_link_libraries(test_cras_thread_name_updating_nodelet cras_nodelet_utils)
@@ -564,7 +572,7 @@ ament_export_libraries(cras_rate_limiter)
 ament_export_libraries(cras_semaphore)
 ament_export_libraries(cras_string_utils)
 #ament_export_libraries(cras_tf2_sensor_msgs)
-#ament_export_libraries(cras_tf2_utils)
+ament_export_libraries(cras_tf2_utils)
 ament_export_libraries(cras_thread_utils)
 ament_export_libraries(cras_time_utils)
 ament_export_libraries(cras_type_utils)
@@ -578,6 +586,8 @@ ament_export_dependencies(rclcpp)
 ament_export_dependencies(rclcpp_components)
 ament_export_dependencies(rcutils)
 ament_export_dependencies(rmw)
+ament_export_dependencies(tf2)
+ament_export_dependencies(tf2_ros)
 ament_export_dependencies(Threads)
 
 ament_package()
