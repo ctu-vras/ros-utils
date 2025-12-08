@@ -20,6 +20,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
   <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_gen_version_h</buildtool_depend>
 
   <depend>builtin_interfaces</depend>
   <depend>libexpected-dev</depend>

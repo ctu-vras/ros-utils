@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 cmake_minimum_required(VERSION 3.20.2)
 cmake_policy(SET CMP0022 NEW)
 if(POLICY CMP0167)
@@ -26,6 +29,19 @@ find_package(Boost REQUIRED)
 # find pthread and provide it as Threads::Threads imported target
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+ament_export_dependencies(
+  builtin_interfaces
+  rcl
+  rclcpp
+  rclcpp_components
+  rcutils
+  rmw
+  tf2
+  tf2_ros
+  Threads
+  tl-expected
+)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 try_compile(HAS_DESIGNATED_INITIALIZERS
@@ -121,7 +137,8 @@ add_library(cras_tf2_utils SHARED
 target_include_directories(cras_tf2_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_tf2_utils
-  PUBLIC ${geometry_mgs_TARGETS} tf2::tf2
+  PUBLIC ${geometry_mgs_TARGETS}
+  PUBLIC tf2::tf2
   PRIVATE tf2_geometry_msgs::tf2_geometry_msgs
 )
 
@@ -136,8 +153,7 @@ target_link_libraries(cras_string_utils PUBLIC cras_time_utils cras_type_traits 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_thread_utils
-  PRIVATE cras_string_utils Threads::Threads)
+target_link_libraries(cras_thread_utils PRIVATE cras_string_utils Threads::Threads)
 
 add_library(cras_log_utils SHARED
   src/log_utils.cpp
@@ -148,7 +164,8 @@ add_library(cras_log_utils SHARED
 target_include_directories(cras_log_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_log_utils
-  PUBLIC ${rcl_interfaces_TARGETS} cras_string_utils rcl::rcl rclcpp::rclcpp
+  PUBLIC ${rcl_interfaces_TARGETS}
+  PUBLIC cras_string_utils rcl::rcl rclcpp::rclcpp
   PRIVATE cras_time_utils
 )
 
@@ -194,8 +211,7 @@ check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 
 add_library(cras_type_utils SHARED src/type_utils.cpp)
 target_include_directories(cras_type_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_type_utils
   PUBLIC cras_type_traits cras_literal_sz
   PRIVATE cras_string_utils)
@@ -209,13 +225,11 @@ target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp)
 
 add_library(cras_param_utils INTERFACE)
 target_sources(cras_param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param_utils.hpp>)
-target_link_libraries(cras_param_utils
-  INTERFACE rclcpp::rclcpp)
+target_link_libraries(cras_param_utils INTERFACE rclcpp::rclcpp)
 
 add_library(cras_qos_utils SHARED src/qos.cpp)
 target_include_directories(cras_qos_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp)
 
 #add_library(cras_filter_base INTERFACE)
@@ -287,49 +301,74 @@ target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp)
 #target_link_libraries(nodelet_manager_sharing_tf_buffer
 #  PUBLIC cras_nodelet_manager_sharing_tf_buffer ${catkin_LIBRARIES})
 
-install(DIRECTORY
-  include/
-  DESTINATION include/${PROJECT_NAME}/
-)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
 
-# Install libraries
-install(TARGETS
+# All shared libraries exported by the project. Do not add component nodes here (they should not be exported).
+# All PUBLIC and INTERFACE dependencies of these libraries have to be <depend> and they have to be covered by
+# ament_export_dependencies() for each package they depend on.
+set(EXPORTED_LIBS
   cras_c_api
-#  cras_cloud
-#  cras_diag_updater
-#  cras_diag_utils
+  #  cras_cloud
+  #  cras_diag_updater
+  #  cras_diag_utils
   cras_expected
-#  cras_filter_base
-#  cras_filter_chain
-#  cras_filter_chain_nodelet
+  #  cras_filter_base
+  #  cras_filter_chain
   cras_literal_sz
   cras_log_utils
   cras_math_utils
-#  cras_message_utils
-#  cras_node_utils
-#  cras_nodelet_manager
-#  cras_nodelet_manager_sharing_tf_buffer
-#  cras_nodelet_utils
+  #  cras_message_utils
+  #  cras_node_utils
+  #  cras_nodelet_manager
+  #  cras_nodelet_utils
   cras_param_utils
   cras_qos_utils
   cras_rate_limiter
-#  cras_resettable
+  #  cras_resettable
   cras_semaphore
   cras_set_utils
+  cras_small_map
   cras_string_utils
   cras_test_utils
-#  cras_tf2_sensor_msgs
+  #  cras_tf2_sensor_msgs
   cras_tf2_utils
   cras_thread_utils
   cras_time_utils
   cras_type_traits
   cras_type_utils
-#  cras_urdf_utils
+  #  cras_urdf_utils
+)
 
+# Libraries that should not be exported (i.e. external packages will not link to them). E.g. component nodes go here.
+# Their dependencies are only <build_depend> and <export_depend> and they need only find_package().
+set(NON_EXPORTED_LIBS
+  #  cras_filter_chain_nodelet
+  #  cras_nodelet_manager_sharing_tf_buffer
+)
+
+add_library(${PROJECT_NAME}_version INTERFACE)
+ament_generate_version_header(${PROJECT_NAME}_version)
+
+# Create a convenience target ${PROJECT_NAME}::${PROJECT_NAME} that links to all sub-libraries
+add_library(${PROJECT_NAME} INTERFACE)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS} ${PROJECT_NAME}_version)
+
+# Install exported libs
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_version ${EXPORTED_LIBS}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
+# Install non-exported libs
+install(TARGETS ${NON_EXPORTED_LIBS}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
 
 # Install executables
@@ -565,41 +604,5 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_resettable cras_resettable cras_test_utils ${catkin_LIBRARIES})
 #  roslaunch_add_file_check(test/test_resettable.test USE_TEST_DEPENDENCIES)
 endif()
-
-ament_export_include_directories("include/${PROJECT_NAME}")
-
-ament_export_libraries(cras_c_api)
-#ament_export_libraries(cras_cloud)
-#ament_export_libraries(cras_diag_updater)
-#ament_export_libraries(cras_diag_utils)
-#ament_export_libraries(cras_log_utils)
-#ament_export_libraries(cras_node_utils)
-#ament_export_libraries(cras_nodelet_manager)
-#ament_export_libraries(cras_nodelet_manager_sharing_tf_buffer)
-#ament_export_libraries(cras_nodelet_utils)
-ament_export_libraries(cras_qos_utils)
-ament_export_libraries(cras_rate_limiter)
-#ament_export_libraries(cras_resettable)
-ament_export_libraries(cras_semaphore)
-ament_export_libraries(cras_string_utils)
-#ament_export_libraries(cras_tf2_sensor_msgs)
-ament_export_libraries(cras_tf2_utils)
-ament_export_libraries(cras_thread_utils)
-ament_export_libraries(cras_time_utils)
-ament_export_libraries(cras_type_utils)
-#ament_export_libraries(cras_urdf_utils)
-
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-
-ament_export_dependencies(builtin_interfaces)
-ament_export_dependencies(rcl)
-ament_export_dependencies(rclcpp)
-ament_export_dependencies(rclcpp_components)
-ament_export_dependencies(rcutils)
-ament_export_dependencies(rmw)
-ament_export_dependencies(tf2)
-ament_export_dependencies(tf2_ros)
-ament_export_dependencies(Threads)
-ament_export_dependencies(tl-expected)
 
 ament_package()
