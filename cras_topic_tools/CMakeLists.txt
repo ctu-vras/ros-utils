@@ -1,5 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
 cmake_minimum_required(VERSION 3.20.2)
 project(cras_topic_tools)
+
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(cxxopts REQUIRED)
 
@@ -10,6 +15,11 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(topic_tools REQUIRED)
+
+ament_export_dependencies(
+#  rclcpp
+#  rclcpp_components
+)
 
 #add_library(cras_shape_shifter src/shape_shifter.cpp)
 #add_dependencies(cras_shape_shifter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -26,11 +36,10 @@ find_package(topic_tools REQUIRED)
 
 add_library(cras_count_messages SHARED src/count_messages.cpp)
 target_include_directories(cras_count_messages PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_count_messages PUBLIC rclcpp::rclcpp)
-target_link_libraries(cras_count_messages PRIVATE
-  rclcpp_components::component cxxopts::cxxopts ${cras_cpp_common_TARGETS})
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_count_messages
+  PUBLIC rclcpp::rclcpp
+  PRIVATE cxxopts::cxxopts cras_cpp_common::cras_cpp_common rclcpp_components::component)
 rclcpp_components_register_node(cras_count_messages PLUGIN cras::CountMessagesComponent EXECUTABLE count_messages)
 add_dependencies(count_messages cras_count_messages)  # workaround https://github.com/ros2/rclcpp/issues/2868
 
@@ -68,27 +77,53 @@ add_dependencies(count_messages cras_count_messages)  # workaround https://githu
 #target_link_libraries(cras_heartbeat_nodelet cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES})
 #cras_node_from_nodelet(cras_heartbeat_nodelet cras::HeartbeatNodelet OUTPUT_NAME heartbeat ANONYMOUS)
 
-install(
-  DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+
+# All shared libraries exported by the project. Do not add component nodes here (they should not be exported).
+# All PUBLIC and INTERFACE dependencies of these libraries have to be <depend> and they have to be covered by
+# ament_export_dependencies() for each package they depend on.
+set(EXPORTED_LIBS
+  #  cras_generic_lazy_pubsub
+  #  cras_lazy_subscriber
+  #  cras_priority_mux
+  #  cras_shape_shifter
 )
 
-install(TARGETS
-#  cras_change_header_nodelet
+# Libraries that should not be exported (i.e. external packages will not link to them). E.g. component nodes go here.
+# Their dependencies are only <build_depend> and <export_depend> and they need only find_package().
+set(NON_EXPORTED_LIBS
+  #  cras_change_header_nodelet
   cras_count_messages
-#  cras_generic_lazy_pubsub
-#  cras_heartbeat_nodelet
-#  cras_lazy_subscriber
-#  cras_priority_mux
-#  cras_priority_mux_nodelet
-#  cras_relay_nodelet
-#  cras_repeat_nodelet
-#  cras_shape_shifter
-#  cras_throttle_messages_nodelet
+  #  cras_heartbeat_nodelet
+  #  cras_priority_mux_nodelet
+  #  cras_relay_nodelet
+  #  cras_repeat_nodelet
+  #  cras_throttle_messages_nodelet
+)
+
+add_library(${PROJECT_NAME}_version INTERFACE)
+ament_generate_version_header(${PROJECT_NAME}_version)
+
+# Create a convenience target cras_cpp_common::cras_cpp_common that links to all sub-libraries
+add_library(${PROJECT_NAME} INTERFACE)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS} ${PROJECT_NAME}_version)
+
+# Install exported libs
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_version ${EXPORTED_LIBS}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
+# Install non-exported libs
+install(TARGETS ${NON_EXPORTED_LIBS}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
 
 #catkin_install_python(PROGRAMS nodes/filter nodes/mux_replay
@@ -187,10 +222,4 @@ if(BUILD_TESTING)
 #  roslaunch_add_file_check(test/test_priority_mux.test USE_TEST_DEPENDENCIES)
 endif()
 
-ament_export_include_directories("include/${PROJECT_NAME}")
-
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-
-ament_export_dependencies(rclcpp)
-ament_export_dependencies(rclcpp_components)
 ament_package()
