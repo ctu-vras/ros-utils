@@ -9,6 +9,7 @@ import copy
 import csv
 import math
 import os.path
+import re
 
 import matplotlib.cm as cmap
 import numpy as np
@@ -3414,6 +3415,108 @@ class DepthImagePreview(DeserializedMessageFilter):
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
+
+
+class AnnotationsToDetection2DArray(NoMessageFilter):
+    """Convert annotations.xml from CVAT for images to Detection2DArray messages."""
+
+    def __init__(self, annotations_file, topic, frame_id, labels=None):
+        """
+        :param annotations_file: The file to read subtitles from.
+        :param topic: The topic to put the subtitles on.
+        :param frame_id: The TF frame of the detection message. Should be the same as the corresponding camera frame.
+        :param labels: If not None, only the listed labels will be exported from the annotations file.
+        """
+        super(AnnotationsToDetection2DArray, self).__init__()
+        self._annotations_file = annotations_file
+        self._topic = topic
+        self._frame_id = frame_id
+        self._labels = TopicSet(labels) if labels is not None else None
+
+        self._stamp_regex = re.compile(r'([0-9]+\.[0-9]{9})')
+
+        self._annotations = None
+
+    def on_filtering_start(self):
+        super(AnnotationsToDetection2DArray, self).on_filtering_start()
+        annotations_file = self.resolve_file(self._annotations_file)
+        self._annotations = self._parse_annotations(annotations_file)
+        print("Read", len(self._annotations), "annotations from file", annotations_file)
+
+    def _parse_annotations(self, annotations_file):
+        annotations = None
+        if annotations_file.endswith(".xml"):
+            annotations = self._parse_xml(annotations_file)
+
+        if annotations is None:
+            raise RuntimeError("Unsupported annotations type. Only CVAT XML is supported so far.")
+        return annotations
+
+    def _parse_xml(self, annotations_file):
+        parser = etree.XMLParser(remove_comments=True, encoding='utf-8')
+        tree = etree.parse(annotations_file, parser).getroot()
+
+        if tree.tag == "annotations" and len(tree) > 0:
+            if tree[0].tag == "version" and tree[0].text == "1.1":
+                return self._parse_cvat_xml(tree)
+
+        return None
+
+    def _parse_cvat_xml(self, xml_root):
+        # type: (etree._Element) -> Dict[genpy.Time, Detection2DArray]
+        annotations = dict()
+
+        warned = False
+
+        for child in xml_root:
+            if child.tag != "image":
+                continue
+            name = child.get("name")
+            match = re.match(self._stamp_regex, name)
+            if not match:
+                raise RuntimeError("Could not parse timestamp from item name")
+            stamp_str = match.group(1)
+            stamp = genpy.Time(*[int(i, base=10) for i in stamp_str.split(".")])
+
+            msg = Detection2DArray()
+            msg.header.frame_id = self._frame_id
+            msg.header.stamp = stamp
+            for det_elem in child:
+                if det_elem.tag == "box":
+                    if self._labels is not None and det_elem.get("label") not in self._labels:
+                        continue
+                    det = Detection2D()
+                    det.header = msg.header
+                    tl = (float(det_elem.get("xtl")), float(det_elem.get("ytl")))
+                    br = (float(det_elem.get("xbr")), float(det_elem.get("ybr")))
+                    det.bbox.center.x = (br[0] + tl[0]) / 2
+                    det.bbox.center.y = (br[1] + tl[1]) / 2
+                    det.bbox.size_x = br[0] - tl[0]
+                    det.bbox.size_y = br[1] - tl[1]
+                    msg.detections.append(det)
+                else:
+                    if not warned:
+                        warned = True
+                        print("Found unsupported annotation type", det_elem.tag, file=sys.stderr)
+
+            if len(msg.detections) > 0:
+                annotations[stamp] = msg
+
+        return annotations
+
+    def extra_initial_messages(self):
+        connection_header = create_connection_header(self._topic, String)
+        for stamp, msg in self._annotations.items():
+            yield self._topic, msg, stamp, connection_header, {MessageTags.GENERATED}
+
+    def _str_params(self):
+        params = ["topic=" + self._topic, "annotations_file=" + self.resolve_file(self._annotations_file)]
+        if self._labels is not None:
+            params.append("labels=%s" % (str(self._labels),))
+        parent_params = super(AnnotationsToDetection2DArray, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
 
 
 class BlurFaces(DeserializedMessageFilter):
