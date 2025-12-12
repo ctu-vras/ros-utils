@@ -55,8 +55,8 @@ class ImageTransportFilter(UniversalFilter):
         if include_types is not None:
             _include_types += list(include_types)
 
-        super(ImageTransportFilter, self).__init__(is_raw,
-            include_topics=_include_topics, include_types=_include_types, *args, **kwargs)
+        super(ImageTransportFilter, self).__init__(
+            is_raw, include_topics=_include_topics, include_types=_include_types, *args, **kwargs)
 
         self.skip_invalid = skip_invalid
         self.recompress = recompress
@@ -223,6 +223,7 @@ class ImageTransportFilter(UniversalFilter):
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
+
 
 __all__ = [
     ImageTransportFilter.__name__,
