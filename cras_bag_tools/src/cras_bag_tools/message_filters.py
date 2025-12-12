@@ -18,6 +18,7 @@ import yaml
 from collections import deque
 from enum import Enum
 from functools import reduce
+import skimage.draw
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 from lxml import etree
 from numpy.linalg import inv
@@ -31,6 +32,7 @@ from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
     TYPE_16UC1, TYPE_32FC1, YUV422
 from cras.log_utils import rosconsole_notifyLoggerLevelsChanged, rosconsole_set_logger_level, RosconsoleLevel
+from cras.message_utils import raw_to_msg, msg_to_raw
 from cras.string_utils import to_str, STRING_TYPE, to_valid_ros_name
 import cv2  # Workaround for https://github.com/opencv/opencv/issues/14884 on Jetsons.
 from cv_bridge import CvBridge, CvBridgeError
@@ -50,9 +52,14 @@ from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
-from .message_filter import DeserializedMessageFilter, DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, \
-    RawMessageFilter, TopicSet, tags_for_changed_msg, tags_for_generated_msg
+from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, \
+    DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, RawMessageFilter, Tags, TopicSet, \
+    deserialize_header, normalize_filter_result, tags_for_changed_msg, tags_for_generated_msg
+from .message_filters_base import ImageTransportFilter
 
+STR = STRING_TYPE
+FilteredImage = Tuple[STR, STR, genpy.Message, genpy.Message, STR, rospy.Time, ConnectionHeader, Tags]
+FilteredImageOrAnyMsg = Union[FilteredImage, DeserializedMessageData]
 
 def urdf_error(message):
     if "selfCollide" in message:
@@ -242,7 +249,7 @@ class Deduplicate(RawMessageFilter):
         key = topic
         msg_header = None
         if has_header and self._per_frame_id:
-            msg_header = self.deserialize_header(data, pytype)
+            msg_header = deserialize_header(data, pytype)
             key = "%s@%s" % (topic, msg_header.frame_id)
 
         if key not in self._last_msgs:
@@ -261,8 +268,8 @@ class Deduplicate(RawMessageFilter):
             stamp_ok = self._ignore_stamp or data[4:12] == last_msg[4:12]
             if not self._ignore_stamp and self._ignore_stamp_difference is not None and not stamp_ok:
                 if msg_header is None:
-                    msg_header = self.deserialize_header(data, pytype)
-                last_msg_header = self.deserialize_header(last_msg, pytype)
+                    msg_header = deserialize_header(data, pytype)
+                last_msg_header = deserialize_header(last_msg, pytype)
                 diff = abs(msg_header.stamp - last_msg_header.stamp)
                 if diff < self._ignore_stamp_difference:
                     stamp_ok = True
@@ -2141,7 +2148,7 @@ class StaticImageMask(RawMessageFilter):
         print("Loaded camera mask", mask_file)
 
     def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
-        msg_header = self.deserialize_header(data, pytype)
+        msg_header = deserialize_header(data, pytype)
         if msg_header is None:
             raise RuntimeError("Message type doesn't have header: " + datatype)
 
@@ -2431,7 +2438,7 @@ class DropMessagesFromCSV(RawMessageFilter):
 
         to_drop = self._to_drop[topic.lstrip('/')]
 
-        msg_header = self.deserialize_header(data, pytype)
+        msg_header = deserialize_header(data, pytype)
         if msg_header is None:
             msg_stamp = stamp
         else:
@@ -2503,7 +2510,7 @@ class ExportMessageInfoToCSV(RawMessageFilter):
 
     def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         # this is only called when self._use_header_stamp is True
-        msg_header = self.deserialize_header(data, pytype)
+        msg_header = deserialize_header(data, pytype)
         if msg_header is None:
             msg_stamp = stamp
         else:
@@ -3463,7 +3470,7 @@ class AnnotationsToDetection2DArray(NoMessageFilter):
         return None
 
     def _parse_cvat_xml(self, xml_root):
-        # type: (etree._Element) -> Dict[genpy.Time, Detection2DArray]
+        # type: (etree._Element) -> Dict[rospy.Time, Detection2DArray]
         annotations = dict()
 
         warned = False
@@ -3476,7 +3483,7 @@ class AnnotationsToDetection2DArray(NoMessageFilter):
             if not match:
                 raise RuntimeError("Could not parse timestamp from item name")
             stamp_str = match.group(1)
-            stamp = genpy.Time(*[int(i, base=10) for i in stamp_str.split(".")])
+            stamp = rospy.Time(*[int(i, base=10) for i in stamp_str.split(".")])
 
             msg = Detection2DArray()
             msg.header.frame_id = self._frame_id
@@ -3514,6 +3521,183 @@ class AnnotationsToDetection2DArray(NoMessageFilter):
         if self._labels is not None:
             params.append("labels=%s" % (str(self._labels),))
         parent_params = super(AnnotationsToDetection2DArray, self)._str_params()
+        if len(parent_params) > 0:
+            params.append(parent_params)
+        return ",".join(params)
+
+
+class BlurDetections(ImageTransportFilter):
+    """Blur parts of images that are covered by a detection bounding box. The header timestamp of both image and
+    detection messages are used for matching. Exact match is required."""
+
+    def __init__(self, image_topic, detections_topic, is_raw=True, ellipse=False, blur_factor=2, bbox_scale=1.0,
+                 detection_receive_stamp_from_image=False, add_tags=None, *args, **kwargs):
+        """
+        :param str image_topic: Topic with images.
+        :param str detections_topic: Topic with detections.
+        :param bool is_raw: Whether the filter works on raw or deserialized messages.
+        :param bool ellipse: Whether to blur an inscribed ellipse (otherwise a rectangle is blurred).
+        :param float blur_factor: Parameter of the blurring. The number of pixels in each dimension that the detection
+                                  will be reduced to.
+        :param float bbox_scale: Scale of the detection bounding boxes used for blurring.
+        :param bool detection_receive_stamp_from_image: If True, the detection messages' receive timestamp will be set
+                                                        to the same stamp the images have (so that they are nicely
+                                                        aligned in rqt_bag and such tools).
+                                                        max_detection_delay after the detection's header stamp.
+        :param add_tags: Tags to be added to messages with some blurred detections.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        include_topics = [image_topic]
+        include_types = None
+        if detection_receive_stamp_from_image:
+            include_topics.append(detections_topic)
+            include_types = [Detection2DArray._type]
+
+        super(BlurDetections, self).__init__(is_raw=is_raw, include_topics=include_topics, include_types=include_types,
+                                             *args, **kwargs)
+
+        self.image_topic = image_topic
+        self.detections_topic = detections_topic
+        self.ellipse = ellipse
+        self.blur_factor = blur_factor
+        self.bbox_scale = bbox_scale
+        self.detection_receive_stamp_from_image = detection_receive_stamp_from_image
+        self.add_tags = set(add_tags) if add_tags else set()
+
+        self._detections_cache = dict()
+        self._image_stamps_cache = dict()
+
+        self._cv = CvBridge()
+
+    def on_filtering_start(self):
+        super(BlurDetections, self).on_filtering_start()
+        bag = self._multibag if self._multibag is not None else self._bag
+
+        topic = self.detections_topic.lstrip('/')
+        topics = [topic, '/' + topic]
+
+        if self.detection_receive_stamp_from_image:
+            topic = self.image_topic.lstrip('/')
+            topics += [topic, '/' + topic]
+
+        for topic, msg, stamp in bag.read_messages(topics=topics, raw=True):
+            datatype = msg[0]
+            if datatype == Detection2DArray._type:
+                det_data = msg[1]
+                header = deserialize_header(det_data, Detection2DArray)
+                self._detections_cache[header.stamp] = det_data
+            else:
+                img_data = msg[1]
+                pytype = msg[-1]
+                header = deserialize_header(img_data, pytype)
+                self._image_stamps_cache[header.stamp] = stamp
+        print("Preloaded %i detections for topic %s" % (len(self._detections_cache), self.detections_topic))
+        if self.detection_receive_stamp_from_image:
+            print("Preloaded %i image stamps for topic %s" % (len(self._image_stamps_cache), self.image_topic))
+
+    def filter_raw(self, topic, datatype, data, md5sum, pytype, stamp, conn_header, tags):
+        if datatype == Config._type:
+            self.process_transport_params(topic, raw_to_msg(datatype, data, md5sum, pytype))
+            return topic, datatype, data, md5sum, pytype, stamp, conn_header, tags
+
+        header = deserialize_header(data, pytype)
+
+        if self.detection_receive_stamp_from_image and datatype == Detection2DArray._type:
+            stamp = self._image_stamps_cache.get(header.stamp, stamp)
+            return topic, datatype, data, md5sum, pytype, stamp, conn_header, tags
+
+        if header.stamp not in self._detections_cache:
+            return topic, datatype, data, md5sum, pytype, stamp, conn_header, tags
+
+        img = raw_to_msg(datatype, data, md5sum, pytype)
+        result = self.filter_any_image(topic, img, stamp, conn_header, tags)
+        result = normalize_filter_result(result)
+        del self._detections_cache[header.stamp]
+
+        raw_result = []
+        for _result in result:
+            if _result is not None:
+                _topic, _msg, _stamp, _header, _tags = _result
+                _datatype, _data, _md5sum, _pytype = msg_to_raw(_msg)
+                raw_result.append((_topic, _datatype, _data, _md5sum, _pytype, _stamp, _header, _tags))
+            else:
+                raw_result.append(None)
+
+        return raw_result
+
+    def filter_deserialized(self, topic, msg, stamp, conn_header, tags):
+        if msg._type == Config._type:
+            self.process_transport_params(topic, msg)
+            return topic, msg, stamp, conn_header, tags
+
+        header = msg.header
+        if header.stamp not in self._detections_cache:
+            return topic, msg, stamp, conn_header, tags
+
+        result = self.filter_any_image(topic, msg, stamp, conn_header, tags)
+        del self._detections_cache[header.stamp]
+        return result
+
+    def filter_image(self, topic, orig_msg, img_msg, raw_topic, transport, stamp, header, tags):
+        det_msg = Detection2DArray().deserialize(self._detections_cache[img_msg.header.stamp])
+        if len(det_msg.detections) > 0:
+            cv_img = self._cv.imgmsg_to_cv2(img_msg).copy()
+
+            for det in det_msg.detections:
+                self.blur(cv_img, det)
+
+            img_msg = self._cv.cv2_to_imgmsg(cv_img, encoding=img_msg.encoding, header=img_msg.header)
+            tags = tags_for_changed_msg(tags, self.add_tags)
+
+        return topic, orig_msg, img_msg, raw_topic, transport, stamp, header, tags
+
+    def blur(self, cv_img, det):
+        bf = self.blur_factor
+
+        img_h, img_w = cv_img.shape[:2]
+        bbox = det.bbox
+        w = int(bbox.size_x * self.bbox_scale)
+        h = int(bbox.size_y * self.bbox_scale)
+        x1 = np.clip(int(bbox.center.x) - w // 2, 0, img_w - 1)
+        x2 = np.clip(int(bbox.center.x) + w // 2, 0, img_w - 1)
+        y1 = np.clip(int(bbox.center.y) - h // 2, 0, img_h - 1)
+        y2 = np.clip(int(bbox.center.y) + h // 2, 0, img_h - 1)
+
+        if x1 == x2 or y1 == y2:
+            return
+        if x2 < x1:
+            x1, x2 = x2, x1
+        if y2 < y1:
+            y1, y2 = y2, y1
+
+        bfx = min(bf, x2 - x1)
+        bfy = min(bf, y2 - y1)
+        kernel_size = (int(abs(x2 - x1) // bfx), int(abs(y2 - y1) // bfy))
+        blurred_box = cv2.blur(cv_img[y1:y2, x1:x2], kernel_size)
+
+        if self.ellipse and w > 4 and h > 4:
+            roibox = cv_img[y1:y2, x1:x2]
+            # Get y and x coordinate lists of the "bounding ellipse"
+            ey, ex = skimage.draw.ellipse(h // 2, w // 2, h // 2, w // 2)
+            roibox[ey, ex] = blurred_box[ey, ex]
+            cv_img[y1:y2, x1:x2] = roibox
+        else:
+            cv_img[y1:y2, x1:x2] = blurred_box
+
+    def reset(self):
+        self._detections_cache = dict()
+        self._image_stamps_cache = dict()
+        super(BlurDetections, self).reset()
+
+    def _str_params(self):
+        params = []
+        params.append("image_topic=" + self.image_topic)
+        params.append("detections_topic=" + self.detections_topic)
+        params.append("ellipse=%r" % (self.ellipse,))
+        params.append("blur_factor=%i" % (self.blur_factor,))
+        params.append("bbox_scale=%f" % (self.bbox_scale,))
+        parent_params = super(BlurDetections, self)._str_params()
         if len(parent_params) > 0:
             params.append(parent_params)
         return ",".join(params)
