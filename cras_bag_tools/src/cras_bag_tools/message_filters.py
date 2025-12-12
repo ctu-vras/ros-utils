@@ -61,6 +61,7 @@ STR = STRING_TYPE
 FilteredImage = Tuple[STR, STR, genpy.Message, genpy.Message, STR, rospy.Time, ConnectionHeader, Tags]
 FilteredImageOrAnyMsg = Union[FilteredImage, DeserializedMessageData]
 
+
 def urdf_error(message):
     if "selfCollide" in message:
         return
