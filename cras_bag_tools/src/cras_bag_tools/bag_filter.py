@@ -12,7 +12,8 @@ import rospy
 from cras import Heap
 
 from .bag_utils import BagWrapper, MultiBag
-from .message_filter import MessageFilter, MessageTags, Passthrough, filter_message
+from .message_filter import MessageFilter, MessageTags, Passthrough, filter_message, msg_long_to_short, \
+    normalize_filter_result
 from .time_range import TimeRange, TimeRanges
 
 
@@ -42,6 +43,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
         bag = bags
 
     bag_filter.set_bag(bag)
+    bag_filter.set_multibag(bags)
 
     if start_time is not None or end_time is not None:
         if time_ranges is None:
@@ -75,7 +77,8 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     # get stamp from the tuple
     def get_stamp_fn(x):
         return x[2]
-    heap = Heap(initial=list(bag_filter.extra_initial_messages()), key=get_stamp_fn)
+    initial_msgs = list(map(msg_long_to_short, bag_filter.extra_initial_messages()))
+    heap = Heap(initial=initial_msgs, key=get_stamp_fn)
 
     num_passed = 0
     num_dropped = 0
@@ -100,8 +103,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
                 if _stamp in extra_time_ranges and _stamp not in time_ranges:
                     tags.add(MessageTags.EXTRA_TIME_RANGE)
             ret = filter_message(_topic, _msg, _stamp, _connection_header, tags, bag_filter, True)
-            if not isinstance(ret, list):
-                ret = [ret]
+            ret = normalize_filter_result(ret)
             for data in ret[1:]:
                 heap.push(data)
             if ret[0] is None:
@@ -120,7 +122,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
 
     # Push all final messages before processing the rest of the heap
     for m in bag_filter.extra_final_messages():
-        heap.push(m)
+        heap.push(msg_long_to_short(m))
 
     # Finish the rest of the heap if there is something left (messages with stamp higher than last message from bag)
     while len(heap) > 0:
@@ -130,8 +132,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
             if _stamp in extra_time_ranges and _stamp not in time_ranges:
                 _tags.add(MessageTags.EXTRA_TIME_RANGE)
         ret = filter_message(_topic, _msg, _stamp, _connection_header, _tags, bag_filter, True)
-        if not isinstance(ret, list):
-            ret = [ret]
+        ret = normalize_filter_result(ret)
         for data in ret[1:]:
             heap.push(data)
         if ret[0] is None:

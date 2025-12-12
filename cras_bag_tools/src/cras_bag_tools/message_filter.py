@@ -21,7 +21,7 @@ from cras.plugin_utils import get_plugin_implementations
 from cras.string_utils import to_str, STRING_TYPE
 from std_msgs.msg import Header
 
-from .bag_utils import MultiBag, BAG_NAME_PATTERN
+from .bag_utils import BagWrapper, MultiBag, BAG_NAME_PATTERN
 from .time_range import TimeRange, TimeRanges
 from .topic_set import TopicSet
 
@@ -51,17 +51,46 @@ def get_filters():
 
 
 ConnectionHeader = Dict[STRING_TYPE, STRING_TYPE]
+Tags = Set[STRING_TYPE]
 RawMessage = Tuple[str, bytes, str, type]
 """datatype, data, md5sum, pytype"""
-RawMessageData = Tuple[str, str, bytes, str, type, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
+RawMessageData = Tuple[str, str, bytes, str, type, rospy.Time, ConnectionHeader, Tags]
 """topic, datatype, data, md5sum, pytype, stamp, connection_header, tags"""
-RawMessageDataShort = Tuple[str, RawMessage, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
+RawMessageDataShort = Tuple[str, RawMessage, rospy.Time, ConnectionHeader, Tags]
 """topic, (datatype, data, md5sum, pytype), stamp, connection_header, tags"""
-DeserializedMessageData = Tuple[str, genpy.Message, rospy.Time, ConnectionHeader, Set[STRING_TYPE]]
+DeserializedMessageData = Tuple[str, genpy.Message, rospy.Time, ConnectionHeader, Tags]
 """topic, msg, stamp, connection_header, tags"""
 AnyMessageData = Union[RawMessageDataShort, DeserializedMessageData]
 RawFilterResult = Union[None, RawMessageData, List[Union[RawMessageData, DeserializedMessageData]]]
 DeserializedFilterResult = Union[None, DeserializedMessageData, List[Union[DeserializedMessageData, RawMessageData]]]
+
+
+def normalize_filter_result(result):
+    # type: (RawFilterResult) -> List[Union[RawMessageData, DeserializedMessageData]]
+    if not isinstance(result, list):
+        result = [result]
+    if len(result) == 0:
+        result = [None]
+    return result
+
+
+def msg_long_to_short(msg_tuple):
+    # type: (Union[RawMessageData, DeserializedMessageData]) -> AnyMessageData
+    try:
+        topic, datatype, data, md5sum, pytype, stamp, connection_header, tags = msg_tuple
+        return topic, (datatype, data, md5sum, pytype), stamp, connection_header, tags
+    except ValueError:
+        return msg_tuple
+
+
+def msg_short_to_long(msg_tuple):
+    # type: (AnyMessageData) -> Union[RawMessageData, DeserializedMessageData]
+    topic, msg, stamp, connection_header, tags = msg_tuple
+    if isinstance(msg, genpy.Message):
+        return msg_tuple
+
+    datatype, data, md5sum, pytype = msg
+    return topic, datatype, data, md5sum, pytype, stamp, connection_header, tags
 
 
 class MessageTags(str, Enum):
@@ -193,6 +222,8 @@ class MessageFilter(object):
         """If set, the filter will only work on messages before this timestamp."""
         self._bag = None
         """If this filter is working on a bag, it should be set here before the filter starts being used on the bag."""
+        self._multibag = None
+        """If this filter is working on a multibag, it should be set here before the filter starts being used."""
         self._params = None
         """If ROS parameters are recorded for the bag, they should be passed here."""
         self._include_time_ranges = self._parse_time_ranges(include_time_ranges)
@@ -229,6 +260,14 @@ class MessageFilter(object):
             self._include_time_ranges.set_base_time(start_time)
         if self._exclude_time_ranges is not None:
             self._exclude_time_ranges.set_base_time(start_time)
+
+    def set_multibag(self, bag):
+        # type: (Union[BagWrapper, MultiBag]) -> None
+        """If this filter is working on a multibag, it should be set here before the filter starts being used.
+
+        :param rosbag.bag.Bag bag: The bag file open for reading.
+        """
+        self._multibag = bag
 
     def set_params(self, params):
         """Set the ROS parameters recorded for the currently open bag file.
@@ -362,7 +401,7 @@ class MessageFilter(object):
         return True
 
     def extra_initial_messages(self):
-        # type: () -> Iterable[Tuple[STRING_TYPE, Any, rospy.Time, Optional[Dict[STRING_TYPE, STRING_TYPE]]]]
+        # type: () -> Iterable[Union[AnyMessageData, RawMessageData]]
         """Get extra messages that should be passed to the filter before the iteration over bag messages starts.
 
         This can be used e.g. by filters that are more generators than actual filters (i.e. they do not operate on
@@ -370,12 +409,12 @@ class MessageFilter(object):
 
         :note: :py:meth:`set_bag` should be called before calling this method.
         :note: Do not generate very large data. All initial messages will be stored in RAM at once.
-        :return: A list or iterator of the message 4-tuples `(topic, message, stamp, connection_header)`.
+        :return: A list or iterator of the message 5-tuples `(topic, message, stamp, connection_header, tags)`.
         """
         return []
 
     def extra_final_messages(self):
-        # type: () -> Iterable[Tuple[STRING_TYPE, Any, rospy.Time, Optional[Dict[STRING_TYPE, STRING_TYPE]]]]
+        # type: () -> Iterable[Union[AnyMessageData, RawMessageData]]
         """Get extra messages that should be passed to the filter after the iteration over bag messages stops.
 
         This can be used e.g. by filters that are more generators than actual filters (i.e. they do not operate on
@@ -383,7 +422,7 @@ class MessageFilter(object):
 
         :note: :py:meth:`set_bag` should be called before calling this method.
         :note: Do not generate very large data. All final messages will be stored in RAM at once.
-        :return: A list or iterator of the message 4-tuples `(topic, message, stamp, connection_header)`.
+        :return: A list or iterator of the message 5-tuples `(topic, message, stamp, connection_header, tags)`.
         """
         return []
 
@@ -478,6 +517,7 @@ class MessageFilter(object):
     def reset(self):
         """Reset the filter. This should be called e.g. before starting a new bag."""
         self._bag = None
+        self._multibag = None
         self._params = None
 
     @staticmethod
@@ -625,21 +665,6 @@ class RawMessageFilter(MessageFilter):
         """
         raise NotImplementedError
 
-    def deserialize_header(self, data, pytype):
-        # type: (bytes, Type) -> Optional[Header]
-        """Deserializes the header from the given raw message.
-
-        This method deserializes only the header, not the rest of the message.
-
-        :param data: The raw message whose header should be deserialized.
-        :param pytype: The message type (as Python type).
-        :return: A deserialized Header instance. If the message type has no header, None is returned.
-        """
-        has_header = len(pytype.__slots__) > 0 and pytype.__slots__[0] == 'header'
-        if not has_header:
-            return None
-        return Header().deserialize(data)
-
 
 class DeserializedMessageFilter(MessageFilter):
     """
@@ -692,13 +717,38 @@ class DeserializedMessageFilterWithTF(DeserializedMessageFilter):
         return TimeRanges([TimeRange(0, self._initial_bag_part_duration)])
 
 
-class Passthrough(RawMessageFilter):
+class UniversalFilter(MessageFilter):
+    """Base for message filters that can act both as raw and deserialized, based just on a configuration value."""
+
+    def filter(self, *args, **kwargs):
+        # type: (...) -> Union[RawFilterResult, DeserializedFilterResult]
+        if self.is_raw:
+            return self.filter_raw(*args, **kwargs)
+        else:
+            return self.filter_deserialized(*args, **kwargs)
+
+    def filter_raw(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+        # type: (...) -> RawFilterResult
+        raise NotImplementedError
+
+    def filter_deserialized(self, topic, msg, stamp, header, tags):
+        # type: (...) -> DeserializedFilterResult
+        raise NotImplementedError
+
+
+class Passthrough(UniversalFilter):
     """
     Just pass all messages through.
     """
 
-    def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
+    def __init__(self, is_raw=True, *args, **kwargs):
+        super(Passthrough, self).__init__(is_raw=is_raw, *args, **kwargs)
+
+    def filter_raw(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         return topic, datatype, data, md5sum, pytype, stamp, header, tags
+
+    def filter_deserialized(self, topic, msg, stamp, header, tags):
+        return topic, msg, stamp, header, tags
 
 
 class NoMessageFilter(RawMessageFilter):
@@ -738,8 +788,7 @@ class FilterChain(RawMessageFilter):
                 if not last_was_raw:
                     datatype, data, md5sum, pytype = msg_to_raw(msg)
                 ret = f(topic, datatype, data, md5sum, pytype, stamp, header, tags)
-                if not isinstance(ret, list):
-                    ret = [ret]
+                ret = normalize_filter_result(ret)
                 if ret[0] is None:
                     if len(ret) == 1 and len(additional_msgs) == 0:
                         return None
@@ -751,8 +800,7 @@ class FilterChain(RawMessageFilter):
                 if last_was_raw:
                     msg = raw_to_msg(datatype, data, md5sum, pytype)
                 ret = f(topic, msg, stamp, header, tags)
-                if not isinstance(ret, list):
-                    ret = [ret]
+                ret = normalize_filter_result(ret)
                 if ret[0] is None:
                     if len(ret) == 1 and len(additional_msgs) == 0:
                         return None
@@ -784,6 +832,11 @@ class FilterChain(RawMessageFilter):
         for f in self.filters:
             f.set_bag(bag)
         super(FilterChain, self).set_bag(bag)
+
+    def set_multibag(self, bag):
+        for f in self.filters:
+            f.set_multibag(bag)
+        super(FilterChain, self).set_multibag(bag)
 
     def set_params(self, params):
         for f in self.filters:
@@ -849,6 +902,9 @@ class FilterChain(RawMessageFilter):
 
 
 def fix_connection_header(header, topic, datatype, md5sum, pytype):
+    if header["type"] == datatype and header["topic"] == topic and header["md5sum"] == md5sum:
+        return header
+    header = dict(header)  # make a copy so that we don't alter the original message header instance
     header["topic"] = topic
     header["message_definition"] = pytype._full_text
     header["md5sum"] = md5sum
@@ -889,12 +945,11 @@ def filter_message(topic,  # type: STRING_TYPE
             datatype, data, md5sum, pytype = msg_to_raw(msg)
         if filter.consider_message(topic, datatype, stamp, connection_header, tags):
             ret = filter(topic, datatype, data, md5sum, pytype, stamp, connection_header, tags)
-            if not isinstance(ret, list):
-                ret = [ret]
+            ret = normalize_filter_result(ret)
             if ret[0] is None:
                 return None if len(ret) == 1 else ret
             topic, datatype, data, md5sum, pytype, stamp, connection_header, tags = ret[0]
-            additional_msgs.extend(ret[1:])
+            additional_msgs.extend(map(msg_long_to_short, ret[1:]))
         out_msg = (datatype, data, md5sum, pytype) if raw_output else raw_to_msg(datatype, data, md5sum, pytype)
     else:
         # Decode the message if raw was given
@@ -903,12 +958,11 @@ def filter_message(topic,  # type: STRING_TYPE
             msg = raw_to_msg(datatype, data, md5sum, pytype)
         if filter.consider_message(topic, msg.__class__._type, stamp, connection_header, tags):
             ret = filter(topic, msg, stamp, connection_header, tags)
-            if not isinstance(ret, list):
-                ret = [ret]
+            ret = normalize_filter_result(ret)
             if ret[0] is None:
                 return None if len(ret) == 1 else ret
             topic, msg, stamp, connection_header, tags = ret[0]
-            additional_msgs.extend(ret[1:])
+            additional_msgs.extend(map(msg_long_to_short, ret[1:]))
         datatype = msg.__class__._type
         md5sum = msg.__class__._md5sum
         pytype = msg.__class__
@@ -926,6 +980,22 @@ def filter_message(topic,  # type: STRING_TYPE
     return [ret] + additional_msgs
 
 
+def deserialize_header(data, pytype):
+    # type: (bytes, Type) -> Optional[Header]
+    """Deserializes the header from the given raw message.
+
+    This method deserializes only the header, not the rest of the message.
+
+    :param data: The raw message whose header should be deserialized.
+    :param pytype: The message type (as Python type).
+    :return: A deserialized Header instance. If the message type has no header, None is returned.
+    """
+    has_header = len(pytype.__slots__) > 0 and pytype.__slots__[0] == 'header'
+    if not has_header:
+        return None
+    return Header().deserialize(data)
+
+
 __all__ = [
     DeserializedMessageFilter.__name__,
     DeserializedMessageFilterWithTF.__name__,
@@ -934,8 +1004,13 @@ __all__ = [
     MessageTags.__name__,
     Passthrough.__name__,
     RawMessageFilter.__name__,
+    UniversalFilter.__name__,
+    deserialize_header.__name__,
     filter_message.__name__,
     get_filters.__name__,
+    msg_long_to_short.__name__,
+    msg_short_to_long.__name__,
+    normalize_filter_result.__name__,
     tags_for_changed_msg.__name__,
     tags_for_generated_msg.__name__,
 ]
