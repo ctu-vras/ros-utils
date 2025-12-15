@@ -10,3 +10,4 @@ Libraries:
 - [tcb/span](tcb): `std::span` shim for older compilers.
 - [tl/expected](tl): `std::expected` proposal implementation.
 - [tl/optional](tl): `std::optional` shim for older compilers.
+- [tqdm](tqdm): CLI Progressbar.

@@ -153,6 +153,10 @@ add_library(cras_span INTERFACE)
 target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/span.hpp>)
 target_sources(cras_span INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tcb/span.hpp>)
 
+add_library(cras_tqdm INTERFACE)
+target_sources(cras_tqdm INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/tqdm.hpp>)
+target_sources(cras_tqdm INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/external/tqdm/tqdm.hpp>)
+
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
 
