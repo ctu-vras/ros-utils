@@ -15,6 +15,7 @@ import matplotlib.cm as cmap
 import numpy as np
 import sys
 import yaml
+from bisect import bisect_left
 from collections import deque
 from enum import Enum
 from functools import reduce
@@ -3532,7 +3533,8 @@ class BlurDetections(ImageTransportFilter):
     detection messages are used for matching. Exact match is required."""
 
     def __init__(self, image_topic, detections_topic, is_raw=True, ellipse=False, blur_factor=2, bbox_scale=1.0,
-                 detection_receive_stamp_from_image=False, add_tags=None, *args, **kwargs):
+                 detection_receive_stamp_from_image=False, approximate_sync_threshold=None, add_tags=None,
+                 *args, **kwargs):
         """
         :param str image_topic: Topic with images.
         :param str detections_topic: Topic with detections.
@@ -3545,13 +3547,15 @@ class BlurDetections(ImageTransportFilter):
                                                         to the same stamp the images have (so that they are nicely
                                                         aligned in rqt_bag and such tools).
                                                         max_detection_delay after the detection's header stamp.
+        :param float approximate_sync_threshold: If not None, defines the maximum difference between stamps of a matched
+                                                 detection-image pair. If None, only exact matches are considered.
         :param add_tags: Tags to be added to messages with some blurred detections.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
         """
         include_topics = [image_topic]
         include_types = None
-        if detection_receive_stamp_from_image:
+        if detection_receive_stamp_from_image or approximate_sync_threshold is not None:
             include_topics.append(detections_topic)
             include_types = [Detection2DArray._type]
 
@@ -3564,10 +3568,13 @@ class BlurDetections(ImageTransportFilter):
         self.blur_factor = blur_factor
         self.bbox_scale = bbox_scale
         self.detection_receive_stamp_from_image = detection_receive_stamp_from_image
+        self.approximate_sync_threshold = \
+            float(approximate_sync_threshold) if approximate_sync_threshold is not None else None
         self.add_tags = set(add_tags) if add_tags else set()
 
         self._detections_cache = dict()
         self._image_stamps_cache = dict()
+        self._approx_detection_stamps = dict()
 
         self._cv = CvBridge()
 
@@ -3578,7 +3585,7 @@ class BlurDetections(ImageTransportFilter):
         topic = self.detections_topic.lstrip('/')
         topics = [topic, '/' + topic]
 
-        if self.detection_receive_stamp_from_image:
+        if self.detection_receive_stamp_from_image or self.approximate_sync_threshold is not None:
             topic = self.image_topic.lstrip('/')
             topics += [topic, '/' + topic]
 
@@ -3587,15 +3594,41 @@ class BlurDetections(ImageTransportFilter):
             if datatype == Detection2DArray._type:
                 det_data = msg[1]
                 header = deserialize_header(det_data, Detection2DArray)
-                self._detections_cache[header.stamp] = det_data
+                self._detections_cache[header.stamp] = det_data, header.stamp
             else:
                 img_data = msg[1]
                 pytype = msg[-1]
                 header = deserialize_header(img_data, pytype)
                 self._image_stamps_cache[header.stamp] = stamp
+
+        # In approximate mode, we find the closest detection for each image that is within the proximity bounds
+        if self.approximate_sync_threshold is not None:
+            img_stamps = list(sorted(self._image_stamps_cache.keys()))
+            for stamp, det_data_and_stamp in list(self._detections_cache.items()):
+                if stamp not in self._image_stamps_cache:
+                    idx = bisect_left(img_stamps, stamp)
+                    for i in sorted(range(-10, 10), key=lambda x: abs(x)):
+                        if 0 <= idx + i < len(img_stamps):
+                            img_stamp = img_stamps[idx + i]
+                            if abs((img_stamp - stamp).to_sec()) <= self.approximate_sync_threshold:
+                                if stamp not in self._approx_detection_stamps:
+                                    self._approx_detection_stamps[stamp] = img_stamp
+                                elif abs((self._approx_detection_stamps[stamp] - stamp).to_sec()) > \
+                                    abs((stamp - img_stamp).to_sec()):
+                                    self._approx_detection_stamps[stamp] = img_stamp
+
+                            if img_stamp not in self._detections_cache:
+                                self._detections_cache[img_stamp] = det_data_and_stamp
+                            else:
+                                det_data, det_stamp = self._detections_cache[img_stamp]
+                                if abs((img_stamp - det_stamp).to_sec()) > abs((img_stamp - stamp).to_sec()):
+                                    self._detections_cache[img_stamp] = det_data_and_stamp
+
         print("Preloaded %i detections for topic %s" % (len(self._detections_cache), self.detections_topic))
         if self.detection_receive_stamp_from_image:
             print("Preloaded %i image stamps for topic %s" % (len(self._image_stamps_cache), self.image_topic))
+        if len(self._approx_detection_stamps) > 0:
+            print("Matched %i approximate timestamps" % (len(self._approx_detection_stamps),))
 
     def filter_raw(self, topic, datatype, data, md5sum, pytype, stamp, conn_header, tags):
         if datatype == Config._type:
@@ -3603,6 +3636,11 @@ class BlurDetections(ImageTransportFilter):
             return topic, datatype, data, md5sum, pytype, stamp, conn_header, tags
 
         header = deserialize_header(data, pytype)
+
+        if datatype == Detection2DArray._type and header.stamp in self._approx_detection_stamps:
+            header.stamp = self._approx_detection_stamps[header.stamp]
+            _, ser_header, _, _ = msg_to_raw(header)
+            data = ser_header + data[len(ser_header):]
 
         if self.detection_receive_stamp_from_image and datatype == Detection2DArray._type:
             stamp = self._image_stamps_cache.get(header.stamp, stamp)
@@ -3633,6 +3671,14 @@ class BlurDetections(ImageTransportFilter):
             return topic, msg, stamp, conn_header, tags
 
         header = msg.header
+
+        if msg._type == Detection2DArray._type and header.stamp in self._approx_detection_stamps:
+            header.stamp = self._approx_detection_stamps[header.stamp]
+
+        if self.detection_receive_stamp_from_image and msg._type == Detection2DArray._type:
+            stamp = self._image_stamps_cache.get(header.stamp, stamp)
+            return topic, msg, stamp, conn_header, tags
+
         if header.stamp not in self._detections_cache:
             return topic, msg, stamp, conn_header, tags
 
@@ -3641,7 +3687,7 @@ class BlurDetections(ImageTransportFilter):
         return result
 
     def filter_image(self, topic, orig_msg, img_msg, raw_topic, transport, stamp, header, tags):
-        det_msg = Detection2DArray().deserialize(self._detections_cache[img_msg.header.stamp])
+        det_msg = Detection2DArray().deserialize(self._detections_cache[img_msg.header.stamp][0])
         if len(det_msg.detections) > 0:
             cv_img = self._cv.imgmsg_to_cv2(img_msg).copy()
 
@@ -3680,7 +3726,7 @@ class BlurDetections(ImageTransportFilter):
         if self.ellipse and w > 4 and h > 4:
             roibox = cv_img[y1:y2, x1:x2]
             # Get y and x coordinate lists of the "bounding ellipse"
-            ey, ex = skimage.draw.ellipse(h // 2, w // 2, h // 2, w // 2)
+            ey, ex = skimage.draw.ellipse(h // 2, w // 2, h // 2, w // 2, shape=blurred_box.shape)
             roibox[ey, ex] = blurred_box[ey, ex]
             cv_img[y1:y2, x1:x2] = roibox
         else:
@@ -3689,6 +3735,7 @@ class BlurDetections(ImageTransportFilter):
     def reset(self):
         self._detections_cache = dict()
         self._image_stamps_cache = dict()
+        self._approx_detection_stamps = dict()
         super(BlurDetections, self).reset()
 
     def _str_params(self):
