@@ -2894,6 +2894,10 @@ class RemovePasswordsFromParams(NoMessageFilter):
     def on_filtering_start(self):
         super(RemovePasswordsFromParams, self).on_filtering_start()
         self.remove_passwords(self._params)
+        if len(self._removed_passwords) > 0:
+            print("Removed passwords %r" % (self._removed_passwords,))
+        else:
+            print("No passwords removed")
 
     def remove_passwords(self, params, prefix=""):
         if isinstance(params, dict):
