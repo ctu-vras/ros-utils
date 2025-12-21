@@ -106,11 +106,11 @@ class Parser(argparse.ArgumentParser):
         description = "Extract pointclouds from a ROS bag. If you pass no topics, all pointcloud" \
                       "topics will be exported."
 
-        super(Parser, self).__init__(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
+        super(Parser, self).__init__(description=description)
 
         self.add_argument("bag_file", help="Input bagfile.")
         self.add_argument("output_dir", help="Output directory.")
-        self.add_argument("-n", "--name-template", default="{topic}-{secs}.{nsecs:09d}.pcd",
+        self.add_argument("-n", "--name-template", default="{topic}-{secs}.{nsecs:09d}.{format}",
                           help="Template for naming the output files. This is a Python format string." +
                           "Available variables are bag, topic, secs, nsecs, msg_num, t, format.")
         self.add_argument("-v", "--verbose", action="store_true", help="Enable debug prints.")
@@ -119,7 +119,7 @@ class Parser(argparse.ArgumentParser):
         self.add_argument('pcl_topics', nargs="*", help="The pointcloud topics to extract.")
 
 
-def get_filename(bag, topic, name_pattern="{topic}-{secs}.{nsecs:09d}.pcd", msg=None, t=None, msg_num=None):
+def get_filename(bag, topic, name_pattern="{topic}-{secs}.{nsecs:09d}.{format}", msg=None, t=None, msg_num=None):
     if not name_pattern.endswith(".{format}"):
         name_pattern += ".{format}"
 
@@ -160,14 +160,14 @@ def get_topic_info(bag):
 def main():
     parser = Parser()
 
-    args = parser.parse_args(sys.argv)
+    args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
     # Parse topic arguments into a per-topic dict
 
-    pcl_topics = list(args.pcl_topic)
+    pcl_topics = list(args.pcl_topics)
     name_template = str(args.name_template)
     basename = os.path.splitext(os.path.basename(args.bag_file))[0]
 
