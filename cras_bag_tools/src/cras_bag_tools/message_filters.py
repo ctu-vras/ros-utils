@@ -3618,7 +3618,7 @@ class BlurDetections(ImageTransportFilter):
                                 if stamp not in self._approx_detection_stamps:
                                     self._approx_detection_stamps[stamp] = img_stamp
                                 elif abs((self._approx_detection_stamps[stamp] - stamp).to_sec()) > \
-                                    abs((stamp - img_stamp).to_sec()):
+                                        abs((stamp - img_stamp).to_sec()):
                                     self._approx_detection_stamps[stamp] = img_stamp
 
                             if img_stamp not in self._detections_cache:
