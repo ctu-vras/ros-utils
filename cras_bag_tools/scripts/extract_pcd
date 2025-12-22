@@ -61,6 +61,7 @@ class Parser(argparse.ArgumentParser):
                           help="Template for naming the output ZIP files. This is a Python format string." +
                           "Available variables are bag, topic, secs, nsecs, msg_num, t, format.")
         self.add_argument("-z", "--zip", action="store_true", help="Store the output PCD files directly into a ZIP")
+        self.add_argument("-c", "--zip-compression", default=6, help="ZIP compression level [0-9]")
         self.add_argument("-v", "--verbose", action="store_true", help="Enable debug prints.")
         self.add_argument("-q", "--no-progress", action="store_false", dest="progress", default=True,
                           help="Disable progress bars.")
@@ -157,7 +158,8 @@ def main():
                     zip_filename = get_filename(basename, topic, args.zip_name_template, msg, t, msg_nums[topic],
                                                 format="zip")
                     zip_file = os.path.join(args.output_dir, zip_filename)
-                    with zipfile.ZipFile(zip_file, "a") as zip_f:
+                    with zipfile.ZipFile(zip_file, "a", zipfile.ZIP_DEFLATED,
+                                         compresslevel=int(args.zip_compression)) as zip_f:
                         zip_f.writestr(out_filename, pcd_data)
                 else:
                     with open(out_file, 'wb') as f:
