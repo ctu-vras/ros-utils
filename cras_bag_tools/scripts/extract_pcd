@@ -35,6 +35,7 @@ import argparse
 import os
 import re
 import sys
+import zipfile
 from collections import defaultdict
 
 import rosbag
@@ -56,13 +57,18 @@ class Parser(argparse.ArgumentParser):
         self.add_argument("-n", "--name-template", default="{topic}-{secs}.{nsecs:09d}.{format}",
                           help="Template for naming the output files. This is a Python format string." +
                           "Available variables are bag, topic, secs, nsecs, msg_num, t, format.")
+        self.add_argument("--zip-name-template", default="{topic}.{format}",
+                          help="Template for naming the output ZIP files. This is a Python format string." +
+                          "Available variables are bag, topic, secs, nsecs, msg_num, t, format.")
+        self.add_argument("-z", "--zip", action="store_true", help="Store the output PCD files directly into a ZIP")
         self.add_argument("-v", "--verbose", action="store_true", help="Enable debug prints.")
         self.add_argument("-q", "--no-progress", action="store_false", dest="progress", default=True,
                           help="Disable progress bars.")
         self.add_argument('pcl_topics', nargs="*", help="The pointcloud topics to extract.")
 
 
-def get_filename(bag, topic, name_pattern="{topic}-{secs}.{nsecs:09d}.{format}", msg=None, t=None, msg_num=None):
+def get_filename(bag, topic, name_pattern="{topic}-{secs}.{nsecs:09d}.{format}", msg=None, t=None, msg_num=None,
+                 format="pcd"):
     if not name_pattern.endswith(".{format}"):
         name_pattern += ".{format}"
 
@@ -77,7 +83,7 @@ def get_filename(bag, topic, name_pattern="{topic}-{secs}.{nsecs:09d}.{format}",
         stamp = rospy.Time(0)
 
     filename = name_pattern.format(
-        bag=bag, topic=topic.replace("/", "_").lstrip("_"), format="pcd",
+        bag=bag, topic=topic.replace("/", "_").lstrip("_"), format=format,
         secs=stamp.secs, nsecs=stamp.nsecs, msg_num=msg_num, t=t)
 
     return filename
@@ -138,15 +144,24 @@ def main():
             msg_nums[topic] += 1
 
             try:
-                out_file = os.path.join(
-                    args.output_dir, get_filename(basename, topic, name_template, msg, t, msg_nums[topic]))
+                out_filename = get_filename(basename, topic, name_template, msg, t, msg_nums[topic])
+                out_file = os.path.join(args.output_dir, out_filename)
                 if args.verbose and topic not in reported_outputs:
                     reported_outputs.add(topic)
                     out_template = os.path.join(args.output_dir, get_filename(basename, topic, name_template))
                     print("Exporting topic %s as pointclouds %s." % (topic, out_template))
 
-                with open(out_file, 'wb') as f:
-                    f.write(convert_PointCloud2_to_pcd(msg))
+                pcd_data = convert_PointCloud2_to_pcd(msg)
+
+                if args.zip:
+                    zip_filename = get_filename(basename, topic, args.zip_name_template, msg, t, msg_nums[topic],
+                                                format="zip")
+                    zip_file = os.path.join(args.output_dir, zip_filename)
+                    with zipfile.ZipFile(zip_file, "a") as zip_f:
+                        zip_f.writestr(out_filename, pcd_data)
+                else:
+                    with open(out_file, 'wb') as f:
+                        f.write(pcd_data)
 
             except IOError as e:
                 print("Error writing pointcloud from topic %s: %s" % (topic, str(e)), sys.stderr)
