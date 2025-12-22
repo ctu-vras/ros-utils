@@ -35,69 +35,12 @@ import argparse
 import os
 import re
 import sys
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 import rosbag
 import rospy
-from cras_bag_tools import TqdmBag
-from sensor_msgs.msg import PointCloud2, PointField
-
-
-PclPointFieldType = namedtuple('PclPointFieldType', ['type_name', 'size'])
-
-
-POINT_FIELD_DATATYPE_TO_PCL = {
-    PointField.INT8: PclPointFieldType('I', 1),
-    PointField.INT16: PclPointFieldType('I', 2),
-    PointField.INT32: PclPointFieldType('I', 4),
-    PointField.UINT8: PclPointFieldType('U', 1),
-    PointField.UINT16: PclPointFieldType('U', 2),
-    PointField.UINT32: PclPointFieldType('U', 4),
-    PointField.FLOAT32: PclPointFieldType('F', 4),
-    PointField.FLOAT64: PclPointFieldType('F', 8),
-}
-
-
-def get_pcd_header(msg):
-    # type: (PointCloud2) -> str
-    fields_str = "FIELDS"
-    size_str = "SIZE"
-    type_str = "TYPE"
-    count_str = "COUNT"
-
-    offset = 0
-    num_paddings = 0
-    for f in msg.fields:
-        pcl_type = POINT_FIELD_DATATYPE_TO_PCL[f.datatype]
-        if f.offset != offset:
-            fields_str += " padding" + str(num_paddings)
-            size_str += " 1"
-            type_str += " I"
-            count_str += " " + str(f.offset - offset)
-            num_paddings += 1
-        fields_str += " " + f.name
-        size_str += " " + str(pcl_type.size)
-        type_str += " " + pcl_type.type_name
-        count_str += " " + str(f.count)
-        offset = f.offset + pcl_type.size
-
-    header = """VERSION .7
-%s
-%s
-%s
-%s
-WIDTH %i
-HEIGHT %i
-VIEWPOINT 0 0 0 1 0 0 0
-POINTS %i
-DATA binary
-""" % (fields_str, size_str, type_str, count_str, msg.width, msg.height, msg.width * msg.height)
-    return header
-
-
-def convert_pcl(msg):
-    header = get_pcd_header(msg)
-    return header.encode('utf-8') + msg.data
+from cras_bag_tools import convert_PointCloud2_to_pcd, TqdmBag
+from sensor_msgs.msg import PointCloud2
 
 
 class Parser(argparse.ArgumentParser):
@@ -203,7 +146,7 @@ def main():
                     print("Exporting topic %s as pointclouds %s." % (topic, out_template))
 
                 with open(out_file, 'wb') as f:
-                    f.write(convert_pcl(msg))
+                    f.write(convert_PointCloud2_to_pcd(msg))
 
             except IOError as e:
                 print("Error writing pointcloud from topic %s: %s" % (topic, str(e)), sys.stderr)

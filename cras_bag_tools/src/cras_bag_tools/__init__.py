@@ -7,3 +7,4 @@ from .bag_utils import *
 from .tqdm_bag import *
 from .message_filter import *
 from .bag_filter import filter_bag
+from .pcl_sensor_msgs import convert_PointCloud2_to_pcd
