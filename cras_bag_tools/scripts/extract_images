@@ -54,6 +54,7 @@ import os
 import re
 import subprocess
 import sys
+import zipfile
 from collections import defaultdict
 
 import rosbag
@@ -97,10 +98,10 @@ max_bit_depth["hdr"] = 32
 
 
 bit_depth_to_dtype = {
-    1: np.bool,
+    1: np.bool_,
     8: np.uint8,
     16: np.uint16,
-    32: np.float,
+    32: np.float_,
 }
 """Numpy dtypes corresponding to the given bit depths."""
 
@@ -308,6 +309,27 @@ class Parser(argparse.ArgumentParser):
                           help="Speedup factor of the videos. If in_fps * speedup exceeds out_fps, frames are dropped "
                                "to satisfy the output FPS. If out_fps is not specified, it is the same as in_fps.")
         self.add_argument("--out-fps", type=float, required=False, help="Default output video FPS.")
+        self.add_argument("--image-name-pattern", type=str, required=False,
+                          help="Pattern to generate the filename. The pattern is passed to str.format() with the "
+                               "following variables defined: bag (filename of the bagfile without extension), "
+                               "topic (the topic with slashes substituted with underscores), "
+                               "secs (header.stamp.secs of the message), nsecs (header.stamp.nsecs of the message), "
+                               "format (the file format). If the pattern does not end with '.{format}', "
+                               "it is added automatically. If not specified, pattern "
+                               "'{bag}-{topic}.{secs}.{nsecs:09d}.{format}' is used.")
+        self.add_argument("--video-name-pattern", type=str, required=False,
+                          help="Pattern to generate the filename. The pattern is passed to str.format() with the "
+                               "following variables defined: bag (filename of the bagfile without extension), "
+                               "topic (the topic with slashes substituted with underscores), "
+                               "secs (header.stamp.secs of the message), nsecs (header.stamp.nsecs of the message), "
+                               "format (the file format). If the pattern does not end with '.{format}', "
+                               "it is added automatically. If not specified, pattern "
+                               "'{bag}-{topic}.{format}' is used.")
+        self.add_argument("--zip-name-pattern", default="{topic}.{format}",
+                          help="Template for naming the output ZIP files. This is a Python format string." +
+                               "Available variables are bag, topic, secs, nsecs, msg_num, t, format.")
+        self.add_argument("-z", "--zip", action="store_true", help="Store the output image files directly into a ZIP")
+        self.add_argument("-c", "--zip-compression", default=0, help="ZIP compression level [0-9]")
 
         usage = self._image_parser.usage
         self._image_parser.usage = argparse.SUPPRESS
@@ -435,6 +457,9 @@ class Parser(argparse.ArgumentParser):
             default_out_fps = float(args.out_fps) if args.out_fps is not None and args.out_fps != '' else 0
             a.out_fps = float(a.out_fps) if a.out_fps is not None and a.out_fps != '' else default_out_fps
             a.speedup = float(a.speedup) if a.speedup is not None else float(args.speedup)
+            a.name_pattern = (a.name_pattern if a.name_pattern is not None else args.video_name_pattern)
+        else:
+            a.name_pattern = (a.name_pattern if a.name_pattern is not None else args.image_name_pattern)
 
         if a.is_video and not is_video:
             self.error("Non-video format passed to --video: %s." % (a.out_format,))
@@ -442,14 +467,7 @@ class Parser(argparse.ArgumentParser):
         return a
 
 
-def get_filename(bag, config, topic, msg=None, t=None, msg_num=None):
-    if config.name_pattern:
-        name_pattern = config.name_pattern
-    else:
-        name_pattern = "{bag}-{topic}"
-        if not config.is_video:
-            name_pattern += "-{secs}.{nsecs:09d}"
-        name_pattern += ".{format}"
+def get_filename(bag, topic, name_pattern, out_format, msg=None, t=None, msg_num=None):
     name_pattern = name_pattern.strip("'").strip('"')
     if not name_pattern.endswith(".{format}"):
         name_pattern += ".{format}"
@@ -465,10 +483,22 @@ def get_filename(bag, config, topic, msg=None, t=None, msg_num=None):
         stamp = rospy.Time(0)
 
     filename = name_pattern.format(
-        bag=bag, topic=topic.replace("/", "_").lstrip("_"), format=config.out_format,
-        secs=stamp.secs, nsecs=stamp.nsecs, msg_num=msg_num)
+        bag=bag, topic=topic.replace("/", "_").lstrip("_"), format=out_format,
+        secs=stamp.secs, nsecs=stamp.nsecs, msg_num=msg_num, t=t)
 
     return filename
+
+
+def get_image_filename(bag, config, topic, msg=None, t=None, msg_num=None):
+    if config.name_pattern:
+        name_pattern = config.name_pattern
+    else:
+        name_pattern = "{bag}-{topic}"
+        if not config.is_video:
+            name_pattern += "-{secs}.{nsecs:09d}"
+        name_pattern += ".{format}"
+
+    return get_filename(bag, topic, name_pattern, config.out_format, msg, t, msg_num)
 
 
 __topic_info = None
@@ -538,20 +568,41 @@ def main():
                 try:
                     # If we get e.g. a JPEG in the message and want JPEG output, just paste it directly in the file
                     is_compressed = msg._type != Image._type
+
+                    out_filename = get_image_filename(basename, config, topic, msg, t, msg_nums[topic])
+                    if args.zip:
+                        zip_filename = get_filename(
+                            basename, topic, args.zip_name_pattern, "zip", msg, t, msg_nums[topic])
+                        out_file = os.path.join(args.output_dir, zip_filename)
+                        zip_args = {
+                            'compression': zipfile.ZIP_DEFLATED,
+                            'compresslevel': int(args.zip_compression),
+                        }
+                        if zip_args['compresslevel'] == 0:
+                            zip_args['compression'] = zipfile.ZIP_STORED
+                    else:
+                        out_file = os.path.join(args.output_dir, out_filename)
+
+                    if not os.path.exists(os.path.dirname(out_file)):
+                        os.makedirs(os.path.dirname(out_file))
+
                     if is_compressed and not config.is_video and not config.force_decode and not config.normalize_range:
                         content, err = get_compressed_image_content(msg, topic, config.out_format)
                         if content is not None:
                             if len(config.out_format) == 0:
                                 config.out_format = content.format.replace("jpeg", "jpg")
-                            out_file = os.path.join(
-                                args.output_dir, get_filename(basename, config, topic, msg, t, msg_nums[topic]))
                             if args.verbose and (topic, config_num) not in reported_outputs:
                                 reported_outputs.add((topic, config_num))
-                                out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                                out_template = os.path.join(
+                                    args.output_dir, get_image_filename(basename, config, topic))
                                 print("Exporting topic %s as images %s." % (topic, out_template))
 
-                            with open(out_file, 'wb') as f:
-                                f.write(content.data)
+                            if args.zip:
+                                with zipfile.ZipFile(out_file, "a", **zip_args) as zip_f:
+                                    zip_f.writestr(out_filename, content.data)
+                            else:
+                                with open(out_file, 'wb') as f:
+                                    f.write(content.data)
                             continue
 
                     # Decode the (possibly compressed) image into raw bytes
@@ -567,11 +618,6 @@ def main():
 
                     cv_img = convert_image(cv_img, raw_img.encoding, config)
 
-                    out_file = os.path.join(
-                        args.output_dir, get_filename(basename, config, topic, msg, t, msg_nums[topic]))
-                    if not os.path.exists(os.path.dirname(out_file)):
-                        os.makedirs(os.path.dirname(out_file))
-
                     # Write the raw bytes in the output
 
                     if not config.is_video:
@@ -581,11 +627,20 @@ def main():
 
                         if args.verbose and (topic, config_num) not in reported_outputs:
                             reported_outputs.add((topic, config_num))
-                            out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                            out_template = os.path.join(args.output_dir, get_image_filename(basename, config, topic))
                             print("Exporting topic %s as images %s (%ix%i)." % (
                                 topic, out_template, cv_img.shape[1], cv_img.shape[0]))
 
-                        cv2.imwrite(out_file, cv_img, compression_param)
+                        if args.zip:
+                            with zipfile.ZipFile(out_file, "a", **zip_args) as zip_f:
+                                res, data = cv2.imencode("." + config.out_format, cv_img, compression_param)
+                                if res:
+                                    zip_f.writestr(out_filename, data)
+                                else:
+                                    raise IOError("Could not encode image on topic " + topic + " to format " +
+                                                  config.out_format)
+                        else:
+                            cv2.imwrite(out_file, cv_img, compression_param)
                     else:
                         pix_fmt = cv_pixfmt_to_ffmpeg_pixfmt.get(config.encoding, DEFAULT_VIDEO_ENCODING)
 
@@ -613,7 +668,8 @@ def main():
                                 config.out_fps = config.in_fps
                             config.out_pix_fmt = config.pix_fmt if config.pix_fmt else DEFAULT_PIX_FMT
                             if args.verbose:
-                                out_template = os.path.join(args.output_dir, get_filename(basename, config, topic))
+                                out_template = os.path.join(
+                                    args.output_dir, get_image_filename(basename, config, topic))
                                 # we use \r here to get rid of the interleaving with tqdm
                                 print("\rExporting topic %s as video %s (%s, %ix%i, %.1f FPS, %s)." % (
                                     topic, out_template, default_video_encoders[config.out_format],
@@ -655,5 +711,4 @@ def main():
 
 
 if __name__ == '__main__':
-    rospy.init_node("test")
     main()
