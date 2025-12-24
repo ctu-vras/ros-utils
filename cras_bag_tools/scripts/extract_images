@@ -587,10 +587,16 @@ def main():
                         os.makedirs(os.path.dirname(out_file))
 
                     if is_compressed and not config.is_video and not config.force_decode and not config.normalize_range:
+                        # whether the compressed content matches the out_format is checked by passing it as matchFormat
+                        # parameter of get_compressed_image_content()
                         content, err = get_compressed_image_content(msg, topic, config.out_format)
                         if content is not None:
                             if len(config.out_format) == 0:
                                 config.out_format = content.format.replace("jpeg", "jpg")
+                                # out_filename depends on config.out_format, so update it here
+                                out_filename = get_image_filename(basename, config, topic, msg, t, msg_nums[topic])
+                                if not args.zip:
+                                    out_file = os.path.join(args.output_dir, out_filename)
                             if args.verbose and (topic, config_num) not in reported_outputs:
                                 reported_outputs.add((topic, config_num))
                                 out_template = os.path.join(
@@ -615,6 +621,10 @@ def main():
 
                     if len(config.out_format) == 0:
                         config.out_format = "mp4" if config.is_video else "jpg"
+                        # out_filename depends on config.out_format, so update it here
+                        out_filename = get_image_filename(basename, config, topic, msg, t, msg_nums[topic])
+                        if not args.zip:
+                            out_file = os.path.join(args.output_dir, out_filename)
 
                     cv_img = convert_image(cv_img, raw_img.encoding, config)
 
