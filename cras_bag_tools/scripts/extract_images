@@ -599,8 +599,12 @@ def main():
                                     out_file = os.path.join(args.output_dir, out_filename)
                             if args.verbose and (topic, config_num) not in reported_outputs:
                                 reported_outputs.add((topic, config_num))
-                                out_template = os.path.join(
-                                    args.output_dir, get_image_filename(basename, config, topic))
+                                if args.zip:
+                                    out_template = os.pathsep.join((
+                                        out_file, get_image_filename(basename, config, topic)))
+                                else:
+                                    out_template = os.path.join(
+                                        args.output_dir, get_image_filename(basename, config, topic))
                                 print("Exporting topic %s as images %s." % (topic, out_template))
 
                             if args.zip:
@@ -637,7 +641,12 @@ def main():
 
                         if args.verbose and (topic, config_num) not in reported_outputs:
                             reported_outputs.add((topic, config_num))
-                            out_template = os.path.join(args.output_dir, get_image_filename(basename, config, topic))
+                            if args.zip:
+                                out_template = os.pathsep.join((
+                                    out_file, get_image_filename(basename, config, topic)))
+                            else:
+                                out_template = os.path.join(
+                                    args.output_dir, get_image_filename(basename, config, topic))
                             print("Exporting topic %s as images %s (%ix%i)." % (
                                 topic, out_template, cv_img.shape[1], cv_img.shape[0]))
 
