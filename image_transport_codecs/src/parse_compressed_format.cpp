@@ -68,12 +68,16 @@ cras::expected<CompressedTransportFormat, std::string> parseCompressedTransportF
   result.rawEncoding = result.compressedEncoding = cras::strip(parts[0]);
   const auto parts2 = cras::split(cras::strip(parts[1]), " ");
 
-  result.format = CompressedTransportCompressionFormat::JPEG;
+  result.format = CompressedTransportCompressionFormat::OTHER;
   if (parts2.size() >= 2 && cras::strip(parts2[1]) == "compressed")
   {
     const auto& f = cras::strip(parts2[0]);
+    result.formatString = f;
     if (compressedFormatTypes.find(f) != compressedFormatTypes.end())
+    {
       result.format = compressedFormatTypes[f];
+      result.formatString = compressedFormatNames[result.format];
+    }
 
     if (parts2.size() > 2)
     {
@@ -85,7 +89,6 @@ cras::expected<CompressedTransportFormat, std::string> parseCompressedTransportF
   else
     return cras::make_unexpected("compressed transport format '" + format + "' is invalid.");
 
-  result.formatString = compressedFormatNames[result.format];
   result.isColor = sensor_msgs::image_encodings::isColor(result.rawEncoding);
   try
   {
@@ -143,7 +146,8 @@ CompressedTransportFormat extractCompressedTransportFormat(
 {
   CompressedTransportFormat result;
   result.format = compressionFormat;
-  result.formatString = compressedFormatNames[result.format];
+  if (compressedFormatNames.find(compressionFormat) != compressedFormatNames.end())
+    result.formatString = compressedFormatNames[result.format];
   result.rawEncoding = result.compressedEncoding = imageEncoding;
   result.isColor = sensor_msgs::image_encodings::isColor(result.rawEncoding);
 

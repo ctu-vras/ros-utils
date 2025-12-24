@@ -29,6 +29,7 @@ enum class CompressedTransportCompressionFormat
 {
   JPEG,  //!< \brief JPEG compression format.
   PNG,  //!< \brief PNG compression format.
+  OTHER,  //!< \brief Other compression formats (not officially supported, but ok for decoding).
 };
 
 /**
