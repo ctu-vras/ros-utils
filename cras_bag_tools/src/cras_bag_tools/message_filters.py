@@ -1597,8 +1597,9 @@ class InterpolateJointStates(DeserializedMessageFilter):
 class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
     """Extract joint states velocity to pretend they are velocity commands."""
 
-    def __init__(self, joints, cmd_topic, joint_states_topic="joint_states", add_tags=None, *args, **kwargs):
-        # type: (List[STRING_TYPE], STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
+    def __init__(self, joints, cmd_topic, min_velocity=0.0, joint_states_topic="joint_states", add_tags=None,
+                 *args, **kwargs):
+        # type: (List[STRING_TYPE], STRING_TYPE, float, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
         """
         :param joints: The joints to extract.
         :param cmd_topic: The topic to which the extracted commands should be published.
@@ -1612,6 +1613,7 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
 
         self._joints = list(joints)
         self._cmd_topic = cmd_topic
+        self._min_velocity = min_velocity
         self._joint_states_topic = joint_states_topic
 
         self._add_tags = set(add_tags) if add_tags else set()
@@ -1624,7 +1626,10 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
             joint_idx = msg.name.index(joint)
             if len(msg.velocity) <= joint_idx:
                 return topic, msg, stamp, header, tags
-            out_msg.data.append(msg.velocity[joint_idx])
+            velocity = msg.velocity[joint_idx]
+            if abs(velocity) < self._min_velocity:
+                velocity = 0.0
+            out_msg.data.append(velocity)
 
         gen_tags = tags_for_generated_msg(tags)
         if self._add_tags:
@@ -1640,6 +1645,8 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
         parts = []
         parts.append('joints=' + repr(self._joints))
         parts.append('cmd_topic=' + self._cmd_topic)
+        if self._min_velocity != 0.0:
+            parts.append('min_velocity=' + str(self._min_velocity))
         parts.append('joint_states_topic=' + self._joint_states_topic)
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
