@@ -47,7 +47,7 @@ from kdl_parser_py.urdf import treeFromUrdfModel
 from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
-from std_msgs.msg import Header, String
+from std_msgs.msg import Float64MultiArray, Header, String
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore
 from urdf_parser_py import urdf, xml_reflection
@@ -1588,6 +1588,58 @@ class InterpolateJointStates(DeserializedMessageFilter):
         parts.append('joints=' + repr(self._joints))
         parts.append('max_dt=' + to_str(self._max_dt).rstrip('0'))
         parts.append('dt_tolerance=' + to_str(self._dt_tolerance).rstrip('0'))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
+    """Extract joint states velocity to pretend they are velocity commands."""
+
+    def __init__(self, joints, cmd_topic, joint_states_topic="joint_states", add_tags=None, *args, **kwargs):
+        # type: (List[STRING_TYPE], STRING_TYPE, STRING_TYPE, Optional[Set[STRING_TYPE]], Any, Any) -> None
+        """
+        :param joints: The joints to extract.
+        :param cmd_topic: The topic to which the extracted commands should be published.
+        :param joint_states_topic: The topic on which to look for joint states.
+        :param add_tags: Tags to be added to generated messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExtractJointStatesVelocityAsCommands, self).__init__(
+            include_topics=(joint_states_topic,), include_types=(JointState._type,), *args, **kwargs)  # noqa
+
+        self._joints = list(joints)
+        self._cmd_topic = cmd_topic
+
+        self._add_tags = ((set(add_tags) if add_tags else set()).union({self._self_tag}))
+
+    def filter(self, topic, msg, stamp, header, tags):
+        out_msg = Float64MultiArray()
+        for joint in self._joints:
+            if joint not in msg.name:
+                return topic, msg, stamp, header, tags
+            joint_idx = msg.name.index(joint)
+            if len(msg.velocity) <= joint_idx:
+                return topic, msg, stamp, header, tags
+            out_msg.data.append(msg.velocity[joint_idx])
+
+        gen_tags = tags_for_generated_msg(tags)
+        if self._add_tags:
+            gen_tags = gen_tags.union(self._add_tags)
+            
+        conn_header = create_connection_header(self._cmd_topic, Float64MultiArray)
+        return [
+            (topic, msg, stamp, header, tags),
+            (self._cmd_topic, out_msg, stamp, conn_header, gen_tags),
+        ]
+
+    def _str_params(self):
+        parts = []
+        parts.append('joints=' + repr(self._joints))
+        parts.append('cmd_topic=' + self._cmd_topic)
+        parts.append('joint_states_topic=' + self._include_topics)
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
