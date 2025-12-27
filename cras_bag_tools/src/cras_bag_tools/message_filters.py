@@ -1629,7 +1629,7 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
         gen_tags = tags_for_generated_msg(tags)
         if self._add_tags:
             gen_tags = gen_tags.union(self._add_tags)
-            
+
         conn_header = create_connection_header(self._cmd_topic, Float64MultiArray)
         return [
             (topic, msg, stamp, header, tags),
