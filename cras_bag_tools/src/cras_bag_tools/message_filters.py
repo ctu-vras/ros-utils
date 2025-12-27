@@ -1613,7 +1613,7 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
         self._joints = list(joints)
         self._cmd_topic = cmd_topic
 
-        self._add_tags = ((set(add_tags) if add_tags else set()).union({self._self_tag}))
+        self._add_tags = set(add_tags) if add_tags else set()
 
     def filter(self, topic, msg, stamp, header, tags):
         out_msg = Float64MultiArray()
