@@ -1612,6 +1612,7 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
 
         self._joints = list(joints)
         self._cmd_topic = cmd_topic
+        self._joint_states_topic = joint_states_topic
 
         self._add_tags = set(add_tags) if add_tags else set()
 
@@ -1639,7 +1640,7 @@ class ExtractJointStatesVelocityAsCommands(DeserializedMessageFilter):
         parts = []
         parts.append('joints=' + repr(self._joints))
         parts.append('cmd_topic=' + self._cmd_topic)
-        parts.append('joint_states_topic=' + self._include_topics)
+        parts.append('joint_states_topic=' + self._joint_states_topic)
         parent_params = self._default_str_params(include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
