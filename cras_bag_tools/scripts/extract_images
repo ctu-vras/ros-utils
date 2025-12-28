@@ -569,7 +569,7 @@ def main():
                     # If we get e.g. a JPEG in the message and want JPEG output, just paste it directly in the file
                     is_compressed = msg._type != Image._type
                     is_compressed_depth = topic.endswith("compressedDepth")
-                    
+
                     # For compressed depth images, do not export RVL-encoded images by default, but only PNGs
                     if is_compressed and is_compressed_depth and len(config.out_format) == 0:
                         config.out_format = "png"
