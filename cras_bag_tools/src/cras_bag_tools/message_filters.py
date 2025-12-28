@@ -172,11 +172,16 @@ class FixHeader(DeserializedMessageFilter):
             tags.add(MessageTags.CHANGED)
         # Support for TF, Path and similar array-only messages
         elif len(msg.__slots__) == 1 and msg._get_types()[0].endswith("[]"):
+            receive_stamp_updated = False
             for m in getattr(msg, msg.__slots__[0]):
                 if len(m.__slots__) > 0 and m.__slots__[0] == 'header':
                     self.fix_header(m.header, stamp)
-                    stamp = self.fix_receive_stamp(m.header, stamp)
+                    if not receive_stamp_updated:
+                        stamp = self.fix_receive_stamp(m.header, stamp)
+                        receive_stamp_updated = True
                     tags.add(MessageTags.CHANGED)
+            if not receive_stamp_updated:
+                stamp += self.receive_stamp_offset
 
         return topic, msg, stamp, header, tags
 
