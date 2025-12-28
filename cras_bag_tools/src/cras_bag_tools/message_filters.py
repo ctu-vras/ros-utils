@@ -821,8 +821,8 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
         self.merged_transforms = {}
         self.add_tags = add_tags
 
-    def set_bag(self, bag):
-        super(MergeInitialStaticTf, self).set_bag(bag)
+    def set_multibag(self, bag):
+        super(MergeInitialStaticTf, self).set_multibag(bag)
         self.start_time = rospy.Time(bag.get_start_time())
         self.end_time = self.start_time + self.delay
         for topic, msg, stamp in bag.read_messages(
