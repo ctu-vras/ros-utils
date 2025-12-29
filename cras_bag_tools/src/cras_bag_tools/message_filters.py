@@ -204,6 +204,20 @@ class FixHeader(DeserializedMessageFilter):
         stamp += self.receive_stamp_offset
         return stamp
 
+    @staticmethod
+    def add_cli_args(parser):
+        parser.add_argument(
+            '--stamp-offset', nargs='?', default=0.0, type=float, metavar="OFFSET",
+            help="Offset header.stamp of messages by the given value [s]")
+        parser.add_argument(
+            '--receive-stamp-offset', nargs='?', default=0.0, type=float, metavar="OFFSET",
+            help="Offset receive timestamp of messages by the given value [s].")
+    
+    @staticmethod
+    def process_cli_args(filters, args):
+        if args.stamp_offset != 0.0 or args.receive_stamp_offset != 0.0:
+            filters.append(FixHeader(stamp_offset=args.stamp_offset, receive_stamp_offset=args.receive_stamp_offset))
+
     def _str_params(self):
         parts = []
         if len(self.frame_id) > 0:
