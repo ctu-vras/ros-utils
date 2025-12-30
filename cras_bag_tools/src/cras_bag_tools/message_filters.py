@@ -212,7 +212,7 @@ class FixHeader(DeserializedMessageFilter):
         parser.add_argument(
             '--receive-stamp-offset', nargs='?', default=0.0, type=float, metavar="OFFSET",
             help="Offset receive timestamp of messages by the given value [s].")
-    
+
     @staticmethod
     def process_cli_args(filters, args):
         if args.stamp_offset != 0.0 or args.receive_stamp_offset != 0.0:
