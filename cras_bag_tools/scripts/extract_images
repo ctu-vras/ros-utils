@@ -519,6 +519,9 @@ def get_topic_info(bag):
 
 
 def main():
+    # For throttled loggers to work.
+    rospy.rostime.set_rostime_initialized(True)
+
     parser = Parser()
 
     args, topic_args = parser.parse_args(sys.argv)
