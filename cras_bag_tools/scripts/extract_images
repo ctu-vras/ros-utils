@@ -157,15 +157,18 @@ def get_dtype_instance(dtype):
     return np.array((), dtype=dtype).dtype
 
 
+def get_bit_depth_and_channels(raw_encoding):
+    dtype, n_channels = bridge.encoding_to_dtype_with_channels(raw_encoding)
+    bit_depth = get_dtype_instance(dtype).itemsize * 8
+    return bit_depth, n_channels
+
+
 def convert_image(im, raw_encoding, topic_config):
     desired_encoding = \
         topic_config.encoding if topic_config.encoding and topic_config.encoding != "passthrough" else raw_encoding
 
-    in_dtype, in_channels = bridge.encoding_to_dtype_with_channels(raw_encoding)
-    in_bit_depth = get_dtype_instance(in_dtype).itemsize * 8
-
-    dtype, channels = bridge.encoding_to_dtype_with_channels(desired_encoding)
-    bit_depth = get_dtype_instance(dtype).itemsize * 8
+    in_bit_depth, in_channels = get_bit_depth_and_channels(raw_encoding)
+    bit_depth, channels = get_bit_depth_and_channels(desired_encoding)
 
     if in_bit_depth != min(bit_depth, max_bit_depth[topic_config.out_format]):
         new_bit_depth = min(bit_depth, max_bit_depth[topic_config.out_format])
@@ -632,7 +635,21 @@ def main():
                     cv_img = bridge.imgmsg_to_cv2(raw_img)
 
                     if len(config.out_format) == 0:
-                        config.out_format = "mp4" if config.is_video else "jpg"
+                        if config.is_video:
+                            config.out_format = "mp4"
+                        else:
+                            bit_depth, n_channels = get_bit_depth_and_channels(raw_img.encoding)
+                            if bit_depth == 8 and n_channels in (1, 3):
+                                config.out_format = "jpg"
+                            elif bit_depth == 1 and n_channels == 1:
+                                config.out_format = "pbm"
+                            elif bit_depth in (1, 2, 4, 8) and n_channels == 1:
+                                config.out_format = "png"
+                            elif bit_depth in (8, 16) and 2 <= n_channels <= 4:
+                                config.out_format = "png"
+                            else:
+                                # Fall back to TIFF and hope it handles the data
+                                config.out_format = "tiff"
                         # out_filename depends on config.out_format, so update it here
                         out_filename = get_image_filename(basename, config, topic, msg, t, msg_nums[topic])
                         if not args.zip:
