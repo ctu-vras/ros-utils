@@ -643,8 +643,10 @@ def main():
                                 config.out_format = "jpg"
                             elif bit_depth == 1 and n_channels == 1:
                                 config.out_format = "pbm"
-                            elif bit_depth in (1, 2, 4, 8) and n_channels == 1:
+                            # Grayscale PNG
+                            elif bit_depth in (1, 2, 4, 8, 16) and n_channels == 1:
                                 config.out_format = "png"
+                            # Color PNG
                             elif bit_depth in (8, 16) and 2 <= n_channels <= 4:
                                 config.out_format = "png"
                             else:
