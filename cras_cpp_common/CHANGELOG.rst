@@ -2,6 +2,28 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Improved build files, added convenience CMake target cras_cpp_common::cras_cpp_common .
+* Fix build on Rolling.
+* docs: Updated readmes.
+* log_utils: Ported to ROS 2.
+* expected: Now provided as a CMake target and automatically installed the library.
+* string_utils: Returned cras::format and renamed to cras::snprintf.
+* time_utils: Added SimpleClockInterface and float_secs().
+* Ported tf2_utils to ROS 2.
+* Added test_utils.
+* ROS 2 port of the rest of string_utils.
+* ROS 2 port of rate_limiter.
+* ROS 2 port of time_utils.
+* Removed std::bind_front() shim.
+* Switched to C++20 and removed shims for older compilers.
+* Removed invalid rosdoc config.
+* Fixed wrong QoS initialization.
+* Initial ROS 2 port.
+* Fixed handling of char and signed char parameters on platforms where char is unsigned (e.g. arm64).
+* Contributors: Martin Pecka
+
 2.5.1 (2025-02-18)
 ------------------
 

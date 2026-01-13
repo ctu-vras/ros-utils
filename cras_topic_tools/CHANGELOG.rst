@@ -2,6 +2,19 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Temporarily disabled cras_msgs for release.
+  The dependency will be put back once cras_msgs is released.
+* Improved build files.
+* docs: Updated readmes.
+* Fixed linter.
+* count_messages: Fixed launching in component container.
+* change_header: Added --report CLI option.
+* count_messages: Default to BEST_AVAILABLE QoS.
+* Initial ROS 2 port.
+* Contributors: Martin Pecka
+
 2.5.1 (2025-02-18)
 ------------------
 

@@ -2,6 +2,15 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Better ROS 2 format.
+* docs: Updated readmes.
+* Improved and fixed extract_images.
+* Initial port of extract_images.
+* Initial ROS 2 port.
+* Contributors: Martin Pecka
+
 2.5.1 (2025-02-18)
 ------------------
 * Fixed running on Jetsons.
