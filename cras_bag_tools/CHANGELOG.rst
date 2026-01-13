@@ -2,8 +2,8 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2026-01-13)
+------------------
 * Better ROS 2 format.
 * docs: Updated readmes.
 * Improved and fixed extract_images.

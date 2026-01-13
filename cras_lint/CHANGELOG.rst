@@ -2,8 +2,8 @@
 Changelog for package cras_lint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2026-01-13)
+------------------
 * docs: Updated readmes.
 * A few style fixes.
 * Also xmllint launch files.

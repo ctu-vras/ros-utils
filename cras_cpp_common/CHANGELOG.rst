@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2026-01-13)
+------------------
 * Improved build files, added convenience CMake target cras_cpp_common::cras_cpp_common .
 * Fix build on Rolling.
 * docs: Updated readmes.
