@@ -10,7 +10,7 @@ find_package(cxxopts REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(cras_cpp_common REQUIRED)
-find_package(cras_msgs REQUIRED)
+# find_package(cras_msgs REQUIRED)  # temporarily disabled for release
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
