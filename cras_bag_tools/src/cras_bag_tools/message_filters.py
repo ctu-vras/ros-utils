@@ -10,18 +10,19 @@ import csv
 import math
 import os.path
 import re
+import sys
 
 import matplotlib.cm as cmap
 import numpy as np
-import sys
+import skimage.draw
 import yaml
+
 from bisect import bisect_left
 from collections import deque
 from enum import Enum
 from functools import reduce
-import skimage.draw
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 from lxml import etree
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
 from numpy.linalg import inv
 
 import genpy
@@ -49,10 +50,11 @@ from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
 from std_msgs.msg import Float64MultiArray, Header, String
 from tf2_msgs.msg import TFMessage
-from tf2_py import BufferCore
+from tf2_py import BufferCore, TransformException
 from urdf_parser_py import urdf, xml_reflection
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 
+from .bag_utils import bag_msg_type_to_standard_type
 from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, \
     DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, RawMessageFilter, Tags, TopicSet, \
     deserialize_header, normalize_filter_result, tags_for_changed_msg, tags_for_generated_msg
@@ -2303,6 +2305,131 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
         parts = []
         parts.append('transforms=' + repr(list(self._transforms.keys())))
         parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class ExportTFTrajectory(DeserializedMessageFilterWithTF):
+    """Export TF trajectory to a CSV file."""
+
+    def __init__(self, odom_frame_id, child_frame_id, csv_file, trigger_frame_id=None, trigger_topic=None,
+                 max_frequency=None, tf_buffer_length=None, *args, **kwargs):
+        # type: (STR, STR, STR, Optional[STR], Optional[STR], Optional[float], Optional[float], Any, Any) -> None
+        """
+        :param odom_frame_id: Frame ID of the odometry frame.
+        :param child_frame_id: Frame ID of the tracked frame.
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param trigger_frame_id: Frame ID of the dynamic TF child frame whose update triggers trajectory point creation.
+        :param trigger_topic: If set, trajectory points will be generated when this message is received instead of being
+                              triggered by trigger_frame_id.
+        :param max_frequency: The maximum frequency on which the transform should be published.
+        :param tf_buffer_length: Length of the TF buffer (in seconds).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        include_topics = ["/tf", "/tf_static"]
+        include_types = (TFMessage._type,)
+
+        if trigger_topic is not None:
+            include_topics.append(trigger_topic)
+            include_types = None  # we don't know the trigger topic type, so we need to accept all
+
+        super(ExportTFTrajectory, self).__init__(
+            include_topics=include_topics, include_types=include_types, *args, **kwargs)  # noqa
+
+        self._odom_frame_id = odom_frame_id
+        self._child_frame_id = child_frame_id
+        self._trigger_frame_id = trigger_frame_id if trigger_frame_id is not None else child_frame_id
+        self._trigger_topic = trigger_topic
+        if trigger_topic is not None:
+            self._trigger_topics = TopicSet((trigger_topic,))
+            self._trigger_frame_id = None
+        self._min_dt = rospy.Duration(1.0 / float(max_frequency)) if max_frequency is not None else None
+        if tf_buffer_length is not None:
+            self._tf_buffer = BufferCore(rospy.Duration.from_sec(float(tf_buffer_length)))
+        else:
+            self._tf_buffer = BufferCore()
+
+        self._csv_file_path = csv_file
+        self._csv_rows = []
+
+        self._last_traj_time = None
+
+    def on_filtering_start(self):
+        self._csv_rows = []
+
+    def on_filtering_end(self):
+        csv_file = self.resolve_file(self._csv_file_path)
+        with open(csv_file, 'w', newline='') as f:
+            fields = ("stamp", "tx", "ty", "tz", "rx", "ry", "rz", "rw")
+            writer = csv.DictWriter(f, fieldnames=fields)
+            writer.writeheader()
+            for row in self._csv_rows:
+                writer.writerow(dict(zip(fields, row)))
+        print("Saved CSV with", len(self._csv_rows), "rows:", csv_file)
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if topic in self._tf_static_topics:
+            for t in msg.transforms:
+                # converting to standard type message avoids warnings from BufferCore, but is not strictly needed
+                self._tf_buffer.set_transform_static(bag_msg_type_to_standard_type(t), "bag")
+        elif topic in self._tf_topics:
+            for t in msg.transforms:
+                self._tf_buffer.set_transform(bag_msg_type_to_standard_type(t), "bag")
+
+        if MessageTags.EXTRA_TIME_RANGE in tags:
+            return topic, msg, stamp, header, tags
+
+        # Check if the trigger frame is among those changed in this TF message
+        trigger_stamp = None
+        if self._trigger_topic is not None and topic in self._trigger_topics:
+            trigger_stamp = msg.header.stamp
+        elif msg._type == TFMessage._type:
+            for t in msg.transforms:
+                if t.child_frame_id == self._trigger_frame_id:
+                    trigger_stamp = t.header.stamp
+                    break
+            else:
+                # If trigger frame is not updated by this message, stop here
+                return topic, msg, stamp, header, tags
+        else:
+            raise RuntimeError("Unexpected message received on topic " + topic + " with type " + msg._type)
+
+        if self._min_dt is not None and self._last_traj_time is not None and \
+                self._last_traj_time + self._min_dt > trigger_stamp:
+            return topic, msg, stamp, header, tags
+
+        try:
+            tf = self._tf_buffer.lookup_transform_core(self._odom_frame_id, self._child_frame_id, trigger_stamp)
+        except TransformException as e:
+            print("Transform error: " + str(e), file=sys.stderr)
+            return topic, msg, stamp, header, tags
+        self._last_traj_time = trigger_stamp
+
+        tr = tf.transform.translation
+        rot = tf.transform.rotation
+        csv_row = (trigger_stamp.to_sec(), tr.x, tr.y, tr.z, rot.x, rot.y, rot.z, rot.w)
+        self._csv_rows.append(csv_row)
+
+        return topic, msg, stamp, header, tags
+
+    def reset(self):
+        super(ExportTFTrajectory, self).reset()
+        self._last_traj_time = None
+        self._csv_rows = []
+        self._tf_buffer.clear()
+
+    def _str_params(self):
+        parts = []
+        parts.append('odom_frame_id=' + self._odom_frame_id)
+        parts.append('child_frame_id=' + self._child_frame_id)
+        if self._trigger_topic is not None:
+            parts.append('trigger_topic=' + self._trigger_topic)
+        else:
+            parts.append('trigger_frame_id=' + self._trigger_frame_id)
+        parts.append('csv_file=' + self.resolve_file(self._csv_file_path))
+        parent_params = self._default_str_params(include_topics=False, include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)

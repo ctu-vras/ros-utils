@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, 
 import genpy
 import rosbag
 
+from cras.message_utils import get_msg_type, msg_to_raw, raw_to_msg
 from cras.string_utils import STRING_TYPE
 
 from .time_range import TimeRanges
@@ -363,10 +364,24 @@ class MultiBag(object):
             topics, start_time, end_time, connection_filter, raw, return_connection_header, return_bag_tags)
 
 
+def bag_msg_type_to_standard_type(bag_msg):
+    """Messages read by rosbag API have a dynamically constructed Python type and not the standard message type.
+    This method reserializes the message into its standard Python type.
+
+    :param genpy.Message bag_msg: The bag-typed message.
+    :return: The standard message
+    :rtype: genpy.Message
+    """
+    datatype, data, md5sum, pytype = msg_to_raw(bag_msg)
+    pytype = get_msg_type(datatype)
+    return raw_to_msg(datatype, data, md5sum, pytype)
+
+
 __all__ = [
     BagWrapper.__name__,
     MultiBag.__name__,
     'BagMessageWithTags',
     'BagMessageWithConnectionHeaderAndTags',
     'ReadMessagesResult',
+    bag_msg_type_to_standard_type.__name__,
 ]

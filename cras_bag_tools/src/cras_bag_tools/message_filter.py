@@ -693,7 +693,8 @@ class DeserializedMessageFilterWithTF(DeserializedMessageFilter):
 
     def __init__(self, include_topics=None, include_types=None, tf_topics=("/tf",), tf_static_topics=("/tf_static",),
                  initial_bag_part_duration=genpy.Duration(2), *args, **kwargs):
-        self._tf_static_topics = tf_static_topics
+        self._tf_topics = TopicSet(tf_topics)
+        self._tf_static_topics = TopicSet(tf_static_topics)
         self._initial_bag_part_duration = initial_bag_part_duration
 
         if include_topics is not None:

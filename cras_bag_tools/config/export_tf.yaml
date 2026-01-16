@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+out_format: '/tmp/{bag_base}.export_tf{ext}'
+filters:
+  - Topics:
+      include_topics:
+        - /tf
+        - /tf_static
+  - ExportTFTrajectory:
+      odom_frame_id: map
+      child_frame_id: base_link
+      trigger_frame_id: odom
+      max_frequency: 20.0
+      csv_file: '{bag_base}.traj.icp-base_link.csv'
+  - ExportTFTrajectory:
+      odom_frame_id: odom
+      child_frame_id: base_link
+      max_frequency: 20.0
+      csv_file: '{bag_base}.traj.odom-base_link.csv'
+  - ExportTFTrajectory:
+      odom_frame_id: map
+      child_frame_id: os_sensor
+      trigger_frame_id: odom
+      max_frequency: 20.0
+      csv_file: '{bag_base}.traj.icp-os_sensor.csv'
+  - ExportTFTrajectory:
+      odom_frame_id: odom
+      child_frame_id: os_sensor
+      trigger_frame_id: base_link
+      max_frequency: 20.0
+      csv_file: '{bag_base}.traj.odom-os_sensor.csv'
+  - Drop: {}
