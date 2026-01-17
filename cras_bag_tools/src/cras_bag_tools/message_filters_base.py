@@ -6,8 +6,9 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import csv
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 import genpy
 import rospy
@@ -19,7 +20,8 @@ from image_transport_codecs import decode, encode
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from sensor_msgs.msg import CompressedImage, Image
 
-from .message_filter import ConnectionHeader, DeserializedMessageData, Tags, UniversalFilter
+from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, MessageTags, Tags, \
+    UniversalFilter
 
 STR = STRING_TYPE
 FilteredImage = Tuple[STR, STR, genpy.Message, genpy.Message, STR, rospy.Time, ConnectionHeader, Tags]
@@ -225,6 +227,78 @@ class ImageTransportFilter(UniversalFilter):
         return ", ".join(parts)
 
 
+class MessageToCSVExporterBase(DeserializedMessageFilter):
+    """Export messages to a CSV file."""
+
+    def __init__(self, csv_file, max_frequency=None, frequency_from_header_stamp=False, *args, **kwargs):
+        # type: (STRING_TYPE, Optional[float], bool, Any, Any) -> None
+        """
+        :param csv_file: Path to the CSV file.
+        :param max_frequency: The maximum frequency on which the CSV data should be exported.
+        :param frequency_from_header_stamp: If True, the header stamp will be used as the timestamp for frequency
+                                            checking. If False, receive stamp is used.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(MessageToCSVExporterBase, self).__init__(*args, **kwargs)  # noqa
+
+        self._min_dt = rospy.Duration(1.0 / float(max_frequency)) if max_frequency is not None else None
+        self._csv_file_path = csv_file
+        self._frequency_from_header_stamp = frequency_from_header_stamp
+
+        self._csv_rows = []
+        self._last_msg_time = None
+
+    def _get_fields(self):
+        # type: () -> Iterable[STRING_TYPE]
+        raise NotImplementedError()
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, genpy.Message, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[STRING_TYPE]]
+        raise NotImplementedError()
+
+    def on_filtering_start(self):
+        self._csv_rows = []
+
+    def on_filtering_end(self):
+        csv_file = self.resolve_file(self._csv_file_path)
+        with open(csv_file, 'w', newline='') as f:
+            fields = tuple(self._get_fields())
+            writer = csv.DictWriter(f, fieldnames=fields)
+            writer.writeheader()
+            for row in self._csv_rows:
+                assert len(row) == len(fields)
+                writer.writerow(dict(zip(fields, row)))
+        print("Saved CSV with", len(self._csv_rows), "rows:", csv_file)
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if self._min_dt is not None:
+            msg_stamp = msg.header.stamp if self._frequency_from_header_stamp else stamp
+            if self._last_msg_time is not None and self._last_msg_time + self._min_dt > msg_stamp:
+                return topic, msg, stamp, header, tags
+            self._last_msg_time = msg_stamp
+
+        csv_row = self._msg_to_csv_row(topic, msg, stamp, header, tags)
+        if csv_row is not None:
+            self._csv_rows.append(tuple(csv_row))
+
+        return topic, msg, stamp, header, tags
+
+    def reset(self):
+        super(MessageToCSVExporterBase, self).reset()
+        self._last_msg_time = None
+        self._csv_rows = []
+
+    def _str_params(self):
+        parts = []
+        parts.append('csv_file=' + self.resolve_file(self._csv_file_path))
+        parent_params = self._default_str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 __all__ = [
     ImageTransportFilter.__name__,
+    MessageToCSVExporterBase.__name__,
 ]

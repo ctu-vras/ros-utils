@@ -58,7 +58,7 @@ from .bag_utils import bag_msg_type_to_standard_type
 from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, \
     DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, RawMessageFilter, Tags, TopicSet, \
     deserialize_header, normalize_filter_result, tags_for_changed_msg, tags_for_generated_msg
-from .message_filters_base import ImageTransportFilter
+from .message_filters_base import ImageTransportFilter, MessageToCSVExporterBase
 
 STR = STRING_TYPE
 FilteredImage = Tuple[STR, STR, genpy.Message, genpy.Message, STR, rospy.Time, ConnectionHeader, Tags]
@@ -2433,6 +2433,32 @@ class ExportTFTrajectory(DeserializedMessageFilterWithTF):
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
+
+
+class ExportCmdVelToCSV(MessageToCSVExporterBase):
+    """Export cmd_vel commands to a CSV file."""
+
+    def __init__(self, topic, csv_file, max_frequency=None, frequency_from_header_stamp=False, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Optional[float], bool, Any, Any) -> None
+        """
+        :param topic: The topic to export (`geometry_msgs/Twist` or `geometry_msgs/TwistStamped` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param max_frequency: The maximum frequency on which the transform should be published.
+        :param frequency_from_header_stamp: If True, the header stamp will be used as the timestamp for frequency
+                                            checking. If False, receive stamp is used. Only works with `TwistStamped`.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportCmdVelToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=max_frequency, frequency_from_header_stamp=frequency_from_header_stamp,
+            include_topics=(topic,), include_types=(Twist._type, TwistStamped._type), *args, **kwargs)  # noqa
+
+    def _get_fields(self):
+        return "stamp", "linear", "angular"
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        msg_stamp = msg.header.stamp if msg._type == TwistStamped._type else stamp
+        return msg_stamp, msg.linear.x, msg.angular.z
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
