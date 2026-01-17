@@ -7,6 +7,7 @@ filters:
       include_topics:
         - /tf
         - /tf_static
+
   - ExportTFTrajectory:
       odom_frame_id: map
       child_frame_id: base_link
@@ -30,4 +31,39 @@ filters:
       trigger_frame_id: base_link
       max_frequency: 20.0
       csv_file: '{bag_base}.traj.odom-os_sensor.csv'
+
+  - ExportFinalTFTreeToYAML:
+      yaml_file: '{bag_base}.transformations.yaml'
+      static_only: True
+      transforms:
+        - [base_link, base_footprint]
+        - [base_link, os_sensor]
+        - [base_link, os_lidar]
+        - [base_link, os_imu]
+        - [base_link, imu]
+        - [base_link, pylon_camera_fisheye_front]
+        - [base_link, pylon_camera_fisheye_rear]
+        - [base_link, pylon_camera_front]
+        - [base_link, pylon_camera_left]
+        - [base_link, pylon_camera_rear]
+        - [base_link, pylon_camera_right]
+        - [base_link, pylon_camera_up]
+        - [base_link, camera_fisheye_front]
+        - [base_link, camera_fisheye_rear]
+        - [base_link, camera_front]
+        - [base_link, camera_left]
+        - [base_link, camera_rear]
+        - [base_link, camera_right]
+        - [base_link, camera_up]
+        - [base_link, oak_rgb_camera_optical_frame]
+        - [base_link, oak_left_camera_optical_frame]
+        - [base_link, oak_right_camera_optical_frame]
+        - [base_link, oak_rgb_camera_frame]
+        - [base_link, oak_left_camera_frame]
+        - [base_link, oak_right_camera_frame]
+        - [base_link, oak_imu_frame]
+        - [base_link, gps_antenna]
+        - [base_link, dgps_main_antenna]
+        - [base_link, dgps_aux_antenna]
+
   - Drop: {}

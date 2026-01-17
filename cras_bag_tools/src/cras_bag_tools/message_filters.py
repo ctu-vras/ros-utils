@@ -14,6 +14,7 @@ import sys
 
 import matplotlib.cm as cmap
 import numpy as np
+import PyKDL
 import skimage.draw
 import yaml
 
@@ -49,6 +50,7 @@ from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
 from std_msgs.msg import Float64MultiArray, Header, String
+import tf2_kdl
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore, TransformException
 from urdf_parser_py import urdf, xml_reflection
@@ -74,9 +76,13 @@ def urdf_error(message):
 xml_reflection.core.on_error = urdf_error
 
 
-def dict_to_str(d, sep='='):
+def items_to_str(items, sep='='):
     return '{' + ', '.join('%s%s%s' % (
-        k, sep, str(v) if not isinstance(v, dict) else dict_to_str(v, sep)) for k, v in d.items()) + "}"
+        k, sep, str(v) if not isinstance(v, dict) else dict_to_str(v, sep)) for k, v in items) + "}"
+
+
+def dict_to_str(d, sep='='):
+    return items_to_str(d.items(), sep)
 
 
 def create_connection_header(topic, msg_type, latch=False):
@@ -2429,6 +2435,94 @@ class ExportTFTrajectory(DeserializedMessageFilterWithTF):
         else:
             parts.append('trigger_frame_id=' + self._trigger_frame_id)
         parts.append('csv_file=' + self.resolve_file(self._csv_file_path))
+        parent_params = self._default_str_params(include_topics=False, include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class ExportFinalTFTreeToYAML(DeserializedMessageFilterWithTF):
+    """Export TF tree at the end of the bag as a YAML file."""
+
+    def __init__(self, yaml_file, static_only=True, tf_buffer_length=None, transforms=None, *args, **kwargs):
+        # type: (STR, bool, Optional[float], Optional[Sequence[Tuple[STR, STR]]], Any, Any) -> None
+        """
+        :param yaml_file: Path to the YAML file to store the tree.
+        :param static_only: If true, only read static transforms.
+        :param tf_buffer_length: Length of the TF buffer (in seconds).
+        :param transforms: If set, only export the given transforms. This is a list of pairs (parent, child).
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        include_topics = ["/tf_static"] if static_only else ["/tf", "/tf_static"]
+        include_types = (TFMessage._type,)
+
+        super(ExportFinalTFTreeToYAML, self).__init__(
+            include_topics=include_topics, include_types=include_types, *args, **kwargs)
+
+        self._yaml_file_path = yaml_file
+        self._static_only = static_only
+        self._transforms = transforms
+
+        if tf_buffer_length is not None:
+            self._tf_buffer = BufferCore(rospy.Duration.from_sec(float(tf_buffer_length)))
+        else:
+            self._tf_buffer = BufferCore()
+
+    def on_filtering_end(self):
+        frames = []
+        if self._transforms is not None:
+            frames = self._transforms
+        else:
+            all_frames = yaml.safe_load(self._tf_buffer.all_frames_as_yaml())
+            for child_frame in all_frames:
+                parent_frame = all_frames[child_frame]['parent']
+                frames.append((parent_frame, child_frame))
+
+        data = {}
+        for parent, child in frames:
+            try:
+                tf = self._tf_buffer.lookup_transform_core(parent, child, rospy.Time(0))
+            except TransformException as e:
+                print('Transform error: ' + str(e), file=sys.stderr)
+                continue
+            t = numpify(tf.transform)
+            t[np.abs(t) < 1e-8] = 0.0
+            t_key = 'T_{parent}__{child}'.format(parent=parent, child=child)
+            t_data = {
+                'rows': 4,
+                'cols': 4,
+                'data': list(map(float, t.reshape(-1).tolist())),
+            }
+            data[t_key] = t_data
+
+        yaml_file = self.resolve_file(self._yaml_file_path)
+        with open(yaml_file, 'w') as f:
+            yaml.safe_dump(data, f)
+        print("Saved YAML file with", len(data), "keys:", yaml_file)
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if topic in self._tf_static_topics:
+            for t in msg.transforms:
+                # converting to standard type message avoids warnings from BufferCore, but is not strictly needed
+                self._tf_buffer.set_transform_static(bag_msg_type_to_standard_type(t), "bag")
+        elif topic in self._tf_topics:
+            for t in msg.transforms:
+                self._tf_buffer.set_transform(bag_msg_type_to_standard_type(t), "bag")
+
+        return topic, msg, stamp, header, tags
+
+    def reset(self):
+        super(ExportFinalTFTreeToYAML, self).reset()
+        self._tf_buffer.clear()
+
+    def _str_params(self):
+        parts = []
+        parts.append('yaml=' + self.resolve_file(self._yaml_file_path))
+        if self._static_only:
+            parts.append('static_only')
+        if self._transforms is not None:
+            parts.append(items_to_str(self._transforms, '->'))
         parent_params = self._default_str_params(include_topics=False, include_types=False)
         if len(parent_params) > 0:
             parts.append(parent_params)
