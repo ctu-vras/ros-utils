@@ -304,6 +304,8 @@ class MessageFilter(object):
         :param str param: Name of the parameter.
         :param value: The value to set.
         """
+        if self._params is None:
+            self._params = {}
         self.__set_param(self._params, param, value)
 
     def __set_param(self, params, param, value):

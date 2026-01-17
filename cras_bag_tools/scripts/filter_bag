@@ -230,7 +230,7 @@ def filter_bags(bags, out_format, compression, copy_params, filter, default_para
                     bag.read_index()
                     filter_bag(bag, out, filter, params, start_time, end_time, time_ranges, print_stats=True)
 
-                if copy_params and params != orig_params:
+                if copy_params and orig_params is not None and params != orig_params:
                     print('Saving ROS parameters to', out_bag_path + '.params')
                     try:
                         with open(out_bag_path + '.params', 'w+') as f:
