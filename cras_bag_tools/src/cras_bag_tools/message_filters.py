@@ -14,7 +14,6 @@ import sys
 
 import matplotlib.cm as cmap
 import numpy as np
-import PyKDL
 import skimage.draw
 import yaml
 
@@ -50,7 +49,6 @@ from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
 from std_msgs.msg import Float64MultiArray, Header, String
-import tf2_kdl
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore, TransformException
 from urdf_parser_py import urdf, xml_reflection

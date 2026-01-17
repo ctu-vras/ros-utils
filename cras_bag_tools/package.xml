@@ -50,7 +50,6 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>ros_numpy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>tf2_kdl</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
   <exec_depend>tf2_py</exec_depend>
   <exec_depend>urdfdom_py</exec_depend>
