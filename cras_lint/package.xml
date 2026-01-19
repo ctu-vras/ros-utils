@@ -6,7 +6,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
 -->
 <package format="3">
   <name>cras_lint</name>
-  <version>3.0.0</version>
+  <version>3.0.1</version>
   <description>Various utilities to work with bag files</description>
 
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>

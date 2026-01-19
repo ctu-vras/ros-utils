@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.1 (2026-01-19)
+------------------
 * string_utils: Fixed pretty-printing time values on GCC 11 + fmt 9.x.
 * format: Add std::chrono support to std::format shim.
 * Added shim for std::format for older compilers (using fmt library).
