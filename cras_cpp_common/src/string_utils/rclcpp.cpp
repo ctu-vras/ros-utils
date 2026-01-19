@@ -219,7 +219,8 @@ std::string to_pretty_string(const rclcpp::Time& value)
     else
     {
       secStr = secStr.substr(0, 2);  // get only the seconds part
-      secStr = cras::format("{0}.{1:06}", secStr, nsec);
+      const auto subsecStr = cras::format("{0:06}", nsec);
+      secStr = cras::format("{0}.{1:.6}", secStr, subsecStr);  // use only first 6 digits from subsec
     }
   }
   else
