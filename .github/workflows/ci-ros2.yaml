@@ -12,7 +12,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  industrial_ci:
+  industrial_ci: &ici
     strategy:
       fail-fast: false
       matrix:
@@ -22,7 +22,7 @@ jobs:
           - {ROS_DISTRO: rolling, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:rolling-perception", ALLOW_FAIL: yes}
         os: ["ubuntu-24.04", "ubuntu-24.04-arm"]
     name: "${{ matrix.env.ROS_DISTRO }}-${{ matrix.os }}"
-    env:
+    env: &env
       CCACHE_DIR: ${{ github.workspace }}/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       AFTER_SETUP_TARGET_WORKSPACE: 'cd $BASEDIR/target_ws/src/ros-utils; for d in *; do if [[ "$d" != "cras_lint" ]] && [[ "$d" != "cras_cpp_common" ]] && [[ "$d" != "cras_topic_tools" ]]; then rm -rf "$d"; fi; done'
       UPSTREAM_WORKSPACE: .github/ci.ros2.rosinstall
@@ -44,3 +44,17 @@ jobs:
       # Run industrial_ci
       - uses: 'ros-industrial/industrial_ci@master'
         env: ${{ matrix.env }}
+  industrial_ci_gcc_11:
+    <<: *ici
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - { ROS_DISTRO: kilted, ROS_REPO: testing, DOCKER_IMAGE: "ghcr.io/sloretz/ros:kilted-perception", ALLOW_FAIL: no }
+        os: [ "ubuntu-24.04", "ubuntu-24.04-arm" ]
+    name: "${{ matrix.env.ROS_DISTRO }}-${{ matrix.os }}-gcc11"
+    env:
+      <<: *env
+      ADDITIONAL_DEBS: "g++-11"
+      CC: "gcc-11"
+      CXX: "g++-11"
