@@ -2598,7 +2598,7 @@ class ExportCameraInfoToYAML(MessageToYAMLExporterBase):
         }
 
     def _write_data_to_file(self, out_file):
-        if len(self._data):
+        if len(self._data) == 0:
             print("YAML", out_file, "has no data, not writing.")
             return
         super(ExportCameraInfoToYAML, self)._write_data_to_file(out_file)
