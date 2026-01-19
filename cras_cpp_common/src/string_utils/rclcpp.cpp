@@ -210,9 +210,22 @@ std::string to_pretty_string(const rclcpp::Time& value)
   const auto [sec, nsec] = cras::secNsec(value);
   std::string secStr = cras::format("{0:%S}", now);
   if (nsec != 0)
-    secStr = secStr.substr(0, 9);
+  {
+    // Some implementations (fmt < 10.0) do not print subseconds for %S, so we have to check the result
+    if (secStr.length() >= 9)
+    {
+      secStr = secStr.substr(0, 9);
+    }
+    else
+    {
+      secStr = secStr.substr(0, 2);  // get only the seconds part
+      secStr = cras::format("{0}.{1:06}", secStr, nsec);
+    }
+  }
   else
+  {
     secStr = secStr.substr(0, 2);
+  }
   return cras::format("{0:%F}T{0:%R}:{1}Z", now, secStr);
 }
 
