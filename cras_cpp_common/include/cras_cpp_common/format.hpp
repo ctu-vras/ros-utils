@@ -46,6 +46,7 @@ using ::std::format_error;
 
 #else
 
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 
 namespace cras
