@@ -13,7 +13,6 @@
 #include <cstdarg>
 #include <cstdint>
 #include <cstring>
-#include <format>
 #include <functional>
 #include <list>
 #include <map>
@@ -26,6 +25,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <cras_cpp_common/format.hpp>
 #include <cras_cpp_common/type_utils/string_traits.hpp>
 
 namespace cras
@@ -354,17 +354,17 @@ template<typename T> using ToStringFn = ::std::function<::std::string(const T&)>
 
 inline ::std::string to_string(const double& value)
 {
-  return ::std::format("{:g}", value);
+  return ::cras::format("{:g}", value);
 }
 
 inline ::std::string to_string(const float& value)
 {
-  return ::std::format("{:g}", value);
+  return ::cras::format("{:g}", value);
 }
 
 inline ::std::string to_string(const long double& value)
 {
-  return ::std::format("{:Lg}", value);
+  return ::cras::format("{:Lg}", value);
 }
 
 inline ::std::string to_string(const char* value)

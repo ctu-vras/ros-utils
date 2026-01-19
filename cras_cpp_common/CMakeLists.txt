@@ -25,6 +25,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tl-expected REQUIRED)
 
 find_package(Boost REQUIRED)
+find_package(fmt REQUIRED)
 
 # find pthread and provide it as Threads::Threads imported target
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -32,6 +33,7 @@ find_package(Threads REQUIRED)
 
 ament_export_dependencies(
   builtin_interfaces
+  fmt
   rcl
   rclcpp
   rclcpp_components
@@ -55,6 +57,13 @@ target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/exp
 target_include_directories(cras_expected INTERFACE
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_expected INTERFACE tl::expected)
+
+add_library(cras_format INTERFACE)
+target_sources(cras_format INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/format.hpp>)
+target_include_directories(cras_format INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+# It actually depends on fmt only for older compilers, but it's not a big deal to over-depend on fmt
+target_link_libraries(cras_format INTERFACE fmt::fmt)
 
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
@@ -119,7 +128,7 @@ target_include_directories(cras_time_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_time_utils
   PUBLIC rclcpp::rclcpp
-  PRIVATE Boost::boost
+  PRIVATE cras_format Boost::boost
   # cras_semaphore
 )
 
@@ -148,7 +157,7 @@ add_library(cras_string_utils SHARED
 )
 target_include_directories(cras_string_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_string_utils PUBLIC cras_time_utils cras_type_traits rclcpp::rclcpp)
+target_link_libraries(cras_string_utils PUBLIC cras_format cras_time_utils cras_type_traits rclcpp::rclcpp)
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_include_directories(cras_thread_utils PUBLIC
@@ -314,6 +323,7 @@ set(EXPORTED_LIBS
   cras_expected
   #  cras_filter_base
   #  cras_filter_chain
+  cras_format
   cras_literal_sz
   cras_log_utils
   cras_math_utils

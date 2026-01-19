@@ -15,6 +15,7 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 
+#include <cras_cpp_common/format.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/string_utils/rclcpp.hpp>
 #include <cras_cpp_common/time_utils.hpp>
@@ -113,7 +114,7 @@ rclcpp::Time parseTime(const std::string& s, const std::optional<rclcpp::Duratio
 
   const auto maybeTime = cras::fromStructTm(t);
   if (!maybeTime.has_value())
-    throw std::invalid_argument(std::format("Invalid time format ({}).", maybeTime.error()));
+    throw std::invalid_argument(cras::format("Invalid time format ({}).", maybeTime.error()));
 
   uint32_t fracNsec = 0;
   if (matches[7].matched)
@@ -121,7 +122,7 @@ rclcpp::Time parseTime(const std::string& s, const std::optional<rclcpp::Duratio
     auto paddedNsec = matches[7].str();
     // pad with zeros to 9 decimals
     if (paddedNsec.length() < 9)
-      paddedNsec = std::format("{:0<9}", paddedNsec);
+      paddedNsec = cras::format("{:0<9}", paddedNsec);
     else if (paddedNsec.length() > 9)
       // We could correctly round here, but who cares about one ns?
       paddedNsec = paddedNsec.substr(0, 9);
@@ -171,7 +172,7 @@ rclcpp::Duration parseDuration(const std::string& s)
   {
     auto paddedNsec = nsecString;
     if (paddedNsec.length() < 9)
-      paddedNsec = std::format("{:0<9}", paddedNsec);
+      paddedNsec = cras::format("{:0<9}", paddedNsec);
     else if (paddedNsec.length() > 9)
       // We could correctly round here, but who cares about one ns?
       paddedNsec = paddedNsec.substr(0, 9);
@@ -193,13 +194,13 @@ rclcpp::Duration parseDuration(const std::string& s)
 std::string to_string(const rclcpp::Time& value)
 {
   const auto secNsec = cras::secNsec(value);
-  return std::format("{}.{:09}", secNsec.first, secNsec.second);
+  return cras::format("{}.{:09}", secNsec.first, secNsec.second);
 }
 
 std::string to_string(const rclcpp::Duration& value)
 {
   const auto secNsec = cras::secNsec(value);
-  return std::format("{}.{:09}", secNsec.first, secNsec.second);
+  return cras::format("{}.{:09}", secNsec.first, secNsec.second);
 }
 
 template<>
@@ -207,12 +208,12 @@ std::string to_pretty_string(const rclcpp::Time& value)
 {
   const auto now = cras::convertTime<std::chrono::system_clock::time_point>(value);
   const auto [sec, nsec] = cras::secNsec(value);
-  std::string secStr = std::format("{0:%S}", now);
+  std::string secStr = cras::format("{0:%S}", now);
   if (nsec != 0)
     secStr = secStr.substr(0, 9);
   else
     secStr = secStr.substr(0, 2);
-  return std::format("{0:%F}T{0:%R}:{1}Z", now, secStr);
+  return cras::format("{0:%F}T{0:%R}:{1}Z", now, secStr);
 }
 
 }

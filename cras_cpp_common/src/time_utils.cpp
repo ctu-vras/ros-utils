@@ -16,6 +16,7 @@
 #include <rclcpp/time.hpp>
 
 #include <cras_cpp_common/expected.hpp>
+#include <cras_cpp_common/format.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 // Fallback for 128bit ints on armhf or non-gcc compilers
@@ -205,8 +206,8 @@ cras::expected<rclcpp::Time, std::string> fromStructTm(const tm& time)
   tzset();
 #endif
   if (timeSecs == static_cast<time_t>(-1) || errno == EOVERFLOW)
-    return cras::make_unexpected(std::format(
-      "Cannot convert the given tm struct to ROS time (timegm failed, errno=%d).", errno));
+    return cras::make_unexpected(cras::format(
+      "Cannot convert the given tm struct to ROS time (timegm failed, errno={}).", errno));
   if (timeSecs < 0)
     return cras::make_unexpected("Cannot convert the given tm struct to ROS time (negative seconds since 1970).");
 
@@ -216,7 +217,7 @@ cras::expected<rclcpp::Time, std::string> fromStructTm(const tm& time)
   }
   catch (const std::runtime_error& e)
   {
-    return cras::make_unexpected(std::format("Cannot convert the given tm struct to ROS time (%s).", e.what()));
+    return cras::make_unexpected(cras::format("Cannot convert the given tm struct to ROS time ({}).", e.what()));
   }
 }
 
