@@ -2,6 +2,13 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* string_utils: Fixed pretty-printing time values on GCC 11 + fmt 9.x.
+* format: Add std::chrono support to std::format shim.
+* Added shim for std::format for older compilers (using fmt library).
+* Contributors: Martin Pecka
+
 3.0.0 (2026-01-13)
 ------------------
 * Improved build files, added convenience CMake target cras_cpp_common::cras_cpp_common .
