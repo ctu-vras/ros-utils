@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+out_format: '/tmp/{bag_base}.export_camera_info{ext}'
+filters:
+  - Topics:
+      include_topics:
+        - /camera_front/camera_info
+        - /camera_rear/camera_info
+
+  - ExportCameraInfoToYAML:
+      topic: /camera_front/camera_info
+      yaml_file: '{bag_base}.caminfo.camera_front.yaml'
+  - ExportCameraInfoToYAML:
+      topic: /camera_rear/camera_info
+      yaml_file: '{bag_base}.caminfo.camera_rear.yaml'
+
+  - Drop: {}

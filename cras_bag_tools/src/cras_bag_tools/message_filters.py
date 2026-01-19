@@ -58,7 +58,7 @@ from .bag_utils import bag_msg_type_to_standard_type
 from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, \
     DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, RawMessageFilter, Tags, TopicSet, \
     deserialize_header, normalize_filter_result, tags_for_changed_msg, tags_for_generated_msg
-from .message_filters_base import ImageTransportFilter, MessageToCSVExporterBase
+from .message_filters_base import ImageTransportFilter, MessageToCSVExporterBase, MessageToYAMLExporterBase
 
 STR = STRING_TYPE
 FilteredImage = Tuple[STR, STR, genpy.Message, genpy.Message, STR, rospy.Time, ConnectionHeader, Tags]
@@ -2551,6 +2551,51 @@ class ExportCmdVelToCSV(MessageToCSVExporterBase):
     def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
         msg_stamp = msg.header.stamp if msg._type == TwistStamped._type else stamp
         return msg_stamp, msg.linear.x, msg.angular.z
+
+
+class ExportCameraInfoToYAML(MessageToYAMLExporterBase):
+    """Export the first camera info on a topic to a YAML file."""
+
+    def __init__(self, topic, yaml_file, yaml_dump_options=None, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Optional[Dict[STRING_TYPE, Any]], Any, Any) -> None
+        """
+        :param topic: The topic to export (`sensor_msgs/CameraInfo`).
+        :param yaml_file: Path to the YAML file to store the camera info.
+        :param yaml_dump_options: Optional options passed to yaml.safe_dump() as kwargs.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportCameraInfoToYAML, self).__init__(
+            yaml_file=yaml_file, yaml_dump_options=yaml_dump_options,
+            include_topics=(topic,), include_types=(CameraInfo._type,), *args, **kwargs)  # noqa
+
+        self._finished = False
+
+    def consider_message(self, topic, datatype, stamp, header, tags):
+        if self._finished:
+            return False
+        return super(ExportCameraInfoToYAML, self).consider_message(topic, datatype, stamp, header, tags)
+
+    def _init_data(self):
+        return {}
+
+    def _append_msg_data(self, topic, msg, stamp, header, tags):
+        self._finished = True
+
+        self._data['image_width'] = msg.width
+        self._data['image_height'] = msg.height
+        self._data['camera_name'] = msg.header.frame_id
+        self._data['camera_matrix'] = {
+            'rows': 3,
+            'cols': 3,
+            'data': list(msg.K),
+        }
+        self._data['distortion_model'] = msg.distortion_model
+        self._data['distortion_coefficients'] = {
+            'rows': 1,
+            'cols': len(msg.D),
+            'data': list(msg.D),
+        }
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):

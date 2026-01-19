@@ -8,7 +8,9 @@ from __future__ import absolute_import, division, print_function
 import copy
 import csv
 import sys
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
+import yaml
 
 import genpy
 import rospy
@@ -227,7 +229,71 @@ class ImageTransportFilter(UniversalFilter):
         return ", ".join(parts)
 
 
-class MessageToCSVExporterBase(DeserializedMessageFilter):
+class MessageToFileExporterBase(DeserializedMessageFilter):
+    """Export messages to a file."""
+
+    def __init__(self, filename, max_frequency=None, frequency_from_header_stamp=False, *args, **kwargs):
+        # type: (STRING_TYPE, Optional[float], bool, Any, Any) -> None
+        """
+        :param filename: Path to the file.
+        :param max_frequency: The maximum frequency on which the data should be exported.
+        :param frequency_from_header_stamp: If True, the header stamp will be used as the timestamp for frequency
+                                            checking. If False, receive stamp is used.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(MessageToFileExporterBase, self).__init__(*args, **kwargs)  # noqa
+
+        self._min_dt = rospy.Duration(1.0 / float(max_frequency)) if max_frequency is not None else None
+        self._file_path = filename
+        self._frequency_from_header_stamp = frequency_from_header_stamp
+
+        self._data = self._init_data()
+        self._last_msg_time = None
+
+    def _init_data(self):
+        return []
+
+    def _append_msg_data(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, genpy.Message, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[STRING_TYPE]]
+        raise NotImplementedError()
+
+    def on_filtering_start(self):
+        self._data = self._init_data()
+
+    def on_filtering_end(self):
+        out_file = self.resolve_file(self._file_path)
+        self._write_data_to_file(out_file)
+
+    def _write_data_to_file(self, out_file):
+        raise NotImplementedError()
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if self._min_dt is not None:
+            msg_stamp = msg.header.stamp if self._frequency_from_header_stamp else stamp
+            if self._last_msg_time is not None and self._last_msg_time + self._min_dt > msg_stamp:
+                return topic, msg, stamp, header, tags
+            self._last_msg_time = msg_stamp
+
+        self._append_msg_data(topic, msg, stamp, header, tags)
+
+        return topic, msg, stamp, header, tags
+
+    def reset(self):
+        super(MessageToFileExporterBase, self).reset()
+        self._last_msg_time = None
+        self._data = self._init_data()
+
+    def _str_params(self):
+        parts = []
+        parts.append('filename=' + self.resolve_file(self._file_path))
+        parent_params = self._default_str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
+class MessageToCSVExporterBase(MessageToFileExporterBase):
     """Export messages to a CSV file."""
 
     def __init__(self, csv_file, max_frequency=None, frequency_from_header_stamp=False, *args, **kwargs):
@@ -240,65 +306,73 @@ class MessageToCSVExporterBase(DeserializedMessageFilter):
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
         """
-        super(MessageToCSVExporterBase, self).__init__(*args, **kwargs)  # noqa
-
-        self._min_dt = rospy.Duration(1.0 / float(max_frequency)) if max_frequency is not None else None
-        self._csv_file_path = csv_file
-        self._frequency_from_header_stamp = frequency_from_header_stamp
-
-        self._csv_rows = []
-        self._last_msg_time = None
+        super(MessageToCSVExporterBase, self).__init__(
+            csv_file, max_frequency, frequency_from_header_stamp, *args, **kwargs)
 
     def _get_fields(self):
         # type: () -> Iterable[STRING_TYPE]
         raise NotImplementedError()
 
     def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
-        # type: (STRING_TYPE, genpy.Message, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[STRING_TYPE]]
+        # type: (STRING_TYPE, genpy.Message, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[Any]]
         raise NotImplementedError()
 
-    def on_filtering_start(self):
-        self._csv_rows = []
+    def _append_msg_data(self, topic, msg, stamp, header, tags):
+        csv_row = self._msg_to_csv_row(topic, msg, stamp, header, tags)
+        if csv_row is not None:
+            self._data.append(csv_row)
 
-    def on_filtering_end(self):
-        csv_file = self.resolve_file(self._csv_file_path)
-        with open(csv_file, 'w', newline='') as f:
+    def _write_data_to_file(self, out_file):
+        with open(out_file, 'w', newline='') as f:
             fields = tuple(self._get_fields())
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
-            for row in self._csv_rows:
+            for row in self._data:
                 assert len(row) == len(fields)
                 writer.writerow(dict(zip(fields, row)))
-        print("Saved CSV with", len(self._csv_rows), "rows:", csv_file)
+        print("Saved CSV with", len(self._data), "rows:", out_file)
 
-    def filter(self, topic, msg, stamp, header, tags):
-        if self._min_dt is not None:
-            msg_stamp = msg.header.stamp if self._frequency_from_header_stamp else stamp
-            if self._last_msg_time is not None and self._last_msg_time + self._min_dt > msg_stamp:
-                return topic, msg, stamp, header, tags
-            self._last_msg_time = msg_stamp
 
-        csv_row = self._msg_to_csv_row(topic, msg, stamp, header, tags)
-        if csv_row is not None:
-            self._csv_rows.append(tuple(csv_row))
+class MessageToYAMLExporterBase(MessageToFileExporterBase):
+    """Export messages to a YAML file."""
 
-        return topic, msg, stamp, header, tags
+    def __init__(self, yaml_file, yaml_dump_options=None, max_frequency=None, frequency_from_header_stamp=False,
+                 *args, **kwargs):
+        # type: (STRING_TYPE, Optional[Dict[STRING_TYPE, Any]], Optional[float], bool, Any, Any) -> None
+        """
+        :param yaml_file: Path to the YAML file.
+        :param yaml_dump_options: Optional options passed to yaml.safe_dump() as kwargs.
+        :param max_frequency: The maximum frequency on which the data should be exported.
+        :param frequency_from_header_stamp: If True, the header stamp will be used as the timestamp for frequency
+                                            checking. If False, receive stamp is used.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(MessageToYAMLExporterBase, self).__init__(
+            yaml_file, max_frequency, frequency_from_header_stamp, *args, **kwargs)
+        self._yaml_dump_options = yaml_dump_options
 
-    def reset(self):
-        super(MessageToCSVExporterBase, self).reset()
-        self._last_msg_time = None
-        self._csv_rows = []
+    def _msg_to_yaml_dict(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, genpy.Message, rospy.Time, ConnectionHeader, Tags) -> Optional[Dict[STR, Any]]
+        raise NotImplementedError()
 
-    def _str_params(self):
-        parts = []
-        parts.append('csv_file=' + self.resolve_file(self._csv_file_path))
-        parent_params = self._default_str_params()
-        if len(parent_params) > 0:
-            parts.append(parent_params)
-        return ", ".join(parts)
+    def _append_msg_data(self, topic, msg, stamp, header, tags):
+        yaml_dict = self._msg_to_yaml_dict(topic, msg, stamp, header, tags)
+        if yaml_dict is not None:
+            self._data.append(yaml_dict)
+
+    def _write_data_to_file(self, out_file):
+        with open(out_file, 'w') as f:
+            opts = {}
+            if self._yaml_dump_options is not None:
+                opts.update(self._yaml_dump_options)
+            yaml.safe_dump(self._data, f, sort_keys=False, **opts)
+        print("Saved YAML with", len(self._data), "items:", out_file)
 
 
 __all__ = [
     ImageTransportFilter.__name__,
     MessageToCSVExporterBase.__name__,
+    MessageToFileExporterBase.__name__,
+    MessageToYAMLExporterBase.__name__,
 ]
