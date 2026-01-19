@@ -2597,6 +2597,12 @@ class ExportCameraInfoToYAML(MessageToYAMLExporterBase):
             'data': list(msg.D),
         }
 
+    def _write_data_to_file(self, out_file):
+        if len(self._data):
+            print("YAML", out_file, "has no data, not writing.")
+            return
+        super(ExportCameraInfoToYAML, self)._write_data_to_file(out_file)
+
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
     """Detect images from Basler cameras that are damaged by incomplete CompressionBeyond packets. These images are
