@@ -2321,6 +2321,76 @@ class FixStaticTF(DeserializedMessageFilterWithTF):
         return ", ".join(parts)
 
 
+class AddStaticTF(DeserializedMessageFilterWithTF):
+    """Add static transforms to the first message on /tf_static."""
+
+    def __init__(self, transforms=None, add_tags=None, *args, **kwargs):
+        # type: (Optional[Sequence[Dict[STRING_TYPE, STRING_TYPE]]], Optional[Set[STRING_TYPE]], Any, Any) -> None
+        """
+        :param transforms: The new transforms. The dicts have to contain keys "frame_id", "child_frame_id", "transform".
+                           The transform has to be a 6-tuple (x, y, z, roll, pitch, yaw)
+                           or 7-tuple (x, y, z, qx, qy, qz, qw).
+        :param add_tags: Tags to be added to the modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(AddStaticTF, self).__init__(
+            include_topics=["tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
+
+        self._transforms = list()
+        self._add_tags = add_tags
+        self._added = False
+
+        for t in (transforms if transforms is not None else list()):
+            frame_id = t["frame_id"]
+            child_frame_id = t["child_frame_id"]
+            data = t["transform"]
+            if len(data) == 7:
+                transform = Transform(Vector3(*data[:3]), Quaternion(*data[3:]))
+            elif len(data) == 6:
+                transform = Transform(Vector3(*data[:3]), quat_msg_from_rpy(*data[3:]))
+            else:
+                raise RuntimeError("'transform' has to be either a 6-tuple or 7-tuple.")
+
+            tf_stamped = TransformStamped()
+            tf_stamped.header.frame_id = frame_id
+            tf_stamped.child_frame_id = child_frame_id
+            tf_stamped.transform = transform
+            self._transforms.append(tf_stamped)
+
+    def consider_message(self, topic, datatype, stamp, header, tags):
+        if self._added:
+            return False
+        return super(AddStaticTF, self).consider_message(topic, datatype, stamp, header, tags)
+
+    def filter(self, topic, msg, stamp, header, tags):
+        msg_stamp = min(t.header.stamp for t in msg.transforms)
+        for tf_stamped in self._transforms:
+            tf_stamped.header.stamp = msg_stamp
+            msg.transforms.append(tf_stamped)
+            print("Adjusted transform %s->%s." % (tf_stamped.header.frame_id, tf_stamped.child_frame_id))
+        self._added = True
+
+        return topic, msg, stamp, header, tags_for_changed_msg(tags, self._add_tags)
+
+    def on_filtering_end(self):
+        if not self._added:
+            print("AddStaticTF did not receive any message on /tf_static, so no static TF was added.", file=sys.stderr)
+        super(AddStaticTF, self).on_filtering_end()
+
+    def reset(self):
+        self._added = False
+        super(AddStaticTF, self).reset()
+
+    def _str_params(self):
+        parts = []
+        parts.append('transforms=' + repr([(t.header.frame_id, t.child_frame_id) for t in self._transforms]))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class ExportTFTrajectory(DeserializedMessageFilterWithTF):
     """Export TF trajectory to a CSV file."""
 
