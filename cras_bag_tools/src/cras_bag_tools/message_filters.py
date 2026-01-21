@@ -2368,7 +2368,7 @@ class AddStaticTF(DeserializedMessageFilterWithTF):
         for tf_stamped in self._transforms:
             tf_stamped.header.stamp = msg_stamp
             msg.transforms.append(tf_stamped)
-            print("Adjusted transform %s->%s." % (tf_stamped.header.frame_id, tf_stamped.child_frame_id))
+            print("Added transform %s->%s." % (tf_stamped.header.frame_id, tf_stamped.child_frame_id))
         self._added = True
 
         return topic, msg, stamp, header, tags_for_changed_msg(tags, self._add_tags)
