@@ -424,10 +424,12 @@ class DeduplicateJointStates(DeserializedMessageFilter):
 class DeduplicateTF(DeserializedMessageFilter):
     """Discard all messages except each first changed."""
 
-    def __init__(self, max_ignored_duration=None, include_topics=None, *args, **kwargs):
+    def __init__(self, max_ignored_duration=None, cache_size=1, include_topics=None, *args, **kwargs):
         """
         :param float max_ignored_duration: If set, a duplicate will pass if its stamp is further from the last passed
                                            message than the given duration (in seconds).
+        :param int cache_size: Number of previous messages to remember for each TF
+                               (duplicates are searched in this cache).
         :param list include_topics: Topics to work on (defaults to standard TF topics).
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -436,6 +438,7 @@ class DeduplicateTF(DeserializedMessageFilter):
             include_topics=['tf', 'tf_static'] if include_topics is None else include_topics,
             include_types=[TFMessage._type], *args, **kwargs)  # noqa
         self._max_ignored_duration = rospy.Duration(max_ignored_duration) if max_ignored_duration is not None else None
+        self._cache_size = max(1, cache_size)
         self._last_msgs = {}
 
     def filter(self, topic, msg, stamp, header, tags):
@@ -445,23 +448,27 @@ class DeduplicateTF(DeserializedMessageFilter):
 
         for i in reversed(range(len(tfs))):
             key = "%s@%s@%s" % (topic, tfs[i].header.frame_id, tfs[i].child_frame_id)
+            msg_stamp = tfs[i].header.stamp
 
             if key not in self._last_msgs:
-                self._last_msgs[key] = tfs[i], stamp, copy.deepcopy(tags)
+                self._last_msgs[key] = deque(maxlen=self._cache_size)
+                self._last_msgs[key].append((msg_stamp, stamp, copy.deepcopy(tags)))
                 continue
 
-            last_msg, last_msg_stamp, last_tags = self._last_msgs[key]
-
-            stamp_ok = tfs[i].header.stamp == last_msg.header.stamp
+            same_msgs = [(ms, s, t) for ms, s, t in self._last_msgs[key] if ms == msg_stamp]
+            has_seen_this_stamp = len(same_msgs) > 0
 
             stamp_diff_ok = True
             if self._max_ignored_duration is not None:
+                _, last_msg_stamp, _ = max(same_msgs, key=lambda x: x[1])
+                # if stamp would somehow be before last_msg_stamp, we want to succeed
+                last_msg_stamp = min(stamp, last_msg_stamp)
                 stamp_diff_ok = stamp - last_msg_stamp < self._max_ignored_duration
 
-            if stamp_ok and stamp_diff_ok:
+            if has_seen_this_stamp and stamp_diff_ok:
                 del tfs[i]
             else:
-                self._last_msgs[key] = tfs[i], stamp, copy.deepcopy(tags)
+                self._last_msgs[key].append((msg_stamp, stamp, copy.deepcopy(tags)))
 
         if len(tfs) == 0:
             return None
