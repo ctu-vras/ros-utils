@@ -13,7 +13,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
 
   <license>BSD</license>
 
-  <url type="website">https://wiki.ros.org/cras_cpp_common</url>
+  <url type="website">https://index.ros.org/p/cras_cpp_common</url>
   <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
   <url type="repository">https://github.com/ctu-vras/ros-utils</url>
 
