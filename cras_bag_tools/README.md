@@ -14,6 +14,7 @@ Several useful functions are exported as Python submodules as module `cras_bag_t
 - [`message_filter`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.message_filter): A message filter that can decide whether a message should be kept or not, and possibly alter it.
 - [`message_filters`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.message_filters): Implementations of common message filters.
 -->
+
 - [`topic_set`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.topic_set): Efficient data structure to hold a static set of topics with super-fast is-in-set queries.
 - [`tqdm_bag`](https://docs.ros.org/en/api/cras_bag_tools/html/cras_bag_tools.html#module-cras_bag_tools.tqdm_bag): Bag file reader that shows progressbars when loading index or reading messages.
 

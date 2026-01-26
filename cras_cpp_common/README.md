@@ -26,18 +26,23 @@ This package is supported on ROS 2 **Jazzy** and **Klited** (on branch `ros2`). 
 _The ROS 2 port is still in its early stage. You will find more modules in this package, but their build and tests are disabled in CMake. Only modules listed here are actually available._
 
 - `c_api`: Utilities for writing a C API for your packages.
+
 <!--
 - `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
 - `diag_utils`: Helpers for easy setup of a diagnosed publisher/subscriber that checks message rate or delay. Configuration of the expected rates/delays is via ROS parameters.
 -->
+
 - `expected`: Provides forward compatibility for [`std::expected`](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0323r3.pdf).
+
 <!--
 - `filter_utils`:
   - `FilterBase` eases access to filter parameters via `param_utils`.
   - `FilterChain` class and nodelet improve upon [`filters::FilterChain`](https://github.com/ros/filters/blob/noetic-devel/include/filters/filter_chain.hpp) by adding support for dynamic disabling/enabling of individual filters, diagnostics of the individual filters and possibility to publish the intermediate filtering results.
 - `functional`: Provides forward compatibility for [`std::apply()`](https://en.cppreference.com/w/cpp/utility/apply), [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke) and [`std::bind_front()`](https://en.cppreference.com/w/cpp/utility/functional/bind_front). Especially `cras::bind_front()` is super useful for specifying ROS subscriber callbacks, where you just bind `this` to the callback, and the rest of the parameters is automatically handled.
 -->
+
 - `log_utils`: Unified access to the `ROS_*` and `NODELET_*` logging macros. This is more an internal utility of this package.
+
 <!--
 - `math_utils`: `sgn()` signum function, and `RunningStats` (computes mean and variance on a stream of data in O(1) time per sample).
 - `message_utils`: `BaseMessage<M>` and `IsMessageParam<M>` template helpers for working with ROS message classes.
@@ -48,6 +53,7 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 - `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
 - `pool_allocator`: Provides a memory-pool-based allocator for ROS messages. It comes handy if you want to publish shared pointer messages on a high rate - it should decrease the time needed for object allocation via `new`.
 -->
+
 - `rate_limiter`: Library for intelligent rate-limiting of events (mainly messages). So far it implements the algorithm from `topic_tools throttle` (not very good), and token bucket algorithm (pretty good for most cases).
 - `set_utils`: Provides `isSetIntersectionEmpty()` working on a pair of `std::set`s.
 - `small_map`: Provides `SmallMap` and `SmallSet`, variants of `std::map` implemented using `std::list` which are append-only and lock-free for reading.
@@ -55,13 +61,16 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 - `suppress_warnings`: Unified macros that suppress various compiler warnings for a piece of code.
 - `test_utils`: Provide a hack that allows loading a locally-defined nodelet without the need to register it via package.xml.
 - `tf2_utils`: `getRoll()`, `getPitch()`, `getYaw()`, `getRPY()` from a `tf2::Quaternion` or `geometry_msgs::Quaternion`!
+
 <!--
   - Also provides `InterruptibleTFBuffer` that can cooperate with `cras::Nodelet` and stop a TF lookup if the nodelet is being unloaded (normally, the lookup freezes when you pause simulation time).
 -->
+
 - `thread_utils`: `getThreadName()` and `setThreadName()`.
   - Also provides `ReverseSemaphore` synchronization primitive that counts towards zero and notifies when empty.
 - `time_utils`: `remainingTime()` tells you how much of a timeout remains if you started waiting at some specified time. Conversions between `rclcpp::Rate()` and frequency. Multiplication and division operators for ROS duration types. Seamless conversions between various time representations using `convertTime()`. Similarly, `convertDuration()`. 
 - `type_utils`: Provides compile-time and run-time `getTypeName()` helper that converts a C++ type to a string containing its name.
+
 <!--
 - `urdf_utils`: Conversions between `urdf` and `Eigen` types.
 -->

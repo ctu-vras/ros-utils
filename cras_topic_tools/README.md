@@ -26,7 +26,9 @@ _The majority of this package is not yet available in ROS 2._
 <!--
 - `change_header`: Allows modifying headers of messages (frame ID, timestamp). [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1ChangeHeaderNodelet.html#details).
 -->
-- `count_messages`: Count the number of received messages, make it available as a ROS parameter and print statistics. <!-- [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1CountMessagesNodelet.html#details). -->
+
+- `count_messages`: Count the number of received messages, make it available as a ROS parameter and print statistics. [Usage](https://docs.ros.org/en/kilted/p/cras_topic_tools/generated/classcras_1_1CountMessagesComponent.html#_CPPv4N4cras22CountMessagesComponentE).
+
 <!--
 - `filter`: (only node, no nodelet) Filter messages on a topic based on a Python expression. [Usage](https://github.com/ctu-vras/ros-utils/blob/master/cras_topic_tools/nodes/filter).
 - `heartbeat`: Publish `cras_msgs/Heartbeat` heartbeat of a topic. [Usage](https://docs.ros.org/en/latest/api/cras_topic_tools/html/classcras_1_1HeartbeatNodelet.html#details).
