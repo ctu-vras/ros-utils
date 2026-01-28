@@ -532,15 +532,22 @@ class Copy(RawMessageFilter):
         super(Copy, self).__init__(kwargs.keys(), None, None, None, min_stamp, max_stamp,
                                    include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
         self._add_tags = add_tags
-        self.copy = kwargs
+        self.copy = dict()
+        for topic_from, topic_to in kwargs:
+            if not topic_from.startswith('/'):
+                topic_from = '/' + topic_from
+            self.copy[topic_from] = topic_to
 
     def filter(self, topic, datatype, data, md5sum, pytype, stamp, header, tags):
         copy_tags = tags_for_generated_msg(tags)
         if self._add_tags:
             copy_tags = copy_tags.union(self._add_tags)
+        topic_from = topic
+        if not topic_from.startswith('/'):
+            topic_from = '/' + topic_from
         return [
             (topic, datatype, data, md5sum, pytype, stamp, header, tags),
-            (self.copy.get(topic, topic), (datatype, data, md5sum, pytype), stamp, header, copy_tags),
+            (self.copy[topic_from], (datatype, data, md5sum, pytype), stamp, header, copy_tags),
         ]
 
     def _str_params(self):
