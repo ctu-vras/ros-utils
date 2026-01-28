@@ -533,7 +533,7 @@ class Copy(RawMessageFilter):
                                    include_time_ranges, exclude_time_ranges, include_tags, exclude_tags)
         self._add_tags = add_tags
         self.copy = dict()
-        for topic_from, topic_to in kwargs:
+        for topic_from, topic_to in kwargs.items():
             if not topic_from.startswith('/'):
                 topic_from = '/' + topic_from
             self.copy[topic_from] = topic_to
