@@ -2627,7 +2627,8 @@ class ExportCmdVelToCSV(MessageToCSVExporterBase):
 
     def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
         msg_stamp = msg.header.stamp if msg._type == TwistStamped._type else stamp
-        return msg_stamp, msg.linear.x, msg.angular.z
+        twist = msg if msg._type == Twist._type else msg.twist
+        return msg_stamp, twist.linear.x, twist.angular.z
 
 
 class ExportCameraInfoToYAML(MessageToYAMLExporterBase):
