@@ -2839,14 +2839,14 @@ class ExportJointStatesToCSV(MessageToCSVExporterBase):
                 row[idx:(idx + 3)] = v[i]
             self._data.append(row)
 
-        super(self, ExportJointStatesToCSV)._write_data_to_file(out_file)
+        super(ExportJointStatesToCSV, self)._write_data_to_file(out_file)
 
     def reset(self):
         self._msgs = dict()
         self._joints = set()
         self._fields = None
         self._stamps = list()
-        super(self, ExportJointStatesToCSV).reset()
+        super(ExportJointStatesToCSV, self).reset()
 
 
 class ExportGNSSToCSV(MessageToCSVExporterBase):
