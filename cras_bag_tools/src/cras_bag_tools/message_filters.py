@@ -2805,7 +2805,7 @@ class ExportJointStatesToCSV(MessageToCSVExporterBase):
         # type: (STRING_TYPE, JointState, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[Any]]
 
         self._stamps.append(msg.header.stamp.to_sec())
-        for v in self._msgs.values:
+        for v in self._msgs.values():
             v.append((float('nan'), float('nan'), float('nan')))
 
         for i, joint in enumerate(msg.name):
