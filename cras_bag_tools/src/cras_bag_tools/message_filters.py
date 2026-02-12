@@ -22,7 +22,7 @@ from collections import deque
 from enum import Enum
 from functools import reduce
 from lxml import etree
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Type, Union
 from numpy.linalg import inv
 
 import genpy
@@ -47,7 +47,7 @@ from image_transport_codecs.parse_compressed_format import guess_any_compressed_
 from kdl_parser_py.urdf import treeFromUrdfModel
 from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
-from sensor_msgs.msg import CameraInfo, CompressedImage, Image, JointState, MagneticField
+from sensor_msgs.msg import CameraInfo, CompressedImage, Image, Imu, JointState, MagneticField
 from std_msgs.msg import Float64MultiArray, Header, String
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore, TransformException
@@ -2691,6 +2691,65 @@ class ExportCameraInfoToYAML(MessageToYAMLExporterBase):
     def reset(self):
         self._finished = False
         super(ExportCameraInfoToYAML, self).reset()
+
+
+class ExportImuToCSV(MessageToCSVExporterBase):
+    """Export Imu messages to a CSV file."""
+
+    def __init__(self, topic, csv_file, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Any, Any) -> None
+        """
+        :param topic: The topic to export (`sensor_msgs/Imu` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportImuToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
+            include_topics=(topic,), include_types=(Imu._type,), *args, **kwargs)  # noqa
+
+    def _get_fields(self):
+        return "stamp", "qx", "qy", "qz", "qw", "wx", "wy", "wz", "ax", "ay", "az", \
+                "cq0", "cq1", "cq2", "cq3", "cq4", "cq5", "cq6", "cq7", "cq8", \
+                "cw0", "cw1", "cw2", "cw3", "cw4", "cw5", "cw6", "cw7", "cw8", \
+                "ca0", "ca1", "ca2", "ca3", "ca4", "ca5", "ca6", "ca7", "ca8"
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, Imu, rospy.Time, ConnectionHeader, Tags) -> Iterable[float]
+        msg_stamp = msg.header.stamp
+        q = msg.orientation
+        w = msg.angular_velocity
+        a = msg.linear_acceleration
+        cq = msg.orientation_covariance
+        cw = msg.angular_velocity_covariance
+        ca = msg.linear_acceleration_covariance
+        return [msg_stamp.to_sec(), q.x, q.y, q.z, q.w, w.x, w.y, w.z, a.x, a.y, a.z] + list(cq) + list(cw) + list(ca)
+
+
+class ExportMagnetometerToCSV(MessageToCSVExporterBase):
+    """Export MagneticField messages to a CSV file."""
+
+    def __init__(self, topic, csv_file, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Any, Any) -> None
+        """
+        :param topic: The topic to export (`sensor_msgs/MagneticField` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportMagnetometerToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
+            include_topics=(topic,), include_types=(MagneticField._type,), *args, **kwargs)  # noqa
+
+    def _get_fields(self):
+        return "stamp", "x", "y", "z", "c0", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, MagneticField, rospy.Time, ConnectionHeader, Tags) -> Iterable[float]
+        msg_stamp = msg.header.stamp
+        f = msg.magnetic_field
+        c = msg.magnetic_field_covariance
+        return [msg_stamp.to_sec(), f.x, f.y, f.z] + list(c)
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
