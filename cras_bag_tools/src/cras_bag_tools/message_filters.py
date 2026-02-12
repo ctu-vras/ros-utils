@@ -2870,7 +2870,7 @@ class ExportGNSSToCSV(MessageToCSVExporterBase):
     def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
         # type: (STRING_TYPE, Union[GPSFix, NavSatFix], rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[Any]]
         return [msg.header.stamp.to_sec(), msg.latitude, msg.longitude, msg.altitude,
-                msg.status.status, msg.position_covariance_type] + msg.position_covariance
+                msg.status.status, msg.position_covariance_type] + list(msg.position_covariance)
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
