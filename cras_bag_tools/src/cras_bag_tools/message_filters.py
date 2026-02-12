@@ -29,6 +29,7 @@ import genpy
 import rospy
 from angles import normalize_angle, normalize_angle_positive
 from camera_calibration_parsers import readCalibration
+from compass_msgs.msg import Azimuth
 from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
 from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
@@ -41,13 +42,14 @@ from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.encoding import decode_config
 from dynamic_reconfigure.msg import Config
 from geometry_msgs.msg import Quaternion, Transform, TransformStamped, Twist, TwistStamped, Vector3
+from gps_common.msg import GPSFix
 from image_transport_codecs import decode, encode
 from image_transport_codecs.compressed_depth_codec import has_rvl
 from image_transport_codecs.parse_compressed_format import guess_any_compressed_image_transport_format
 from kdl_parser_py.urdf import treeFromUrdfModel
 from nav_msgs.msg import Odometry
 from ros_numpy import msgify, numpify
-from sensor_msgs.msg import CameraInfo, CompressedImage, Image, Imu, JointState, MagneticField
+from sensor_msgs.msg import CameraInfo, CompressedImage, Image, Imu, JointState, MagneticField, NavSatFix
 from std_msgs.msg import Float64MultiArray, Header, String
 from tf2_msgs.msg import TFMessage
 from tf2_py import BufferCore, TransformException
@@ -2750,6 +2752,125 @@ class ExportMagnetometerToCSV(MessageToCSVExporterBase):
         f = msg.magnetic_field
         c = msg.magnetic_field_covariance
         return [msg_stamp.to_sec(), f.x, f.y, f.z] + list(c)
+
+
+class ExportAzimuthToCSV(MessageToCSVExporterBase):
+    """Export Azimuth messages to a CSV file."""
+
+    def __init__(self, topic, csv_file, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Any, Any) -> None
+        """
+        :param topic: The topic to export (`compass_msgs/Azimuth` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportAzimuthToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
+            include_topics=(topic,), include_types=(Azimuth._type,), *args, **kwargs)  # noqa
+
+    def _get_fields(self):
+        return "stamp", "azimuth_rad", "azimuth_rad_cov"
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, Azimuth, rospy.Time, ConnectionHeader, Tags) -> Iterable[float]
+        msg_stamp = msg.header.stamp
+        return [msg_stamp.to_sec(), msg.azimuth, msg.variance]
+
+
+class ExportJointStatesToCSV(MessageToCSVExporterBase):
+    """Export JointState messages to a CSV file."""
+
+    def __init__(self, topic, csv_file, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Any, Any) -> None
+        """
+        :param topic: The topic to export (`sensor_msgs/JointState` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportJointStatesToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
+            include_topics=(topic,), include_types=(JointState._type,), *args, **kwargs)  # noqa
+
+        self._fields = None
+        self._joints = set()
+        self._msgs = dict()
+        self._stamps = list()
+
+    def _get_fields(self):
+        return self._fields
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, JointState, rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[Any]]
+
+        self._stamps.append(msg.header.stamp.to_sec())
+        for v in self._msgs.values:
+            v.append((float('nan'), float('nan'), float('nan')))
+
+        for i, joint in enumerate(msg.name):
+            if joint not in self._joints:
+                self._joints.add(joint)
+                self._msgs[joint] = [(float('nan'), float('nan'), float('nan'))] * len(self._stamps)
+            p = msg.position[i] if len(msg.position) > i else float('nan')
+            v = msg.velocity[i] if len(msg.velocity) > i else float('nan')
+            e = msg.effort[i] if len(msg.effort) > i else float('nan')
+            self._msgs[joint][-1] = (p, v, e)
+
+        return None
+
+    def _write_data_to_file(self, out_file):
+        self._fields = ["stamp"]
+        idxs = dict()
+        for joint in sorted(list(self._joints)):
+            idxs[joint] = len(self._fields)
+            self._fields.extend([
+                joint + "_pos",
+                joint + "_vel",
+                joint + "_eff",
+            ])
+
+        row_len = len(self._fields)
+        for i, stamp in enumerate(self._stamps):
+            row = [float('nan')] * row_len
+            row[0] = stamp
+            for j, v in self._msgs.items():
+                idx = idxs[j]
+                row[idx:(idx + 3)] = v[i]
+            self._data.append(row)
+
+        super(self, ExportJointStatesToCSV)._write_data_to_file(out_file)
+
+    def reset(self):
+        self._msgs = dict()
+        self._joints = set()
+        self._fields = None
+        self._stamps = list()
+        super(self, ExportJointStatesToCSV).reset()
+
+
+class ExportGNSSToCSV(MessageToCSVExporterBase):
+    """Export cmd_vel commands to a CSV file."""
+
+    def __init__(self, topic, csv_file, *args, **kwargs):
+        # type: (STRING_TYPE, STRING_TYPE, Any, Any) -> None
+        """
+        :param topic: The topic to export (`gps_common/GPSFix` or `sensor_msgs/NavSatFix` type).
+        :param csv_file: Path to the CSV file to store the trajectory.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(ExportGNSSToCSV, self).__init__(
+            csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
+            include_topics=(topic,), include_types=(GPSFix._type, NavSatFix._type), *args, **kwargs)  # noqa
+
+    def _get_fields(self):
+        return "stamp", "lat", "lon", "alt", "status", "cov_type", "c0", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"
+
+    def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
+        # type: (STRING_TYPE, Union[GPSFix, NavSatFix], rospy.Time, ConnectionHeader, Tags) -> Optional[Iterable[Any]]
+        return [msg.header.stamp.to_sec(), msg.latitude, msg.longitude, msg.altitude,
+                msg.status.status, msg.position_covariance_type] + msg.position_covariance
 
 
 class DetectDamagedBaslerImages(DeserializedMessageFilter):
