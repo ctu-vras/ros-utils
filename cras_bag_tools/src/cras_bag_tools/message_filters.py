@@ -29,7 +29,6 @@ import genpy
 import rospy
 from angles import normalize_angle, normalize_angle_positive
 from camera_calibration_parsers import readCalibration
-from compass_msgs.msg import Azimuth
 from cras.distortion_models import PLUMB_BOB, RATIONAL_POLYNOMIAL, EQUIDISTANT
 from cras.geometry_utils import quat_msg_from_rpy
 from cras.image_encodings import isColor, isMono, isBayer, isDepth, bitDepth, numChannels, MONO8, RGB8, BGR8,\
@@ -59,7 +58,8 @@ from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithP
 from .bag_utils import bag_msg_type_to_standard_type
 from .message_filter import ConnectionHeader, DeserializedMessageData, DeserializedMessageFilter, \
     DeserializedMessageFilterWithTF, MessageTags, NoMessageFilter, RawMessageFilter, Tags, TopicSet, \
-    deserialize_header, normalize_filter_result, tags_for_changed_msg, tags_for_generated_msg
+    cleanup_requeue_tags, deserialize_header, normalize_filter_result, num_used_requeues, \
+    tags_for_changed_msg, tags_for_generated_msg, tags_for_requeuing_msg
 from .message_filters_base import ImageTransportFilter, MessageToCSVExporterBase, MessageToYAMLExporterBase
 
 STR = STRING_TYPE
@@ -2765,6 +2765,7 @@ class ExportAzimuthToCSV(MessageToCSVExporterBase):
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
         """
+        from compass_msgs.msg import Azimuth
         super(ExportAzimuthToCSV, self).__init__(
             csv_file=csv_file, max_frequency=None, frequency_from_header_stamp=False,
             include_topics=(topic,), include_types=(Azimuth._type,), *args, **kwargs)  # noqa
@@ -2773,7 +2774,7 @@ class ExportAzimuthToCSV(MessageToCSVExporterBase):
         return "stamp", "azimuth_rad", "azimuth_rad_cov"
 
     def _msg_to_csv_row(self, topic, msg, stamp, header, tags):
-        # type: (STRING_TYPE, Azimuth, rospy.Time, ConnectionHeader, Tags) -> Iterable[float]
+        # type: (STRING_TYPE, 'compass_msgs.msg.Azimuth', rospy.Time, ConnectionHeader, Tags) -> Iterable[float]
         msg_stamp = msg.header.stamp
         return [msg_stamp.to_sec(), msg.azimuth, msg.variance]
 
@@ -4650,3 +4651,100 @@ class BlurFaces(DeserializedMessageFilter):
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
+
+
+def get_closest_stamp(msg_stamp, q, max_diff):
+    closest_stamp = None
+    if len(q) > 0:
+        diff, closest_stamp = min(sorted([(abs(((s - msg_stamp).to_sec())), s) for s in q]))
+        if diff > max_diff:
+            closest_stamp = None
+    return closest_stamp
+
+
+class NiftiAugmentJointStates(DeserializedMessageFilter):
+    """Add velocity and currents to NIFTi robot joint states."""
+
+    def __init__(self, joint_states_topic, *args, **kwargs):
+        """
+        :param str joint_states_topic: The topic with joint states to augment.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        super(NiftiAugmentJointStates, self).__init__(
+            include_topics=[joint_states_topic, 'currents', 'flippers_vel'], *args, **kwargs)
+
+        self._currents_queue = {}
+        self._flippers_vels_queue = {}
+
+        self._max_wait_time = rospy.Duration(2.0)
+        self._requeue_delay = rospy.Duration(0.1)
+        self._max_sync_diff = rospy.Duration(0.1).to_sec()
+        self._max_requeues = 20
+
+        self._joint_names_to_fields = {
+            'front_left_flipper_j': 'frontLeft',
+            'front_right_flipper_j': 'frontRight',
+            'rear_left_flipper_j': 'rearLeft',
+            'rear_right_flipper_j': 'rearRight',
+        }
+
+    def filter(self, topic, msg, stamp, header, tags):
+        # Prune stale queue items
+        self._currents_queue = {s: m for s, m in self._currents_queue.items() if s + self._max_wait_time >= stamp}
+        self._flippers_vels_queue = \
+            {s: m for s, m in self._flippers_vels_queue.items() if s + self._max_wait_time >= stamp}
+
+        t = topic.lstrip('/')
+        msg_stamp = msg.header.stamp
+
+        if t == 'currents':
+            self._currents_queue[msg_stamp] = msg
+            return topic, msg, stamp, header, tags
+        elif t == 'flippers_vel':
+            self._flippers_vels_queue[msg_stamp] = msg
+            return topic, msg, stamp, header, tags
+
+        currents_stamp = get_closest_stamp(msg_stamp, self._currents_queue, self._max_sync_diff)
+        vel_stamp = get_closest_stamp(msg_stamp, self._flippers_vels_queue, self._max_sync_diff)
+
+        if currents_stamp is not None and vel_stamp is not None:
+            currents = self._currents_queue[currents_stamp]
+            flippers_vel = self._flippers_vels_queue[vel_stamp]
+            del self._currents_queue[currents_stamp]
+            del self._flippers_vels_queue[vel_stamp]
+
+            msg.velocity = [0.0] * 6
+            msg.effort = [0.0] * 6
+
+            for joint, field in self._joint_names_to_fields.items():
+                idx = msg.name.index(joint)
+                msg.velocity[idx] = getattr(flippers_vel, field)
+                msg.effort[idx] = getattr(currents, field)
+
+            tags = tags_for_changed_msg(tags)
+
+            if MessageTags.REQUEUE in tags:
+                num_requeues = num_used_requeues(tags, self._max_requeues)
+                tags = cleanup_requeue_tags(tags)
+                # correct the receive stamp back to its original value
+                stamp -= self._requeue_delay * num_requeues
+        else:
+            # requeue the joint states message until we have the other two;
+            # pass the unaugmented message if the messages are not available even afte the requeues
+            if MessageTags.REQUEUE not in tags:
+                tags = tags_for_requeuing_msg(tags, max_requeues=self._max_requeues, drop_on_timeout=False)
+            stamp += self._requeue_delay
+
+        return topic, msg, stamp, header, tags
+
+    def _str_params(self):
+        parts = []
+        parent_params = super(NiftiAugmentJointStates, self)._str_params()
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+    def reset(self):
+        self._currents_queue = {}
+        self._flippers_vels_queue = {}

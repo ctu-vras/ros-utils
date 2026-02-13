@@ -12,8 +12,8 @@ import rospy
 from cras import Heap
 
 from .bag_utils import BagWrapper, MultiBag
-from .message_filter import MessageFilter, MessageTags, Passthrough, filter_message, msg_long_to_short, \
-    normalize_filter_result
+from .message_filter import MessageFilter, MessageTags, Passthrough, cleanup_requeue_tags, decrement_requeue_tag, \
+    filter_message, msg_long_to_short, normalize_filter_result
 from .time_range import TimeRange, TimeRanges
 
 
@@ -84,6 +84,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     num_dropped = 0
     num_changed = 0
     num_generated = 0
+    num_requeues = 0
 
     connection_filter = bag_filter.connection_filter
     for topic, msg, stamp, connection_header, bag_tags in bags.read_messages(
@@ -109,8 +110,22 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
                 num_dropped += 1
                 continue
 
-            num_passed += 1
             _topic, _raw_msg, _stamp, _connection_header, _tags = ret[0]
+
+            if MessageTags.REQUEUE in _tags:
+                some_requeues_left, _tags = decrement_requeue_tag(_tags)
+                if not some_requeues_left:
+                    if MessageTags.DROP_ON_REQUEUE_TIMEOUT in _tags:
+                        num_dropped += 1
+                        continue
+                    _tags = cleanup_requeue_tags(_tags)
+                    # continue processing the message
+                else:
+                    num_requeues += 1
+                    heap.push((_topic, _raw_msg, _stamp, _connection_header, _tags))
+                    continue
+
+            num_passed += 1
 
             if MessageTags.CHANGED in _tags:
                 num_changed += 1
@@ -151,7 +166,7 @@ def filter_bag(bags, out, bag_filter=Passthrough(), params=None, start_time=None
     bag_filter.on_filtering_end()
 
     if print_stats:
-        print("Message stats: %i passed, %i dropped, %i changed, %i generated." % (
-            num_passed, num_dropped, num_changed, num_generated))
+        print("Message stats: %i passed, %i dropped, %i changed, %i generated, %i requeues." % (
+            num_passed, num_dropped, num_changed, num_generated, num_requeues))
 
     bag_filter.reset()

@@ -98,6 +98,11 @@ class MessageTags(str, Enum):
 
     This is not a closed set. Filters can create and use any strings they like as tags. This enum is just a collection
     of the common tags used by the library itself.
+
+    There is a group of tags that handle the requeueing mechanism. If a message is returned with REQUEUE tag,
+    it should not continue its traversal through filters, but it should be instead put back on the processing queue.
+    To prevent infinite loops, each REQUEUE tag should be accompanied by tag (REQUEUES_LEFT_PREFIX + number) and the
+    queue processor is responsible for "decrementing" this numbered tag every time it requeues the message.
     """
 
     ORIGINAL = "original"
@@ -112,12 +117,26 @@ class MessageTags(str, Enum):
     CHANGED = "changed"
     """The message has been changed by at least one filter."""
 
+    REQUEUE = "requeue"
+    """The message should be requeued. Most filters will ignore it."""
+
+    REQUEUES_LEFT_PREFIX = "requeues:"
+    """Number of requeues left for the tagged message.
+    
+    This tag should never be used in this form. Instead, tags like 'requeues:10' should be created."""
+
+    DROP_ON_REQUEUE_TIMEOUT = "requeue-drop"
+    """If the message is out of requeue attempts, it should be dropped."""
+
+    PASS_ON_REQUEUE_TIMEOUT = "requeue-pass"
+    """If the message is out of requeue attempts, it should be passed further."""
+
     __str__ = str.__str__
     __format__ = str.__format__
 
 
 def tags_for_generated_msg(orig_tags, add_tags=None):
-    # type: (Set[STRING_TYPE], Optional[Set[STRING_TYPE]]) -> Set[STRING_TYPE]
+    # type: (Tags, Optional[Tags]) -> Tags
     """Given message tags for an input message, creates tags for a derived message.
 
     This means ORIGINAL and CHANGED tags are removed (if present) and GENERATED tag is added (if not present).
@@ -139,7 +158,7 @@ def tags_for_generated_msg(orig_tags, add_tags=None):
 
 
 def tags_for_changed_msg(orig_tags, add_tags=None):
-    # type: (Set[STRING_TYPE], Optional[Set[STRING_TYPE]]) -> Set[STRING_TYPE]
+    # type: (Tags, Optional[Tags]) -> Tags
     """Given message tags for an input message, creates tags for a derived message.
 
     This means ORIGINAL and CHANGED tags are removed (if present) and GENERATED tag is added (if not present).
@@ -154,6 +173,93 @@ def tags_for_changed_msg(orig_tags, add_tags=None):
     if add_tags:
         new_tags = new_tags.union(add_tags)
     return new_tags
+
+
+def tags_for_requeuing_msg(orig_tags, max_requeues=10, drop_on_timeout=False):
+    # type: (Tags, int, bool) -> Tags
+    """Given message tags for an input message, creates tags for requeuing the message.
+
+    :param orig_tags: Tags of the original message.
+    :param max_requeues: Maximum number of requeues.
+    :param drop_on_timeout: If True, the message is dropped when the number of requeues reaches 0.
+    :return: Tags for requeuing the message.
+    """
+
+    # If the message has already been requeued, do not alter it
+    if MessageTags.REQUEUE in orig_tags:
+        return orig_tags
+
+    new_tags = copy.deepcopy(orig_tags)
+    new_tags.add(MessageTags.REQUEUE)
+    new_tags.add(MessageTags.REQUEUES_LEFT_PREFIX + str(max_requeues))
+    if drop_on_timeout:
+        new_tags.add(MessageTags.DROP_ON_REQUEUE_TIMEOUT)
+    else:
+        new_tags.add(MessageTags.PASS_ON_REQUEUE_TIMEOUT)
+    return new_tags
+
+
+def decrement_requeue_tag(orig_tags):
+    # type: (Tags) -> Tuple[bool, Tags]
+    """Given message tags for an input message, decrements the requeue counter.
+
+    :param orig_tags: Tags of the original message.
+    :return: Tuple of (some requeues left, original tags with the requeue tag decremented).
+    """
+
+    if MessageTags.REQUEUE not in orig_tags:
+        return True, orig_tags
+
+    new_tags = copy.deepcopy(orig_tags)
+    requeues_left_tags = [t for t in orig_tags if t.startswith(MessageTags.REQUEUES_LEFT_PREFIX)]
+    some_requeues_left = True
+    for t in requeues_left_tags:
+        new_tags.remove(t)
+        _, requeues_left_str = t.split(':', maxsplit=1)
+        new_requeues_left = int(requeues_left_str) - 1
+        if new_requeues_left == 0:
+            some_requeues_left = False
+        else:
+            new_tags.add(MessageTags.REQUEUES_LEFT_PREFIX + str(new_requeues_left))
+
+    if not some_requeues_left:
+        new_tags.remove(MessageTags.REQUEUE)
+
+    return some_requeues_left, new_tags
+
+
+def cleanup_requeue_tags(orig_tags):
+    # type: (Tags) -> Tags
+    """Given message tags for a previously requeued message, cleans the requeue-related tags.
+
+    :param orig_tags: Tags of the original message.
+    :return: Original tags with the requeue tags removed.
+    """
+
+    new_tags = copy.deepcopy(orig_tags)
+    new_tags -= {MessageTags.REQUEUE, MessageTags.DROP_ON_REQUEUE_TIMEOUT, MessageTags.PASS_ON_REQUEUE_TIMEOUT}
+    requeues_left_tags = [t for t in new_tags if t.startswith(MessageTags.REQUEUES_LEFT_PREFIX)]
+    for t in requeues_left_tags:
+        new_tags.remove(t)
+
+    return new_tags
+
+
+def num_used_requeues(tags, max_requeues):
+    # type: (Tags, int) -> Optional[int]
+    """Get the number of requeues used by a message with the given tags.
+
+    :param tags: The tags of the message.
+    :param max_requeues: The number of max_requeues with which the requeuing was started.
+    :return: The number of used requeues. If the message is not requeued, returns None.
+    """
+    requeues_left_tags = [t for t in tags if t.startswith(MessageTags.REQUEUES_LEFT_PREFIX)]
+    if len(requeues_left_tags) == 0:
+        return None
+    _, requeues_left_str = requeues_left_tags[0].split(':', maxsplit=1)
+    requeues_left = int(requeues_left_str)
+    num_requeues = max_requeues - requeues_left
+    return num_requeues
 
 
 class MessageFilter(object):
@@ -239,6 +345,8 @@ class MessageFilter(object):
             tuple([({t} if isinstance(t, STRING_TYPE) else set(t)) for t in exclude_tags]) if exclude_tags else tuple()
         """If nonempty, the filter will skip messages with these tags. Each element of this tuple is itself a
         set. For a message to be skipped, at least one set has to be a subset of the tags list of the message."""
+        self._accept_requeued_messages = False
+        """If True, requeued messages will be accepted by this filter."""
 
         self.__rospack = None
 
@@ -376,6 +484,9 @@ class MessageFilter(object):
         if self._include_tags and not any(req_tags.issubset(tags) for req_tags in self._include_tags):
             return False
         if self._exclude_tags and any(req_tags.issubset(tags) for req_tags in self._exclude_tags):
+            return False
+        # Filters have to explicitly opt-in to reading requeued messages.
+        if not self._accept_requeued_messages and MessageTags.REQUEUE in tags:
             return False
 
         return True
@@ -775,6 +886,8 @@ class FilterChain(RawMessageFilter):
         :type filters: list of MessageFilter
         """
         super(FilterChain, self).__init__()
+        # leave the decision about accepting requeues on individual filters
+        self._accept_requeued_messages = True
         self.filters = filters
 
     def consider_message(self, topic, datatype, stamp, header, tags):
@@ -1008,12 +1121,16 @@ __all__ = [
     Passthrough.__name__,
     RawMessageFilter.__name__,
     UniversalFilter.__name__,
+    cleanup_requeue_tags.__name__,
+    decrement_requeue_tag.__name__,
     deserialize_header.__name__,
     filter_message.__name__,
     get_filters.__name__,
     msg_long_to_short.__name__,
     msg_short_to_long.__name__,
     normalize_filter_result.__name__,
+    num_used_requeues.__name__,
     tags_for_changed_msg.__name__,
     tags_for_generated_msg.__name__,
+    tags_for_requeuing_msg.__name__,
 ]

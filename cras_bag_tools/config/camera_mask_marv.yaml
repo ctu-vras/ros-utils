@@ -20,6 +20,14 @@ filters:
         - /camera_up/camera_info
         - /camera_fisheye_front/camera_info
         - /camera_fisheye_rear/camera_info
+  - Throttle:
+      /camera_front/camera_info: 0.5
+      /camera_rear/camera_info: 0.5
+      /camera_left/camera_info: 0.5
+      /camera_right/camera_info: 0.5
+      /camera_up/camera_info: 0.5
+      /camera_fisheye_front/camera_info: 0.5
+      /camera_fisheye_rear/camera_info: 0.5
 
   # Flippers on the robot were decalibrated
   - FixJointStates:

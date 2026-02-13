@@ -4,14 +4,24 @@
 out_format: '{name}.subs{ext}'
 compression: lz4
 filters:
-  - UpdateRobotModel:
-      urdf_file: "marv.urdf"
-      param: "marv/robot_description"
-  - DumpRobotModel:
-      urdf_file: "marv2.urdf"
-      param: "marv/robot_description"
-      remove_comments: True
-      pretty_print: True
+#  - UpdateRobotModel:
+#      urdf_file: "marv.urdf"
+#      param: "marv/robot_description"
+#  - DumpRobotModel:
+#      urdf_file: "marv2.urdf"
+#      param: "marv/robot_description"
+#      remove_comments: True
+#      pretty_print: True
   - AddSubtitles:
-      subtitles_file: 'marv_2024-10-05-12-34-53.small.bag.srt'
+      subtitles_file: 'ugv_2024-09-26-14-14-42.bag.srt'
       topic: /commentary
+  - StampTwist:
+      source_topic: /cmd_vel
+  - Topics:
+      include_topics:
+        - /commentary
+        - /cmd_vel
+        - /cmd_vel_stamped
+  - Drop:
+      include_topics:
+        - /cmd_vel

@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+# Augments joint states with velocity and currents from other topics
+out_format: '{bag_base}.joint_states_augmented{ext}'
+compression: lz4
+copy_params: False
+filters:
+  - Topics:
+      include_topics:
+        - /joint_states
+        - /filtered_joint_states
+        - /currents
+        - /flippers_vel
+  - NiftiAugmentJointStates:
+      joint_states_topic: joint_states
+  - NiftiAugmentJointStates:
+      joint_states_topic: filtered_joint_states
+  - Drop:
+      exclude_tags: ['changed']
