@@ -122,7 +122,7 @@ class MessageTags(str, Enum):
 
     REQUEUES_LEFT_PREFIX = "requeues:"
     """Number of requeues left for the tagged message.
-    
+
     This tag should never be used in this form. Instead, tags like 'requeues:10' should be created."""
 
     DROP_ON_REQUEUE_TIMEOUT = "requeue-drop"
