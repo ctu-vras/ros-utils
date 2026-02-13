@@ -8,9 +8,12 @@ import copy
 import heapq
 import os
 import re
+import sys
 from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, Tuple, Union
 
+import genmsg
 import genpy
+import genpy.dynamic
 import rosbag
 
 from cras.message_utils import get_msg_type, msg_to_raw, raw_to_msg
@@ -45,6 +48,33 @@ ReadMessagesResult = Union[
     BagMessageWithTags,
     BagMessageWithConnectionHeaderAndTags,
 ]
+
+_message_types = {}
+
+
+def _get_message_type(info):
+    message_type = _message_types.get(info.datatype + info.md5sum)
+    if message_type is None:
+        try:
+            message_type = genpy.dynamic.generate_dynamic(info.datatype, info.msg_def)[info.datatype]
+            if (message_type._md5sum != info.md5sum):
+                print('WARNING: For type [%s] stored md5sum [%s] does not match message definition [%s].\n  '
+                      'Try: "rosrun rosbag fix_msg_defs.py old_bag new_bag."' %
+                      (info.datatype, info.md5sum, message_type._md5sum), file=sys.stderr)
+        except genmsg.InvalidMsgSpec:
+            message_type = genpy.dynamic.generate_dynamic(info.datatype, "")[info.datatype]
+            print('WARNING: For type [%s] stored md5sum [%s] has invalid message definition."' %
+                  (info.datatype, info.md5sum), file=sys.stderr)
+        except genmsg.MsgGenerationException as ex:
+            raise rosbag.ROSBagException('Error generating datatype %s: %s' % (info.datatype, str(ex)))
+
+        _message_types[info.datatype + info.md5sum] = message_type
+
+    return message_type
+
+
+# Workaround for https://github.com/ros/ros_comm/issues/2214
+rosbag.bag._get_message_type = _get_message_type
 
 
 class BagWrapper(object):
