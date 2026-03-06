@@ -1318,6 +1318,129 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
         return ", ".join(parts)
 
 
+class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
+    """Recompute all static TFs from the URDF model. This filter changes the first static TF to the new TF tree 
+    and drops all other TF static messages. If you want it to retain some messages, you have to tag them and exclude
+    them from this filter."""
+
+    def __init__(self, include_topics=None, description_param=None, description_file=None,
+                 exclude_joints=(), add_tags=None, *args, **kwargs):
+        """
+        :param list include_topics: Topics to handle. It should contain just /tf_static.
+        :param str description_param: Name of the ROS parameter that hold the URDF model.
+        :param str description_file: Path to a file with the URDF model (has precedence over description_param).
+        :param list exclude_joints: If nonempty, joints with one of the listed names will not be processed.
+        :param set add_tags: Add these tags to all modified TF messages.
+        :param args: Standard include/exclude and stamp args.
+        :param kwargs: Standard include/exclude and stamp kwargs.
+        """
+        if include_topics is None:
+            include_topics = ("/tf_static",)
+
+        super(RecomputeStaticTFFromRobotModel, self).__init__(
+            include_topics=include_topics, include_types=(TFMessage._type,), *args, **kwargs)  # noqa
+
+        self._urdf_model = None
+        self._kdl_model = None
+        self._segments_fixed = {}
+        self._child_to_joint_map = {}
+        self._joint_to_child_map = {}
+        self._has_published = False
+        self._add_tags = add_tags
+
+        self.exclude_joints = TopicSet(exclude_joints)
+
+        self.description_file = description_file
+        self.description_param = description_param
+
+    def on_filtering_start(self):
+        super(RecomputeStaticTFFromRobotModel, self).on_filtering_start()
+
+        model_from_file = None
+        if self.description_file is not None:
+            description_file = self.resolve_file(self.description_file)
+            if os.path.exists(description_file):
+                try:
+                    with open(description_file, "r") as f:
+                        model_from_file = f.read()
+                    print("Loaded URDF model from file " + description_file)
+                except Exception as e:
+                    print('Could not read URDF model from file %s: %s' % (description_file, str(e)), file=sys.stderr)
+            else:
+                print('URDF model file "%s" does not exist.' % (description_file,), file=sys.stderr)
+
+        model = model_from_file
+        if model is None:
+            if self.description_param is None:
+                self.description_param = "robot_description"
+            model = self._get_param(self.description_param)
+            if model is not None:
+                print("Read URDF model from ROS parameter " + self.description_param)
+
+        if model is None:
+            raise RuntimeError("RecomputeStaticTFFromRobotModel requires robot URDF either as a file or ROS parameter.")
+
+        self._urdf_model = urdf.URDF.from_xml_string(model)
+        ok, self._kdl_model = treeFromUrdfModel(self._urdf_model, quiet=True)
+        if not ok:
+            self._kdl_model = None
+            print('Could not parse URDF model into KDL model.', file=sys.stderr)
+
+        self._segments_fixed = {}
+        for child, (joint_name, parent) in self._urdf_model.parent_map.items():
+            if self.exclude_joints and joint_name in self.exclude_joints:
+                continue
+            segment = self._kdl_model.getChain(parent, child).getSegment(0)
+            joint = segment.getJoint()
+            if joint.getTypeName() == "None":
+                self._segments_fixed[child] = segment
+
+    def filter(self, topic, msg, stamp, header, tags):
+        if self._kdl_model is None:
+            return topic, msg, stamp, header, tags
+
+        if self._has_published:
+            return None
+
+        if len(msg.transforms) == 0:
+            return topic, msg, stamp, header, tags
+
+        msg_stamp = msg.transforms[0].header.stamp
+        msg.transforms = []
+
+        for child_name, segment in self._segments_fixed.items():
+            _, parent_name = self._urdf_model.parent_map[child_name]
+            t = TransformStamped()
+            t.header.frame_id = parent_name
+            t.header.stamp = msg_stamp
+            t.child_frame_id = child_name
+            self._compute_static_transform(t)
+            msg.transforms.append(t)
+
+        print('Recomputed %i static transforms from robot model.' % (len(msg.transforms),))
+        self._has_published = True
+
+        return topic, msg, stamp, header, tags_for_changed_msg(tags, self._add_tags)
+
+    def reset(self):
+        super(RecomputeStaticTFFromRobotModel, self).reset()
+        self._has_published = False
+
+    def _compute_static_transform(self, transform):
+        segment = self._segments_fixed[transform.child_frame_id]
+        frame = segment.pose(0.0)
+        set_transform_from_KDL_frame(transform.transform, frame)
+
+    def _str_params(self):
+        parts = []
+        if self.exclude_joints:
+            parts.append('exclude_joints=' + str(self.exclude_joints))
+        parent_params = self._default_str_params(include_types=False)
+        if len(parent_params) > 0:
+            parts.append(parent_params)
+        return ", ".join(parts)
+
+
 class FixJointStates(DeserializedMessageFilter):
     """Adjust some joint states. If TFs are computed from them, use RecomputeTFFromJointStates to recompute TF."""
 
@@ -2345,6 +2468,7 @@ class AddStaticTF(DeserializedMessageFilterWithTF):
         """
         super(AddStaticTF, self).__init__(
             include_topics=["tf_static"], include_types=(TFMessage._type,), *args, **kwargs)  # noqa
+        self._include_topics = TopicSet(["tf_static"])  # not interested in /tf which is added by superclass
 
         self._transforms = list()
         self._add_tags = add_tags
