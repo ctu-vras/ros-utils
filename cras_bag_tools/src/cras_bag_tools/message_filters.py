@@ -1408,6 +1408,8 @@ class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
             if transform.child_frame_id not in self._segments_fixed:
                 continue
 
+            _, parent_name = self._urdf_model.parent_map[transform.child_frame_id]
+            transform.header.frame_id = parent_name  # overwrite parent if it is different in model
             self._compute_static_transform(transform)
             tags = changed_tags
             published_transforms.add(transform.child_frame_id)
