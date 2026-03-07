@@ -1319,9 +1319,9 @@ class RecomputeTFFromJointStates(DeserializedMessageFilter):
 
 
 class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
-    """Recompute all static TFs from the URDF model. This filter changes the first static TF to the new TF tree 
-    and drops all other TF static messages. If you want it to retain some messages, you have to tag them and exclude
-    them from this filter."""
+    """Recompute all static TFs from the URDF model. This filter adds all TFs from the robot model to the first TF
+    message it encounters and then watches for later messages and changes the TFs it finds in them so that the TFs
+    computed from robot model are always used."""
 
     def __init__(self, include_topics=None, description_param=None, description_file=None,
                  exclude_joints=(), add_tags=None, *args, **kwargs):
@@ -1329,7 +1329,7 @@ class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
         :param list include_topics: Topics to handle. It should contain just /tf_static.
         :param str description_param: Name of the ROS parameter that hold the URDF model.
         :param str description_file: Path to a file with the URDF model (has precedence over description_param).
-        :param list exclude_joints: If nonempty, joints with one of the listed names will not be processed.
+        :param list exclude_joints: If nonempty, joints with one of the listed names will not be read from the model.
         :param set add_tags: Add these tags to all modified TF messages.
         :param args: Standard include/exclude and stamp args.
         :param kwargs: Standard include/exclude and stamp kwargs.
@@ -1345,7 +1345,7 @@ class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
         self._segments_fixed = {}
         self._child_to_joint_map = {}
         self._joint_to_child_map = {}
-        self._has_published = False
+        self._has_published_all = False
         self._add_tags = add_tags
 
         self.exclude_joints = TopicSet(exclude_joints)
@@ -1396,35 +1396,43 @@ class RecomputeStaticTFFromRobotModel(DeserializedMessageFilter):
                 self._segments_fixed[child] = segment
 
     def filter(self, topic, msg, stamp, header, tags):
-        if self._kdl_model is None:
+        if self._kdl_model is None or len(msg.transforms) == 0:
             return topic, msg, stamp, header, tags
 
-        if self._has_published:
-            return None
-
-        if len(msg.transforms) == 0:
-            return topic, msg, stamp, header, tags
+        changed_tags = tags_for_changed_msg(tags, self._add_tags)
 
         msg_stamp = msg.transforms[0].header.stamp
-        msg.transforms = []
+        published_transforms = set()
 
-        for child_name, segment in self._segments_fixed.items():
-            _, parent_name = self._urdf_model.parent_map[child_name]
-            t = TransformStamped()
-            t.header.frame_id = parent_name
-            t.header.stamp = msg_stamp
-            t.child_frame_id = child_name
-            self._compute_static_transform(t)
-            msg.transforms.append(t)
+        for transform in msg.transforms:
+            if transform.child_frame_id not in self._segments_fixed:
+                continue
 
-        print('Recomputed %i static transforms from robot model.' % (len(msg.transforms),))
-        self._has_published = True
+            self._compute_static_transform(transform)
+            tags = changed_tags
+            published_transforms.add(transform.child_frame_id)
 
-        return topic, msg, stamp, header, tags_for_changed_msg(tags, self._add_tags)
+        if not self._has_published_all:
+            for child_name, segment in self._segments_fixed.items():
+                if child_name in published_transforms:
+                    continue
+                _, parent_name = self._urdf_model.parent_map[child_name]
+                t = TransformStamped()
+                t.header.frame_id = parent_name
+                t.header.stamp = msg_stamp
+                t.child_frame_id = child_name
+                self._compute_static_transform(t)
+                msg.transforms.append(t)
+                published_transforms.add(t.child_frame_id)
+                tags = changed_tags
+            self._has_published_all = True
+            print('Recomputed %i static transforms from robot model.' % (len(published_transforms),))
+
+        return topic, msg, stamp, header, tags
 
     def reset(self):
         super(RecomputeStaticTFFromRobotModel, self).reset()
-        self._has_published = False
+        self._has_published_all = False
 
     def _compute_static_transform(self, transform):
         segment = self._segments_fixed[transform.child_frame_id]
