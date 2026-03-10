@@ -733,10 +733,10 @@ class Transforms(DeserializedMessageFilter):
                  change=None, include_topics=None, exclude_topics=None, include_types=None, exclude_types=None,
                  *args, **kwargs):
         """
-        :param list include_parents: If nonempty, only TFs with one of the listed frames as parent will be retained.
-        :param list exclude_parents: If nonempty, TFs with one of the listed frames as parent will be dropped.
-        :param list include_children: If nonempty, only TFs with one of the listed frames as child will be retained.
-        :param list exclude_children: If nonempty, TFs with one of the listed frames as child will be dropped.
+        self.include_parents = TopicSet(include_parents)
+        self.exclude_parents = TopicSet(exclude_parents)
+        self.include_children = TopicSet(include_children)
+        self.exclude_children = TopicSet(exclude_children)
         :param dict change: A multilevel dictionary. First key is parent frame. Second key is child frame. Values are
                             dicts with optional keys 'translation', 'rotation', 'frame_id', 'child_frame_id'.
                             'translation' is a dict with optional keys 'x', 'y', 'z'.
@@ -847,12 +847,17 @@ class Transforms(DeserializedMessageFilter):
 class MergeInitialStaticTf(DeserializedMessageFilter):
     """Merge all /tf_static messages from the beginning of bag files into a single message."""
 
-    def __init__(self, delay=5.0, change_stamps=True, add_tags=None):
+    def __init__(self, delay=5.0, change_stamps=True, include_parents=(), exclude_parents=(),
+                 include_children=(), exclude_children=(), add_tags=None):
         super(MergeInitialStaticTf, self).__init__(include_topics=["/tf_static"], include_types=["tf2_msgs/TFMessage"])
         self.delay = rospy.Duration(delay)
         self.start_time = None
         self.end_time = None
         self.change_stamps = change_stamps
+        self.include_parents = TopicSet(include_parents)
+        self.exclude_parents = TopicSet(exclude_parents)
+        self.include_children = TopicSet(include_children)
+        self.exclude_children = TopicSet(exclude_children)
         self.merged_message_published = False
         self.merged_transforms = {}
         self.add_tags = add_tags
@@ -864,6 +869,14 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
         for topic, msg, stamp in bag.read_messages(
                 topics=['/tf_static'], start_time=self.start_time, end_time=self.end_time):
             for tf in msg.transforms:
+                if self.include_parents and tf.header.frame_id not in self.include_parents:
+                    continue
+                if self.exclude_parents and tf.header.frame_id in self.exclude_parents:
+                    continue
+                if self.include_children and tf.child_frame_id not in self.include_children:
+                    continue
+                if self.exclude_children and tf.child_frame_id in self.exclude_children:
+                    continue
                 if self.change_stamps:
                     tf = copy.deepcopy(tf)
                     tf.header.stamp = self.start_time
@@ -895,6 +908,16 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
     def _str_params(self):
         parts = ['delay=%f' % (self.delay.to_sec(),), 'change_stamps=' + repr(self.change_stamps)]
         parent_params = super(MergeInitialStaticTf, self)._str_params()
+        if self.include_parents:
+            parts.append('include_parents=' + str(self.include_parents))
+        if self.exclude_parents:
+            parts.append('exclude_parents=' + str(self.exclude_parents))
+        if self.include_children:
+            parts.append('include_children=' + str(self.include_children))
+        if self.exclude_children:
+            parts.append('exclude_children=' + str(self.exclude_children))
+        if len(self.change) > 0:
+            parts.append('change=' + dict_to_str(self.change))
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
