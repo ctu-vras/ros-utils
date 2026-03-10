@@ -916,8 +916,6 @@ class MergeInitialStaticTf(DeserializedMessageFilter):
             parts.append('include_children=' + str(self.include_children))
         if self.exclude_children:
             parts.append('exclude_children=' + str(self.exclude_children))
-        if len(self.change) > 0:
-            parts.append('change=' + dict_to_str(self.change))
         if len(parent_params) > 0:
             parts.append(parent_params)
         return ", ".join(parts)
