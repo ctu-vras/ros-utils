@@ -2,6 +2,13 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed compatibility with Rolling.
+* Try fixing readme rendering on index.ros.org
+* Updated ROS 2 website links to point to index.ros.org
+* Contributors: Martin Pecka
+
 3.0.1 (2026-01-19)
 ------------------
 * string_utils: Fixed pretty-printing time values on GCC 11 + fmt 9.x.

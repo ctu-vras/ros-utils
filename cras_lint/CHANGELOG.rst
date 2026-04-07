@@ -2,6 +2,11 @@
 Changelog for package cras_lint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated ROS 2 website links to point to index.ros.org
+* Contributors: Martin Pecka
+
 3.0.1 (2026-01-19)
 ------------------
 
