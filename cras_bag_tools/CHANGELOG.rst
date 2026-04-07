@@ -2,8 +2,8 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.2 (2026-04-07)
+------------------
 * Try fixing readme rendering on index.ros.org
 * Updated ROS 2 website links to point to index.ros.org
 * Contributors: Martin Pecka
