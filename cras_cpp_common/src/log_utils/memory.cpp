@@ -15,6 +15,7 @@
 
 #include <rcl_interfaces/msg/log.hpp>
 #include <rclcpp/time.hpp>
+#include <rclcpp/version.h>
 
 namespace cras
 {
@@ -73,7 +74,11 @@ const char* MemoryLoggingInterface::get_logger_name() const
 }
 
 void MemoryLoggingInterface::create_logger_services(
+#if RCLCPP_VERSION_GTE(31, 0, 0)
+  const rclcpp::node_interfaces::NodeServicesInterface::SharedPtr& node_services)
+#else
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services)
+#endif
 {
 }
 

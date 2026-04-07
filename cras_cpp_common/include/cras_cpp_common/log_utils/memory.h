@@ -14,6 +14,7 @@
 
 #include <rcl_interfaces/msg/log.hpp>
 #include <rclcpp/node_interfaces/node_logging_interface.hpp>
+#include <rclcpp/version.h>
 
 namespace cras
 {
@@ -33,7 +34,11 @@ public:
 
   rclcpp::Logger get_logger() const override;
   const char* get_logger_name() const override;
+#if RCLCPP_VERSION_GTE(31, 0, 0)
+  void create_logger_services(const rclcpp::node_interfaces::NodeServicesInterface::SharedPtr& node_services) override;
+#else
   void create_logger_services(rclcpp::node_interfaces::NodeServicesInterface::SharedPtr node_services) override;
+#endif
 
   virtual void addLogMessage(const rcl_interfaces::msg::Log& msg);
 
