@@ -1,16 +1,17 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for conversions between URDF and other types.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <Eigen/Geometry>
 
 #include <urdf_model/model.h>
 
-#include <cras_cpp_common/urdf_utils.h>
+#include <cras_cpp_common/urdf_utils.hpp>
 
 namespace cras
 {

@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
- * \brief Unit test for urdf_utils.h.
+ * \brief Unit test for urdf_utils.hpp.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "gtest/gtest.h"
@@ -12,7 +13,7 @@
 
 #include <urdf_model/model.h>
 
-#include <cras_cpp_common/urdf_utils.h>
+#include <cras_cpp_common/urdf_utils.hpp>
 
 TEST(UrdfEigen, VectorTranslation)  // NOLINT
 {

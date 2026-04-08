@@ -23,6 +23,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tl-expected REQUIRED)
+find_package(urdfdom_headers REQUIRED)
 
 find_package(Boost REQUIRED)
 find_package(fmt REQUIRED)
@@ -43,6 +44,7 @@ ament_export_dependencies(
   tf2_ros
   Threads
   tl-expected
+  urdfdom_headers
 )
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -87,11 +89,12 @@ target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/
 add_library(cras_literal_sz INTERFACE)
 target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.hpp>)
 
-#add_library(cras_urdf_utils src/urdf_utils.cpp)
-##catkin_lint: ignore_once external_interface_path
-#target_include_directories(cras_urdf_utils PUBLIC ${urdfdom_headers_INCLUDE_DIRS})
-#target_link_libraries(cras_urdf_utils
-#  PUBLIC Eigen3::Eigen)
+add_library(cras_urdf_utils src/urdf_utils.cpp)
+target_include_directories(cras_urdf_utils PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_urdf_utils
+  PUBLIC urdfdom_headers::urdfdom_headers Eigen3::Eigen)
 
 #add_library(cras_message_utils INTERFACE)
 #target_sources(cras_message_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/message_utils.hpp>)
@@ -346,7 +349,7 @@ set(EXPORTED_LIBS
   cras_time_utils
   cras_type_traits
   cras_type_utils
-  #  cras_urdf_utils
+  cras_urdf_utils
 )
 
 # Libraries that should not be exported (i.e. external packages will not link to them). E.g. component nodes go here.
@@ -415,7 +418,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/nodelet_utils.hpp
     include/${PROJECT_NAME}/resettable.h
     include/${PROJECT_NAME}/tf2_sensor_msgs.h
-    include/${PROJECT_NAME}/urdf_utils.h
     nodes/*
     src/diag_utils/*
     src/log_utils/node.cpp
@@ -428,7 +430,6 @@ if(BUILD_TESTING)
     src/resettable.cpp
     src/tf2_sensor_msgs.cpp
     src/time_utils/interruptible_sleep_interface.cpp
-    src/urdf_utils.cpp
     test/*
   )
   set(ament_cmake_cpplint_EXTRA_FILTERS "-build/include_order")
@@ -495,9 +496,9 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
   target_link_libraries(test_cras_type_utils cras_type_utils cras_string_utils cras_time_utils)
-#
-#  catkin_add_gtest(test_cras_urdf_utils test/test_urdf_utils.cpp)
-#  target_link_libraries(test_cras_urdf_utils cras_urdf_utils)
+
+  ament_add_gtest(test_cras_urdf_utils test/test_urdf_utils.cpp)
+  target_link_libraries(test_cras_urdf_utils cras_urdf_utils)
 #
 #  catkin_add_gtest(test_cras_xmlrpc_value_traits test/test_xmlrpc_value_traits.cpp)
 #  target_link_libraries(test_cras_xmlrpc_value_traits xmlrpc_value_traits ${catkin_LIBRARIES})
