@@ -26,6 +26,7 @@ find_package(tl-expected REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
 find_package(Boost REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(fmt REQUIRED)
 
 # find pthread and provide it as Threads::Threads imported target
@@ -34,6 +35,7 @@ find_package(Threads REQUIRED)
 
 ament_export_dependencies(
   builtin_interfaces
+  Eigen3
   fmt
   rcl
   rclcpp
@@ -441,8 +443,6 @@ if(BUILD_TESTING)
   find_package(std_msgs REQUIRED)
   find_package(tf2 REQUIRED)
 
-  find_package(Eigen3 REQUIRED)
-#
 #  # GTEST tests (no rosmaster required)
 #
 #  catkin_add_gtest(test_c_api test/test_c_api.cpp)

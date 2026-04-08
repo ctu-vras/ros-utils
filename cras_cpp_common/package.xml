@@ -23,6 +23,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
   <buildtool_depend>ament_cmake_gen_version_h</buildtool_depend>
 
   <depend>builtin_interfaces</depend>
+  <depend>eigen</depend>
   <depend>fmt</depend>
   <depend>libexpected-dev</depend>
   <depend>rcl</depend>
@@ -46,7 +47,6 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>cras_lint</test_depend>
-  <test_depend>eigen</test_depend>
   <test_depend>geometry_msgs</test_depend>
   <test_depend>std_msgs</test_depend>
   <test_depend>tf2</test_depend>
