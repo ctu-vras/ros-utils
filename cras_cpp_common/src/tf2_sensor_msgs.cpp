@@ -28,15 +28,15 @@ namespace cras
 
 //! \brief Channels that are considered a part of the XYZ point description.
 static const std::unordered_map<std::string, CloudChannelType> XYZ_CHANNELS({
-  {"", CloudChannelType::POINT},
-});
+    {"", CloudChannelType::POINT},
+  });
 
 //! \brief Default assignment of channel prefixes to their type.
 static std::unordered_map<std::string, CloudChannelType> DEFAULT_CHANNELS({
-  {"", CloudChannelType::POINT},
-  {"vp_", CloudChannelType::POINT},
-  {"normal_", CloudChannelType::DIRECTION},
-});
+    {"", CloudChannelType::POINT},
+    {"vp_", CloudChannelType::POINT},
+    {"normal_", CloudChannelType::DIRECTION},
+  });
 
 void registerCloudChannelType(const std::string& channelPrefix, const CloudChannelType type)
 {
@@ -112,7 +112,7 @@ void transformChannel(const sensor_msgs::msg::PointCloud2& cloudIn, sensor_msgs:
         *y_out = point.y();
         *z_out = point.z();
       }
-      break;
+    break;
     case CloudChannelType::DIRECTION:
       for (; x_out != x_out.end(); ++x_in, ++y_in, ++z_in, ++x_out, ++y_out, ++z_out)
       {
@@ -121,9 +121,9 @@ void transformChannel(const sensor_msgs::msg::PointCloud2& cloudIn, sensor_msgs:
         *y_out = point.y();
         *z_out = point.z();
       }
-      break;
+    break;
     default:
-      break;
+    break;
   }
 }
 
@@ -163,7 +163,9 @@ sensor_msgs::msg::PointCloud2& transformWithChannels(
   const auto transform = tf2::transformToEigen(tf).cast<float>();
 
   for (const auto& channel : channelsPresent)
+  {
     transformChannel(in, out, transform, channel, channels.at(channel));
+  }
 
   return out;
 }

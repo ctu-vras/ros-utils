@@ -22,7 +22,7 @@
 namespace cras
 {
 
-bool hasField(const ::cras::Cloud &cloud, const std::string &fieldName)
+bool hasField(const ::cras::Cloud& cloud, const std::string& fieldName)
 {
   return std::any_of(cloud.fields.begin(), cloud.fields.end(),
     [&fieldName](const sensor_msgs::msg::PointField& f) {return f.name == fieldName;});
@@ -30,7 +30,8 @@ bool hasField(const ::cras::Cloud &cloud, const std::string &fieldName)
 
 sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const std::string& fieldName)
 {
-  for (auto &field : cloud.fields) {
+  for (auto& field : cloud.fields)
+  {
     if (field.name == fieldName)
       return field;
   }
@@ -39,7 +40,8 @@ sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const std::string& 
 
 const sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const std::string& fieldName)
 {
-  for (const auto &field : cloud.fields) {
+  for (const auto& field : cloud.fields)
+  {
     if (field.name == fieldName)
       return field;
   }
@@ -74,7 +76,9 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const std::str
   GenericCloudConstIter dataIn(in, fieldName);
   GenericCloudIter dataOut(out, fieldName);
   for (; dataIn != dataIn.end(); ++dataIn, ++dataOut)
+  {
     dataOut.copyData(dataIn);
+  }
 }
 
 namespace impl

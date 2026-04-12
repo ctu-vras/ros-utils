@@ -32,7 +32,7 @@ enum class CloudChannelType
   DIRECTION,
 
   //! \brief A scalar value (not affected by transforms).
-  SCALAR
+  SCALAR,
 };
 
 /**

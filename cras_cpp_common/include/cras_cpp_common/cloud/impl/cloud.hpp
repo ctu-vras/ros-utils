@@ -33,7 +33,6 @@ template<typename T, typename TT, typename U, typename C, template<typename> cla
 class GenericCloudIteratorBase : public ::sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V>
 {
 public:
-
   /**
    * \param[in] cloudMsg The PointCloud2 to iterate upon.
    * \param[in] fieldName The field to iterate upon.
@@ -61,8 +60,8 @@ protected:
  * \brief Generic const cloud iterator which can return the data in the raw type.
  */
 template<typename T = unsigned char>
-class GenericCloudConstIterator :
-  public GenericCloudIteratorBase<T, const T, const unsigned char,
+class GenericCloudConstIterator
+  : public GenericCloudIteratorBase<T, const T, const unsigned char,
     const ::sensor_msgs::msg::PointCloud2, GenericCloudConstIterator>
 {
 public:
@@ -70,8 +69,8 @@ public:
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name) :
-    GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
+  GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name)
+    : GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
       GenericCloudConstIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
   }
@@ -96,16 +95,16 @@ public:
  * \brief Generic non-const cloud iterator which can return the data in the raw type.
  */
 template<typename T = unsigned char>
-class GenericCloudIterator :
-  public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2, GenericCloudIterator>
+class GenericCloudIterator
+  : public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2, GenericCloudIterator>
 {
 public:
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudIterator(::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name) :
-    GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
+  GenericCloudIterator(::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name)
+    : GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
       GenericCloudIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
   }

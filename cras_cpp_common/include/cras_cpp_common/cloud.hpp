@@ -9,6 +9,7 @@
  * \author Martin Pecka
  */
 
+#include <limits>
 #include <string>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -124,6 +125,7 @@ size_t sizeOfPointField(const ::sensor_msgs::msg::PointField& field);
  */
 void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::string& fieldName);
 
+// *INDENT-OFF*
 /**
  * \brief Create a pointcloud that contains a subset of points of `IN` defined by
  * the filter `FILTER`. The result is saved into `OUT`. `FILTER` should be a boolean expression
@@ -176,6 +178,7 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
     } \
   } \
   \
-  (OUT).row_step = (OUT).width * (OUT).point_step;\
+  (OUT).row_step = (OUT).width * (OUT).point_step; \
 }
+// *INDENT-ON*
 }
