@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Unit test for tf2_sensor_msgs.h.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "gtest/gtest.h"
@@ -12,10 +13,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
-#include <tf2_ros/buffer.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <tf2/buffer_core.hpp>
 
 #include <cras_cpp_common/tf2_sensor_msgs.h>
 
@@ -60,9 +61,9 @@ const static std::vector<Point> pointsOut =  // NOLINT
  * \param[in] width Width of the cloud.
  * \return The created cloud.
  */
-sensor_msgs::PointCloud2 createCloud(const uint32_t width)
+sensor_msgs::msg::PointCloud2 createCloud(const uint32_t width)
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   msg.header.stamp.sec = 2;
   msg.header.frame_id = "odom";
   msg.width = width;
@@ -72,20 +73,20 @@ sensor_msgs::PointCloud2 createCloud(const uint32_t width)
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2Fields(14,
-    "x", 1, sensor_msgs::PointField::FLOAT32,
-    "y", 1, sensor_msgs::PointField::FLOAT32,
-    "z", 1, sensor_msgs::PointField::FLOAT32,
-    "rgb", 1, sensor_msgs::PointField::FLOAT32,
-    "vp_x", 1, sensor_msgs::PointField::FLOAT32,
-    "vp_y", 1, sensor_msgs::PointField::FLOAT32,
-    "vp_z", 1, sensor_msgs::PointField::FLOAT32,
-    "normal_x", 1, sensor_msgs::PointField::FLOAT32,
-    "normal_y", 1, sensor_msgs::PointField::FLOAT32,
-    "normal_z", 1, sensor_msgs::PointField::FLOAT32,
-    "test_x", 1, sensor_msgs::PointField::FLOAT32,
-    "test_y", 1, sensor_msgs::PointField::FLOAT32,
-    "test_z", 1, sensor_msgs::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::PointField::UINT16);
+    "x", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "y", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "rgb", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "vp_x", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "vp_y", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "vp_z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "normal_x", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "normal_y", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "normal_z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "test_x", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "test_y", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "test_z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "intensity", 1, sensor_msgs::msg::PointField::UINT16);
 
   mod.resize(4);
 
@@ -150,9 +151,9 @@ sensor_msgs::PointCloud2 createCloud(const uint32_t width)
  * \brief Create a transform to be used in the tests.
  * \return The transform.
  */
-geometry_msgs::TransformStamped createTestTf()
+geometry_msgs::msg::TransformStamped createTestTf()
 {
-  geometry_msgs::TransformStamped tf;
+  geometry_msgs::msg::TransformStamped tf;
   tf.header.stamp.sec = 2;
   tf.header.frame_id = "base_link";
   tf.child_frame_id = "odom";
@@ -171,7 +172,7 @@ TEST(TF2SensorMsgs, TransformChannelBadField)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  sensor_msgs::PointCloud2 out = msg;
+  sensor_msgs::msg::PointCloud2 out = msg;
   const auto tf = createTestTf().transform;
   EXPECT_THROW(cras::transformChannel(out, tf, "bad", cras::CloudChannelType::POINT), std::runtime_error);
 }
@@ -180,7 +181,7 @@ TEST(TF2SensorMsgs, TransformChannel)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  sensor_msgs::PointCloud2 out = msg;
+  sensor_msgs::msg::PointCloud2 out = msg;
   cras::transformChannel(out, createTestTf().transform, "vp_", cras::CloudChannelType::POINT);
 
   ASSERT_EQ("odom", out.header.frame_id);
@@ -262,10 +263,10 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOrganized)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  tf2_ros::Buffer buffer;
+  tf2::BufferCore buffer;
   buffer.setTransform(createTestTf(), "test");
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformWithChannels(msg, out, buffer, "base_link");
 
   ASSERT_EQ("base_link", out.header.frame_id);
@@ -347,10 +348,10 @@ TEST(TF2SensorMsgs, CreateTransformedCloudUnorganized)  // NOLINT
 {
   const auto msg = createCloud(1);
 
-  tf2_ros::Buffer buffer;
+  tf2::BufferCore buffer;
   buffer.setTransform(createTestTf(), "test");
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformWithChannels(msg, out, buffer, "base_link");
 
   ASSERT_EQ("base_link", out.header.frame_id);
@@ -432,10 +433,10 @@ TEST(TF2SensorMsgs, CreateTransformedCloudNoChannels)  // NOLINT
 {
   const auto msg = createCloud(4);
 
-  tf2_ros::Buffer buffer;
+  tf2::BufferCore buffer;
   buffer.setTransform(createTestTf(), "test");
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformWithChannels(msg, out, buffer, "base_link", {});
 
   ASSERT_EQ("base_link", out.header.frame_id);
@@ -517,7 +518,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudSomeChannels)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformWithChannels(msg, out, createTestTf(),
     {{"", cras::CloudChannelType::POINT}, {"normal_", cras::CloudChannelType::DIRECTION}});
 
@@ -602,7 +603,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudChangeDefaultChannels)  // NOLINT
 
   cras::registerCloudChannelType("test_", cras::CloudChannelType::DIRECTION);
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformWithChannels(msg, out, createTestTf());
 
   cras::unregisterCloudChannelType("test_");
@@ -686,7 +687,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformOnlyChannels(msg, out, createTestTf(),
     {{"", cras::CloudChannelType::POINT},
      {"normal_", cras::CloudChannelType::DIRECTION},
@@ -741,7 +742,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlyXYZ)  // NOLINT
 {
   const auto msg = createCloud(2);
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   cras::transformOnlyXYZ(msg, out, createTestTf());
 
   ASSERT_EQ("base_link", out.header.frame_id);

@@ -25,18 +25,21 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
   <depend>builtin_interfaces</depend>
   <depend>eigen</depend>
   <depend>fmt</depend>
+  <depend>geometry_msgs</depend>
   <depend>libexpected-dev</depend>
   <depend>rcl</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>rcutils</depend>
   <depend>rmw</depend>
+  <depend>sensor_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>urdf</depend>
 
   <build_depend>backward_ros</build_depend>
   <build_depend>libboost-dev</build_depend>
+  <build_depend>tf2_eigen</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
 
   <exec_depend>backward_ros</exec_depend>
@@ -47,7 +50,6 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>cras_lint</test_depend>
-  <test_depend>geometry_msgs</test_depend>
   <test_depend>std_msgs</test_depend>
   <test_depend>tf2</test_depend>
 

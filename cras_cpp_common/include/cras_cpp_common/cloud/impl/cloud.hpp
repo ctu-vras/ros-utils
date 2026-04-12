@@ -1,18 +1,19 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for comfortable working with PointCloud2 messages.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <string>
 
-#include <sensor_msgs/PointField.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/point_field.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 namespace cras
 {
@@ -25,7 +26,7 @@ namespace impl
  * \tparam T Type of the value on which the child class will be templated.
  * \tparam TT Type of the value to be retrieved (same as T except for constness).
  * \tparam U Type of the raw data in PointCloud2 (only uchar and const uchar are supported).
- * \tparam C Type of the pointcloud to intialize from (const or not).
+ * \tparam C Type of the pointcloud to initialize from (const or not).
  * \tparam V The derived class (yop, curiously recurring template pattern).
  */
 template<typename T, typename TT, typename U, typename C, template<typename> class V>
@@ -34,8 +35,8 @@ class GenericCloudIteratorBase : public ::sensor_msgs::impl::PointCloud2Iterator
 public:
 
   /**
-   * \param[in] cloud_msg The PointCloud2 to iterate upon.
-   * \param[in] field_name The field to iterate upon.
+   * \param[in] cloudMsg The PointCloud2 to iterate upon.
+   * \param[in] fieldName The field to iterate upon.
    */
   GenericCloudIteratorBase(C& cloudMsg, const ::std::string& fieldName);
 
@@ -62,15 +63,15 @@ protected:
 template<typename T = unsigned char>
 class GenericCloudConstIterator :
   public GenericCloudIteratorBase<T, const T, const unsigned char,
-    const ::sensor_msgs::PointCloud2, GenericCloudConstIterator>
+    const ::sensor_msgs::msg::PointCloud2, GenericCloudConstIterator>
 {
 public:
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudConstIterator(const ::sensor_msgs::PointCloud2 &cloud_msg, const ::std::string &field_name) :
-    GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::PointCloud2,
+  GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name) :
+    GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
       GenericCloudConstIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
   }
@@ -96,15 +97,15 @@ public:
  */
 template<typename T = unsigned char>
 class GenericCloudIterator :
-  public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::PointCloud2, GenericCloudIterator>
+  public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2, GenericCloudIterator>
 {
 public:
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudIterator(::sensor_msgs::PointCloud2 &cloud_msg, const ::std::string &field_name) :
-    GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::PointCloud2,
+  GenericCloudIterator(::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name) :
+    GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
       GenericCloudIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
   }

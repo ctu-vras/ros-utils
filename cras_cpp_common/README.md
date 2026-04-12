@@ -26,9 +26,9 @@ This package is supported on ROS 2 **Jazzy** and **Klited** (on branch `ros2`). 
 _The ROS 2 port is still in its early stage. You will find more modules in this package, but their build and tests are disabled in CMake. Only modules listed here are actually available._
 
 - `c_api`: Utilities for writing a C API for your packages.
+- `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
 
 <!--
-- `cloud`, `tf2_sensor_msgs`: Utilities for working with pointclouds (iterators, copying, extracting channels, transforming the clouds).
 - `diag_utils`: Helpers for easy setup of a diagnosed publisher/subscriber that checks message rate or delay. Configuration of the expected rates/delays is via ROS parameters.
 -->
 

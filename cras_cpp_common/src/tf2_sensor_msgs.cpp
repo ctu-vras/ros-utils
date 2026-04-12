@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Transformation tools for sensor_msgs messages.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <string>
@@ -12,14 +13,15 @@
 
 #include <Eigen/Geometry>  // needs to be implementation-private as we want -march=native optimizations
 
-#include <geometry_msgs/Transform.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <geometry_msgs/msg/transform.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <cras_cpp_common/cloud.hpp>
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/tf2_sensor_msgs.h>
+#include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
 {
@@ -80,7 +82,7 @@ bool fieldNameMatchesChannel(const std::string& fieldName, const std::string& ch
  * \param[in] type Type of the channel.
  * \note This function cannot be exposed via the header as we can't expose any Eigen types.
  */
-void transformChannel(const sensor_msgs::PointCloud2& cloudIn, sensor_msgs::PointCloud2& cloudOut,
+void transformChannel(const sensor_msgs::msg::PointCloud2& cloudIn, sensor_msgs::msg::PointCloud2& cloudOut,
   const Eigen::Isometry3f& transform, const std::string& channelPrefix, const CloudChannelType type)
 {
   if (numPoints(cloudIn) == 0)
@@ -125,29 +127,29 @@ void transformChannel(const sensor_msgs::PointCloud2& cloudIn, sensor_msgs::Poin
   }
 }
 
-void transformChannel(sensor_msgs::PointCloud2& cloud, const geometry_msgs::Transform& tf,
+void transformChannel(sensor_msgs::msg::PointCloud2& cloud, const geometry_msgs::msg::Transform& tf,
   const std::string& channelPrefix, const CloudChannelType type)
 {
   const auto transform = tf2::transformToEigen(tf).cast<float>();
   transformChannel(cloud, cloud, transform, channelPrefix, type);
 }
 
-sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const geometry_msgs::TransformStamped& tf)
+sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const geometry_msgs::msg::TransformStamped& tf)
 {
   return transformWithChannels(in, out, tf, DEFAULT_CHANNELS);
 }
 
-sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const geometry_msgs::TransformStamped& tf, const std::unordered_map<std::string, CloudChannelType>& channels)
+sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const geometry_msgs::msg::TransformStamped& tf, const std::unordered_map<std::string, CloudChannelType>& channels)
 {
   std::unordered_set<std::string> channelsPresent;
   for (const auto& field : in.fields)
   {
-    for (const auto& channelAndType : channels)
+    for (const auto& [channel, channelType] : channels)
     {
-      const auto& channel = channelAndType.first;
-      const auto& channelType = channelAndType.second;
       if (channelType != CloudChannelType::SCALAR && fieldNameMatchesChannel(field.name, channel, channelType))
       {
         channelsPresent.insert(channel);
@@ -166,31 +168,33 @@ sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& 
   return out;
 }
 
-sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const tf2_ros::Buffer& tfBuffer, const std::string& targetFrame)
+sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const tf2::BufferCoreInterface& tfBuffer, const std::string& targetFrame)
 {
   return transformWithChannels(in, out, tfBuffer, targetFrame, DEFAULT_CHANNELS);
 }
 
-sensor_msgs::PointCloud2& transformWithChannels(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const tf2_ros::Buffer& tfBuffer, const std::string& targetFrame,
+sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const tf2::BufferCoreInterface& tfBuffer, const std::string& targetFrame,
   const std::unordered_map<std::string, CloudChannelType>& channels)
 {
-  const auto tf = tfBuffer.lookupTransform(targetFrame, in.header.frame_id, in.header.stamp);
+  const auto stamp = cras::convertTime<tf2::TimePoint>(in.header.stamp);
+  const auto tf = tfBuffer.lookupTransform(targetFrame, in.header.frame_id, stamp);
   return transformWithChannels(in, out, tf, channels);
 }
 
-sensor_msgs::PointCloud2& transformOnlyChannels(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const geometry_msgs::TransformStamped& tf, const std::unordered_map<std::string, CloudChannelType>& channels)
+sensor_msgs::msg::PointCloud2& transformOnlyChannels(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const geometry_msgs::msg::TransformStamped& tf, const std::unordered_map<std::string, CloudChannelType>& channels)
 {
   std::unordered_set<std::string> channelsPresent;
   out.point_step = 0;
   for (const auto& field : in.fields)
   {
-    for (const auto& channelAndType : channels)
+    for (const auto& [channel, channelType] : channels)
     {
-      const auto& channel = channelAndType.first;
-      const auto& channelType = channelAndType.second;
       if (fieldNameMatchesChannel(field.name, channel, channelType))
       {
         channelsPresent.insert(channel);
@@ -225,8 +229,9 @@ sensor_msgs::PointCloud2& transformOnlyChannels(const sensor_msgs::PointCloud2& 
   return out;
 }
 
-sensor_msgs::PointCloud2& transformOnlyXYZ(const sensor_msgs::PointCloud2& in, sensor_msgs::PointCloud2& out,
-  const geometry_msgs::TransformStamped& tf)
+sensor_msgs::msg::PointCloud2& transformOnlyXYZ(
+  const sensor_msgs::msg::PointCloud2& in, sensor_msgs::msg::PointCloud2& out,
+  const geometry_msgs::msg::TransformStamped& tf)
 {
   return transformOnlyChannels(in, out, tf, XYZ_CHANNELS);
 }

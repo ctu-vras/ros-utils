@@ -1,18 +1,19 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for comfortable working with PointCloud2 messages.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <string>
 
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/PointField.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/point_field.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include "cloud/impl/cloud.hpp"
 
@@ -20,7 +21,7 @@ namespace cras
 {
 
 //! \brief Shorthand for sensor_msgs::PointCloud2
-typedef ::sensor_msgs::PointCloud2 Cloud;
+typedef ::sensor_msgs::msg::PointCloud2 Cloud;
 
 //! \brief Cloud float field iterator.
 typedef ::sensor_msgs::PointCloud2Iterator<float> CloudIter;
@@ -85,7 +86,7 @@ bool hasField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
  * \return Reference to the field.
  * \throws std::runtime_error if the field doesn't exist.
  */
-::sensor_msgs::PointField& getField(::cras::Cloud& cloud, const ::std::string& fieldName);
+::sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const ::std::string& fieldName);
 
 /**
  * \brief Return the sensor_msgs::PointField with the given name.
@@ -94,7 +95,7 @@ bool hasField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
  * \return Reference to the field.
  * \throws std::runtime_error if the field doesn't exist.
  */
-const ::sensor_msgs::PointField& getField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
+const ::sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
 
 /**
  * \brief Return the size (in bytes) of a sensor_msgs::PointField datatype.
@@ -110,12 +111,12 @@ size_t sizeOfPointField(int datatype);
  * \return Size of the data.
  * \throws std::runtime_error if wrong datatype is passed.
  */
-size_t sizeOfPointField(const ::sensor_msgs::PointField& field);
+size_t sizeOfPointField(const ::sensor_msgs::msg::PointField& field);
 
 /**
  * \brief Copy data belonging to the given field from `in` cloud to `out` cloud.
  * \param[in] in The input cloud.
- * \param[out] out The ouptut cloud. It has to be resized to contain at least that many points as the input cloud.
+ * \param[out] out The output cloud. It has to be resized to contain at least as many points as the input cloud.
  *                 It also has to have the given field present already.
  * \param[in] fieldName Name of the field whose data should be copied.
  * \throws std::runtime_error If the output cloud is smaller (in nr. of points) than the input cloud.

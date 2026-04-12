@@ -1,20 +1,21 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Transformation tools for sensor_msgs messages.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <string>
 #include <unordered_map>
 
-#include <geometry_msgs/Transform.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <tf2_ros/buffer.h>
+#include <geometry_msgs/msg/transform.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2/buffer_core.hpp>
 
 namespace cras
 {
@@ -55,7 +56,7 @@ void unregisterCloudChannelType(const ::std::string& channelPrefix);
  * \param[in] channelPrefix Prefix of the channel.
  * \param[in] type Type of the channel.
  */
-void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::Transform& transform,
+void transformChannel(::sensor_msgs::msg::PointCloud2& cloud, const ::geometry_msgs::msg::Transform& transform,
   const ::std::string& channelPrefix, ::cras::CloudChannelType type);
 
 /**
@@ -67,8 +68,9 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  * \param[in] tf The transform to apply.
  * \return `out`.
  */
-::sensor_msgs::PointCloud2& transformWithChannels(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::geometry_msgs::TransformStamped& tf);
+::sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::geometry_msgs::msg::TransformStamped& tf);
 
 /**
  * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in
@@ -79,8 +81,9 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  * \param[in] channels A map of `channel prefix`-`channel type` of channels that should be transformed.
  * \return `out`.
  */
-::sensor_msgs::PointCloud2& transformWithChannels(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::geometry_msgs::TransformStamped& tf,
+::sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::geometry_msgs::msg::TransformStamped& tf,
   const ::std::unordered_map<::std::string, ::cras::CloudChannelType>& channels);
 
 /**
@@ -92,10 +95,11 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  * \param[in] tfBuffer The TF buffer.
  * \param[in] targetFrame The frame to transform to.
  * \return `out`.
- * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be catched.
+ * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be caught.
  */
-::sensor_msgs::PointCloud2& transformWithChannels(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::tf2_ros::Buffer& tfBuffer, const ::std::string& targetFrame);
+::sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::tf2::BufferCoreInterface& tfBuffer, const ::std::string& targetFrame);
 
 /**
  * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in
@@ -106,10 +110,11 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  * \param[in] targetFrame The frame to transform to.
  * \param[in] channels A map of `channel prefix`-`channel type` of channels that should be transformed.
  * \return `out`.
- * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be catched.
+ * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be caught.
  */
-::sensor_msgs::PointCloud2& transformWithChannels(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::tf2_ros::Buffer& tfBuffer, const ::std::string& targetFrame,
+::sensor_msgs::msg::PointCloud2& transformWithChannels(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::tf2::BufferCoreInterface& tfBuffer, const ::std::string& targetFrame,
   const ::std::unordered_map<::std::string, ::cras::CloudChannelType>& channels);
 
 /**
@@ -121,8 +126,9 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  *                     channels will be present in the output cloud.
  * \return `out`.
  */
-::sensor_msgs::PointCloud2& transformOnlyChannels(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::geometry_msgs::TransformStamped& tf,
+::sensor_msgs::msg::PointCloud2& transformOnlyChannels(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::geometry_msgs::msg::TransformStamped& tf,
   const ::std::unordered_map<::std::string, ::cras::CloudChannelType>& channels);
 
 /**
@@ -132,7 +138,8 @@ void transformChannel(::sensor_msgs::PointCloud2& cloud, const ::geometry_msgs::
  * \param[in] tf The transform to apply.
  * \return `out`.
  */
-::sensor_msgs::PointCloud2& transformOnlyXYZ(const ::sensor_msgs::PointCloud2& in, ::sensor_msgs::PointCloud2& out,
-  const ::geometry_msgs::TransformStamped& tf);
+::sensor_msgs::msg::PointCloud2& transformOnlyXYZ(
+  const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
+  const ::geometry_msgs::msg::TransformStamped& tf);
 
 }

@@ -14,12 +14,15 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(ament_cmake REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tl-expected REQUIRED)
@@ -37,11 +40,13 @@ ament_export_dependencies(
   builtin_interfaces
   Eigen3
   fmt
+  geometry_msgs
   rcl
   rclcpp
   rclcpp_components
   rcutils
   rmw
+  sensor_msgs
   tf2
   tf2_ros
   Threads
@@ -104,10 +109,11 @@ target_link_libraries(cras_urdf_utils
 #  INTERFACE ${catkin_LIBRARIES})
 #add_dependencies(cras_message_utils INTERFACE ${catkin_EXPORTED_TARGETS})
 
-#add_library(cras_cloud src/cloud.cpp)
-#add_dependencies(cras_cloud ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(cras_cloud
-#  PUBLIC ${catkin_LIBRARIES})
+add_library(cras_cloud src/cloud.cpp)
+target_include_directories(cras_cloud PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS})
 
 #add_library(cras_diag_updater src/diag_utils/updater.cpp)
 #add_dependencies(cras_diag_updater ${catkin_EXPORTED_TARGETS})
@@ -199,29 +205,30 @@ check_cxx_compiler_flag("-march=armv8-a" COMPILER_SUPPORTS_MARCH_ARMV8)
 check_cxx_compiler_flag("-march=armv7-a+neon" COMPILER_SUPPORTS_MARCH_ARMV7)
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 
-#add_library(cras_tf2_sensor_msgs src/tf2_sensor_msgs.cpp)
-#add_dependencies(cras_tf2_sensor_msgs ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(cras_tf2_sensor_msgs
-#  PUBLIC ${catkin_LIBRARIES}
-#  PRIVATE cras_cloud cras_string_utils Eigen3::Eigen)
-## The pointcloud processing loop really needs SIMD. We enable it conservatively.
-## ROS buildfarm should pick up x86-64-v3 for x86 builds, armv7 for armhf builds and armv8 for arm64 builds.
-#if (COMPILER_SUPPORTS_MARCH_X86_V3)
-#  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=x86-64 ${X86_V3_FLAGS})
-#  message("cras_tf2_sensor_msgs uses x86-64-v3 SIMD")
-#elseif (COMPILER_SUPPORTS_MARCH_X86_V2)
-#  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=x86-64 ${X86_V2_FLAGS})
-#  message("cras_tf2_sensor_msgs uses x86-64-v2 SIMD")
-#elseif (COMPILER_SUPPORTS_MARCH_ARMV7)
-#  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=armv7-a+neon)
-#  message("cras_tf2_sensor_msgs uses armv7-a+simd SIMD")
-#elseif (COMPILER_SUPPORTS_MARCH_ARMV8)
-#  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=armv8-a)
-#  message("cras_tf2_sensor_msgs uses armv8-a SIMD")
-#elseif (COMPILER_SUPPORTS_MARCH_NATIVE)
-#  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=native)
-#  message("cras_tf2_sensor_msgs uses native SIMD")
-#endif()
+add_library(cras_tf2_sensor_msgs src/tf2_sensor_msgs.cpp)
+target_include_directories(cras_tf2_sensor_msgs PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_tf2_sensor_msgs
+  PUBLIC ${geometry_msgs_TARGETS} ${sensor_msgs_TARGETS} tf2::tf2
+  PRIVATE cras_cloud cras_string_utils cras_time_utils Eigen3::Eigen tf2_eigen::tf2_eigen)
+# The pointcloud processing loop really needs SIMD. We enable it conservatively.
+# ROS buildfarm should pick up x86-64-v3 for x86 builds, armv7 for armhf builds and armv8 for arm64 builds.
+if (COMPILER_SUPPORTS_MARCH_X86_V3)
+  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=x86-64 ${X86_V3_FLAGS})
+  message("cras_tf2_sensor_msgs uses x86-64-v3 SIMD")
+elseif (COMPILER_SUPPORTS_MARCH_X86_V2)
+  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=x86-64 ${X86_V2_FLAGS})
+  message("cras_tf2_sensor_msgs uses x86-64-v2 SIMD")
+elseif (COMPILER_SUPPORTS_MARCH_ARMV7)
+  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=armv7-a+neon)
+  message("cras_tf2_sensor_msgs uses armv7-a+simd SIMD")
+elseif (COMPILER_SUPPORTS_MARCH_ARMV8)
+  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=armv8-a)
+  message("cras_tf2_sensor_msgs uses armv8-a SIMD")
+elseif (COMPILER_SUPPORTS_MARCH_NATIVE)
+  target_compile_options(cras_tf2_sensor_msgs PRIVATE -march=native)
+  message("cras_tf2_sensor_msgs uses native SIMD")
+endif()
 
 add_library(cras_type_utils SHARED src/type_utils.cpp)
 target_include_directories(cras_type_utils PUBLIC
@@ -322,7 +329,7 @@ install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
 # ament_export_dependencies() for each package they depend on.
 set(EXPORTED_LIBS
   cras_c_api
-  #  cras_cloud
+  cras_cloud
   #  cras_diag_updater
   #  cras_diag_utils
   cras_expected
@@ -345,7 +352,7 @@ set(EXPORTED_LIBS
   cras_small_map
   cras_string_utils
   cras_test_utils
-  #  cras_tf2_sensor_msgs
+  cras_tf2_sensor_msgs
   cras_tf2_utils
   cras_thread_utils
   cras_time_utils
@@ -397,7 +404,6 @@ if(BUILD_TESTING)
   find_package(cras_lint REQUIRED)
   cras_lint_common()
   set(cras_lint_FILE_EXCLUDE
-    include/${PROJECT_NAME}/cloud/impl/*
     include/${PROJECT_NAME}/diag_utils/*
     include/${PROJECT_NAME}/diag_utils/deprecated/*
     include/${PROJECT_NAME}/diag_utils/impl/*
@@ -411,7 +417,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/nodelet_utils/impl/*
     include/${PROJECT_NAME}/test_utils/*
     include/${PROJECT_NAME}/tf2_utils/interruptible_buffer.h
-    include/${PROJECT_NAME}/cloud.hpp
     include/${PROJECT_NAME}/diag_utils.hpp
     include/${PROJECT_NAME}/filter_chain_nodelet.hpp
     include/${PROJECT_NAME}/filter_utils.hpp
@@ -419,7 +424,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/node_utils.hpp
     include/${PROJECT_NAME}/nodelet_utils.hpp
     include/${PROJECT_NAME}/resettable.h
-    include/${PROJECT_NAME}/tf2_sensor_msgs.h
     nodes/*
     src/diag_utils/*
     src/log_utils/node.cpp
@@ -428,9 +432,7 @@ if(BUILD_TESTING)
     src/nodelet_utils/*
     src/tf2_utils/interruptible_buffer.cpp
     src/time_utils/*
-    src/cloud.cpp
     src/resettable.cpp
-    src/tf2_sensor_msgs.cpp
     src/time_utils/interruptible_sleep_interface.cpp
     test/*
   )
@@ -448,8 +450,8 @@ if(BUILD_TESTING)
 #  catkin_add_gtest(test_c_api test/test_c_api.cpp)
 #  target_link_libraries(test_c_api cras_c_api ${catkin_LIBRARIES})
 #
-#  catkin_add_gtest(test_cras_cloud test/test_cloud.cpp)
-#  target_link_libraries(test_cras_cloud cras_cloud ${catkin_LIBRARIES})
+  ament_add_gtest(test_cras_cloud test/test_cloud.cpp)
+  target_link_libraries(test_cras_cloud cras_cloud)
 #
 #  catkin_add_gtest(test_cras_filter_chain test/test_filter_chain.cpp)
 #  target_link_libraries(test_cras_filter_chain cras_filter_chain ${catkin_LIBRARIES})
@@ -474,9 +476,9 @@ if(BUILD_TESTING)
     cras_string_utils cras_time_utils
     ${std_msgs_TARGETS} Eigen3::Eigen rclcpp::rclcpp tf2::tf2
   )
-#
-#  catkin_add_gtest(test_cras_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
-#  target_link_libraries(test_cras_tf2_sensor_msgs cras_tf2_sensor_msgs ${catkin_LIBRARIES})
+
+  ament_add_gtest(test_cras_tf2_sensor_msgs test/test_tf2_sensor_msgs.cpp)
+  target_link_libraries(test_cras_tf2_sensor_msgs cras_tf2_sensor_msgs)
 #
 #  add_rostest_gtest(test_cras_tf2_utils test/test_tf2_utils.test test/test_tf2_utils.cpp)
   ament_add_ros_isolated_gtest(test_cras_tf2_utils test/test_tf2_utils.cpp)

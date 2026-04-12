@@ -84,6 +84,7 @@ template<> ::tm convertTime(const ::rclcpp::Time& t);
 template<> ::std::chrono::system_clock::time_point convertTime(const ::rclcpp::Time& t);
 
 template<> ::rclcpp::Time convertTime(const ::builtin_interfaces::msg::Time& t);
+template<> ::std::chrono::system_clock::time_point convertTime(const ::builtin_interfaces::msg::Time& t);
 
 template<> ::rclcpp::Time convertTime(const double& t);
 

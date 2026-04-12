@@ -1,15 +1,19 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Unit test for cloud.hpp.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include "gtest/gtest.h"
+
+#include <cmath>
+
 #include <cras_cpp_common/cloud.hpp>
 
-void fillXYZ(sensor_msgs::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size, bool allZeros = false)
+void fillXYZ(sensor_msgs::msg::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size, bool allZeros = false)
 {
   mod.resize(size);
 
@@ -26,7 +30,7 @@ void fillXYZ(sensor_msgs::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mo
 
 TEST(Cloud, NumPoints)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2FieldsByString(1, "xyz");
@@ -43,13 +47,13 @@ TEST(Cloud, NumPoints)  // NOLINT
 
 TEST(Cloud, CreateFilteredCloudUnorganized)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2FieldsByString(1, "xyz");
   fillXYZ(msg, mod, 3);
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   CREATE_FILTERED_CLOUD(msg, out, true, *x_it == 2.0)
 
   EXPECT_EQ(1, cras::numPoints(out));
@@ -67,7 +71,7 @@ TEST(Cloud, CreateFilteredCloudUnorganized)  // NOLINT
 
 TEST(Cloud, CreateFilteredCloudOrganized)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2FieldsByString(1, "xyz");
@@ -78,7 +82,7 @@ TEST(Cloud, CreateFilteredCloudOrganized)  // NOLINT
   msg.row_step = msg.row_step / 2;
   msg.is_dense = false;
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   CREATE_FILTERED_CLOUD(msg, out, true, static_cast<int>(*x_it) % 2 == 0)
 
   ASSERT_EQ(4, cras::numPoints(out));
@@ -115,7 +119,7 @@ TEST(Cloud, CreateFilteredCloudOrganized)  // NOLINT
 
 TEST(Cloud, CreateFilteredCloudOrganizedDoNotKeep)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
 
   mod.setPointCloud2FieldsByString(1, "xyz");
@@ -126,7 +130,7 @@ TEST(Cloud, CreateFilteredCloudOrganizedDoNotKeep)  // NOLINT
   msg.row_step = msg.row_step / 2;
   msg.is_dense = false;
 
-  sensor_msgs::PointCloud2 out;
+  sensor_msgs::msg::PointCloud2 out;
   CREATE_FILTERED_CLOUD(msg, out, false, static_cast<int>(*x_it) % 2 == 0)
 
   ASSERT_EQ(2, cras::numPoints(out));
@@ -151,7 +155,7 @@ TEST(Cloud, CreateFilteredCloudOrganizedDoNotKeep)  // NOLINT
 
 TEST(Cloud, GenericConstIterator)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msgOrig;
+  sensor_msgs::msg::PointCloud2 msgOrig;
   sensor_msgs::PointCloud2Modifier mod(msgOrig);
   const auto& msg = msgOrig;
 
@@ -173,7 +177,7 @@ TEST(Cloud, GenericConstIterator)  // NOLINT
 
 TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msgOrig;
+  sensor_msgs::msg::PointCloud2 msgOrig;
   sensor_msgs::PointCloud2Modifier mod(msgOrig);
   const auto& msg = msgOrig;
 
@@ -209,7 +213,7 @@ TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
 
 TEST(Cloud, GenericIterator)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
   fillXYZ(msg, mod, 4, true);
@@ -242,7 +246,7 @@ TEST(Cloud, GenericIterator)  // NOLINT
 
 TEST(Cloud, GenericIteratorDataAs)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
   fillXYZ(msg, mod, 4, true);
@@ -289,10 +293,10 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
 
 TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
-  sensor_msgs::PointCloud2 msg2;
+  sensor_msgs::msg::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
 
@@ -331,10 +335,10 @@ TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
 
 TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
-  sensor_msgs::PointCloud2 msg2;
+  sensor_msgs::msg::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
 
@@ -373,16 +377,16 @@ TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
 
 TEST(Cloud, CopyChannelData)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msg;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2FieldsByString(1, "xyz");
 
-  sensor_msgs::PointCloud2 msg2;
+  sensor_msgs::msg::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(1, "xyz");
 
-  using F = sensor_msgs::PointField;
-  sensor_msgs::PointCloud2 msg3;
+  using F = sensor_msgs::msg::PointField;
+  sensor_msgs::msg::PointCloud2 msg3;
   sensor_msgs::PointCloud2Modifier mod3(msg3);
   mod3.setPointCloud2Fields(8,
     "a", 1, F::FLOAT64, "b", 1, F::FLOAT32,
@@ -448,13 +452,13 @@ TEST(Cloud, CopyChannelData)  // NOLINT
 
 TEST(Cloud, HasGetField)  // NOLINT
 {
-  sensor_msgs::PointCloud2 msgOrig;
+  sensor_msgs::msg::PointCloud2 msgOrig;
   sensor_msgs::PointCloud2Modifier mod(msgOrig);
   mod.setPointCloud2FieldsByString(1, "xyz");
   mod.resize(1);
   const auto& msg = msgOrig;
 
-  sensor_msgs::PointCloud2 msg2;
+  sensor_msgs::msg::PointCloud2 msg2;
   sensor_msgs::PointCloud2Modifier mod2(msg2);
   mod2.setPointCloud2FieldsByString(2, "xyz", "rgba");
   mod2.resize(1);
@@ -472,17 +476,17 @@ TEST(Cloud, HasGetField)  // NOLINT
 
   EXPECT_EQ("x", cras::getField(msg, "x").name);
   EXPECT_EQ(1, cras::getField(msg, "x").count);
-  EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "x").datatype);
+  EXPECT_EQ(sensor_msgs::msg::PointField::FLOAT32, cras::getField(msg, "x").datatype);
   EXPECT_EQ(0, cras::getField(msg, "x").offset);
 
   EXPECT_EQ("y", cras::getField(msg, "y").name);
   EXPECT_EQ(1, cras::getField(msg, "y").count);
-  EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "y").datatype);
+  EXPECT_EQ(sensor_msgs::msg::PointField::FLOAT32, cras::getField(msg, "y").datatype);
   EXPECT_EQ(4, cras::getField(msg, "y").offset);
 
   EXPECT_EQ("z", cras::getField(msg, "z").name);
   EXPECT_EQ(1, cras::getField(msg, "z").count);
-  EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg, "z").datatype);
+  EXPECT_EQ(sensor_msgs::msg::PointField::FLOAT32, cras::getField(msg, "z").datatype);
   EXPECT_EQ(8, cras::getField(msg, "z").offset);
 
   EXPECT_EQ(cras::getField(msg2, "x"), cras::getField(msg, "x"));
@@ -491,7 +495,7 @@ TEST(Cloud, HasGetField)  // NOLINT
 
   EXPECT_EQ("rgba", cras::getField(msg2, "rgba").name);
   EXPECT_EQ(1, cras::getField(msg2, "rgba").count);
-  EXPECT_EQ(sensor_msgs::PointField::FLOAT32, cras::getField(msg2, "rgba").datatype);
+  EXPECT_EQ(sensor_msgs::msg::PointField::FLOAT32, cras::getField(msg2, "rgba").datatype);
   EXPECT_EQ(16, cras::getField(msg2, "rgba").offset);
 
   EXPECT_THROW(cras::getField(msg, "rgba"), std::runtime_error);
@@ -505,8 +509,8 @@ TEST(Cloud, HasGetField)  // NOLINT
 
 TEST(Cloud, SizeOfPointField)  // NOLINT
 {
-  using F = sensor_msgs::PointField;
-  sensor_msgs::PointCloud2 msg;
+  using F = sensor_msgs::msg::PointField;
+  sensor_msgs::msg::PointCloud2 msg;
   sensor_msgs::PointCloud2Modifier mod(msg);
   mod.setPointCloud2Fields(8,
     "a", 1, F::FLOAT64, "b", 1, F::FLOAT32,
@@ -532,7 +536,7 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
   EXPECT_EQ(msg.fields[7].offset - msg.fields[6].offset, cras::sizeOfPointField(msg.fields[6]));
   EXPECT_EQ(msg.point_step - msg.fields[7].offset, cras::sizeOfPointField(msg.fields[7]));
 
-  EXPECT_THROW(cras::sizeOfPointField(sensor_msgs::PointField::FLOAT64 + 2), std::runtime_error);
+  EXPECT_THROW(cras::sizeOfPointField(sensor_msgs::msg::PointField::FLOAT64 + 2), std::runtime_error);
 }
 
 int main(int argc, char **argv)

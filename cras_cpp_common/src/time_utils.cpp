@@ -165,6 +165,13 @@ rclcpp::Time convertTime(const builtin_interfaces::msg::Time& t)
 }
 
 template<>
+std::chrono::system_clock::time_point convertTime(const builtin_interfaces::msg::Time& t)
+{
+  return cras::convertTime<std::chrono::system_clock::time_point>(
+    cras::convertTime<rclcpp::Time>(t));
+}
+
+template<>
 rclcpp::Time convertTime(const double& t)
 {
   return {static_cast<int32_t>(std::floor(t)), static_cast<uint32_t>((t - std::floor(t)) * 1e9)};
