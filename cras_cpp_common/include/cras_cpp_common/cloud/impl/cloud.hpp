@@ -69,7 +69,7 @@ public:
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name)
+  GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2& cloud_msg, const ::std::string& field_name)
     : GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
       GenericCloudConstIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
@@ -103,7 +103,7 @@ public:
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudIterator(::sensor_msgs::msg::PointCloud2 &cloud_msg, const ::std::string &field_name)
+  GenericCloudIterator(::sensor_msgs::msg::PointCloud2& cloud_msg, const ::std::string& field_name)
     : GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
       GenericCloudIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
   {
