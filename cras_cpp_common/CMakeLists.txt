@@ -95,7 +95,7 @@ target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/
 add_library(cras_literal_sz INTERFACE)
 target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.hpp>)
 
-add_library(cras_urdf_utils src/urdf_utils.cpp)
+add_library(cras_urdf_utils SHARED src/urdf_utils.cpp)
 target_include_directories(cras_urdf_utils PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
@@ -108,7 +108,7 @@ target_link_libraries(cras_urdf_utils
 #  INTERFACE ${catkin_LIBRARIES})
 #add_dependencies(cras_message_utils INTERFACE ${catkin_EXPORTED_TARGETS})
 
-add_library(cras_cloud src/cloud.cpp)
+add_library(cras_cloud SHARED src/cloud.cpp)
 target_include_directories(cras_cloud PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
@@ -204,7 +204,7 @@ check_cxx_compiler_flag("-march=armv8-a" COMPILER_SUPPORTS_MARCH_ARMV8)
 check_cxx_compiler_flag("-march=armv7-a+neon" COMPILER_SUPPORTS_MARCH_ARMV7)
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 
-add_library(cras_tf2_sensor_msgs src/tf2_sensor_msgs.cpp)
+add_library(cras_tf2_sensor_msgs SHARED src/tf2_sensor_msgs.cpp)
 target_include_directories(cras_tf2_sensor_msgs PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_tf2_sensor_msgs
