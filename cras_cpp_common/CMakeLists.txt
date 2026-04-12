@@ -24,7 +24,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(tl-expected REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
@@ -48,7 +47,7 @@ ament_export_dependencies(
   rmw
   sensor_msgs
   tf2
-  tf2_ros
+  tf2_eigen
   Threads
   tl-expected
   urdfdom_headers
