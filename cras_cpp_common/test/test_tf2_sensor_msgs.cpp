@@ -18,7 +18,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tf2/buffer_core.hpp>
 
-#include <cras_cpp_common/tf2_sensor_msgs.h>
+#include <cras_cpp_common/tf2_sensor_msgs.hpp>
 
 struct Point
 {

@@ -20,7 +20,7 @@
 
 #include <cras_cpp_common/cloud.hpp>
 #include <cras_cpp_common/string_utils.hpp>
-#include <cras_cpp_common/tf2_sensor_msgs.h>
+#include <cras_cpp_common/tf2_sensor_msgs.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 namespace cras
