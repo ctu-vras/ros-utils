@@ -12,8 +12,7 @@
 #include <charconv>
 #include <string>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Convert the given string to its best float representation. The behavior is similar to std::from_chars(),
@@ -28,9 +27,8 @@ namespace cras
  *         values. `ptr` points to the first character that was not parsed as a part of the numeric value.
  */
 inline ::std::from_chars_result from_chars(
-  const ::std::string& string, float& value,
-  const ::std::chars_format fmt = ::std::chars_format::general) noexcept
-{
+    const ::std::string& string, float& value,
+    const ::std::chars_format fmt = ::std::chars_format::general) noexcept {
   return ::std::from_chars(string.data(), string.data() + string.size(), value, fmt);
 }
 
@@ -46,10 +44,9 @@ inline ::std::from_chars_result from_chars(
  *         It is implementation specific, whether `result_out_of_range` or 0/inf will be returned for too small/large
  *         values. `ptr` points to the first character that was not parsed as a part of the numeric value.
  */
-inline ::std::from_chars_result from_chars(const ::std::string& string, double& value,
-  const ::std::chars_format fmt = ::std::chars_format::general) noexcept
-{
+inline ::std::from_chars_result from_chars(
+    const ::std::string& string, double& value, const ::std::chars_format fmt = ::std::chars_format::general) noexcept {
   return ::std::from_chars(string.data(), string.data() + string.size(), value, fmt);
 }
 
-}
+}  // namespace cras

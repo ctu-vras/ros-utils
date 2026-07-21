@@ -18,8 +18,7 @@
 
 #include "cloud/impl/cloud.hpp"
 
-namespace cras
-{
+namespace cras {
 
 //! \brief Shorthand for sensor_msgs::PointCloud2
 typedef ::sensor_msgs::msg::PointCloud2 Cloud;
@@ -67,8 +66,7 @@ typedef ::cras::impl::GenericCloudConstIterator<> GenericCloudConstIter;
  * \param[in] cloud The cloud to examine.
  * \return The number of points.
  */
-inline size_t numPoints(const ::cras::Cloud& cloud)
-{
+inline size_t numPoints(const ::cras::Cloud& cloud) {
   return static_cast<size_t>(cloud.height) * static_cast<size_t>(cloud.width);
 }
 
@@ -181,4 +179,4 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
   (OUT).row_step = (OUT).width * (OUT).point_step; \
 }
 // *INDENT-ON*
-}
+}  // namespace cras

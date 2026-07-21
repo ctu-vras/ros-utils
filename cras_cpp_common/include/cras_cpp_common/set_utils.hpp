@@ -12,8 +12,7 @@
 #include <iterator>
 #include <set>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Test whether the two given sets have empty intersection.
@@ -23,8 +22,7 @@ namespace cras
  * \return Whether the intersection of set1 and set2 is empty.
  */
 template<typename T>
-bool isSetIntersectionEmpty(const ::std::set<T>& set1, const ::std::set<T>& set2)
-{
+bool isSetIntersectionEmpty(const ::std::set<T>& set1, const ::std::set<T>& set2) {
   ::std::set<T> tmpSet;
   ::std::set_intersection(
       set1.begin(), set1.end(),
@@ -33,4 +31,4 @@ bool isSetIntersectionEmpty(const ::std::set<T>& set1, const ::std::set<T>& set2
   return tmpSet.empty();
 }
 
-}
+}  // namespace cras

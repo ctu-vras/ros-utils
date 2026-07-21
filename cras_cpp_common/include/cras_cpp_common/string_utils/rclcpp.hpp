@@ -23,8 +23,7 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
-namespace cras
-{
+namespace cras {
 
 constexpr ::std::string_view to_string(const ::rclcpp::ParameterType& type) {
   switch (type) {
@@ -62,8 +61,7 @@ constexpr ::std::string_view to_string(const ::rclcpp::ParameterType& type) {
 template<typename T, typename ::std::enable_if_t<
     ::cras::TimeType<T>::value && !::std::is_same_v<T, ::rclcpp::Time> && !::std::is_integral_v<T> &&
     !::std::is_floating_point_v<T>>* = nullptr>
-inline ::std::string to_string(const T& value)
-{
+inline ::std::string to_string(const T& value) {
   return ::cras::to_string(::cras::convertTime<::rclcpp::Time>(value));
 }
 
@@ -72,8 +70,7 @@ inline ::std::string to_string(const T& value)
 template<typename T, typename ::std::enable_if_t<
     ::cras::DurationType<T>::value && !::std::is_same_v<T, ::rclcpp::Duration> && !::cras::TimeType<T>::value &&
     !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
-inline ::std::string to_string(const T& value)
-{
+inline ::std::string to_string(const T& value) {
   return ::cras::to_string(::cras::convertDuration<::rclcpp::Duration>(value));
 }
 
@@ -93,26 +90,25 @@ template<>
 template<typename T, typename ::std::enable_if_t<
     ::std::is_same<T, ::rclcpp::Rate>::value ||
     ::std::is_same<T, ::rclcpp::WallRate>::value
-  >* = nullptr>
-inline ::std::string to_string(const T& value)
-{
+    >* = nullptr>
+inline ::std::string to_string(const T& value) {
   ::std::stringstream ss;
   ss << ::cras::frequency(value, true);
   return ss.str();
 }
 
 template<typename M,
-::std::enable_if_t<
-  ::rosidl_generator_traits::is_message<M>::value &&
-  // We exclude Time and Duration because we convert them via the time-interfaces to_string()
-  !::std::is_same_v<M, ::builtin_interfaces::msg::Time> &&
-  !::std::is_same_v<M, ::builtin_interfaces::msg::Duration>
->* = nullptr>
-inline std::string to_string(const M& msg)
-{
+    ::std::enable_if_t<
+        ::rosidl_generator_traits::is_message<M>::value &&
+        // We exclude Time and Duration because we convert them via the time-interfaces to_string()
+        !::std::is_same_v<M, ::builtin_interfaces::msg::Time> &&
+        !::std::is_same_v<M, ::builtin_interfaces::msg::Duration>
+    >* = nullptr>
+inline std::string to_string(const M& msg) {
   ::std::string s = to_yaml(msg);
-  if (!s.empty() && s[s.length() - 1] == '\n')
+  if (!s.empty() && s[s.length() - 1] == '\n') {
     s.erase(s.length() - 1);
+  }
   ::cras::replace(s, "\n", ", ");
   return s;
 }
@@ -161,8 +157,9 @@ inline std::string to_string(const M& msg)
  * \return The parsed time as seconds from epoch.
  * \throws std::invalid_argument If the string does not represent a date with time.
  */
-::rclcpp::Time parseTime(const ::std::string& s, const ::std::optional<::rclcpp::Duration>& timezoneOffset = {},
-  const ::rclcpp::Time& referenceDate = ::rclcpp::Time(), const ::rclcpp::Clock::ConstSharedPtr& clock = nullptr);
+::rclcpp::Time parseTime(
+    const ::std::string& s, const ::std::optional<::rclcpp::Duration>& timezoneOffset = {},
+    const ::rclcpp::Time& referenceDate = ::rclcpp::Time(), const ::rclcpp::Clock::ConstSharedPtr& clock = nullptr);
 
 /**
  * \brief Parse the given string as duration.
@@ -184,4 +181,4 @@ inline std::string to_string(const M& msg)
  */
 ::rclcpp::Duration parseDuration(const ::std::string& s);
 
-}
+}  // namespace cras

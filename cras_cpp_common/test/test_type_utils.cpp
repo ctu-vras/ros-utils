@@ -8,12 +8,12 @@
 
 #include "gtest/gtest.h"
 
+#include <list>
 #include <map>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <list>
 #include <vector>
 
 #include <cras_cpp_common/type_utils.hpp>
@@ -135,8 +135,7 @@ TEST(TypeUtils, IsString)  // NOLINT
   EXPECT_EQ(std::false_type::value, cras::is_string<std::vector<char*>>::value);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

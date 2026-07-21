@@ -20,8 +20,7 @@
 
 #include <cras_cpp_common/tf2_sensor_msgs.hpp>
 
-struct Point
-{
+struct Point{
   float x;
   float y;
   float z;
@@ -61,8 +60,7 @@ const static std::vector<Point> pointsOut =  // NOLINT
  * \param[in] width Width of the cloud.
  * \return The created cloud.
  */
-sensor_msgs::msg::PointCloud2 createCloud(const uint32_t width)
-{
+sensor_msgs::msg::PointCloud2 createCloud(const uint32_t width) {
   sensor_msgs::msg::PointCloud2 msg;
   msg.header.stamp.sec = 2;
   msg.header.frame_id = "odom";
@@ -122,8 +120,7 @@ sensor_msgs::msg::PointCloud2 createCloud(const uint32_t width)
     it_b = &it_rgb[2];
   };
 
-  for (const auto& point : pointsIn)
-  {
+  for (const auto& point : pointsIn) {
     *it_x = point.x;
     *it_y = point.y;
     *it_z = point.z;
@@ -151,8 +148,7 @@ sensor_msgs::msg::PointCloud2 createCloud(const uint32_t width)
  * \brief Create a transform to be used in the tests.
  * \return The transform.
  */
-geometry_msgs::msg::TransformStamped createTestTf()
-{
+geometry_msgs::msg::TransformStamped createTestTf() {
   geometry_msgs::msg::TransformStamped tf;
   tf.header.stamp.sec = 2;
   tf.header.frame_id = "base_link";
@@ -226,8 +222,7 @@ TEST(TF2SensorMsgs, TransformChannel)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -311,8 +306,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOrganized)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -396,8 +390,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudUnorganized)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -481,8 +474,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudNoChannels)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -564,8 +556,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudSomeChannels)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -650,8 +641,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudChangeDefaultChannels)  // NOLINT
     it_b = &it_rgb[2];
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& point = pointsOut[i];
     const auto& pointIn = pointsIn[i];
 
@@ -690,8 +680,8 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
   sensor_msgs::msg::PointCloud2 out;
   cras::transformOnlyChannels(msg, out, createTestTf(),
     {{"", cras::CloudChannelType::POINT},
-     {"normal_", cras::CloudChannelType::DIRECTION},
-     {"intensity", cras::CloudChannelType::SCALAR}});
+      {"normal_", cras::CloudChannelType::DIRECTION},
+      {"intensity", cras::CloudChannelType::SCALAR}});
 
   ASSERT_EQ("base_link", out.header.frame_id);
   ASSERT_EQ(msg.header.stamp, out.header.stamp);
@@ -718,8 +708,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlySomeChannels)  // NOLINT
     ++it_x; ++it_y; ++it_z; ++it_normal_x; ++it_normal_y; ++it_normal_z; ++it_intensity;
   };
 
-  for (size_t i = 0; i < pointsOut.size(); ++i)
-  {
+  for (size_t i = 0; i < pointsOut.size(); ++i) {
     const auto& pointIn = pointsIn[i];
     const auto& pointOut = pointsOut[i];
 
@@ -764,8 +753,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlyXYZ)  // NOLINT
     ++it_x; ++it_y; ++it_z;
   };
 
-  for (const auto& point : pointsOut)
-  {
+  for (const auto& point : pointsOut) {
     EXPECT_NEAR(point.x, *it_x, 1e-6);
     EXPECT_NEAR(point.y, *it_y, 1e-6);
     EXPECT_NEAR(point.z, *it_z, 1e-6);
@@ -774,8 +762,7 @@ TEST(TF2SensorMsgs, CreateTransformedCloudOnlyXYZ)  // NOLINT
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

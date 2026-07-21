@@ -18,8 +18,7 @@
 
 // #include <cras_cpp_common/message_utils.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Allocator function that should allocate a buffer of the given size on the caller side and return a pointer
@@ -72,4 +71,4 @@ uint8_t* outputByteBuffer(allocator_t allocator, const uint8_t* bytes, size_t le
  */
 uint8_t* outputByteBuffer(allocator_t allocator, const std::vector<uint8_t>& bytes);
 
-}
+}  // namespace cras

@@ -16,23 +16,22 @@
 #include <rclcpp/node_interfaces/node_logging_interface.hpp>
 #include <rclcpp/version.h>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * Log helper redirecting storing logged messages in memory.
  */
-class MemoryLoggingInterface : public ::rclcpp::node_interfaces::NodeLoggingInterface
-{
+class MemoryLoggingInterface : public ::rclcpp::node_interfaces::NodeLoggingInterface {
 public:
   RCLCPP_SMART_PTR_ALIASES_ONLY(MemoryLoggingInterface)
 
-  explicit MemoryLoggingInterface(const std::string& name = "log",
-    RCUTILS_LOG_SEVERITY severity = RCUTILS_LOG_SEVERITY_DEBUG);
+  explicit MemoryLoggingInterface(
+      const std::string& name = "log", RCUTILS_LOG_SEVERITY severity = RCUTILS_LOG_SEVERITY_DEBUG);
 
   ~MemoryLoggingInterface() override;
 
   rclcpp::Logger get_logger() const override;
+
   const char* get_logger_name() const override;
 #if RCLCPP_VERSION_GTE(31, 0, 0)
   void create_logger_services(const rclcpp::node_interfaces::NodeServicesInterface::SharedPtr& node_services) override;
@@ -63,4 +62,4 @@ protected:
   ::cras::MemoryLoggingInterface* prevLoggingInterface {nullptr};
 };
 
-}
+}  // namespace cras

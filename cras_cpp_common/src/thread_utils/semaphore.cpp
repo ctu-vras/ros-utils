@@ -10,83 +10,74 @@
 
 #include <cras_cpp_common/thread_utils/semaphore.hpp>
 
-namespace cras
-{
+namespace cras {
 
-ReverseSemaphore::ReverseSemaphore(const bool waitZeroAtDestroy) : waitZeroAtDestroy(waitZeroAtDestroy)
-{
+ReverseSemaphore::ReverseSemaphore(const bool waitZeroAtDestroy) : waitZeroAtDestroy(waitZeroAtDestroy) {
 }
 
-ReverseSemaphore::~ReverseSemaphore()
-{
+ReverseSemaphore::~ReverseSemaphore() {
   this->isDestroying = true;
   this->disable();
-  if (this->waitZeroAtDestroy)
-  {
+  if (this->waitZeroAtDestroy) {
     this->waitZero();
-  }
-  else
-  {
+  } else {
     // needed for cv destructor to finish
     std::lock_guard lock(this->mutex);
     this->cv.notify_all();
   }
 }
 
-bool ReverseSemaphore::acquire()
-{
+bool ReverseSemaphore::acquire() {
   std::lock_guard lock(this->mutex);
-  if (this->disabled)
+  if (this->disabled) {
     return false;
+  }
   this->count = this->count + 1;
   return true;
 }
 
-void ReverseSemaphore::release()
-{
+void ReverseSemaphore::release() {
   bool reportError{false};
   {
     std::lock_guard lock(this->mutex);
-    if (this->count > 0)
+    if (this->count > 0) {
       this->count = this->count - 1;
-    else
+    } else {
       reportError = true;
-    if (this->count == 0)
+    }
+    if (this->count == 0) {
       this->cv.notify_all();
+    }
   }
-  if (reportError)
+  if (reportError) {
     std::cerr << "ReverseSemaphore released more times than acquired!" << std::endl;
+  }
 }
 
-bool ReverseSemaphore::waitZero()
-{
+bool ReverseSemaphore::waitZero() {
   std::unique_lock lock(this->mutex);
-  this->cv.wait(lock, [this](){ return this->count == 0 || (!this->waitZeroAtDestroy && this->isDestroying); });
+  this->cv.wait(lock, [this]() { return this->count == 0 || (!this->waitZeroAtDestroy && this->isDestroying); });
   return this->count == 0;
 }
 
-void ReverseSemaphore::disable()
-{
+void ReverseSemaphore::disable() {
   std::lock_guard lock(this->mutex);
   this->disabled = true;
 }
 
-void ReverseSemaphore::enable()
-{
+void ReverseSemaphore::enable() {
   std::lock_guard lock(this->mutex);
   this->disabled = false;
 }
 
-bool ReverseSemaphore::isEnabled() const
-{
+bool ReverseSemaphore::isEnabled() const {
   std::lock_guard lock(this->mutex);
   return !this->disabled;
 }
 
-size_t ReverseSemaphore::getCount() const
-{
+size_t ReverseSemaphore::getCount() const {
   std::lock_guard lock(this->mutex);
   return this->count;
 }
 
-}
+}  // namespace cras

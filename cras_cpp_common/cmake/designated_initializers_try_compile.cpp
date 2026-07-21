@@ -7,13 +7,11 @@
  * \author Martin Pecka
  */
 
-struct S
-{
+struct S {
   int a;
   int b;
 };
 
-void fn()
-{
+void fn() {
   S s{.b = 1};
 }

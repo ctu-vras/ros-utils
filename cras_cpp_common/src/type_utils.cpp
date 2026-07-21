@@ -18,19 +18,17 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/type_utils.hpp>
 
-namespace cras
-{
+namespace cras {
 
 std::regex charTraitsRegex("(.*), std::char_traits<\\1>");  // NOLINT
 std::regex allocatorRegex("(.*), std::allocator<\\1>");  // NOLINT
 std::regex mapRegex("<(.*), (.*), std::less<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
 std::regex unorderedMapRegex(  // NOLINT
-  "<(.*), (.*), std::hash<\\1>, std::equal_to<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
+    "<(.*), (.*), std::hash<\\1>, std::equal_to<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
 std::regex setRegex("<(.*), std::less<\\1>");  // NOLINT
 std::regex unorderedSetRegex("<(.*), std::hash<\\1>, std::equal_to<\\1>");  // NOLINT
 
-std::string cleanTypeName(const std::string& typeName)
-{
+std::string cleanTypeName(const std::string& typeName) {
   auto result = typeName;
 
   cras::replace(result, " >", ">");
@@ -41,8 +39,7 @@ std::string cleanTypeName(const std::string& typeName)
   result = std::regex_replace(result, setRegex, "<$1");
   result = std::regex_replace(result, unorderedSetRegex, "<$1");
 
-  while (std::regex_search(result, charTraitsRegex) || std::regex_search(result, allocatorRegex))
-  {
+  while (std::regex_search(result, charTraitsRegex) || std::regex_search(result, allocatorRegex)) {
     result = std::regex_replace(result, charTraitsRegex, "$1");
     result = std::regex_replace(result, allocatorRegex, "$1");
   }
@@ -53,19 +50,15 @@ std::string cleanTypeName(const std::string& typeName)
   return result;
 }
 
-std::string demangle(const std::string& mangled)
-{
+std::string demangle(const std::string& mangled) {
 #if HAS_CXX_ABI
   int status;
   const auto demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
-  if (demangled && status == 0)
-  {
+  if (demangled && status == 0) {
     std::string result {demangled};
     std::free(demangled);
     return result;
-  }
-  else
-  {
+  } else {
     return mangled;
   }
 #else
@@ -78,9 +71,8 @@ std::string demangle(const std::string& mangled)
 #endif
 }
 
-std::string getTypeName(const std::type_info& typeInfo)
-{
+std::string getTypeName(const std::type_info& typeInfo) {
   return cras::cleanTypeName(cras::demangle(typeInfo.name()));
 }
 
-}
+}  // namespace cras

@@ -17,14 +17,12 @@
 #include <rclcpp/rate.hpp>
 #include <rclcpp/time.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Generic rate-limiter interface.
  */
-class RateLimiter
-{
+class RateLimiter {
 public:
   /**
    * \brief Create limiter with the given rate.
@@ -94,13 +92,14 @@ protected:
  * \brief The (not so clever) algorithm used by topic_tools/throttle node.
  * \note It is not very good at achieving the requested if it isn't orders of magnitude smaller than the incoming rate.
  */
-class ThrottleLimiter : public ::cras::RateLimiter
-{
+class ThrottleLimiter : public ::cras::RateLimiter {
 public:
   explicit ThrottleLimiter(const ::rclcpp::Rate& rate);
+
   explicit ThrottleLimiter(const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period);
 
   bool shouldPublish(const ::rclcpp::Time& stamp) override;
+
   void reset() override;
 
 protected:
@@ -117,8 +116,7 @@ protected:
  * \note The bucket capacity basically specifies the size of the burst that can happen after some period of inactivity
  *       when tokens are just collected and not consumed.
  */
-class TokenBucketLimiter : public ::cras::RateLimiter
-{
+class TokenBucketLimiter : public ::cras::RateLimiter {
 public:
   /**
    * \brief Create the rate-limiter limiting to the desired rate.
@@ -128,8 +126,8 @@ public:
    *                                   let the first packet through. This number should not be higher than
    *                                   `bucketCapacity`.
    */
-  explicit TokenBucketLimiter(const ::rclcpp::Rate& rate, size_t bucketCapacity = 2,
-    double initialTokensAvailable = 1.0);
+  explicit TokenBucketLimiter(
+      const ::rclcpp::Rate& rate, size_t bucketCapacity = 2, double initialTokensAvailable = 1.0);
 
   /**
    * \brief Create rate-limiter with rate corresponding to the given period.
@@ -140,10 +138,12 @@ public:
    *                                   let the first packet through. This number should not be higher than
    *                                   `bucketCapacity`.
    */
-  explicit TokenBucketLimiter(const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period,
-    size_t bucketCapacity = 2, double initialTokensAvailable = 1.0);
+  explicit TokenBucketLimiter(
+      const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period,
+      size_t bucketCapacity = 2, double initialTokensAvailable = 1.0);
 
   bool shouldPublish(const ::rclcpp::Time& stamp) override;
+
   void reset() override;
 
 protected:
@@ -161,4 +161,4 @@ protected:
   double initialTokensAvailable;
 };
 
-}
+}  // namespace cras

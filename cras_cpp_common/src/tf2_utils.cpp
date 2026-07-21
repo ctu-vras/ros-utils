@@ -15,62 +15,53 @@
 
 #include <cras_cpp_common/tf2_utils.hpp>
 
-namespace cras
-{
+namespace cras {
 
-void getRPY(const tf2::Quaternion& quat, double& roll, double& pitch, double& yaw)
-{
+void getRPY(const tf2::Quaternion& quat, double& roll, double& pitch, double& yaw) {
   tf2::Matrix3x3 tmpMat(quat);
   tmpMat.getRPY(roll, pitch, yaw);
 }
 
-void getRPY(const geometry_msgs::msg::Quaternion& quat, double& roll, double& pitch, double& yaw)
-{
+void getRPY(const geometry_msgs::msg::Quaternion& quat, double& roll, double& pitch, double& yaw) {
   tf2::Quaternion tmpQuat;
   tf2::fromMsg(quat, tmpQuat);
   getRPY(tmpQuat, roll, pitch, yaw);
 }
 
-double getRoll(const tf2::Quaternion& quat)
-{
+double getRoll(const tf2::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return roll;
 }
 
-double getRoll(const geometry_msgs::msg::Quaternion& quat)
-{
+double getRoll(const geometry_msgs::msg::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return roll;
 }
 
-double getPitch(const tf2::Quaternion& quat)
-{
+double getPitch(const tf2::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return pitch;
 }
 
-double getPitch(const geometry_msgs::msg::Quaternion& quat)
-{
+double getPitch(const geometry_msgs::msg::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return pitch;
 }
 
-double getYaw(const tf2::Quaternion& quat)
-{
+double getYaw(const tf2::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return yaw;
 }
 
-double getYaw(const geometry_msgs::msg::Quaternion& quat)
-{
+double getYaw(const geometry_msgs::msg::Quaternion& quat) {
   double roll, pitch, yaw;
   getRPY(quat, roll, pitch, yaw);
   return yaw;
 }
 
-}
+}  // namespace cras

@@ -26,21 +26,17 @@
 
 #include "type_utils.hpp"
 
-namespace cras
-{
+namespace cras {
 
 template<typename T>
-::std::optional<T> maybeParam(const ::rclcpp::ParameterValue& value)
-{
-  if (value.get_type() == ::rclcpp::PARAMETER_NOT_SET)
+::std::optional<T> maybeParam(const ::rclcpp::ParameterValue& value) {
+  if (value.get_type() == ::rclcpp::PARAMETER_NOT_SET) {
     return ::std::nullopt;
-
-  try
-  {
-    return value.get<T>();
   }
-  catch (const ::rclcpp::ParameterTypeException& e)
-  {
+
+  try {
+    return value.get<T>();
+  } catch (const ::rclcpp::ParameterTypeException& e) {
     return ::std::nullopt;
   }
 }
@@ -55,11 +51,11 @@ template<typename T>
  */
 template<typename ResultType, typename ParamValueType>
 using check_get_param_types = typename std::enable_if_t<
-  // getParam() cannot handle std::optional types
-  !::cras::is_optional<ResultType>::value &&
-  // C strings are handled via overloads as GetParamOptions is undefined for them
-  !::cras::is_c_string<ResultType>::value &&
-  !::cras::is_c_string<ParamValueType>::value
+    // getParam() cannot handle std::optional types
+    !::cras::is_optional<ResultType>::value &&
+    // C strings are handled via overloads as GetParamOptions is undefined for them
+    !::cras::is_c_string<ResultType>::value &&
+    !::cras::is_c_string<ParamValueType>::value
 >;
 
 /**
@@ -87,8 +83,8 @@ public:
  * \return Whether the parameter is specified.
  */
 bool hasParam(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::ConstSharedPtr& params, const ::std::string& name,
-  bool allow_undeclared = true);
+    const ::rclcpp::node_interfaces::NodeParametersInterface::ConstSharedPtr& params, const ::std::string& name,
+    bool allow_undeclared = true);
 
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
@@ -116,15 +112,15 @@ bool hasParam(
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
 template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-  ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-inline ::cras::GetParamResult<ResultType> getParamVerbose(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ::std::optional<ResultType>& default_value = ResultType(),
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "") {
+    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+::cras::GetParamResult<ResultType> getParamVerbose(
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ::std::optional<ResultType>& default_value = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "") {
   ::cras::GetParamResultInfo info;
   ParamValueType value;
   bool should_throw {false};
@@ -258,7 +254,8 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
             unique_errors.push_back(error);
           }
         }
-        info.message += " Some parts of the value were skipped because of the following conversion errors: " +
+        info.message +=
+          " Some parts of the value were skipped because of the following conversion errors: " +
           ::cras::to_string(unique_errors);
         info.message_level = ::rclcpp::Logger::Level::Warn;
       }
@@ -328,15 +325,15 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
 template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-  ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-inline ::cras::GetParamResult<ResultType> getParamVerbose(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ResultType& default_value = ResultType(),
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "") {
+    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+::cras::GetParamResult<ResultType> getParamVerbose(
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ResultType& default_value = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "") {
   return ::cras::getParamVerbose(
     params, name, ::std::optional<ResultType>(default_value), unit, options, logger, log_prefix);
 }
@@ -367,15 +364,15 @@ inline ::cras::GetParamResult<ResultType> getParamVerbose(
  * \return The loaded parameter value.
  */
 template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-  ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-inline ResultType getParam(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ::std::optional<ResultType>& default_value = ResultType(),
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "") {
+    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+ResultType getParam(
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ::std::optional<ResultType>& default_value = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "") {
   return ::cras::getParamVerbose(params, name, default_value, unit, options, logger, log_prefix).value;
 }
 
@@ -399,15 +396,15 @@ inline ResultType getParam(
  * \return The loaded parameter value.
  */
 template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-  ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-inline ResultType getParam(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ResultType& default_value = ResultType(),
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "") {
+    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+ResultType getParam(
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ResultType& default_value = ResultType(),
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "") {
   return ::cras::getParamVerbose(params, name, default_value, unit, options, logger, log_prefix).value;
 }
 
@@ -439,13 +436,13 @@ inline ResultType getParam(
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
 ::cras::GetParamResult<::std::string> getParamVerbose(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ::std::optional<const char*>& default_value = "",
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<::std::string>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "");
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ::std::optional<const char*>& default_value = "",
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "");
 
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value,
@@ -463,13 +460,13 @@ inline ResultType getParam(
  * \return A wrapper containing the loaded parameter value and details about the function execution.
  */
 ::cras::GetParamResult<::std::string> getParamVerbose(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const char* default_value = "",
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<::std::string>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "");
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const char* default_value = "",
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "");
 
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value (if not nullopt),
@@ -489,13 +486,13 @@ inline ResultType getParam(
  * \return The loaded parameter value.
  */
 ::std::string getParam(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const ::std::optional<const char*>& default_value = "",
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<::std::string>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "");
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const ::std::optional<const char*>& default_value = "",
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "");
 
 /**
  * \brief Get the value of the given ROS parameter, falling back to the specified default value,
@@ -513,13 +510,13 @@ inline ResultType getParam(
  * \return The loaded parameter value.
  */
 ::std::string getParam(
-  const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const ::std::string& name,
-  const char* default_value = "",
-  const ::std::string& unit = "",
-  const ::cras::GetParamOptions<::std::string>& options = {},
-  const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
-  const ::std::string& log_prefix = "");
+    const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const ::std::string& name,
+    const char* default_value = "",
+    const ::std::string& unit = "",
+    const ::cras::GetParamOptions<::std::string>& options = {},
+    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logger = nullptr,
+    const ::std::string& log_prefix = "");
 
 /**
  * \brief Generate definitions of "specializations" of getParam(Verbose) that use different
@@ -602,8 +599,8 @@ namespace cras {
 class ParamHelper {
 public:
   using RequiredInterfaces = ::rclcpp::node_interfaces::NodeInterfaces<
-    ::rclcpp::node_interfaces::NodeLoggingInterface,
-    ::rclcpp::node_interfaces::NodeParametersInterface
+      ::rclcpp::node_interfaces::NodeLoggingInterface,
+      ::rclcpp::node_interfaces::NodeParametersInterface
   >;
 
   explicit ParamHelper(const RequiredInterfaces& node_interfaces, const ::std::string& log_prefix = "");
@@ -640,12 +637,12 @@ public:
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ::cras::GetParamResult<ResultType> getParamVerbose(
-    const ::std::string& name,
-    const ::std::optional<ResultType>& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ::cras::GetParamResult<ResultType> getParamVerbose(
+      const ::std::string& name,
+      const ::std::optional<ResultType>& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     return ::cras::getParamVerbose(
       node_interfaces_.get_node_parameters_interface(), name, default_value, unit, options,
       node_interfaces_.get_node_logging_interface(), log_prefix_);
@@ -668,12 +665,12 @@ public:
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ::cras::GetParamResult<ResultType> getParamVerbose(
-    const ::std::string& name,
-    const ResultType& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ::cras::GetParamResult<ResultType> getParamVerbose(
+      const ::std::string& name,
+      const ResultType& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     return ::cras::getParamVerbose(
       node_interfaces_.get_node_parameters_interface(), name, ::std::optional<ResultType>(default_value), unit, options,
       node_interfaces_.get_node_logging_interface(), log_prefix_);
@@ -702,12 +699,12 @@ public:
    * \return The loaded parameter value.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ResultType getParam(
-    const ::std::string& name,
-    const ::std::optional<ResultType>& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ResultType getParam(
+      const ::std::string& name,
+      const ::std::optional<ResultType>& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     return ::cras::getParamVerbose(
       node_interfaces_.get_node_parameters_interface(), name, default_value, unit, options,
       node_interfaces_.get_node_logging_interface(), log_prefix_).value;
@@ -730,12 +727,12 @@ public:
    * \return The loaded parameter value.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ResultType getParam(
-    const ::std::string& name,
-    const ResultType& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ResultType getParam(
+      const ::std::string& name,
+      const ResultType& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     return ::cras::getParamVerbose(
       node_interfaces_.get_node_parameters_interface(), name, default_value, unit, options,
       node_interfaces_.get_node_logging_interface(), log_prefix_).value;
@@ -744,31 +741,31 @@ public:
   // const char* overloads of getParam
 
   ::cras::GetParamResult<::std::string> getParamVerbose(
-    const ::std::string& name,
-    const ::std::optional<const char*>& default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {});
+      const ::std::string& name,
+      const ::std::optional<const char*>& default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {});
 
   ::cras::GetParamResult<::std::string> getParamVerbose(
-    const ::std::string& name,
-    const char* default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {});
+      const ::std::string& name,
+      const char* default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {});
 
   ::std::string getParam(
-    const ::std::string& name,
-    const ::std::optional<const char*>& default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {});
+      const ::std::string& name,
+      const ::std::optional<const char*>& default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {});
 
   ::std::string getParam(
-    const ::std::string& name,
-    const char* default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {});
+      const ::std::string& name,
+      const char* default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {});
 
   ::std::string log_prefix_;  //!< Name used as a prefix in log messages.
   RequiredInterfaces node_interfaces_;
 };
 
-}
+}  // namespace cras

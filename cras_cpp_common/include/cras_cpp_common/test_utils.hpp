@@ -12,24 +12,20 @@
 #include <gtest/gtest.h>
 #include <rclcpp/utilities.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * Create a descendant of this class and use it as a fixture for Gtest tests using TEST_F macro. It will automatically
  * start and stop the rclcpp backend.
  */
-class RclcppTestFixture : public ::testing::Test
-{
+class RclcppTestFixture : public ::testing::Test{
 protected:
-  void SetUp() override
-  {
+  void SetUp() override{
     rclcpp::init(0, nullptr);
   }
-  void TearDown() override
-  {
+  void TearDown() override{
     rclcpp::shutdown();
   }
 };
 
-}
+}  // namespace cras

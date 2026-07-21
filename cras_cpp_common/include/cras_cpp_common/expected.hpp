@@ -13,20 +13,18 @@
 
 #include <tl/expected.hpp>
 
-namespace cras
-{
+namespace cras {
 using ::tl::bad_expected_access;
 using ::tl::expected;
 using ::tl::in_place;
 using ::tl::make_unexpected;
 using ::tl::unexpect;
 using ::tl::unexpected;
-}
+}  // namespace cras
 
 #include <type_traits>
 
-namespace cras
-{
+namespace cras {
 /**
  * \brief Type trait determining whether type T is cras::expected or not.
  * \tparam T The type to test.
@@ -41,4 +39,4 @@ struct is_cras_expected : public ::std::false_type {};
  */
 template<typename T, typename E>
 struct is_cras_expected<::cras::expected<T, E>> : public ::std::true_type {};
-}
+}  // namespace cras

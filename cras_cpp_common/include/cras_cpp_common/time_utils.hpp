@@ -26,8 +26,7 @@
 #include <rclcpp/time.hpp>
 #include <rmw/time.h>
 
-namespace cras
-{
+namespace cras {
 
 #if __cpp_lib_chrono >= 201907L || (defined(__GNUC__) && __GNUC__ >= 12 && __cplusplus >= 202002L)
 #define cras_has_chrono_clocks_support 1
@@ -97,8 +96,7 @@ struct TimeType<
  * \return t
  */
 template<typename T, typename ::std::enable_if_t<::cras::TimeType<T>::value>* = nullptr>
-T convertTime(const T& t)
-{
+T convertTime(const T& t) {
   return t;
 }
 
@@ -113,13 +111,13 @@ T convertTime(const T& t)
  * \return The converted time.
  */
 template<
-  typename T2, typename T1,
-  typename ::std::enable_if_t<
-    ::cras::TimeType<T1>::value &&
-    ::cras::TimeType<T2>::value &&
-    !::std::is_same_v<T1, T2> &&
-    !(::cras::is_time_point_v<T2> && ::cras::is_time_point_v<T1>)
-  >* = nullptr
+    typename T2, typename T1,
+    typename ::std::enable_if_t<
+        ::cras::TimeType<T1>::value &&
+        ::cras::TimeType<T2>::value &&
+        !::std::is_same_v<T1, T2> &&
+        !(::cras::is_time_point_v<T2> && ::cras::is_time_point_v<T1>)
+    >* = nullptr
 >
 T2 convertTime(const T1& t) = delete;
 
@@ -250,8 +248,7 @@ T2 convertTime(const T1& t) {
  * \return The converted time with the given clock type.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-::rclcpp::Time convertTime(const T1& t, const ::rcl_clock_type_t clockType)
-{
+::rclcpp::Time convertTime(const T1& t, const ::rcl_clock_type_t clockType) {
   return ::rclcpp::Time(convertTime<rcutils_time_point_value_t>(t), clockType);
 }
 
@@ -272,8 +269,7 @@ int64_t secNsecToNSec(const int32_t sec, const uint32_t nsec);
  * \return A pair consisting of the whole number of seconds and the number of nanoseconds in the fractional second.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-std::pair<int32_t, uint32_t> secNsec(const T1& t)
-{
+std::pair<int32_t, uint32_t> secNsec(const T1& t) {
   const auto time = convertTime<::builtin_interfaces::msg::Time>(t);
   return {time.sec, time.nanosec};
 }
@@ -286,8 +282,7 @@ std::pair<int32_t, uint32_t> secNsec(const T1& t)
  * \return The number of whole seconds.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-int32_t sec(const T1& t)
-{
+int32_t sec(const T1& t) {
   return ::cras::secNsec(t).first;
 }
 
@@ -299,8 +294,7 @@ int32_t sec(const T1& t)
  * \return The number of nanoseconds in the fractional second.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-uint32_t nanosec(const T1& t)
-{
+uint32_t nanosec(const T1& t) {
   return ::cras::secNsec(t).second;
 }
 
@@ -312,8 +306,7 @@ uint32_t nanosec(const T1& t)
  * \return The float seconds.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-double float_secs(const T1& t)
-{
+double float_secs(const T1& t) {
   return ::cras::convertTime<double>(t);
 }
 
@@ -330,8 +323,8 @@ template<> struct DurationType<rcutils_duration_value_t> : ::std::true_type {};
 template<> struct DurationType<rmw_time_t> : ::std::true_type {};  // yes, this is correct, rmw_time_t is duration, too
 template<> struct DurationType<double> : ::std::true_type {};
 template<typename R, typename P> struct DurationType<
-  ::std::chrono::duration<R, P>,
-  ::std::enable_if_t<::cras::is_duration_v<::std::chrono::duration<R, P>>>
+    ::std::chrono::duration<R, P>,
+    ::std::enable_if_t<::cras::is_duration_v<::std::chrono::duration<R, P>>>
 > : ::std::true_type {};
 // *INDENT-ON*
 
@@ -342,8 +335,7 @@ template<typename R, typename P> struct DurationType<
  * \return t
  */
 template<typename T, typename ::std::enable_if_t<::cras::DurationType<T>::value>* = nullptr>
-T convertDuration(const T& t)
-{
+T convertDuration(const T& t) {
   return t;
 }
 
@@ -358,14 +350,14 @@ T convertDuration(const T& t)
  * \return The converted duration.
  */
 template<
-  typename D2, typename D1,
-  typename ::std::enable_if_t<
-    ::cras::DurationType<D1>::value &&
-    ::cras::DurationType<D2>::value &&
-    !::std::is_same_v<D1, D2> &&
-    // the following case needs to be explicitly removed from overload resolution
-    !::cras::is_duration_v<D1>
-  >* = nullptr
+    typename D2, typename D1,
+    typename ::std::enable_if_t<
+        ::cras::DurationType<D1>::value &&
+        ::cras::DurationType<D2>::value &&
+        !::std::is_same_v<D1, D2> &&
+        // the following case needs to be explicitly removed from overload resolution
+        !::cras::is_duration_v<D1>
+    >* = nullptr
 >
 D2 convertDuration(const D1& t) = delete;
 
@@ -486,8 +478,8 @@ D2 convertDuration(const D1& t) {
 template<
   typename D2, typename D1,
   typename ::std::enable_if_t<
-    ::cras::is_duration_v<D1> && ::cras::is_duration_v<D2> &&
-    !::std::is_same_v<D1, D2>
+      ::cras::is_duration_v<D1> && ::cras::is_duration_v<D2> &&
+      !::std::is_same_v<D1, D2>
   >* = nullptr
 >
 D2 convertDuration(const D1& t) {
@@ -503,11 +495,10 @@ D2 convertDuration(const D1& t) {
  * \return A pair consisting of the whole number of seconds and the number of nanoseconds in the fractional second.
  */
 template<
-  typename T1,
-  typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
+    typename T1,
+    typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
 >
-std::pair<int32_t, uint32_t> secNsec(const T1& t)
-{
+std::pair<int32_t, uint32_t> secNsec(const T1& t) {
   const auto time = convertDuration<::builtin_interfaces::msg::Duration>(t);
   return {time.sec, time.nanosec};
 }
@@ -520,11 +511,10 @@ std::pair<int32_t, uint32_t> secNsec(const T1& t)
  * \return The number of whole seconds.
  */
 template<
-  typename T1,
-  typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
+    typename T1,
+    typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
 >
-int32_t sec(const T1& t)
-{
+int32_t sec(const T1& t) {
   return ::cras::secNsec(t).first;
 }
 
@@ -536,11 +526,10 @@ int32_t sec(const T1& t)
  * \return The number of nanoseconds in the fractional second.
  */
 template<
-  typename T1,
-  typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
+    typename T1,
+    typename ::std::enable_if_t<::cras::DurationType<T1>::value && !::cras::TimeType<T1>::value>* = nullptr
 >
-uint32_t nanosec(const T1& t)
-{
+uint32_t nanosec(const T1& t) {
   return ::cras::secNsec(t).second;
 }
 
@@ -552,7 +541,7 @@ uint32_t nanosec(const T1& t)
  * \return The remaining time.
  */
 ::rclcpp::Duration remainingTime(const ::rclcpp::Time& query, double timeout,
-  const ::rclcpp::Clock::ConstSharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
+    const ::rclcpp::Clock::ConstSharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
 
 /**
  * \brief Return remaining time to timeout from the query time.
@@ -562,7 +551,7 @@ uint32_t nanosec(const T1& t)
  * \return The remaining time.
  */
 ::rclcpp::Duration remainingTime(const ::rclcpp::Time& query, const ::rclcpp::Duration& timeout,
-  const ::rclcpp::Clock::ConstSharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
+    const ::rclcpp::Clock::ConstSharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
 
 /**
  * \brief Return the frequency represented by the given rate.
@@ -580,7 +569,7 @@ double frequency(const ::rclcpp::Rate& rate, bool maxPeriodMeansZero = false);
  * \return The corresponding Rate object.
  */
 ::rclcpp::Rate safeRate(double frequency,
-  const ::rclcpp::Clock::SharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
+    const ::rclcpp::Clock::SharedPtr& clock = ::std::make_shared<::rclcpp::Clock>(RCL_SYSTEM_TIME));
 
 /**
  * \brief Return a rate representing the given frequency. If the frequency is zero or too small, return min/max
@@ -621,22 +610,18 @@ int getYear(const ::std::chrono::system_clock::time_point& time);
 /**
  * \brief Trivial NodeClockInterface that just gives access to the given clock instance.
  */
-class SimpleClockInterface : public ::rclcpp::node_interfaces::NodeClockInterface
-{
+class SimpleClockInterface : public ::rclcpp::node_interfaces::NodeClockInterface{
 public:
   RCLCPP_SMART_PTR_ALIASES_ONLY(SimpleClockInterface)
 
-  explicit SimpleClockInterface(const ::rclcpp::Clock::SharedPtr& clock) : clock(clock)
-  {
+  explicit SimpleClockInterface(const ::rclcpp::Clock::SharedPtr& clock) : clock(clock) {
   }
 
-  ::rclcpp::Clock::SharedPtr get_clock() override
-  {
+  ::rclcpp::Clock::SharedPtr get_clock() override{
     return this->clock;
   }
 
-  ::rclcpp::Clock::ConstSharedPtr get_clock() const override
-  {
+  ::rclcpp::Clock::ConstSharedPtr get_clock() const override{
     return this->clock;
   }
 
@@ -644,10 +629,9 @@ protected:
   ::rclcpp::Clock::SharedPtr clock;
 };
 
-}
+}  // namespace cras
 
-namespace rclcpp
-{
+namespace rclcpp {
 
 /**
  * \brief Test two rates for equality.
@@ -675,4 +659,4 @@ bool operator==(const ::rclcpp::Rate& r1, const ::rclcpp::Rate& r2);
  */
 ::rclcpp::Duration operator/(const ::rclcpp::Duration& numerator, const ::rclcpp::Duration& denominator);
 
-}
+}  // namespace rclcpp

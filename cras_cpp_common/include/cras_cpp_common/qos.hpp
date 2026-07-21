@@ -17,8 +17,7 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/qos.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Parse a QoS preset name into the QoS object.
@@ -29,17 +28,17 @@ namespace cras
 ::rclcpp::QoS parseQoSPreset(const ::std::string& qosPreset);
 
 bool configureQoSProfile(
-  ::rclcpp::QoS& profile, const ::std::optional<int>& depth,
-  const ::std::optional<::std::string>& history, const ::std::optional<::std::string>& reliability,
-  const ::std::optional<::std::string>& durability, const ::std::optional<::std::string>& liveliness,
-  const ::std::optional<double>& livelinessLeaseDurationSeconds);
+    ::rclcpp::QoS& profile, const ::std::optional<int>& depth,
+    const ::std::optional<::std::string>& history, const ::std::optional<::std::string>& reliability,
+    const ::std::optional<::std::string>& durability, const ::std::optional<::std::string>& liveliness,
+    const ::std::optional<double>& livelinessLeaseDurationSeconds);
 
 void configureQoSProfile(
-  ::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
-  const ::std::optional<::rmw_qos_history_policy_t>& history,
-  const ::std::optional<::rmw_qos_reliability_policy_t>& reliability,
-  const ::std::optional<::rmw_qos_durability_policy_t>& durability,
-  const ::std::optional<::rmw_qos_liveliness_policy_t>& liveliness,
-  const ::std::optional<::rclcpp::Duration>& livelinessLeaseDuration);
+    ::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
+    const ::std::optional<::rmw_qos_history_policy_t>& history,
+    const ::std::optional<::rmw_qos_reliability_policy_t>& reliability,
+    const ::std::optional<::rmw_qos_durability_policy_t>& durability,
+    const ::std::optional<::rmw_qos_liveliness_policy_t>& liveliness,
+    const ::std::optional<::rclcpp::Duration>& livelinessLeaseDuration);
 
-}
+}  // namespace cras

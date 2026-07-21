@@ -15,8 +15,7 @@
 #include "type_utils/literal_sz.hpp"
 #include "type_utils/string_traits.hpp"
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Remove not-so-nice parts of demangled C++ type names.
@@ -38,8 +37,7 @@ namespace cras
  * \return Human-readable name.
  */
 template<typename T>
-inline ::std::string getTypeName()
-{
+inline ::std::string getTypeName() {
 #if defined(__clang__)
   const ::std::string prefix = "[T = ";
   const ::std::string suffix = "]";
@@ -72,4 +70,4 @@ inline ::std::string getTypeName()
  */
 ::std::string getTypeName(const ::std::type_info& typeInfo);
 
-}
+}  // namespace cras

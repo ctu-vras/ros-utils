@@ -32,15 +32,15 @@ namespace cras {
  *         contained value succeeded converting (if converting to a container type).
  */
 inline bool convert(
-  const ::rclcpp::ParameterValue& x, ::rclcpp::ParameterValue& v, bool /*skip_non_convertible*/ = false,
-  ::std::list<::std::string>* /*errors*/ = nullptr) {
+    const ::rclcpp::ParameterValue& x, ::rclcpp::ParameterValue& v, bool /*skip_non_convertible*/ = false,
+    ::std::list<::std::string>* /*errors*/ = nullptr) {
   v = x;
   return true;
 }
 
 inline bool convert(
-  const ::rclcpp::ParameterValue& x, bool& v, bool /*skip_non_convertible*/ = false,
-  ::std::list<::std::string>* errors = nullptr) {
+    const ::rclcpp::ParameterValue& x, bool& v, bool /*skip_non_convertible*/ = false,
+    ::std::list<::std::string>* errors = nullptr) {
   if (x.get_type() == ::rclcpp::ParameterType::PARAMETER_BOOL) {
     v = x.get<bool>();
     return true;
@@ -76,8 +76,8 @@ inline bool convert(
 }
 
 inline bool convert(
-  const ::rclcpp::ParameterValue& x, int64_t& v, bool /*skip_non_convertible*/ = false,
-  ::std::list<::std::string>* errors = nullptr) {
+    const ::rclcpp::ParameterValue& x, int64_t& v, bool /*skip_non_convertible*/ = false,
+    ::std::list<::std::string>* errors = nullptr) {
   if (x.get_type() == ::rclcpp::ParameterType::PARAMETER_INTEGER) {
     v = x.get<int64_t>();
     return true;
@@ -92,24 +92,24 @@ inline bool convert(
 
 template<typename T>
 bool convert(
-  const ::std::string& x, ::std::enable_if_t<std::is_convertible_v<::std::string, T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
+    const ::std::string& x, ::std::enable_if_t<std::is_convertible_v<::std::string, T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
   v = static_cast<T>(x);
   return true;
 }
 
 template<typename T>
 bool convert(
-  const bool& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
+    const bool& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
   v = x;
   return true;
 }
 
 template<typename T>
 bool convert(
-  const int64_t& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
+    const int64_t& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
   if (x == 0 || x == 1) {
     v = static_cast<T>(x);
     return true;
@@ -121,8 +121,8 @@ bool convert(
 
 template<typename T>
 bool convert(
-  const ::std::string& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
+    const ::std::string& x, ::std::enable_if_t<std::is_same_v<bool, T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
   if (x == "true" || x == "1") {
     v = true;
     return true;
@@ -137,8 +137,8 @@ bool convert(
 
 template<typename T>
 bool convert(
-  const int64_t& x, ::std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
+    const int64_t& x, ::std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
   if constexpr (sizeof(T) > sizeof(int64_t)) {
     v = static_cast<T>(x);
   } else if constexpr (std::is_same_v<int64_t, T>) {
@@ -170,8 +170,8 @@ bool convert(
 
 template<typename T>
 bool convert(
-  const double& x, ::std::enable_if_t<std::is_floating_point_v<T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
+    const double& x, ::std::enable_if_t<std::is_floating_point_v<T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
   if constexpr (sizeof(T) > sizeof(double)) {
     v = static_cast<T>(x);
   } else if constexpr (std::is_same_v<double, T>) {
@@ -198,15 +198,15 @@ bool convert(
 
 template<typename T>
 bool convert(
-  const int64_t& x, ::std::enable_if_t<std::is_floating_point_v<T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
+    const int64_t& x, ::std::enable_if_t<std::is_floating_point_v<T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* errors = nullptr) {
   return convert(static_cast<double>(x), v, false, errors);
 }
 
 template<typename T>
 bool convert(
-  const uint8_t& x, ::std::enable_if_t<std::is_same_v<uint8_t, T>, T>& v,
-  bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
+    const uint8_t& x, ::std::enable_if_t<std::is_same_v<uint8_t, T>, T>& v,
+    bool /*skip_non_convertible*/ = false, ::std::list<::std::string>* /*errors*/ = nullptr) {
   v = x;
   return true;
 }
@@ -247,8 +247,8 @@ DEFINE_INTEGRAL_CONVERT(unsigned long, int64_t, 0, ULONG_MAX)  // NOLINT
 DEFINE_INTEGRAL_CONVERT(unsigned long long, int64_t, 0, ULONG_LONG_MAX)  // NOLINT
 
 inline bool convert(
-  const ::rclcpp::ParameterValue& x, double& v, bool /*skip_non_convertible*/ = false,
-  ::std::list<::std::string>* errors = nullptr) {
+    const ::rclcpp::ParameterValue& x, double& v, bool /*skip_non_convertible*/ = false,
+    ::std::list<::std::string>* errors = nullptr) {
   if (x.get_type() == ::rclcpp::ParameterType::PARAMETER_DOUBLE) {
     v = x.get<double>();
     return true;
@@ -293,8 +293,8 @@ DEFINE_DOUBLE_CONVERT(float, double, -FLT_MAX, FLT_MAX)
 DEFINE_DOUBLE_CONVERT(long double, double, -LDBL_MAX, LDBL_MAX)
 
 inline bool convert(
-  const ::rclcpp::ParameterValue& x, std::string& v, bool /*skip_non_convertible*/ = false,
-  ::std::list<::std::string>* errors = nullptr) {
+    const ::rclcpp::ParameterValue& x, std::string& v, bool /*skip_non_convertible*/ = false,
+    ::std::list<::std::string>* errors = nullptr) {
   if (x.get_type() == ::rclcpp::ParameterType::PARAMETER_STRING) {
     v = x.get<std::string>();
     return true;
@@ -310,34 +310,34 @@ inline bool convert(
 // forward-declare container types so that they can be used by the other container converters (set inside vector etc.)
 template<typename T>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::vector<T>& v,
-  bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
+    const ::rclcpp::ParameterValue& x, ::std::vector<T>& v,
+    bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
 
 template<typename T>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::list<T>& v,
-  bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
+    const ::rclcpp::ParameterValue& x, ::std::list<T>& v,
+    bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
 
 template<typename T>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::set<T>& v,
-  bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
+    const ::rclcpp::ParameterValue& x, ::std::set<T>& v,
+    bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
 
 template<typename T>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::unordered_set<T>& v,
-  bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
+    const ::rclcpp::ParameterValue& x, ::std::unordered_set<T>& v,
+    bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
 
 template<typename T, size_t N>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::array<T, N>& v,
-  bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
+    const ::rclcpp::ParameterValue& x, ::std::array<T, N>& v,
+    bool skip_non_convertible = false, ::std::list<::std::string>* errors = nullptr);
 
 #define DEFINE_ARRAY_CONVERT(arrayType, insertFn) \
   template<typename T> \
-  inline bool convert(const ::rclcpp::ParameterValue& x, arrayType<T>& v, bool skip_non_convertible, \
-    ::std::list<::std::string>* errors) \
-  { \
+  inline bool convert( \
+      const ::rclcpp::ParameterValue& x, arrayType<T>& v, bool skip_non_convertible, \
+      ::std::list<::std::string>* errors) { \
     const auto array_param_type = ::cras::ParameterValueTraits<arrayType<T>>::param_type; \
     if (x.get_type() != array_param_type) { \
       if (errors != nullptr) { \
@@ -350,8 +350,7 @@ bool convert(
     const auto& array = x.get<::cras::ParameterValueTraits<arrayType<T>>::param_type>(); \
     for (size_t i = 0; i < array.size(); ++i) { \
       T t; \
-      if (convert(array[i], t, skip_non_convertible, errors)) \
-      { \
+      if (convert(array[i], t, skip_non_convertible, errors)) { \
         v.insertFn(t); \
       } else if (!skip_non_convertible) { \
         return false; \
@@ -370,8 +369,8 @@ DEFINE_ARRAY_CONVERT(::std::unordered_set, insert)
 
 template<typename T, size_t N>
 bool convert(
-  const ::rclcpp::ParameterValue& x, ::std::array<T, N>& v, bool skip_non_convertible,
-  ::std::list<::std::string>* errors) {
+    const ::rclcpp::ParameterValue& x, ::std::array<T, N>& v, bool skip_non_convertible,
+    ::std::list<::std::string>* errors) {
   const auto array_param_type = ::cras::ParameterValueTraits<::std::array<T, N>>::param_type;
   if (x.get_type() != array_param_type) {
     if (errors != nullptr) {

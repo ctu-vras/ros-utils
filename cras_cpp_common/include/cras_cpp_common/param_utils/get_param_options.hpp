@@ -59,8 +59,9 @@ struct DefaultToParamFn {
    * \return Whether the conversion succeeded.
    * \note This function should not throw.
    */
-  static bool to_param(const ::rclcpp::ParameterValue& x, ParamValueType& v, bool skip_non_convertible = false,
-                       ::std::list<::std::string>* errors = nullptr) {
+  static bool to_param(
+      const ::rclcpp::ParameterValue& x, ParamValueType& v, bool skip_non_convertible = false,
+      ::std::list<::std::string>* errors = nullptr) {
     return ::cras::convert(x, v, skip_non_convertible, errors);
   }
 };
@@ -125,11 +126,12 @@ struct GetParamOptions {
    * \return Whether the conversion succeeded.
    * \note This function should not throw.
    */
-  typedef ::std::function<bool(
-      const ::rclcpp::ParameterValue& param,
-      ParamValueType& value,
-      bool skip_non_convertible,
-      ::std::list<::std::string>* errors)> ToParamFn;
+  typedef ::std::function<
+      bool(
+        const ::rclcpp::ParameterValue& param, ParamValueType& value,
+        bool skip_non_convertible, ::std::list<::std::string>* errors
+      )
+  > ToParamFn;
 
   //! \brief Whether to print error messages to log.
   bool print_messages {true};
@@ -204,12 +206,12 @@ struct GetParamOptions {
    */
   template<typename NewParamValueType>
   ::cras::GetParamOptions<ResultType, NewParamValueType> asType(
-    typename ::cras::GetParamOptions<ResultType, NewParamValueType>::ToResultFn new_to_result =
-    & ::cras::DefaultToResultFn<ResultType, NewParamValueType>::to_result,
-    ::cras::ToStringFn<NewParamValueType> new_param_to_str =
-    [] (const NewParamValueType& s) { return ::cras::to_string(s); },
-    typename ::cras::GetParamOptions<ResultType, NewParamValueType>::ToParamFn new_to_param =
-    & ::cras::DefaultToParamFn<NewParamValueType>::to_param) const {
+      typename ::cras::GetParamOptions<ResultType, NewParamValueType>::ToResultFn new_to_result =
+      & ::cras::DefaultToResultFn<ResultType, NewParamValueType>::to_result,
+      ::cras::ToStringFn<NewParamValueType> new_param_to_str =
+      [] (const NewParamValueType& s) { return ::cras::to_string(s); },
+      typename ::cras::GetParamOptions<ResultType, NewParamValueType>::ToParamFn new_to_param =
+      & ::cras::DefaultToParamFn<NewParamValueType>::to_param) const {
     // We can't initialize the object with the default values of to_param and to_result because they are ill-formed
     ::cras::GetParamOptions<ResultType, NewParamValueType> options = {
       {}, {}, {}, {}, {}, {}, {}, new_to_result, new_to_param

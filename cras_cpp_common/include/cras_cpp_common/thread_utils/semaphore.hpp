@@ -11,16 +11,14 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief A reverse counting semaphore which can wait until its count is zero. Each `acquire()` increases this count and
  * each `release()` decreases it. `waitZero()` is the function that waits until the internal count is zero. The
  * semaphore can be disabled, which means no new `acquire()` calls will be accepted. This is useful if you plan to quit.
  */
-class ReverseSemaphore
-{
+class ReverseSemaphore {
 public:
   /**
    * \brief Create the semaphore (internal count is zero).
@@ -106,18 +104,16 @@ private:
  *       `SemaphoreGuard&lt;ReverseSemaphore&gt; guard(sem); if (!guard.acquired()) return;
  */
 template<typename T>
-class SemaphoreGuard
-{
+class SemaphoreGuard {
 public:
-  explicit SemaphoreGuard(T& semaphore) : semaphore(semaphore)
-  {
+  explicit SemaphoreGuard(T& semaphore) : semaphore(semaphore) {
     this->acquireSucceeded = this->semaphore.acquire();
   }
 
-  ~SemaphoreGuard()
-  {
-    if (this->acquireSucceeded)
+  ~SemaphoreGuard() {
+    if (this->acquireSucceeded) {
       this->semaphore.release();
+    }
   }
 
   /**
@@ -125,8 +121,7 @@ public:
    * \return Success value.
    * \note Always check the result of this function after constructing a guard. The semaphore may be disabled.
    */
-  bool acquired() const
-  {
+  bool acquired() const {
     return this->acquireSucceeded;
   }
 
@@ -137,4 +132,5 @@ private:
   //! \brief Whether the acquire succeeded.
   bool acquireSucceeded {false};
 };
-}
+
+}  // namespace cras
