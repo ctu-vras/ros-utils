@@ -7,7 +7,7 @@
   <author email="peckama2@fel.cvut.cz">Martin Pecka</author>
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
 
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <url type="website">https://index.ros.org/p/cras_topic_tools</url>
   <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
