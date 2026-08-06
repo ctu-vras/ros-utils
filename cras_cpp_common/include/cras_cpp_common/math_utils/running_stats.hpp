@@ -1,15 +1,17 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Computation of running average and variance using Welford's algorithm.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <cmath>
 #include <cstddef>
+#include <optional>
 
 namespace cras
 {
@@ -23,6 +25,8 @@ namespace cras
  *
  * You can also add and subtract instances of this class which behaves as if you merged / diffed the streams that
  * created the stats.
+ *
+ * This class also provides minimum and maximum values. However, these only work when removals are not used.
  */
 template<typename T>
 class RunningStats
@@ -60,6 +64,7 @@ public:
    * \brief Get the mean of stored samples.
    * \return The mean.
    * \note This function runs in O(1) time.
+   * \note Calling this function on empty stats returns zero.
    */
   T getMean() const;
 
@@ -67,6 +72,7 @@ public:
    * \brief Get the variance of stored samples.
    * \return The variance.
    * \note This function runs in O(1) time.
+   * \note Calling this function on empty stats returns zero.
    */
   T getVariance() const;
 
@@ -75,6 +81,7 @@ public:
    *        should be unbiased estimator).
    * \return The sample variance.
    * \note This function runs in O(1) time.
+   * \note Calling this function on empty stats returns zero.
    */
   T getSampleVariance() const;
 
@@ -83,8 +90,27 @@ public:
    * \return The standard deviation.
    * \note The standard deviation computation is based on the sample variance.
    * \note This function runs in O(1) time.
+   * \note Calling this function on empty stats returns zero.
    */
   T getStandardDeviation() const;
+
+  /**
+   * \brief Get the minimum value.
+   * \return The minimum value.
+   * \note Calling this function on empty stats returns the maximum value of type T.
+   * \note Every removal of a sample resets the min/max values.
+   * \note This function runs in O(1) time.
+   */
+  T getMin() const;
+
+  /**
+   * \brief Get the maximum value.
+   * \return The maximum value.
+   * \note Calling this function on empty stats returns the minimum value of type T.
+   * \note Every removal of a sample resets the min/max values.
+   * \note This function runs in O(1) time.
+   */
+  T getMax() const;
 
   /**
    * \brief Combine the two sequences represented by this and other and represent their joint stats.
@@ -189,6 +215,18 @@ protected:
    */
   static T zero();
 
+  /**
+   * \brief Return the minimum value of type T.
+   * \return The minimum value.
+   */
+  static T minValue();
+
+  /**
+   * \brief Return the maximum value of type T.
+   * \return The maximum value.
+   */
+  static T maxValue();
+
   //! \brief Number of represented samples.
   size_t count {0u};
 
@@ -197,6 +235,9 @@ protected:
 
   //! \brief Sk term of the computation such that var(X0...Xk) = this->var/this->count.
   T var {RunningStats<T>::zero()};
+
+  ::std::optional<T> min;  //!< The minimum value.
+  ::std::optional<T> max;  //!< The maximum value.
 };
 
 }

@@ -127,6 +127,12 @@ target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/m
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats.hpp>)
 target_link_libraries(cras_math_utils INTERFACE ${PROJECT_NAME}_includes)
 
+add_library(cras_math_utils_running_stats_duration INTERFACE)
+target_sources(cras_math_utils_running_stats_duration INTERFACE
+  $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats_duration.hpp>)
+target_link_libraries(cras_math_utils_running_stats_duration INTERFACE
+  cras_math_utils rclcpp::rclcpp ${PROJECT_NAME}_includes)
+
 add_library(cras_time_utils SHARED
   src/time_utils.cpp
 #  src/time_utils/interruptible_sleep_interface.cpp
@@ -318,6 +324,7 @@ set(EXPORTED_LIBS
   cras_literal_sz
   cras_log_utils
   cras_math_utils
+  cras_math_utils_running_stats_duration
   #  cras_message_utils
   #  cras_node_utils
   #  cras_nodelet_manager
@@ -439,8 +446,8 @@ if(BUILD_TESTING)
   ament_add_gtest(test_cras_log_utils test/test_log_utils.cpp)
   target_link_libraries(test_cras_log_utils cras_log_utils cras_type_utils)
 #
-#  catkin_add_gtest(test_cras_math_utils test/test_math_utils.cpp)
-#  target_link_libraries(test_cras_math_utils cras_math_utils ${catkin_LIBRARIES})
+  ament_add_gtest(test_cras_math_utils test/test_math_utils.cpp)
+  target_link_libraries(test_cras_math_utils cras_math_utils cras_math_utils_running_stats_duration)
 #
 #  catkin_add_gtest(test_pool_allocator test/test_pool_allocator.cpp)
 #  target_link_libraries(test_pool_allocator cras_pool_allocator)
