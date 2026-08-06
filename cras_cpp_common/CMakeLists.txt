@@ -60,47 +60,46 @@ try_compile(HAS_DESIGNATED_INITIALIZERS
 
 set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
+add_library(${PROJECT_NAME}_includes INTERFACE)
+target_include_directories(${PROJECT_NAME}_includes INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+
 add_library(cras_expected INTERFACE)
 target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
-target_include_directories(cras_expected INTERFACE
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_expected INTERFACE tl::expected)
+target_link_libraries(cras_expected INTERFACE tl::expected ${PROJECT_NAME}_includes)
 
 add_library(cras_format INTERFACE)
 target_sources(cras_format INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/format.hpp>)
-target_include_directories(cras_format INTERFACE
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 # It actually depends on fmt only for older compilers, but it's not a big deal to over-depend on fmt
-target_link_libraries(cras_format INTERFACE fmt::fmt)
+target_link_libraries(cras_format INTERFACE fmt::fmt ${PROJECT_NAME}_includes)
 
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
+target_link_libraries(cras_small_map INTERFACE ${PROJECT_NAME}_includes)
 
 add_library(cras_c_api SHARED src/c_api.cpp)
-target_include_directories(cras_c_api PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_c_api PUBLIC ${PROJECT_NAME}_includes)
 
 add_library(cras_semaphore SHARED src/thread_utils/semaphore.cpp)
-target_include_directories(cras_semaphore PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+target_link_libraries(cras_semaphore PUBLIC ${PROJECT_NAME}_includes)
 
 add_library(cras_set_utils INTERFACE)
 target_sources(cras_set_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/set_utils.hpp>)
+target_link_libraries(cras_set_utils INTERFACE ${PROJECT_NAME}_includes)
 
 add_library(cras_type_traits INTERFACE)
 target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/string_traits.hpp>)
+target_link_libraries(cras_type_traits INTERFACE ${PROJECT_NAME}_includes)
 
 add_library(cras_literal_sz INTERFACE)
 target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.hpp>)
+target_link_libraries(cras_literal_sz INTERFACE ${PROJECT_NAME}_includes)
 
 add_library(cras_urdf_utils SHARED src/urdf_utils.cpp)
-target_include_directories(cras_urdf_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_urdf_utils
-  PUBLIC urdfdom_headers::urdfdom_headers Eigen3::Eigen)
+  PUBLIC urdfdom_headers::urdfdom_headers Eigen3::Eigen ${PROJECT_NAME}_includes)
 
 #add_library(cras_message_utils INTERFACE)
 #target_sources(cras_message_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/message_utils.hpp>)
@@ -109,10 +108,7 @@ target_link_libraries(cras_urdf_utils
 #add_dependencies(cras_message_utils INTERFACE ${catkin_EXPORTED_TARGETS})
 
 add_library(cras_cloud SHARED src/cloud.cpp)
-target_include_directories(cras_cloud PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS})
+target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS} ${PROJECT_NAME}_includes)
 
 #add_library(cras_diag_updater src/diag_utils/updater.cpp)
 #add_dependencies(cras_diag_updater ${catkin_EXPORTED_TARGETS})
@@ -129,35 +125,29 @@ target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS})
 add_library(cras_math_utils INTERFACE)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils.hpp>)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats.hpp>)
+target_link_libraries(cras_math_utils INTERFACE ${PROJECT_NAME}_includes)
 
 add_library(cras_time_utils SHARED
   src/time_utils.cpp
 #  src/time_utils/interruptible_sleep_interface.cpp
 )
-target_include_directories(cras_time_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_time_utils
-  PUBLIC rclcpp::rclcpp
+  PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_includes
   PRIVATE cras_format Boost::boost
   # cras_semaphore
 )
 
 add_library(cras_rate_limiter SHARED src/rate_limiter.cpp)
-target_include_directories(cras_rate_limiter PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_rate_limiter
-  PUBLIC rcl::rcl rclcpp::rclcpp
+  PUBLIC rcl::rcl rclcpp::rclcpp ${PROJECT_NAME}_includes
   PRIVATE cras_time_utils)
 
 add_library(cras_tf2_utils SHARED
   src/tf2_utils.cpp
 #  src/tf2_utils/interruptible_buffer.cpp
 )
-target_include_directories(cras_tf2_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_tf2_utils
-  PUBLIC ${geometry_mgs_TARGETS}
-  PUBLIC tf2::tf2
+  PUBLIC tf2::tf2 ${geometry_mgs_TARGETS} ${PROJECT_NAME}_includes
   PRIVATE tf2_geometry_msgs::tf2_geometry_msgs
 )
 
@@ -165,14 +155,15 @@ add_library(cras_string_utils SHARED
   src/string_utils.cpp
   src/string_utils/rclcpp.cpp
 )
-target_include_directories(cras_string_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_string_utils PUBLIC cras_format cras_time_utils cras_type_traits rclcpp::rclcpp)
+target_link_libraries(cras_string_utils PUBLIC
+  cras_format cras_time_utils cras_type_traits rclcpp::rclcpp ${PROJECT_NAME}_includes
+)
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
-target_include_directories(cras_thread_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_thread_utils PRIVATE cras_string_utils Threads::Threads)
+target_link_libraries(cras_thread_utils
+  PUBLIC ${PROJECT_NAME}_includes
+  PRIVATE cras_string_utils Threads::Threads
+)
 
 add_library(cras_log_utils SHARED
   src/log_utils.cpp
@@ -180,11 +171,8 @@ add_library(cras_log_utils SHARED
   #src/log_utils/node.cpp
   #src/log_utils/nodelet.cpp
 )
-target_include_directories(cras_log_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_log_utils
-  PUBLIC ${rcl_interfaces_TARGETS}
-  PUBLIC cras_string_utils rcl::rcl rclcpp::rclcpp
+  PUBLIC cras_string_utils rcl::rcl rclcpp::rclcpp ${rcl_interfaces_TARGETS} ${PROJECT_NAME}_includes
   PRIVATE cras_time_utils
 )
 
@@ -205,10 +193,8 @@ check_cxx_compiler_flag("-march=armv7-a+neon" COMPILER_SUPPORTS_MARCH_ARMV7)
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 
 add_library(cras_tf2_sensor_msgs SHARED src/tf2_sensor_msgs.cpp)
-target_include_directories(cras_tf2_sensor_msgs PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_tf2_sensor_msgs
-  PUBLIC ${geometry_msgs_TARGETS} ${sensor_msgs_TARGETS} tf2::tf2
+  PUBLIC ${geometry_msgs_TARGETS} ${sensor_msgs_TARGETS} ${PROJECT_NAME}_includes tf2::tf2
   PRIVATE cras_cloud cras_string_utils cras_time_utils Eigen3::Eigen tf2_eigen::tf2_eigen)
 # The pointcloud processing loop really needs SIMD. We enable it conservatively.
 # ROS buildfarm should pick up x86-64-v3 for x86 builds, armv7 for armhf builds and armv8 for arm64 builds.
@@ -230,27 +216,21 @@ elseif(COMPILER_SUPPORTS_MARCH_NATIVE)
 endif()
 
 add_library(cras_type_utils SHARED src/type_utils.cpp)
-target_include_directories(cras_type_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_type_utils
-  PUBLIC cras_type_traits cras_literal_sz
+  PUBLIC cras_type_traits cras_literal_sz ${PROJECT_NAME}_includes
   PRIVATE cras_string_utils)
 
 add_library(cras_test_utils INTERFACE)
 #target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils/preloading_class_loader.hpp>)
 target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils.hpp>)
-target_include_directories(cras_expected INTERFACE
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp)
+target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_includes)
 
 add_library(cras_param_utils INTERFACE)
 target_sources(cras_param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param_utils.hpp>)
-target_link_libraries(cras_param_utils INTERFACE rclcpp::rclcpp)
+target_link_libraries(cras_param_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_includes)
 
 add_library(cras_qos_utils SHARED src/qos.cpp)
-target_include_directories(cras_qos_utils PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp)
+target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_includes)
 
 #add_library(cras_filter_base INTERFACE)
 #target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_base.hpp>)
@@ -358,6 +338,7 @@ set(EXPORTED_LIBS
   cras_type_traits
   cras_type_utils
   cras_urdf_utils
+  ${PROJECT_NAME}_includes
 )
 
 # Libraries that should not be exported (i.e. external packages will not link to them). E.g. component nodes go here.
