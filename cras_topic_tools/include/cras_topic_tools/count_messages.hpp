@@ -19,8 +19,7 @@
 #include <rclcpp/time.hpp>
 #include <rclcpp/timer.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Component for counting messages and their size.
@@ -35,8 +34,7 @@ namespace cras
  * - `~input` (any type): The input messages.
  * - `~reset` (any type): When a message is received on this topic, the counter is reset to zero.
  */
-class CountMessagesComponent : public ::rclcpp::Node
-{
+class CountMessagesComponent : public ::rclcpp::Node {
 public:
   explicit CountMessagesComponent(const ::rclcpp::NodeOptions& options);
 
@@ -119,4 +117,4 @@ protected:
   ::std::optional<::rclcpp::Time> lastReportStamp;
 };
 
-}
+}  // namespace cras

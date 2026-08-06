@@ -22,53 +22,48 @@
 #include <cras_topic_tools/count_messages.hpp>
 #include <cras_topic_tools/generic_subscription.hpp>
 
-namespace cras
-{
+namespace cras {
 
-void CountMessagesComponent::cb(const std::shared_ptr<const rclcpp::SerializedMessage>& message)
-{
+void CountMessagesComponent::cb(const std::shared_ptr<const rclcpp::SerializedMessage>& message) {
   std::lock_guard<std::mutex> lock(this->mutex);
   this->count++;
   this->countSinceLastReport++;
   this->bytes += message->size();
-  if (this->useParams)
-  {
+  if (this->useParams) {
     this->set_parameter(rclcpp::Parameter("count", static_cast<int>(this->count)));
     this->set_parameter(rclcpp::Parameter("bytes", static_cast<int>(this->bytes)));
   }
 }
 
-void CountMessagesComponent::reportCb()
-{
-  if (!this->lastReportStamp.has_value())
+void CountMessagesComponent::reportCb() {
+  if (!this->lastReportStamp.has_value()) {
     return;
+  }
 
   std::lock_guard<std::mutex> lock(this->mutex);
-  RCLCPP_INFO(this->get_logger(), "Received %zu messages in %f s (total %zu messages, %zu bytes).",
-    this->countSinceLastReport, (this->get_clock()->now() - *this->lastReportStamp).seconds(),
-    this->count, this->bytes);
+  RCLCPP_INFO(
+    this->get_logger(), "Received %zu messages in %f s (total %zu messages, %zu bytes).",
+    this->countSinceLastReport, (this->get_clock()->now() - *this->lastReportStamp).seconds(), this->count,
+    this->bytes);
   this->lastReportStamp = this->get_clock()->now();
   this->countSinceLastReport = 0;
 }
 
-void CountMessagesComponent::discoverTopicAndSubscribe()
-{
-  if (this->sub != nullptr)
-  {
+void CountMessagesComponent::discoverTopicAndSubscribe() {
+  if (this->sub != nullptr) {
     this->discoveryTimer->cancel();
     return;
   }
 
   std::string type;
-  for (const auto [topic, types] : this->get_topic_names_and_types())
-  {
-    if (!types.empty() && topic == this->resolvedTopic)
+  for (const auto& [topic, types] : this->get_topic_names_and_types()) {
+    if (!types.empty() && topic == this->resolvedTopic) {
       type = types[0];
+    }
   }
-  if (type.empty())
-  {
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-      "Waiting for topic %s", this->resolvedTopic.c_str());
+  if (type.empty()) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Waiting for topic %s", this->resolvedTopic.c_str());
     return;
   }
 
@@ -76,35 +71,37 @@ void CountMessagesComponent::discoverTopicAndSubscribe()
 
   rclcpp::SubscriptionOptions opts;
   opts.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
-  if (this->intraprocessComms)
+  if (this->intraprocessComms) {
     opts.use_intra_process_comm = rclcpp::IntraProcessSetting::Enable;
-  if (this->topicStats)
+  }
+  if (this->topicStats) {
     opts.topic_stats_options.state = rclcpp::TopicStatisticsState::Enable;
+  }
 
-  this->sub = ::cras::create_generic_subscription(*this, this->topic, type, this->qosProfile,
-    std::bind(&CountMessagesComponent::cb, this, std::placeholders::_1), opts);
+  this->sub = ::cras::create_generic_subscription(
+    *this, this->topic, type, this->qosProfile, std::bind(&CountMessagesComponent::cb, this, std::placeholders::_1),
+    opts);
 
   this->lastReportStamp = this->get_clock()->now();
 
   this->discoveryTimer->cancel();
 }
 
-void CountMessagesComponent::discoverResetTopicAndSubscribe()
-{
-  if (this->resetSub != nullptr)
-  {
+void CountMessagesComponent::discoverResetTopicAndSubscribe() {
+  if (this->resetSub != nullptr) {
     this->resetDiscoveryTimer->cancel();
     return;
   }
 
   std::string type;
-  for (const auto [topic, types] : this->get_topic_names_and_types())
-  {
-    if (!types.empty() && topic == this->resolvedResetTopic)
+  for (const auto& [topic, types] : this->get_topic_names_and_types()) {
+    if (!types.empty() && topic == this->resolvedResetTopic) {
       type = types[0];
+    }
   }
-  if (type.empty())
+  if (type.empty()) {
     return;
+  }
 
   RCLCPP_DEBUG(this->get_logger(), "Subscribing to topic %s [%s]", this->resolvedResetTopic.c_str(), type.c_str());
 
@@ -115,8 +112,7 @@ void CountMessagesComponent::discoverResetTopicAndSubscribe()
 }
 
 CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& options)
-  : rclcpp::Node("count_messages", options)
-{
+    : rclcpp::Node("count_messages", options) {
   this->useParams = this->declare_parameter("use_parameters", this->useParams);
   this->intraprocessComms = this->declare_parameter("intraprocess_comms", this->intraprocessComms);
   this->topicStats = this->declare_parameter("topic_statistics", this->topicStats);
@@ -135,45 +131,46 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
     maybeParam<double>(this->declare_parameter("qos_liveliness_lease_duration_seconds", rclcpp::PARAMETER_DOUBLE));
 
   // Support direct command-line usage
-  if (options.arguments().size() > 1)
-  {
+  if (options.arguments().size() > 1) {
     cxxopts::Options parser("count_messages", "Count ROS messages");
+
     parser.add_options()
     ("topic", "Topic", cxxopts::value<std::string>()->default_value("input"))
     ("qos-profile,p", "QoS Profile", cxxopts::value<std::string>()->default_value(""))
     ("report,r", "Reporting interval", cxxopts::value<double>()->default_value("0")->implicit_value("1"))
     ("help,h", "Help");
+
     parser.parse_positional({"topic", "qos-profile"});
     parser.positional_help("[TOPIC [QOS-PROFILE]]");
     parser.show_positional_help();
 
     // Convert all args to argc/argv, remove ROS-specific args and convert to argc/argv again
     std::vector<const char*> argv;
-    for (const auto& arg : options.arguments())
-    {
+    for (const auto& arg : options.arguments()) {
       argv.push_back(arg.c_str());
     }
     const auto tmpArgs = rclcpp::remove_ros_arguments(argv.size(), argv.data());
     argv.clear();
-    for (const auto& arg : tmpArgs)
-    {
+    for (const auto& arg : tmpArgs) {
       argv.push_back(arg.c_str());
     }
 
-    if (argv.size() > 0)
-    {
+    if (!argv.empty()) {
       const auto args = parser.parse(argv.size(), argv.data());
 
-      if (args.count("help"))
+      if (args.count("help")) {
         throw std::invalid_argument(parser.help());
+      }
 
       this->topic = args["topic"].as<std::string>();
 
-      if (args.count("qos-profile") == 1 && !args["qos-profile"].as<std::string>().empty())
+      if (args.count("qos-profile") == 1 && !args["qos-profile"].as<std::string>().empty()) {
         qosProfileStr = args["qos-profile"].as<std::string>();
+      }
 
-      if (args.count("report") == 1)
+      if (args.count("report") == 1) {
         reportIntervalDouble = args["report"].as<double>();
+      }
     }
   }
 
@@ -183,42 +180,40 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
   const auto defaultQoS = rclcpp::BestAvailableQoS().keep_last(1000);
   this->qosProfile = qosProfileStr.empty() ? defaultQoS : parseQoSPreset(qosProfileStr);
   cras::configureQoSProfile(this->qosProfile, qosDepthParam, qosHistoryParam, qosReliabilityParam, qosDurabilityParam,
-    qosLivelinessParam, qosLivelinessLeaseDurationSecondsParam);
+                            qosLivelinessParam, qosLivelinessLeaseDurationSecondsParam);
 
   this->resolvedTopic = this->get_node_base_interface()->resolve_topic_or_service_name(this->topic, false);
   this->resolvedResetTopic = this->get_node_base_interface()->resolve_topic_or_service_name("reset", false);
 
-  if (this->useParams)
-  {
+  if (this->useParams) {
     this->declare_parameter("bytes", 0);
     this->declare_parameter("count", 0);
   }
 
-  this->discoveryTimer = this->create_wall_timer(std::chrono::milliseconds(100),
-    std::bind(&CountMessagesComponent::discoverTopicAndSubscribe, this));
+  this->discoveryTimer = this->create_wall_timer(
+    std::chrono::milliseconds(100), std::bind(&CountMessagesComponent::discoverTopicAndSubscribe, this));
 
-  this->resetDiscoveryTimer = this->create_wall_timer(std::chrono::seconds(1),
-    std::bind(&CountMessagesComponent::discoverResetTopicAndSubscribe, this));
+  this->resetDiscoveryTimer = this->create_wall_timer(
+    std::chrono::seconds(1), std::bind(&CountMessagesComponent::discoverResetTopicAndSubscribe, this));
 
-  if (reportInterval != std::chrono::seconds(0))
+  if (reportInterval != std::chrono::seconds(0)) {
     this->reportTimer = this->create_timer(reportInterval, std::bind(&CountMessagesComponent::reportCb, this));
+  }
 
   this->discoverTopicAndSubscribe();
   this->discoverResetTopicAndSubscribe();
 }
 
-void CountMessagesComponent::resetCb(const std::shared_ptr<const rclcpp::SerializedMessage>&)
-{
+void CountMessagesComponent::resetCb(const std::shared_ptr<const rclcpp::SerializedMessage>&) {
   std::lock_guard<std::mutex> lock(this->mutex);
   this->count = this->bytes = this->countSinceLastReport = 0;
-  if (this->useParams)
-  {
+  if (this->useParams) {
     this->set_parameter(rclcpp::Parameter("count", 0));
     this->set_parameter(rclcpp::Parameter("bytes", 0));
   }
 }
 
-}
+}  // namespace cras
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(cras::CountMessagesComponent)
