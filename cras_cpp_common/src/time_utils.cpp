@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for working with time.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <chrono>
@@ -45,8 +46,8 @@ rclcpp::Duration remainingTime(
   return (timeout > passed) ? timeout - passed : rclcpp::Duration(0, 0);
 }
 
-double frequency(const rclcpp::Rate& rate, const bool maxPeriodMeansZero) {
-  if (maxPeriodMeansZero &&
+double frequency(const rclcpp::Rate& rate, const bool max_period_means_zero) {
+  if (max_period_means_zero &&
       (rate.period().count() == rclcpp::Duration::max().nanoseconds() || rate.period().count() == 0))
   {
     return 0.0;
@@ -107,17 +108,17 @@ ros::Time nowFallbackToWall()
 
 rclcpp::Time saturateAdd(const rclcpp::Time& time, const rclcpp::Duration& duration) {
   const auto nsec = time.nanoseconds() + duration.nanoseconds();
-  const auto clockType = time.get_clock_type();
+  const auto clock_type = time.get_clock_type();
 
   if (nsec < 0) {
-    return {0, 0, clockType};
+    return {0, 0, clock_type};
   }
 
-  if (nsec > rclcpp::Time::max(clockType).nanoseconds()) {
-    return rclcpp::Time::max(clockType);
+  if (nsec > rclcpp::Time::max(clock_type).nanoseconds()) {
+    return rclcpp::Time::max(clock_type);
   }
 
-  return rclcpp::Time(nsec, clockType);
+  return rclcpp::Time(nsec, clock_type);
 }
 
 template<>
@@ -149,16 +150,16 @@ template<>
 tm convertTime(const rclcpp::Time& t) {
   const auto timet = static_cast<time_t>(cras::sec(t));
 
-  tm structTm{};
-  const auto result = gmtime_r(&timet, &structTm);
+  tm struct_tm{};
+  const auto result = gmtime_r(&timet, &struct_tm);
 
   // This shouldn't ever happen. gmtime can return nullptr only if year overflows, and max year of ros::Time is far
   // from being able to overflow an int (even if 16-bit).
   if (result == nullptr) {
-    return structTm;
+    return struct_tm;
   }
 
-  return structTm;
+  return struct_tm;
 }
 
 template<>
@@ -347,12 +348,12 @@ cras::expected<rclcpp::Time, std::string> fromStructTm(const tm& time) {
   tm t = time;
 #if _DEFAULT_SOURCE
   errno = 0;
-  const auto timeSecs = timegm(&t);
+  const auto time_secs = timegm(&t);
 #else
   const auto tz = getenv("TZ");
   setenv("TZ", "", 1);
   tzset();
-  const auto timeSecs = mktime(&t);
+  const auto time_secs = mktime(&t);
   if (tz) {
     setenv("TZ", tz, 1);
   } else {
@@ -360,16 +361,16 @@ cras::expected<rclcpp::Time, std::string> fromStructTm(const tm& time) {
   }
   tzset();
 #endif
-  if (timeSecs == static_cast<time_t>(-1) || errno == EOVERFLOW) {
+  if (time_secs == static_cast<time_t>(-1) || errno == EOVERFLOW) {
     return cras::make_unexpected(cras::format(
       "Cannot convert the given tm struct to ROS time (timegm failed, errno={}).", errno));
   }
-  if (timeSecs < 0) {
+  if (time_secs < 0) {
     return cras::make_unexpected("Cannot convert the given tm struct to ROS time (negative seconds since 1970).");
   }
 
   try {
-    return rclcpp::Time(timeSecs, 0);
+    return rclcpp::Time(time_secs, 0);
   } catch (const std::runtime_error& e) {
     return cras::make_unexpected(cras::format("Cannot convert the given tm struct to ROS time ({}).", e.what()));
   }
@@ -662,16 +663,16 @@ rclcpp::Duration operator*(const rclcpp::Duration& val1, const rclcpp::Duration&
   const auto s2 = static_cast<int64_t>(sn2.first);
   const auto ns2 = static_cast<int64_t>(sn2.second);
 
-  const auto nanosecondsLarge =
+  const auto nanoseconds_large =
     static_cast<cras::cras_int128_t>(s1 * s2) * 1000000000LL +
     s1 * ns2 + s2 * ns1 +
     ns1 * ns2 / 1000000000LL;
 
-  if (nanosecondsLarge > rclcpp::Duration::max().nanoseconds()) {
+  if (nanoseconds_large > rclcpp::Duration::max().nanoseconds()) {
     throw std::invalid_argument("Overflow in duration multiplication.");
   }
 
-  return rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(nanosecondsLarge));
+  return rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(nanoseconds_large));
 }
 
 rclcpp::Duration operator/(const rclcpp::Duration& numerator, const rclcpp::Duration& denominator) {
@@ -679,8 +680,8 @@ rclcpp::Duration operator/(const rclcpp::Duration& numerator, const rclcpp::Dura
     throw std::runtime_error("Division by zero");
   }
 
-  const auto numeratorLarge = static_cast<cras::cras_int128_t>(numerator.nanoseconds()) * 1000000000LL;
-  return rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(numeratorLarge / denominator.nanoseconds()));
+  const auto numerator_large = static_cast<cras::cras_int128_t>(numerator.nanoseconds()) * 1000000000LL;
+  return rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(numerator_large / denominator.nanoseconds()));
 }
 
 }  // namespace rclcpp

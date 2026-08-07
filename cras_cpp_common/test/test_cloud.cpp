@@ -13,9 +13,8 @@
 
 #include <cras_cpp_common/cloud.hpp>
 
-void fillXYZ(sensor_msgs::msg::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size,
-                                                                                                     bool allZeros =
-                                                                                                     false) {
+void fillXYZ(
+  sensor_msgs::msg::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size, bool allZeros = false) {
   mod.resize(size);
 
   sensor_msgs::PointCloud2Iterator<float> it_x(msg, "x");

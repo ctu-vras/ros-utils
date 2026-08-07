@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for working with time.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #pragma once
@@ -244,12 +245,12 @@ T2 convertTime(const T1& t) {
  *
  * \tparam T1 The output type.
  * \param[in] t The time to convert.
- * \param[in] clockType The clock type of the output.
+ * \param[in] clock_type The clock type of the output.
  * \return The converted time with the given clock type.
  */
 template<typename T1, typename ::std::enable_if_t<::cras::TimeType<T1>::value>* = nullptr>
-::rclcpp::Time convertTime(const T1& t, const ::rcl_clock_type_t clockType) {
-  return ::rclcpp::Time(convertTime<rcutils_time_point_value_t>(t), clockType);
+::rclcpp::Time convertTime(const T1& t, const ::rcl_clock_type_t clock_type) {
+  return ::rclcpp::Time(convertTime<rcutils_time_point_value_t>(t), clock_type);
 }
 
 /**
@@ -556,10 +557,10 @@ uint32_t nanosec(const T1& t) {
 /**
  * \brief Return the frequency represented by the given rate.
  * \param[in] rate The rate to convert.
- * \param[in] maxPeriodMeansZero If true, return 0 frequency in case the rate's cycle time is the maximum duration.
+ * \param[in] max_period_means_zero If true, return 0 frequency in case the rate's cycle time is the maximum duration.
  * \return The frequency.
  */
-double frequency(const ::rclcpp::Rate& rate, bool maxPeriodMeansZero = false);
+double frequency(const ::rclcpp::Rate& rate, bool max_period_means_zero = false);
 
 /**
  * \brief Return a rate representing the given frequency. If the frequency is zero or too small, return min/max
@@ -614,19 +615,19 @@ class SimpleClockInterface : public ::rclcpp::node_interfaces::NodeClockInterfac
 public:
   RCLCPP_SMART_PTR_ALIASES_ONLY(SimpleClockInterface)
 
-  explicit SimpleClockInterface(const ::rclcpp::Clock::SharedPtr& clock) : clock(clock) {
+  explicit SimpleClockInterface(const ::rclcpp::Clock::SharedPtr& clock) : clock_(clock) {
   }
 
   ::rclcpp::Clock::SharedPtr get_clock() override{
-    return this->clock;
+    return this->clock_;
   }
 
   ::rclcpp::Clock::ConstSharedPtr get_clock() const override{
-    return this->clock;
+    return this->clock_;
   }
 
 protected:
-  ::rclcpp::Clock::SharedPtr clock;
+  ::rclcpp::Clock::SharedPtr clock_;
 };
 
 }  // namespace cras

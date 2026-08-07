@@ -13,8 +13,8 @@
 
 namespace cras {
 
-int8_t logLevelToMsgLevel(const RCUTILS_LOG_SEVERITY rosLevel) {
-  switch (rosLevel) {
+int8_t logLevelToMsgLevel(const RCUTILS_LOG_SEVERITY ros_level) {
+  switch (ros_level) {
     case RCUTILS_LOG_SEVERITY_DEBUG:
       return rcl_interfaces::msg::Log::DEBUG;
     case RCUTILS_LOG_SEVERITY_INFO:
@@ -28,8 +28,8 @@ int8_t logLevelToMsgLevel(const RCUTILS_LOG_SEVERITY rosLevel) {
   }
 }
 
-RCUTILS_LOG_SEVERITY msgLevelToLogLevel(const uint8_t msgLevel) {
-  switch (msgLevel) {
+RCUTILS_LOG_SEVERITY msgLevelToLogLevel(const uint8_t msg_level) {
+  switch (msg_level) {
     case rcl_interfaces::msg::Log::DEBUG:
       return RCUTILS_LOG_SEVERITY_DEBUG;
     case rcl_interfaces::msg::Log::INFO:

@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for working with sets.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <algorithm>
@@ -23,12 +24,12 @@ namespace cras {
  */
 template<typename T>
 bool isSetIntersectionEmpty(const ::std::set<T>& set1, const ::std::set<T>& set2) {
-  ::std::set<T> tmpSet;
+  ::std::set<T> tmp_set;
   ::std::set_intersection(
       set1.begin(), set1.end(),
       set2.begin(), set2.end(),
-      ::std::inserter(tmpSet, tmpSet.end()));
-  return tmpSet.empty();
+      ::std::inserter(tmp_set, tmp_set.end()));
+  return tmp_set.empty();
 }
 
 }  // namespace cras

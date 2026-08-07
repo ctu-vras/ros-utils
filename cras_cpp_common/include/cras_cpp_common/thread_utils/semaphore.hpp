@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Implementation of a reversed semaphore usable for thread synchronization.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <condition_variable>
@@ -22,9 +23,9 @@ class ReverseSemaphore {
 public:
   /**
    * \brief Create the semaphore (internal count is zero).
-   * \param[in] waitZeroAtDestroy Whether the semaphore should `waitForZero()` when it is destroyed.
+   * \param[in] wait_zero_at_destroy Whether the semaphore should `waitForZero()` when it is destroyed.
    */
-  explicit ReverseSemaphore(bool waitZeroAtDestroy = true);
+  explicit ReverseSemaphore(bool wait_zero_at_destroy = true);
 
   /**
    * \brief Destroys this semaphore. Internally blocks it and waits for zero count.
@@ -77,22 +78,22 @@ public:
 
 private:
   //! \brief Whether to wait for zero when the object is being destroyed.
-  bool waitZeroAtDestroy;
+  bool wait_zero_at_destroy_;
 
   //! \brief True if the destructor has begun.
-  bool isDestroying {false};
+  bool is_destroying_ {false};
 
   //! \brief The internal count of the semaphore.
-  volatile size_t count {0};
+  volatile size_t count_ {0};
 
   //! \brief Whether the semaphore is disabled.
-  volatile bool disabled {false};
+  volatile bool disabled_ {false};
 
-  //! \brief Mutex protecting `cv`, `count` and `disabled`.
-  mutable ::std::mutex mutex;
+  //! \brief Mutex protecting `cv_`, `count_` and `disabled_`.
+  mutable ::std::mutex mutex_;
 
   //! \brief Condition variable used for signalling between `release()` and `waitZero()`.
-  ::std::condition_variable cv;
+  ::std::condition_variable cv_;
 };
 
 /**
@@ -106,13 +107,13 @@ private:
 template<typename T>
 class SemaphoreGuard {
 public:
-  explicit SemaphoreGuard(T& semaphore) : semaphore(semaphore) {
-    this->acquireSucceeded = this->semaphore.acquire();
+  explicit SemaphoreGuard(T& semaphore) : semaphore_(semaphore) {
+    acquire_succeeded_ = semaphore_.acquire();
   }
 
   ~SemaphoreGuard() {
-    if (this->acquireSucceeded) {
-      this->semaphore.release();
+    if (acquire_succeeded_) {
+      semaphore_.release();
     }
   }
 
@@ -122,15 +123,15 @@ public:
    * \note Always check the result of this function after constructing a guard. The semaphore may be disabled.
    */
   bool acquired() const {
-    return this->acquireSucceeded;
+    return acquire_succeeded_;
   }
 
 private:
   //! \brief The guarded semaphore.
-  T& semaphore;
+  T& semaphore_;
 
   //! \brief Whether the acquire succeeded.
-  bool acquireSucceeded {false};
+  bool acquire_succeeded_ {false};
 };
 
 }  // namespace cras

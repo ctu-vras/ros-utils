@@ -21,27 +21,27 @@
 
 namespace cras {
 
-bool hasField(const ::cras::Cloud& cloud, const std::string& fieldName) {
+bool hasField(const ::cras::Cloud& cloud, const std::string& field_name) {
   return std::any_of(cloud.fields.begin(), cloud.fields.end(),
-      [&fieldName](const sensor_msgs::msg::PointField& f) {return f.name == fieldName;});
+      [&field_name](const sensor_msgs::msg::PointField& f) {return f.name == field_name;});
 }
 
-sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const std::string& fieldName) {
+sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const std::string& field_name) {
   for (auto& field : cloud.fields) {
-    if (field.name == fieldName) {
+    if (field.name == field_name) {
       return field;
     }
   }
-  throw std::runtime_error(std::string("Field ") + fieldName + " does not exist.");
+  throw std::runtime_error(std::string("Field ") + field_name + " does not exist.");
 }
 
-const sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const std::string& fieldName) {
+const sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const std::string& field_name) {
   for (const auto& field : cloud.fields) {
-    if (field.name == fieldName) {
+    if (field.name == field_name) {
       return field;
     }
   }
-  throw std::runtime_error(std::string("Field ") + fieldName + " does not exist.");
+  throw std::runtime_error(std::string("Field ") + field_name + " does not exist.");
 }
 
 size_t sizeOfPointField(const ::sensor_msgs::msg::PointField& field) {
@@ -63,13 +63,13 @@ size_t sizeOfPointField(const int datatype) {
   }
 }
 
-void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const std::string& fieldName) {
+void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const std::string& field_name) {
   if (numPoints(out) < numPoints(in)) {
     throw std::runtime_error("Output cloud needs to be resized to fit the number of points of the input cloud.");
   }
 
-  GenericCloudConstIter dataIn(in, fieldName);
-  GenericCloudIter dataOut(out, fieldName);
+  GenericCloudConstIter dataIn(in, field_name);
+  GenericCloudIter dataOut(out, field_name);
   for (; dataIn != dataIn.end(); ++dataIn, ++dataOut) {
     dataOut.copyData(dataIn);
   }
@@ -78,9 +78,9 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const std::str
 namespace impl {
 
 template<typename T, typename TT, typename U, typename C, template<typename> class V>
-GenericCloudIteratorBase<T, TT, U, C, V>::GenericCloudIteratorBase(C& cloudMsg, const std::string& fieldName)
-    : sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V>(cloudMsg, fieldName) {
-  this->fieldSize = sizeOfPointField(getField(cloudMsg, fieldName));
+GenericCloudIteratorBase<T, TT, U, C, V>::GenericCloudIteratorBase(C& cloud_msg, const std::string& field_name)
+    : sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V>(cloud_msg, field_name) {
+  field_size_ = sizeOfPointField(getField(cloud_msg, field_name));
 }
 
 template<typename T, typename TT, typename U, typename C, template<typename> class V>
@@ -89,13 +89,13 @@ U* GenericCloudIteratorBase<T, TT, U, C, V>::rawData() const {
 }
 
 template<typename T>
-void GenericCloudIterator<T>::copyData(const GenericCloudConstIterator<T>& otherIter) const {
-  std::memcpy(this->rawData(), otherIter.rawData(), this->fieldSize);
+void GenericCloudIterator<T>::copyData(const GenericCloudConstIterator<T>& other_iter) const {
+  std::memcpy(this->rawData(), other_iter.rawData(), this->field_size_);
 }
 
 template<typename T>
-void GenericCloudIterator<T>::copyData(const GenericCloudIterator<T>& otherIter) const {
-  std::memcpy(this->rawData(), otherIter.rawData(), this->fieldSize);
+void GenericCloudIterator<T>::copyData(const GenericCloudIterator<T>& other_iter) const {
+  std::memcpy(this->rawData(), other_iter.rawData(), this->field_size_);
 }
 
 // explicitly instantiate

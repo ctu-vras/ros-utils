@@ -149,8 +149,8 @@ inline std::string to_string(const M& msg) {
  * - Decimal comma `,` can be used instead of decimal dot `.` .
  *
  * \param[in] s The string to parse.
- * \param[in] timezoneOffset Optional timezone offset to use if no offset is specified in the string.
- * \param[in] referenceDate If the date part is missing in the string, the date from this argument will be used.
+ * \param[in] timezone_offset Optional timezone offset to use if no offset is specified in the string.
+ * \param[in] reference_date If the date part is missing in the string, the date from this argument will be used.
  * \param[in] clock The clock to be used in case "now" is passed. Also, the type of the clock defines the type of the
  *                  result (defaults to RCL_SYSTEM_TIME if this clock is nullptr). If the clock is null, current system
  *                  clock will be used.
@@ -158,8 +158,8 @@ inline std::string to_string(const M& msg) {
  * \throws std::invalid_argument If the string does not represent a date with time.
  */
 ::rclcpp::Time parseTime(
-    const ::std::string& s, const ::std::optional<::rclcpp::Duration>& timezoneOffset = {},
-    const ::rclcpp::Time& referenceDate = ::rclcpp::Time(), const ::rclcpp::Clock::ConstSharedPtr& clock = nullptr);
+    const ::std::string& s, const ::std::optional<::rclcpp::Duration>& timezone_offset = {},
+    const ::rclcpp::Time& reference_date = ::rclcpp::Time(), const ::rclcpp::Clock::ConstSharedPtr& clock = nullptr);
 
 /**
  * \brief Parse the given string as duration.

@@ -1,11 +1,12 @@
 #pragma once
 
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utilities for working with C++ types.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <cstddef>
@@ -19,10 +20,10 @@ namespace cras {
 
 /**
  * \brief Remove not-so-nice parts of demangled C++ type names.
- * \param[in] typeName Name of a demangled C++ type.
+ * \param[in] type_name Name of a demangled C++ type.
  * \return A better name.
  */
-::std::string cleanTypeName(const ::std::string& typeName);
+::std::string cleanTypeName(const ::std::string& type_name);
 
 /**
  * \brief Demangle the given mangle C++ type identifier.
@@ -65,9 +66,9 @@ inline ::std::string getTypeName() {
 
 /**
  * \brief Get a human-readable name of a type represented by the given typeinfo.
- * \param[in] typeInfo Info about the type.
+ * \param[in] type_info Info about the type.
  * \return Human-readable name.
  */
-::std::string getTypeName(const ::std::type_info& typeInfo);
+::std::string getTypeName(const ::std::type_info& type_info);
 
 }  // namespace cras

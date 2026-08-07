@@ -53,13 +53,13 @@ public:
   void clear();
 
 protected:
-  ::std::list<::rcl_interfaces::msg::Log> messages;  //!< \brief The list of logged messages.
+  ::std::list<::rcl_interfaces::msg::Log> messages_;  //!< \brief The list of logged messages.
 
-  ::std::string name;
+  ::std::string name_;
 
-  ::RCUTILS_LOG_SEVERITY prevLogLevel {RCUTILS_LOG_SEVERITY_UNSET};
-  ::rcutils_logging_output_handler_t prevHandler {nullptr};
-  ::cras::MemoryLoggingInterface* prevLoggingInterface {nullptr};
+  ::RCUTILS_LOG_SEVERITY prev_log_level_ {RCUTILS_LOG_SEVERITY_UNSET};
+  ::rcutils_logging_output_handler_t prev_handler_ {nullptr};
+  ::cras::MemoryLoggingInterface* prev_logging_interface_ {nullptr};
 };
 
 }  // namespace cras

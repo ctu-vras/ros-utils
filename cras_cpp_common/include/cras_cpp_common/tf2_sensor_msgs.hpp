@@ -36,26 +36,26 @@ enum class CloudChannelType {
 /**
  * \brief Register the given pointcloud channel prefix with the given type. This registration will be used by
  * transformWithChannels() when called without an explicit channel list.
- * \param[in] channelPrefix Prefix of the channel. E.g. `normal_` for registering type of normal_x,normal_y,normal_z.
+ * \param[in] channel_prefix Prefix of the channel. E.g. `normal_` for registering type of normal_x,normal_y,normal_z.
  * \param[in] type Type of the channel.
  */
-void registerCloudChannelType(const ::std::string& channelPrefix, ::cras::CloudChannelType type);
+void registerCloudChannelType(const ::std::string& channel_prefix, ::cras::CloudChannelType type);
 
 /**
  * \brief Unregister a cloud channel type registered earlier with registerCloudChannelType().
- * \param[in] channelPrefix Prefix of the channel.
+ * \param[in] channel_prefix Prefix of the channel.
  */
-void unregisterCloudChannelType(const ::std::string& channelPrefix);
+void unregisterCloudChannelType(const ::std::string& channel_prefix);
 
 /**
  * \brief Transform the given channel in the given cloud using the given transform.
  * \param[in,out] cloud The cloud.
  * \param[in] transform The transform to apply.
- * \param[in] channelPrefix Prefix of the channel.
+ * \param[in] channel_prefix Prefix of the channel.
  * \param[in] type Type of the channel.
  */
 void transformChannel(::sensor_msgs::msg::PointCloud2& cloud, const ::geometry_msgs::msg::Transform& transform,
-    const ::std::string& channelPrefix, ::cras::CloudChannelType type);
+    const ::std::string& channel_prefix, ::cras::CloudChannelType type);
 
 /**
  * \brief Copy `in` cloud to `out` and transform channels using the given transform. The list of channels to be
@@ -90,29 +90,29 @@ void transformChannel(::sensor_msgs::msg::PointCloud2& cloud, const ::geometry_m
  *        registerCloudChannelType().
  * \param[in] in The input cloud.
  * \param[out] out The output cloud (can be the same as input).
- * \param[in] tfBuffer The TF buffer.
- * \param[in] targetFrame The frame to transform to.
+ * \param[in] tf_buffer The TF buffer.
+ * \param[in] target_frame The frame to transform to.
  * \return `out`.
  * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be caught.
  */
 ::sensor_msgs::msg::PointCloud2& transformWithChannels(
     const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
-    const ::tf2::BufferCoreInterface& tfBuffer, const ::std::string& targetFrame);
+    const ::tf2::BufferCoreInterface& tf_buffer, const ::std::string& target_frame);
 
 /**
  * \brief Copy `in` cloud to `out` and transform channels using the given transform. Only the channels passed in
  *        `channels` will be transformed, according to their type.
  * \param[in] in The input cloud.
  * \param[out] out The output cloud (can be the same as input).
- * \param[in] tfBuffer The TF buffer.
- * \param[in] targetFrame The frame to transform to.
+ * \param[in] tf_buffer The TF buffer.
+ * \param[in] target_frame The frame to transform to.
  * \param[in] channels A map of `channel prefix`-`channel type` of channels that should be transformed.
  * \return `out`.
  * \throws tf2::TransformException No exceptions thrown from lookupTransform() will be caught.
  */
 ::sensor_msgs::msg::PointCloud2& transformWithChannels(
     const ::sensor_msgs::msg::PointCloud2& in, ::sensor_msgs::msg::PointCloud2& out,
-    const ::tf2::BufferCoreInterface& tfBuffer, const ::std::string& targetFrame,
+    const ::tf2::BufferCoreInterface& tf_buffer, const ::std::string& target_frame,
     const ::std::unordered_map<::std::string, ::cras::CloudChannelType>& channels);
 
 /**

@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Utils for working with strings.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <iconv.h>
@@ -93,22 +94,22 @@ std::string stripLeadingSlash(const std::string& s, const bool warn) {
   return s;
 }
 
-std::string removePrefix(const std::string& str, const std::string& prefix, bool* hadPrefix) {
-  const auto hasPrefix = startsWith(str, prefix);
-  if (hadPrefix != nullptr) {
-    *hadPrefix = hasPrefix;
+std::string removePrefix(const std::string& str, const std::string& prefix, bool* had_prefix) {
+  const auto has_prefix = startsWith(str, prefix);
+  if (had_prefix != nullptr) {
+    *had_prefix = has_prefix;
   }
 
-  return hasPrefix ? str.substr(prefix.length()) : str;
+  return has_prefix ? str.substr(prefix.length()) : str;
 }
 
-std::string removeSuffix(const std::string& str, const std::string& suffix, bool* hadSuffix) {
-  const auto hasSuffix = endsWith(str, suffix);
-  if (hadSuffix != nullptr) {
-    *hadSuffix = hasSuffix;
+std::string removeSuffix(const std::string& str, const std::string& suffix, bool* had_suffix) {
+  const auto has_suffix = endsWith(str, suffix);
+  if (had_suffix != nullptr) {
+    *had_suffix = has_suffix;
   }
 
-  return hasSuffix ? str.substr(0, str.length() - suffix.length()) : str;
+  return has_suffix ? str.substr(0, str.length() - suffix.length()) : str;
 }
 
 std::string prependIfNonEmpty(const std::string& str, const std::string& prefix) {
@@ -128,18 +129,18 @@ bool endsWith(const std::string& str, const std::string& suffix) {
 }
 
 void replace(std::string& str, const std::string& from, const std::string& to, const ::cras::ReplacePosition& where) {
-  size_t startPos = 0;
-  while ((startPos = str.find(from, startPos)) != std::string::npos) {
-    if (where == cras::ReplacePosition::START && startPos != 0) {
+  size_t start_pos = 0;
+  while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    if (where == cras::ReplacePosition::START && start_pos != 0) {
       break;
     }
-    const auto endPos = startPos + from.length();
-    if (where == cras::ReplacePosition::END && endPos != str.length()) {
-      startPos += 1;
+    const auto end_pos = start_pos + from.length();
+    if (where == cras::ReplacePosition::END && end_pos != str.length()) {
+      start_pos += 1;
       continue;
     }
-    str.replace(startPos, from.length(), to);
-    startPos += to.length();
+    str.replace(start_pos, from.length(), to);
+    start_pos += to.length();
   }
 }
 
@@ -158,18 +159,18 @@ bool contains(const std::string& str, const std::string& needle) {
   return str.length() >= needle.length() && str.find(needle) != std::string::npos;
 }
 
-std::vector<std::string> split(const std::string& str, const std::string& delimiter, int maxSplits) {
+std::vector<std::string> split(const std::string& str, const std::string& delimiter, const int max_splits) {
   // inspired by https://stackoverflow.com/a/46931770/1076564, CC-BY-SA 4.0
   // renamed some variables, added the maxSplits option
   size_t start{0};
   size_t end;
-  size_t delimiterLength{delimiter.length()};
+  size_t delimiter_length{delimiter.length()};
   std::string token;
   std::vector<std::string> result;
 
-  while ((end = str.find(delimiter, start)) != std::string::npos && (maxSplits == -1 || result.size() < maxSplits)) {
+  while ((end = str.find(delimiter, start)) != std::string::npos && (max_splits == -1 || result.size() < max_splits)) {
     token = str.substr(start, end - start);
-    start = end + delimiterLength;
+    start = end + delimiter_length;
     result.push_back(token);
   }
 
@@ -195,21 +196,21 @@ template<typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>,
 inline T parseIntegralNumber(const std::string& string, const uint8_t base) {
   T result{};
 
-  auto cleanString = string;
-  while (!cleanString.empty() && cleanString[0] == ' ') {
-    cras::stripLeading(cleanString, ' ');
+  auto clean_string = string;
+  while (!clean_string.empty() && clean_string[0] == ' ') {
+    cras::stripLeading(clean_string, ' ');
   }
-  while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ') {
-    cras::stripTrailing(cleanString, ' ');
+  while (!clean_string.empty() && clean_string[clean_string.length() - 1] == ' ') {
+    cras::stripTrailing(clean_string, ' ');
   }
-  cras::stripLeading(cleanString, '+');
-  while (cleanString.length() > 1 && cleanString[0] == '0') {
-    cras::stripLeading(cleanString, '0');
+  cras::stripLeading(clean_string, '+');
+  while (clean_string.length() > 1 && clean_string[0] == '0') {
+    cras::stripLeading(clean_string, '0');
   }
 
-  auto [ptr, ec] = std::from_chars(cleanString.data(), cleanString.data() + cleanString.size(), result, base);
+  auto [ptr, ec] = std::from_chars(clean_string.data(), clean_string.data() + clean_string.size(), result, base);
   if (ec == std::errc()) {
-    if (ptr == cleanString.data() + cleanString.size()) {
+    if (ptr == clean_string.data() + clean_string.size()) {
       return result;
     }
     throw std::invalid_argument("Passed string contains excess characters: '" + string + "'");
@@ -223,41 +224,41 @@ inline T parseIntegralNumber(const std::string& string, const uint8_t base) {
 
 template<typename T, ::std::enable_if_t<::std::is_integral_v<::std::decay_t<T>>, bool> = true>
 inline T parseIntegralNumber(const std::string& string) {
-  auto cleanString = string;
-  while (!cleanString.empty() && cleanString[0] == ' ') {
-    cras::stripLeading(cleanString, ' ');
+  auto clean_string = string;
+  while (!clean_string.empty() && clean_string[0] == ' ') {
+    cras::stripLeading(clean_string, ' ');
   }
-  while (!cleanString.empty() && cleanString[cleanString.length() - 1] == ' ') {
-    cras::stripTrailing(cleanString, ' ');
+  while (!clean_string.empty() && clean_string[clean_string.length() - 1] == ' ') {
+    cras::stripTrailing(clean_string, ' ');
   }
-  cras::stripLeading(cleanString, '+');
+  cras::stripLeading(clean_string, '+');
 
-  auto noSignString = cleanString;
-  cras::stripLeading(noSignString, '-');
+  auto no_sign_string = clean_string;
+  cras::stripLeading(no_sign_string, '-');
   auto base = 10;
-  if (noSignString.length() > 2 && noSignString[0] == '0') {
-    if (noSignString[1] == 'x' || noSignString[1] == 'X') {
+  if (no_sign_string.length() > 2 && no_sign_string[0] == '0') {
+    if (no_sign_string[1] == 'x' || no_sign_string[1] == 'X') {
       base = 16;
-      cras::stripLeading(noSignString, '0');
-      cras::stripLeading(noSignString, 'x');
-      cras::stripLeading(noSignString, 'X');
-    } else if (noSignString[1] == 'b' || noSignString[1] == 'B') {
+      cras::stripLeading(no_sign_string, '0');
+      cras::stripLeading(no_sign_string, 'x');
+      cras::stripLeading(no_sign_string, 'X');
+    } else if (no_sign_string[1] == 'b' || no_sign_string[1] == 'B') {
       base = 2;
-      cras::stripLeading(noSignString, '0');
-      cras::stripLeading(noSignString, 'b');
-      cras::stripLeading(noSignString, 'B');
+      cras::stripLeading(no_sign_string, '0');
+      cras::stripLeading(no_sign_string, 'b');
+      cras::stripLeading(no_sign_string, 'B');
     } else {
       base = 8;
-      cras::stripLeading(noSignString, '0');
+      cras::stripLeading(no_sign_string, '0');
     }
-    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
-  } else if (noSignString.length() > 1 && noSignString[0] == '0') {
+    clean_string = clean_string[0] == '-' ? ("-" + no_sign_string) : no_sign_string;
+  } else if (no_sign_string.length() > 1 && no_sign_string[0] == '0') {
     base = 8;
-    cras::stripLeading(noSignString, '0');
-    cleanString = cleanString[0] == '-' ? ("-" + noSignString) : noSignString;
+    cras::stripLeading(no_sign_string, '0');
+    clean_string = clean_string[0] == '-' ? ("-" + no_sign_string) : no_sign_string;
   }
 
-  return parseIntegralNumber<T>(cleanString, base);
+  return parseIntegralNumber<T>(clean_string, base);
 }
 
 int8_t parseInt8(const std::string& string) {
@@ -328,14 +329,14 @@ template<typename T, ::std::enable_if_t<::std::is_floating_point_v<::std::decay_
 inline T parseFloatingNumber(const std::string& string) {
   T result{};
 
-  auto cleanString = cras::stripLeading(string, ' ');
-  cras::stripLeading(cleanString, '+');
-  cras::stripTrailing(cleanString, ' ');
+  auto clean_string = cras::stripLeading(string, ' ');
+  cras::stripLeading(clean_string, '+');
+  cras::stripTrailing(clean_string, ' ');
 
-  auto [ptr, ec] = cras::from_chars(cleanString, result);
+  auto [ptr, ec] = cras::from_chars(clean_string, result);
 
   if (ec == std::errc()) {
-    if (ptr == cleanString.data() + cleanString.size()) {
+    if (ptr == clean_string.data() + clean_string.size()) {
       return result;
     }
     throw std::invalid_argument("Passed string contains excess characters: '" + string + "'");
@@ -376,13 +377,13 @@ bool isLegalBaseName(const std::string& name) {
   return std::regex_match(name, BASE_NAME_LEGAL_CHARS_P);
 }
 
-TempLocale::TempLocale(const int category, const char* newLocale)
-    : category(category), oldLocale(setlocale(category, nullptr)) {
-  setlocale(category, newLocale);
+TempLocale::TempLocale(const int category, const char* new_locale)
+    : category_(category), old_locale_(setlocale(category, nullptr)) {
+  setlocale(category, new_locale);
 }
 
 TempLocale::~TempLocale() {
-  setlocale(this->category, this->oldLocale);
+  setlocale(category_, old_locale_);
 }
 
 namespace {
@@ -399,85 +400,86 @@ struct pair_hash {
   }
 };
 
-thread_local std::unordered_map<std::pair<std::string, std::string>, iconv_t, pair_hash> iconvDescriptors;
+thread_local std::unordered_map<std::pair<std::string, std::string>, iconv_t, pair_hash> g_iconv_descriptors;
 }
 
 std::string iconvConvert(
-    const std::string& toEncoding, const std::string& fromEncoding, const std::string& inText, const bool translit,
-    bool ignore, const double initialOutbufSizeScale, const double outbufEnlargeCoef,
-    const std::optional<std::string>& localeName) {
-  if (outbufEnlargeCoef <= 1.0) {
+    const std::string& to_encoding, const std::string& from_encoding, const std::string& in_text, const bool translit,
+    bool ignore, const double initial_outbuf_size_scale, const double outbuf_enlarge_coef,
+    const std::optional<std::string>& locale_name) {
+  if (outbuf_enlarge_coef <= 1.0) {
     throw std::invalid_argument("outbufEnlargeCoef has to be strictly larger than 1.0");
   }
 
-  auto toEnc = toEncoding;
-  if (translit && !cras::contains(toEncoding, "//TRANSLIT")) {
-    toEnc += "//TRANSLIT";
+  auto to_enc = to_encoding;
+  if (translit && !cras::contains(to_encoding, "//TRANSLIT")) {
+    to_enc += "//TRANSLIT";
   }
-  if (ignore && !cras::contains(toEncoding, "//IGNORE")) {
-    toEnc += "//IGNORE";
+  if (ignore && !cras::contains(to_encoding, "//IGNORE")) {
+    to_enc += "//IGNORE";
   }
-  ignore = cras::contains(toEnc, "//IGNORE") || (cras::contains(toEnc, "//") && cras::contains(toEnc, ",IGNORE"));
+  ignore = cras::contains(to_enc, "//IGNORE") || (cras::contains(to_enc, "//") && cras::contains(to_enc, ",IGNORE"));
 
-  iconv_t convDesc;
-  if (iconvDescriptors.find({fromEncoding, toEnc}) == iconvDescriptors.end()) {
+  iconv_t conv_desc;
+  if (!g_iconv_descriptors.contains({from_encoding, to_enc})) {
     errno = 0;
-    convDesc = iconv_open(toEnc.c_str(), fromEncoding.c_str());
-    if (convDesc == reinterpret_cast<iconv_t>(-1)) {
+    conv_desc = iconv_open(to_enc.c_str(), from_encoding.c_str());
+    if (conv_desc == reinterpret_cast<iconv_t>(-1)) {
       throw std::invalid_argument(cras::format(
         "Could not create conversion descriptor from encoding '{}' to '{}': Error {}",
-        fromEncoding, toEnc, strerror(errno)));
+        from_encoding, to_enc, strerror(errno)));
     }
-    iconvDescriptors[{fromEncoding, toEnc}] = convDesc;
+    g_iconv_descriptors[{from_encoding, to_enc}] = conv_desc;
   } else {
-    convDesc = iconvDescriptors[{fromEncoding, toEnc}];
-    iconv(convDesc, nullptr, nullptr, nullptr, nullptr);
+    conv_desc = g_iconv_descriptors[{from_encoding, to_enc}];
+    iconv(conv_desc, nullptr, nullptr, nullptr, nullptr);
   }
 
-  std::vector<char> inbufData(std::begin(inText), std::end(inText));
-  size_t inbufUnreadSize = inbufData.size();
-  char* inbuf = inbufData.data();
+  std::vector<char> inbuf_data(std::begin(in_text), std::end(in_text));
+  size_t inbuf_unread_size = inbuf_data.size();
+  char* inbuf = inbuf_data.data();
 
-  size_t outbufLen = static_cast<size_t>(inText.size() * initialOutbufSizeScale);
-  std::vector<char> outbufData(outbufLen);
-  size_t outbufUnusedSize = outbufData.size();
-  char* outbuf = outbufData.data();
+  size_t outbuf_len = static_cast<size_t>(in_text.size() * initial_outbuf_size_scale);
+  std::vector<char> outbuf_data(outbuf_len);
+  size_t outbuf_unused_size = outbuf_data.size();
+  char* outbuf = outbuf_data.data();
 
   // Read the input until there is something to read
-  while (inbufUnreadSize > 0) {
+  while (inbuf_unread_size > 0) {
     // iconv transliteration doesn't work with the default C locale, we need a UTF-8 one
-    TempLocale tempLocale(LC_CTYPE, localeName.value_or("en_US.UTF-8").c_str());
+    TempLocale temp_locale(LC_CTYPE, locale_name.value_or("en_US.UTF-8").c_str());
     errno = 0;
-    if (iconv(convDesc, &inbuf, &inbufUnreadSize, &outbuf, &outbufUnusedSize) != static_cast<size_t>(-1)) {
+    if (iconv(conv_desc, &inbuf, &inbuf_unread_size, &outbuf, &outbuf_unused_size) != static_cast<size_t>(-1)) {
       // Clean up the conversion descriptor and flush possible "shift sequences"
       errno = 0;
-      iconv(convDesc, nullptr, nullptr, &outbuf, &outbufUnusedSize);
+      iconv(conv_desc, nullptr, nullptr, &outbuf, &outbuf_unused_size);
     } else {
       // The output buffer is too small; increase its size and try the conversion again
       if (errno == E2BIG) {
-        inbuf = inbufData.data();
-        inbufUnreadSize = inbufData.size();
+        inbuf = inbuf_data.data();
+        inbuf_unread_size = inbuf_data.size();
 
-        outbufLen = static_cast<size_t>(std::ceil(outbufLen * outbufEnlargeCoef));  // Enlarge the output buffer size
-        outbufData.resize(outbufLen);
-        outbuf = outbufData.data();
-        outbufUnusedSize = outbufData.size();
+        // Enlarge the output buffer size
+        outbuf_len = static_cast<size_t>(std::ceil(outbuf_len * outbuf_enlarge_coef));
+        outbuf_data.resize(outbuf_len);
+        outbuf = outbuf_data.data();
+        outbuf_unused_size = outbuf_data.size();
       } else {
         // Invalid byte sequence encountered or cannot transliterate to output
-        const auto resErrno = errno;
+        const auto res_errno = errno;
         // Reset the conversion descriptor as we'll be ignoring some bytes, so all context is lost
         errno = 0;
-        iconv(convDesc, nullptr, nullptr, nullptr, nullptr);
+        iconv(conv_desc, nullptr, nullptr, nullptr, nullptr);
 
         if (!ignore) {
           throw std::invalid_argument(cras::format("Could not convert {} from encoding {} to {}. Error {}",
-                                                   inText, fromEncoding, toEncoding, strerror(resErrno)));
+                                                   in_text, from_encoding, to_encoding, strerror(res_errno)));
         }
 
         // Ignore invalid input byte sequences or sequences we can't transliterate
-        if (resErrno == EILSEQ && inbufUnreadSize > 1) {
-          inbufUnreadSize -= 1;
-          inbuf = inbufData.data() + inText.size() - inbufUnreadSize;
+        if (res_errno == EILSEQ && inbuf_unread_size > 1) {
+          inbuf_unread_size -= 1;
+          inbuf = inbuf_data.data() + in_text.size() - inbuf_unread_size;
         } else {
           // EINVAL means invalid byte sequence at the end of input, just throw it away
           // inbufUnreadSize == 0 means ignore is True, some chars were ignored, but otherwise, we have success
@@ -487,7 +489,7 @@ std::string iconvConvert(
     }
   }
 
-  return {outbufData.data(), outbufLen - outbufUnusedSize};
+  return {outbuf_data.data(), outbuf_len - outbuf_unused_size};
 }
 
 std::string transliterateToAscii(const std::string& text) {
@@ -495,21 +497,21 @@ std::string transliterateToAscii(const std::string& text) {
 }
 
 std::string toValidRosName(
-    const std::string& text, const bool baseName, const std::optional<std::string>& fallbackName) {
-  if ((baseName && isLegalBaseName(text)) || (!baseName && isLegalName(text))) {
+    const std::string& text, const bool base_name, const std::optional<std::string>& fallback_name) {
+  if ((base_name && isLegalBaseName(text)) || (!base_name && isLegalName(text))) {
     return text;
   }
 
   if (text.empty()) {
-    if (!fallbackName.has_value()) {
+    if (!fallback_name.has_value()) {
       throw std::invalid_argument("Empty name is not allowed");
     }
-    return *fallbackName;
+    return *fallback_name;
   }
 
   auto name = transliterateToAscii(text);
   std::string prefix;
-  if (baseName) {
+  if (base_name) {
     name = std::regex_replace(name, std::regex("[^a-zA-Z0-9_]"), "_");
   } else {
     if (name[0] == '~') {
@@ -528,18 +530,18 @@ std::string toValidRosName(
 
   name = std::regex_replace(name, std::regex("^[^a-zA-Z]*"), "");
   if (name.empty()) {
-    if (!fallbackName.has_value()) {
+    if (!fallback_name.has_value()) {
       throw std::invalid_argument(cras::format("Name '{}' cannot be converted to valid ROS name", name));
     }
-    return *fallbackName;
+    return *fallback_name;
   }
 
   name = prefix + name;
-  if ((baseName && !isLegalBaseName(name)) || (!baseName && !isLegalName(name))) {
-    if (!fallbackName.has_value()) {
+  if ((base_name && !isLegalBaseName(name)) || (!base_name && !isLegalName(name))) {
+    if (!fallback_name.has_value()) {
       throw std::invalid_argument(cras::format("Name '{}' cannot be converted to valid ROS name", name));
     }
-    return *fallbackName;
+    return *fallback_name;
   }
 
   return name;

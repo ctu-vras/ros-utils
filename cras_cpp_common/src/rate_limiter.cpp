@@ -27,61 +27,61 @@ RateLimiter::RateLimiter(const ::rclcpp::Rate& rate) : RateLimiter(rate.clock_, 
 }
 
 RateLimiter::RateLimiter(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Duration& period)
-    : rate(period, clock), period(period) {
-  if (this->period < rclcpp::Duration(0, 0)) {
+    : rate_(period, clock), period_(period) {
+  if (period_ < rclcpp::Duration(0, 0)) {
     throw std::invalid_argument("Negative rate is not supported.");
   }
 
-  this->jumpHandler = this->rate.clock_->create_jump_callback(
-    nullptr, std::bind_front(&RateLimiter::onJump, this), this->jumpBackTolerance);
+  jump_handler_ = rate_.clock_->create_jump_callback(
+    nullptr, std::bind_front(&RateLimiter::onJump, this), jump_back_tolerance_);
 }
 
 RateLimiter::~RateLimiter() = default;
 
 void RateLimiter::reset() {
-  this->lastJump.reset();
+  last_jump_.reset();
 }
 
 void RateLimiter::setJumpBackTolerance(const rclcpp::Duration& tolerance) {
   if (tolerance < rclcpp::Duration(0, 0)) {
     throw std::invalid_argument("Jump back tolerance cannot be negative");
   }
-  this->jumpBackTolerance.min_backward.nanoseconds = -cras::convertDuration<rcl_duration_value_t>(tolerance);
-  this->jumpHandler = this->rate.clock_->create_jump_callback(
-    nullptr, std::bind_front(&RateLimiter::onJump, this), this->jumpBackTolerance);
+  jump_back_tolerance_.min_backward.nanoseconds = -cras::convertDuration<rcl_duration_value_t>(tolerance);
+  jump_handler_ = rate_.clock_->create_jump_callback(
+    nullptr, std::bind_front(&RateLimiter::onJump, this), jump_back_tolerance_);
 }
 
 void RateLimiter::setJumpBackTolerance(const rcl_jump_threshold_t& tolerance) {
-  this->jumpBackTolerance = tolerance;
-  this->jumpHandler = this->rate.clock_->create_jump_callback(
-    nullptr, std::bind_front(&RateLimiter::onJump, this), this->jumpBackTolerance);
+  jump_back_tolerance_ = tolerance;
+  jump_handler_ = rate_.clock_->create_jump_callback(
+    nullptr, std::bind_front(&RateLimiter::onJump, this), jump_back_tolerance_);
 }
 
-void RateLimiter::onJump(const rcl_time_jump_t& timeJump) {
-  this->lastJump = std::make_tuple(this->rate.clock_->now(), timeJump);
+void RateLimiter::onJump(const rcl_time_jump_t& time_jump) {
+  last_jump_ = std::make_tuple(rate_.clock_->now(), time_jump);
 }
 
 ThrottleLimiter::ThrottleLimiter(const rclcpp::Rate& rate) : RateLimiter(rate) {
-  this->lastPublishTime.rcl_time_.clock_type = rate.get_type();
+  last_publish_time_.rcl_time_.clock_type = rate.get_type();
 }
 
 ThrottleLimiter::ThrottleLimiter(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Duration& period)
     : RateLimiter(clock, period) {
-  this->lastPublishTime.rcl_time_.clock_type = rate.get_type();
+  last_publish_time_.rcl_time_.clock_type = rate_.get_type();
 }
 
 bool ThrottleLimiter::shouldPublish(const rclcpp::Time& stamp) {
   // If time jumped back, always allow
-  if (this->lastJump.has_value()) {
-    this->lastJump.reset();
-    this->lastPublishTime = stamp;
+  if (last_jump_.has_value()) {
+    last_jump_.reset();
+    last_publish_time_ = stamp;
     return true;
   }
 
-  bool result {false};
-  if (stamp >= (this->lastPublishTime + this->period)) {
+  auto result {false};
+  if (stamp >= (last_publish_time_ + period_)) {
     result = true;
-    this->lastPublishTime = stamp;
+    last_publish_time_ = stamp;
   }
 
   return result;
@@ -89,59 +89,59 @@ bool ThrottleLimiter::shouldPublish(const rclcpp::Time& stamp) {
 
 void ThrottleLimiter::reset() {
   RateLimiter::reset();
-  this->lastPublishTime = {0, 0, this->lastPublishTime.get_clock_type()};
+  last_publish_time_ = {0, 0, last_publish_time_.get_clock_type()};
 }
 
 TokenBucketLimiter::TokenBucketLimiter(
-    const rclcpp::Rate& rate, const size_t bucketCapacity, const double initialTokensAvailable)
-    : RateLimiter(rate), tokensAvailable(rclcpp::Duration::from_seconds(initialTokensAvailable)) {
-  this->bucketCapacity = bucketCapacity;
-  this->initialTokensAvailable = (std::min)(initialTokensAvailable, static_cast<double>(bucketCapacity));
-  this->tokensAvailable = rclcpp::Duration::from_seconds(this->initialTokensAvailable);
+    const rclcpp::Rate& rate, const size_t bucket_capacity, const double initial_tokens_available)
+    : RateLimiter(rate), tokens_available_(rclcpp::Duration::from_seconds(initial_tokens_available)) {
+  bucket_capacity_ = bucket_capacity;
+  initial_tokens_available_ = (std::min)(initial_tokens_available, static_cast<double>(bucket_capacity));
+  tokens_available_ = rclcpp::Duration::from_seconds(initial_tokens_available_);
 }
 
 TokenBucketLimiter::TokenBucketLimiter(
-    const rclcpp::Clock::SharedPtr& clock, const rclcpp::Duration& period, const size_t bucketCapacity,
-    const double initialTokensAvailable)
-    : RateLimiter(clock, period), tokensAvailable(rclcpp::Duration::from_seconds(initialTokensAvailable)) {
-  this->bucketCapacity = bucketCapacity;
-  this->initialTokensAvailable = (std::min)(initialTokensAvailable, static_cast<double>(bucketCapacity));
-  this->tokensAvailable = rclcpp::Duration::from_seconds(this->initialTokensAvailable);
+    const rclcpp::Clock::SharedPtr& clock, const rclcpp::Duration& period, const size_t bucket_capacity,
+    const double initial_tokens_available)
+    : RateLimiter(clock, period), tokens_available_(rclcpp::Duration::from_seconds(initial_tokens_available)) {
+  bucket_capacity_ = bucket_capacity;
+  initial_tokens_available_ = (std::min)(initial_tokens_available, static_cast<double>(bucket_capacity));
+  tokens_available_ = rclcpp::Duration::from_seconds(initial_tokens_available_);
 }
 
 bool TokenBucketLimiter::shouldPublish(const rclcpp::Time& stamp) {
   // If time jumped back by a lot, reset
-  if (this->lastJump.has_value()) {
-    this->reset();
+  if (last_jump_.has_value()) {
+    reset();
   }
 
   // If we're processing the first message, record its stamp and say that dt == 0, so nothing will be added to bucket
-  if (this->lastCheckTime.nanoseconds() == 0) {
-    this->lastCheckTime = stamp;
+  if (last_check_time_.nanoseconds() == 0) {
+    last_check_time_ = stamp;
   }
 
   // Do not allow if time jumped back just a bit (large jumps are solved above)
-  if (stamp < this->lastCheckTime) {
-    this->lastCheckTime = stamp;
+  if (stamp < last_check_time_) {
+    last_check_time_ = stamp;
     return false;
   }
 
-  bool result {false};
+  auto result {false};
 
-  const auto dt = stamp - this->lastCheckTime;
-  this->lastCheckTime = stamp;
+  const auto dt = stamp - last_check_time_;
+  last_check_time_ = stamp;
 
   // Refill rate is 1 token per every period
-  this->tokensAvailable += dt / this->period;
+  tokens_available_ += dt / period_;
 
   // Limit by bucket capacity
-  this->tokensAvailable = (std::min)(
-    this->tokensAvailable, rclcpp::Duration(std::chrono::nanoseconds(this->bucketCapacity * 1000000000)));
+  tokens_available_ = (std::min)(
+    tokens_available_, rclcpp::Duration(std::chrono::nanoseconds(bucket_capacity_ * 1000000000)));
 
   // If there is at least one whole token in the bucket, allow publishing
-  if (this->tokensAvailable >= rclcpp::Duration(1, 0)) {
+  if (tokens_available_ >= rclcpp::Duration(1, 0)) {
     result = true;
-    this->tokensAvailable -= rclcpp::Duration(1, 0);
+    tokens_available_ -= rclcpp::Duration(1, 0);
   }
 
   return result;
@@ -149,8 +149,8 @@ bool TokenBucketLimiter::shouldPublish(const rclcpp::Time& stamp) {
 
 void TokenBucketLimiter::reset() {
   RateLimiter::reset();
-  this->lastCheckTime = {0, 0, this->lastCheckTime.get_clock_type()};
-  this->tokensAvailable = rclcpp::Duration::from_seconds(this->initialTokensAvailable);
+  last_check_time_ = {0, 0, last_check_time_.get_clock_type()};
+  tokens_available_ = rclcpp::Duration::from_seconds(initial_tokens_available_);
 }
 
 }  // namespace cras

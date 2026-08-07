@@ -94,21 +94,21 @@ void stripLeadingSlash(::std::string& s, bool warn = false);
  * \brief Remove `prefix` from start of `str` if it contains it, otherwise return `str` unchanged.
  * \param[in] str The string to work on.
  * \param[in] prefix The prefix to find.
- * \param[in] hadPrefix If non-null, will contain information whether `str` starts with `prefix`.
+ * \param[in] had_prefix If non-null, will contain information whether `str` starts with `prefix`.
  * \return If `str` starts with `prefix`, it will return `str` with `prefix` removed.
  *         Otherwise, `str` will be returned unchanged.
  */
-::std::string removePrefix(const ::std::string& str, const ::std::string& prefix, bool* hadPrefix = nullptr);
+::std::string removePrefix(const ::std::string& str, const ::std::string& prefix, bool* had_prefix = nullptr);
 
 /**
  * \brief Remove `suffix` from end of `str` if it contains it, otherwise return `str` unchanged.
  * \param[in] str The string to work on.
  * \param[in] suffix The suffix to find.
- * \param[in] hadSuffix If non-null, will contain information whether `str` ends with `suffix`.
+ * \param[in] had_suffix If non-null, will contain information whether `str` ends with `suffix`.
  * \return If `str` ends with `suffix`, it will return `str` with `suffix` removed.
  *         Otherwise, `str` will be returned unchanged.
  */
-::std::string removeSuffix(const ::std::string& str, const ::std::string& suffix, bool* hadSuffix = nullptr);
+::std::string removeSuffix(const ::std::string& str, const ::std::string& suffix, bool* had_suffix = nullptr);
 
 /**
  * \brief If `str` is nonempty, returns prefix + str, otherwise empty string.
@@ -199,10 +199,10 @@ bool contains(const ::std::string& str, const ::std::string& needle);
  * \brief Split the given string by the given delimiter.
  * \param[in] str The string to split.
  * \param[in] delimiter The delimiter used for splitting.
- * \param[in] maxSplits If >= 0, defines the maximum number of splits.
+ * \param[in] max_splits If >= 0, defines the maximum number of splits.
  * \return A vector of parts of the original string.
  */
-::std::vector<::std::string> split(const ::std::string& str, const ::std::string& delimiter, int maxSplits = -1);
+::std::vector<::std::string> split(const ::std::string& str, const ::std::string& delimiter, int max_splits = -1);
 
 /**
  * \brief Convert all characters in the given string to upper case.
@@ -231,8 +231,8 @@ inline ::std::string snprintf(const char* format, ::va_list args) {
   constexpr size_t BUF_LEN = 1024u;
   char buf[BUF_LEN];
 
-  ::va_list argsCopy;
-  ::va_copy(argsCopy, args);
+  ::va_list args_copy;
+  ::va_copy(args_copy, args);
 
   const auto len = ::vsnprintf(buf, BUF_LEN, format, args);
 
@@ -243,11 +243,11 @@ inline ::std::string snprintf(const char* format, ::va_list args) {
     result = buf;
   } else {
     char* buf2 = new char[len + 1];
-    ::vsnprintf(buf2, len + 1, format, argsCopy);
+    ::vsnprintf(buf2, len + 1, format, args_copy);
     result = buf2;
     delete[] buf2;
   }
-  ::va_end(argsCopy);
+  ::va_end(args_copy);
   return result;
 }
 
@@ -400,9 +400,9 @@ inline ::std::string to_string(const ::std::map<K, V>& value);
 template<typename K, typename V>
 inline ::std::string to_string(const ::std::unordered_map<K, V>& value);
 
-#define DECLARE_TO_STRING_VECTOR(vectorType, prefix, suffix) \
+#define DECLARE_TO_STRING_VECTOR(vector_type, prefix, suffix) \
   template<typename T> \
-  inline ::std::string to_string(const vectorType<T>& value) \
+  inline ::std::string to_string(const vector_type<T>& value) \
   { \
     ::std::stringstream ss; \
     ss << (prefix); \
@@ -482,8 +482,8 @@ const char* to_cstring(const T& value) {
  */
 template<typename T>
 ::std::string join(const T& strings, const ::std::string& delimiter) {
-  const auto numStrings = strings.size();
-  if (numStrings == 0) {
+  const auto num_strings = strings.size();
+  if (num_strings == 0) {
     return "";
   }
 
@@ -491,7 +491,7 @@ template<typename T>
   size_t i = 0;
   for (const auto& s : strings) {
     ss << ::cras::to_string(s);
-    if (i < numStrings - 1) {
+    if (i < num_strings - 1) {
       ss << delimiter;
     }
     i++;
@@ -934,35 +934,36 @@ public:
   /**
    * \brief By creating this object on stack, you change the locale to the given one until the object goes out of scope.
    * \param category The LC_* category of the locale.
-   * \param newLocale The new (temporary) locale.
+   * \param new_locale The new (temporary) locale.
    */
-  TempLocale(int category, const char* newLocale);
+  TempLocale(int category, const char* new_locale);
   ~TempLocale();
 
 private:
-  int category;  //!< The category of the locale.
-  const char* oldLocale;  //!< The previous locale.
+  int category_;  //!< The category of the locale.
+  const char* old_locale_;  //!< The previous locale.
 };
 
 /**
- * \brief Convert `inText` from `fromEncoding` to `toEncoding` using iconv.
- * \param toEncoding The target encoding. It may contain the //TRANSLIT and //IGNORE suffixes.
- * \param fromEncoding The source encoding.
- * \param inText The text to convert.
- * \param translit If true, the conversion will try to transliterate letters not present in target encoding.
- * \param ignore If true, letters that can't be converted and transliterated will be left out.
- * \param initialOutbufSizeScale The initial scale of the size of the output buffer. Setting this to the correct value
- *                               may speed up the conversion in case the output is much larger than the input.
- * \param outbufEnlargeCoef The step size to use for enlarging the output buffer if it shows that its initial size
- *                          is insufficient. Must be strictly larger than 1.0.
- * \param localeName If set, specifies the locale used for the iconv call. It may influence the transliteration
- *                   results. If not set, a default english locale is used that usually works quite well.
+ * \brief Convert `in_text` from `from_encoding` to `to_encoding` using iconv.
+ * \param[in] to_encoding The target encoding. It may contain the //TRANSLIT and //IGNORE suffixes.
+ * \param[in] from_encoding The source encoding.
+ * \param[in] in_text The text to convert.
+ * \param[in] translit If true, the conversion will try to transliterate letters not present in target encoding.
+ * \param[in] ignore If true, letters that can't be converted and transliterated will be left out.
+ * \param[in] initial_outbuf_size_scale The initial scale of the size of the output buffer. Setting this to the correct
+ *                                      value may speed up the conversion in case the output is much larger than the
+ *                                      input.
+ * \param[in] outbuf_enlarge_coef The step size to use for enlarging the output buffer if it shows that its initial size
+ *                                is insufficient. Must be strictly larger than 1.0.
+ * \param[in] locale_name If set, specifies the locale used for the iconv call. It may influence the transliteration
+ *                        results. If not set, a default english locale is used that usually works quite well.
  * \return
  */
 ::std::string iconvConvert(
-    const ::std::string& toEncoding, const ::std::string& fromEncoding, const ::std::string& inText,
-    bool translit = false, bool ignore = false, double initialOutbufSizeScale = 1.0,
-    double outbufEnlargeCoef = 2.0, const ::std::optional<::std::string>& localeName = ::std::nullopt);
+    const ::std::string& to_encoding, const ::std::string& from_encoding, const ::std::string& in_text,
+    bool translit = false, bool ignore = false, double initial_outbuf_size_scale = 1.0,
+    double outbuf_enlarge_coef = 2.0, const ::std::optional<::std::string>& locale_name = ::std::nullopt);
 
 /**
  * \brief Transliterate the given string from UTF-8 to ASCII (replace non-ASCII chars by closest ASCII chars).
@@ -974,16 +975,16 @@ private:
 /**
  * \brief Make sure the given string can be used as ROS name.
  * \param text The text to convert.
- * \param baseName If true, the text represents only one "level" of names. If False, it can be the absolute or relative
+ * \param base_name If true, the text represents only one "level" of names. If False, it can be the absolute or relative
  *                 name with ~ and /.
- * \param fallbackName If specified, this name will be used if the automated conversion fails. This name is not checked
+ * \param fallback_name If specified, this name will be used if the automated conversion fails. This name is not checked
  *                     to be valid.
  * \return The valid ROS graph resource name.
  * \throws std::invalid_argument If the given text cannot be converted to a valid ROS name, and no `fallback_name`
  *                               is specified.
  */
 ::std::string toValidRosName(
-    const ::std::string& text, bool baseName = true,
-    const ::std::optional<::std::string>& fallbackName = ::std::nullopt);
+    const ::std::string& text, bool base_name = true,
+    const ::std::optional<::std::string>& fallback_name = ::std::nullopt);
 
 }  // namespace cras

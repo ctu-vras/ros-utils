@@ -16,16 +16,16 @@ namespace cras {
 
 /**
  * \brief Convert the given RCL logging level to `rcl_interfaces::msg::Log` level constant.
- * \param[in] rosLevel The RCL logging level.
+ * \param[in] ros_level The RCL logging level.
  * \return The `rosgraph_msgs::Log` level constant.
  */
-int8_t logLevelToMsgLevel(RCUTILS_LOG_SEVERITY rosLevel);
+int8_t logLevelToMsgLevel(RCUTILS_LOG_SEVERITY ros_level);
 
 /**
  * \brief Convert the given `rcl_interfaces::msg::Log` level constant to a given RCL
- * \param[in] msgLevel A `rosgraph_msgs::Log` level constant.
+ * \param[in] msg_level A `rosgraph_msgs::Log` level constant.
  * \return The rosconsole logging level.
  */
-RCUTILS_LOG_SEVERITY msgLevelToLogLevel(uint8_t msgLevel);
+RCUTILS_LOG_SEVERITY msgLevelToLogLevel(uint8_t msg_level);
 
 }  // namespace cras
