@@ -4,8 +4,6 @@
 cmake_minimum_required(VERSION 3.20.2)
 project(cras_topic_tools)
 
-set(CMAKE_CXX_STANDARD 20)
-
 find_package(cxxopts REQUIRED)
 
 find_package(ament_cmake REQUIRED)
@@ -21,6 +19,14 @@ ament_export_dependencies(
 #  rclcpp_components
 )
 
+add_library(${PROJECT_NAME}_defaults INTERFACE)
+target_include_directories(${PROJECT_NAME}_defaults INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+target_link_libraries(${PROJECT_NAME}_defaults INTERFACE cras_cpp_common::cras_defaults)
+target_compile_features(${PROJECT_NAME}_defaults INTERFACE $<BUILD_INTERFACE:cxx_std_20>)
+
 #add_library(cras_shape_shifter src/shape_shifter.cpp)
 #add_dependencies(cras_shape_shifter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(cras_shape_shifter ${catkin_LIBRARIES})
@@ -35,10 +41,8 @@ ament_export_dependencies(
 #  cras_lazy_subscriber cras_shape_shifter ${catkin_LIBRARIES} Boost::boost)
 
 add_library(cras_count_messages SHARED src/count_messages.cpp)
-target_include_directories(cras_count_messages PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>" "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(cras_count_messages
-  PUBLIC rclcpp::rclcpp
+  PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults
   PRIVATE cxxopts::cxxopts cras_cpp_common::cras_cpp_common rclcpp_components::component)
 rclcpp_components_register_node(cras_count_messages PLUGIN cras::CountMessagesComponent EXECUTABLE count_messages)
 add_dependencies(count_messages cras_count_messages)  # workaround https://github.com/ros2/rclcpp/issues/2868
@@ -79,10 +83,16 @@ add_dependencies(count_messages cras_count_messages)  # workaround https://githu
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
+# Generate version.h header
+add_library(${PROJECT_NAME}_version INTERFACE)
+ament_generate_version_header(${PROJECT_NAME}_version)
+
 # All shared libraries exported by the project. Do not add component nodes here (they should not be exported).
 # All PUBLIC and INTERFACE dependencies of these libraries have to be <depend> and they have to be covered by
 # ament_export_dependencies() for each package they depend on.
 set(EXPORTED_LIBS
+  ${PROJECT_NAME}_defaults
+  ${PROJECT_NAME}_version
   #  cras_generic_lazy_pubsub
   #  cras_lazy_subscriber
   #  cras_priority_mux
@@ -101,16 +111,14 @@ set(NON_EXPORTED_LIBS
   #  cras_throttle_messages_nodelet
 )
 
-add_library(${PROJECT_NAME}_version INTERFACE)
-ament_generate_version_header(${PROJECT_NAME}_version)
-
-# Create a convenience target cras_cpp_common::cras_cpp_common that links to all sub-libraries
+# Create a convenience target ${PROJECT_NAME}::${PROJECT_NAME} that links to all sub-libraries
 add_library(${PROJECT_NAME} INTERFACE)
-target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS} ${PROJECT_NAME}_version)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS})
+list(APPEND EXPORTED_LIBS ${PROJECT_NAME})
 
 # Install exported libs
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_version ${EXPORTED_LIBS}
+install(TARGETS ${EXPORTED_LIBS}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

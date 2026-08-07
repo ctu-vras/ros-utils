@@ -2037,7 +2037,6 @@ TEST(NodeUtils, SubscribeSignatures3ArgFilledWithHeader)  // NOLINT
   }
 }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitNoHeader)  // NOLINT
 {
   using TestClass = CbTest;
@@ -2076,7 +2075,6 @@ TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitNoHeader)  // NOLINT
   }
 }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitWithHeader)  // NOLINT
 {
   using TestClass = CbTestHeader;
@@ -2115,7 +2113,6 @@ TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitWithHeader)  // NOLINT
     ++i;
   }
 }
-#endif
 
 int main(int argc, char **argv)
 {
