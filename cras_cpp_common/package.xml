@@ -25,6 +25,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
 
   <depend>builtin_interfaces</depend>
   <depend>eigen</depend>
+  <depend>filters</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>libexpected-dev</depend>

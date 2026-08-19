@@ -12,6 +12,7 @@ project(cras_cpp_common)
 find_package(ament_cmake REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(filters REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -36,6 +37,7 @@ find_package(Threads REQUIRED)
 ament_export_dependencies(
   builtin_interfaces
   Eigen3
+  filters
   fmt
   geometry_msgs
   rcl
@@ -246,10 +248,9 @@ target_link_libraries(cras_param_utils PRIVATE Eigen3::Eigen tf2::tf2 ${geometry
 add_library(cras_qos_utils SHARED src/qos.cpp)
 target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
-#add_library(cras_filter_base INTERFACE)
-#target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_base.hpp>)
-#target_link_libraries(cras_filter_base
-#  INTERFACE cras_log_utils cras_param_utils cras_string_utils ${catkin_LIBRARIES})
+add_library(cras_filter_base SHARED src/filter_utils/filter_base.cpp)
+target_link_libraries(cras_filter_base
+  PUBLIC cras_param_utils cras_string_utils filters::filter_base rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
 #add_library(cras_filter_chain INTERFACE)
 #target_sources(cras_filter_chain INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_chain.hpp>)
@@ -331,7 +332,7 @@ set(EXPORTED_LIBS
   #  cras_diag_updater
   #  cras_diag_utils
   cras_expected
-  #  cras_filter_base
+  cras_filter_base
   #  cras_filter_chain
   cras_format
   cras_literal_sz
@@ -407,7 +408,8 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/diag_utils/deprecated/*
     include/${PROJECT_NAME}/diag_utils/impl/*
     include/${PROJECT_NAME}/diagnostics/*
-    include/${PROJECT_NAME}/filter_utils/*
+    include/${PROJECT_NAME}/filter_utils/filter_chain.hpp
+    include/${PROJECT_NAME}/filter_utils/filter_chain_nodelet.hpp
     include/${PROJECT_NAME}/filter_utils/impl/*
     include/${PROJECT_NAME}/log_utils/node.h
     include/${PROJECT_NAME}/log_utils/nodelet.h
@@ -417,8 +419,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/test_utils/*
     include/${PROJECT_NAME}/tf2_utils/interruptible_buffer.h
     include/${PROJECT_NAME}/diag_utils.hpp
-    include/${PROJECT_NAME}/filter_chain_nodelet.hpp
-    include/${PROJECT_NAME}/filter_utils.hpp
     include/${PROJECT_NAME}/message_utils.hpp
     include/${PROJECT_NAME}/node_utils.hpp
     include/${PROJECT_NAME}/nodelet_utils.hpp
