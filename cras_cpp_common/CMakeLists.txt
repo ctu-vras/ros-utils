@@ -239,9 +239,9 @@ add_library(cras_test_utils INTERFACE)
 target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils.hpp>)
 target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
-add_library(cras_param_utils INTERFACE)
-target_sources(cras_param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param_utils.hpp>)
-target_link_libraries(cras_param_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_defaults)
+add_library(cras_param_utils SHARED src/param_utils.cpp)
+target_link_libraries(cras_param_utils PUBLIC cras_string_utils rclcpp::rclcpp ${PROJECT_NAME}_defaults)
+target_link_libraries(cras_param_utils PRIVATE Eigen3::Eigen tf2::tf2 ${geometry_msgs_TARGETS})
 
 add_library(cras_qos_utils SHARED src/qos.cpp)
 target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults)
