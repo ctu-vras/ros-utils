@@ -2075,7 +2075,6 @@ TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitNoHeader)  // NOLINT
     ++i;
   }
 }
-#endif
 
 #ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeUtils, SubscribeSignatures3ArgDesignatedInitWithHeader)  // NOLINT
