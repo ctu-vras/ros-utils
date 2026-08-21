@@ -493,7 +493,7 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_cras_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)
 #
   ament_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
-  target_link_libraries(test_cras_time_utils cras_time_utils)
+  target_link_libraries(test_cras_time_utils cras_time_utils ${PROJECT_NAME}_defaults)
 
   ament_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
   target_link_libraries(test_cras_type_utils cras_type_utils cras_string_utils cras_time_utils)

@@ -60,19 +60,21 @@ constexpr ::std::string_view to_string(const ::rclcpp::ParameterType& type) {
 ::std::string to_string(const ::rclcpp::Time& value);
 
 template<typename T, typename ::std::enable_if_t<
-    ::cras::TimeType<T>::value && !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
+    ::cras::TimeType<T>::value && !::std::is_same_v<T, ::rclcpp::Time> && !::std::is_integral_v<T> &&
+    !::std::is_floating_point_v<T>>* = nullptr>
 inline ::std::string to_string(const T& value)
 {
-  return to_string(::cras::convertTime<::rclcpp::Time>(value));
+  return ::cras::to_string(::cras::convertTime<::rclcpp::Time>(value));
 }
 
 ::std::string to_string(const ::rclcpp::Duration& value);
 
 template<typename T, typename ::std::enable_if_t<
-    ::cras::DurationType<T>::value && !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
+    ::cras::DurationType<T>::value && !::std::is_same_v<T, ::rclcpp::Duration> && !::cras::TimeType<T>::value &&
+    !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
 inline ::std::string to_string(const T& value)
 {
-  return to_string(::cras::convertDuration<::rclcpp::Duration>(value));
+  return ::cras::to_string(::cras::convertDuration<::rclcpp::Duration>(value));
 }
 
 /**
@@ -99,7 +101,13 @@ inline ::std::string to_string(const T& value)
   return ss.str();
 }
 
-template<typename M, ::std::enable_if_t<::rosidl_generator_traits::is_message<M>::value>* = nullptr>
+template<typename M,
+::std::enable_if_t<
+  ::rosidl_generator_traits::is_message<M>::value &&
+  // We exclude Time and Duration because we convert them via the time-interfaces to_string()
+  !::std::is_same_v<M, ::builtin_interfaces::msg::Time> &&
+  !::std::is_same_v<M, ::builtin_interfaces::msg::Duration>
+>* = nullptr>
 inline std::string to_string(const M& msg)
 {
   ::std::string s = to_yaml(msg);

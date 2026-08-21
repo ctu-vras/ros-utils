@@ -12,6 +12,7 @@
 #include <regex>
 #include <string>
 
+#include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/parameter.hpp>
 #include <rclcpp/parameter_value.hpp>
