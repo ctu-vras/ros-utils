@@ -24,17 +24,16 @@
 #include <Eigen/Core>
 
 #include <cras_cpp_common/string_utils.hpp>
+#include <rclcpp/exceptions/exceptions.hpp>
+#include <rclcpp/time.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <std_msgs/msg/multi_array_layout.hpp>
-#include <rclcpp/exceptions/exceptions.hpp>
-#include <rclcpp/time.hpp>
 #include <tf2/LinearMath/Vector3.hpp>
 
 using namespace cras;
 
-rclcpp::Clock::SharedPtr createTestClock()
-{
+rclcpp::Clock::SharedPtr createTestClock() {
   const auto clock = rclcpp::Clock::make_shared(RCL_ROS_TIME);
   const auto ret = rcl_enable_ros_time_override(clock->get_clock_handle());
   if (ret != RMW_RET_OK)
@@ -42,8 +41,7 @@ rclcpp::Clock::SharedPtr createTestClock()
   return clock;
 }
 
-void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time)
-{
+void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time) {
   const auto ret = rcl_set_ros_time_override(
     clock->get_clock_handle(), cras::convertTime<rcl_time_point_value_t>(time));
   if (ret != RMW_RET_OK)
@@ -551,7 +549,7 @@ TEST(StringUtils, ToUpper)  // NOLINT
   EXPECT_EQ("TEST", cras::toUpper("TeST"));
   EXPECT_EQ("", cras::toUpper(""));
   EXPECT_EQ("1234567890", cras::toUpper("1234567890"));
-//  EXPECT_EQ("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ", cras::toUpper("ěščřžýáíéďťňúů"));  // not yet working
+// EXPECT_EQ("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ", cras::toUpper("ěščřžýáíéďťňúů"));  // not yet working
 }
 
 TEST(StringUtils, ToLower)  // NOLINT
@@ -562,7 +560,7 @@ TEST(StringUtils, ToLower)  // NOLINT
   EXPECT_EQ("test", cras::toLower("TeST"));
   EXPECT_EQ("", cras::toUpper(""));
   EXPECT_EQ("1234567890", cras::toUpper("1234567890"));
-//  EXPECT_EQ("ěščřžýáíéďťňúů", cras::toLower("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ"));  // not yet working
+// EXPECT_EQ("ěščřžýáíéďťňúů", cras::toLower("ĚŠČŘŽÝÁÍÉĎŤŇÚŮ"));  // not yet working
 }
 
 TEST(StringUtils, QuoteIfStringType)  // NOLINT
@@ -1524,8 +1522,7 @@ TEST(StringUtils, ToValidRosName)  // NOLINT
   EXPECT_EQ(toValidRosName("30 \U0001d5c4\U0001d5c6/\U0001d5c1", false), "km/h");
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

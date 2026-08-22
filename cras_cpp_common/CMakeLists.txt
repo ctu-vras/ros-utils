@@ -417,6 +417,7 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/nodelet_utils/*
     include/${PROJECT_NAME}/nodelet_utils/impl/*
     include/${PROJECT_NAME}/test_utils/*
+    include/${PROJECT_NAME}/time_utils/interruptible_sleep_interface.h
     include/${PROJECT_NAME}/tf2_utils/interruptible_buffer.h
     include/${PROJECT_NAME}/diag_utils.hpp
     include/${PROJECT_NAME}/message_utils.hpp

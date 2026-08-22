@@ -12,14 +12,9 @@
 #include <string>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/msg/point_field.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-namespace cras
-{
-
-namespace impl
-{
+namespace cras::impl {
 
 /**
  * \brief Base of a generic cloud iterator which can return the data in the raw type.
@@ -30,20 +25,19 @@ namespace impl
  * \tparam V The derived class (yop, curiously recurring template pattern).
  */
 template<typename T, typename TT, typename U, typename C, template<typename> class V>
-class GenericCloudIteratorBase : public ::sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V>
-{
+class GenericCloudIteratorBase : public ::sensor_msgs::impl::PointCloud2IteratorBase<T, TT, U, C, V> {
 public:
   /**
-   * \param[in] cloudMsg The PointCloud2 to iterate upon.
-   * \param[in] fieldName The field to iterate upon.
+   * \param[in] cloud_msg The PointCloud2 to iterate upon.
+   * \param[in] field_name The field to iterate upon.
    */
-  GenericCloudIteratorBase(C& cloudMsg, const ::std::string& fieldName);
+  GenericCloudIteratorBase(C& cloud_msg, const ::std::string& field_name);
 
   /**
    * \brief Get the byte size of the field which this iterator iterates.
    * \return Size in bytes.
    */
-  inline size_t getFieldSize() const { return this->fieldSize; }
+  inline size_t getFieldSize() const { return field_size_; }
 
   /**
    * \brief Return a pointer to the raw data of this field. Only `getFieldSize()` bytes after this pointer are valid.
@@ -53,7 +47,7 @@ public:
 
 protected:
   //! \brief The byte size of the field which this iterator iterates.
-  size_t fieldSize = 0;
+  size_t field_size_ = 0;
 };
 
 /**
@@ -61,19 +55,17 @@ protected:
  */
 template<typename T = unsigned char>
 class GenericCloudConstIterator
-  : public GenericCloudIteratorBase<T, const T, const unsigned char,
-    const ::sensor_msgs::msg::PointCloud2, GenericCloudConstIterator>
-{
+    : public GenericCloudIteratorBase<
+        T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2, GenericCloudConstIterator> {
 public:
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
   GenericCloudConstIterator(const ::sensor_msgs::msg::PointCloud2& cloud_msg, const ::std::string& field_name)
-    : GenericCloudIteratorBase<T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
-      GenericCloudConstIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
-  {
-  }
+      : GenericCloudIteratorBase<
+            T, const T, const unsigned char, const ::sensor_msgs::msg::PointCloud2,
+            GenericCloudConstIterator>::GenericCloudIteratorBase(cloud_msg, field_name) {}
 
   /**
    * \brief Return the raw data converted to the given datatype. The datatype has to have the same size as the field.
@@ -82,11 +74,11 @@ public:
    * \throws std::runtime_error If sizeof(D) is not the same as getFieldSize().
    */
   template<typename D>
-  const D* dataAs() const
-  {
-    if (sizeof(D) != this->getFieldSize())
+  const D* dataAs() const {
+    if (sizeof(D) != this->getFieldSize()) {
       throw ::std::runtime_error("Cannot convert field of size " + ::std::to_string(this->getFieldSize()) +
         " to a type of size " + ::std::to_string(sizeof(D)));
+    }
     return reinterpret_cast<const D*>(this->rawData());
   }
 };
@@ -96,18 +88,16 @@ public:
  */
 template<typename T = unsigned char>
 class GenericCloudIterator
-  : public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2, GenericCloudIterator>
-{
+    : public GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2, GenericCloudIterator> {
 public:
   /**
    * \param[in] cloud_msg The PointCloud2 to iterate upon.
    * \param[in] field_name The field to iterate upon.
    */
   GenericCloudIterator(::sensor_msgs::msg::PointCloud2& cloud_msg, const ::std::string& field_name)
-    : GenericCloudIteratorBase<T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
-      GenericCloudIterator>::GenericCloudIteratorBase(cloud_msg, field_name)
-  {
-  }
+      : GenericCloudIteratorBase<
+            T, T, unsigned char, ::sensor_msgs::msg::PointCloud2,
+            GenericCloudIterator>::GenericCloudIteratorBase(cloud_msg, field_name) {}
 
   /**
    * \brief Return the raw data converted to the given datatype. The datatype has to have the same size as the field.
@@ -116,26 +106,25 @@ public:
    * \throws std::runtime_error If sizeof(D) is not the same as getFieldSize().
    */
   template<typename D>
-  D* dataAs() const
-  {
-    if (sizeof(D) != this->getFieldSize())
+  D* dataAs() const {
+    if (sizeof(D) != this->getFieldSize()) {
       throw ::std::runtime_error("Cannot convert field of size " + ::std::to_string(this->getFieldSize()) +
         " to a type of size " + ::std::to_string(sizeof(D)));
+    }
     return reinterpret_cast<D*>(this->rawData());
   }
 
   /**
    * \brief Copy all values of this field from another iterator.
-   * \param otherIter The other iterator.
+   * \param other_iter The other iterator.
    */
-  void copyData(const ::cras::impl::GenericCloudConstIterator<T>& otherIter) const;
+  void copyData(const ::cras::impl::GenericCloudConstIterator<T>& other_iter) const;
 
   /**
    * \brief Copy all values of this field from another iterator.
-   * \param otherIter The other iterator.
+   * \param other_iter The other iterator.
    */
-  void copyData(const ::cras::impl::GenericCloudIterator<T>& otherIter) const;
+  void copyData(const ::cras::impl::GenericCloudIterator<T>& other_iter) const;
 };
 
-}
-}
+}  // namespace cras::impl

@@ -17,14 +17,12 @@
 #include <rclcpp/rate.hpp>
 #include <rclcpp/time.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Generic rate-limiter interface.
  */
-class RateLimiter
-{
+class RateLimiter {
 public:
   /**
    * \brief Create limiter with the given rate.
@@ -70,42 +68,43 @@ public:
 protected:
   /**
    * \brief Callback called when time jumped.
-   * \param[in] timeJump Parameters of the time jump.
+   * \param[in] time_jump Parameters of the time jump.
    */
-  virtual void onJump(const rcl_time_jump_t& timeJump);
+  virtual void onJump(const rcl_time_jump_t& time_jump);
 
   //! \brief The desired rate (1/period).
-  ::rclcpp::Rate rate;
+  ::rclcpp::Rate rate_;
 
   //! \brief The desired period between message (1/rate).
-  ::rclcpp::Duration period;
+  ::rclcpp::Duration period_;
 
   //! \brief Threshold for time jump detection.
-  ::rcl_jump_threshold_t jumpBackTolerance {true, 0, -3000000000};
+  ::rcl_jump_threshold_t jump_back_tolerance_ {true, 0, -3000000000};
 
   //! \brief Handler of time jumps.
-  ::rclcpp::JumpHandler::SharedPtr jumpHandler {nullptr};
+  ::rclcpp::JumpHandler::SharedPtr jump_handler_ {nullptr};
 
   //! \brief Parameters of the last time jump.
-  ::std::optional<::std::tuple<::rclcpp::Time, ::rcl_time_jump_t>> lastJump {};
+  ::std::optional<::std::tuple<::rclcpp::Time, ::rcl_time_jump_t>> last_jump_ {};
 };
 
 /**
  * \brief The (not so clever) algorithm used by topic_tools/throttle node.
  * \note It is not very good at achieving the requested if it isn't orders of magnitude smaller than the incoming rate.
  */
-class ThrottleLimiter : public ::cras::RateLimiter
-{
+class ThrottleLimiter : public ::cras::RateLimiter {
 public:
   explicit ThrottleLimiter(const ::rclcpp::Rate& rate);
+
   explicit ThrottleLimiter(const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period);
 
   bool shouldPublish(const ::rclcpp::Time& stamp) override;
+
   void reset() override;
 
 protected:
   //! \brief Stamp of the last message for which `shouldPublish()` returned true.
-  ::rclcpp::Time lastPublishTime {0, 0};
+  ::rclcpp::Time last_publish_time_ {0, 0};
 };
 
 /**
@@ -117,48 +116,49 @@ protected:
  * \note The bucket capacity basically specifies the size of the burst that can happen after some period of inactivity
  *       when tokens are just collected and not consumed.
  */
-class TokenBucketLimiter : public ::cras::RateLimiter
-{
+class TokenBucketLimiter : public ::cras::RateLimiter {
 public:
   /**
    * \brief Create the rate-limiter limiting to the desired rate.
    * \param[in] rate Desired rate.
-   * \param[in] bucketCapacity Capacity of the bucket (in tokens).
-   * \param[in] initialTokensAvailable Number of tokens available in the bucket at the beginning. Set to 1 to always
-   *                                   let the first packet through. This number should not be higher than
-   *                                   `bucketCapacity`.
+   * \param[in] bucket_capacity Capacity of the bucket (in tokens).
+   * \param[in] initial_tokens_available Number of tokens available in the bucket at the beginning. Set to 1 to always
+   *                                     let the first packet through. This number should not be higher than
+   *                                     `bucketCapacity`.
    */
-  explicit TokenBucketLimiter(const ::rclcpp::Rate& rate, size_t bucketCapacity = 2,
-    double initialTokensAvailable = 1.0);
+  explicit TokenBucketLimiter(
+      const ::rclcpp::Rate& rate, size_t bucket_capacity = 2, double initial_tokens_available = 1.0);
 
   /**
    * \brief Create rate-limiter with rate corresponding to the given period.
    * \param[in] clock The clock to use.
    * \param[in] period Average delay between two desired output messages.
-   * \param[in] bucketCapacity Capacity of the bucket (in tokens).
-   * \param[in] initialTokensAvailable Number of tokens available in the bucket at the beginning. Set to 1 to always
+   * \param[in] bucket_capacity Capacity of the bucket (in tokens).
+   * \param[in] initial_tokens_available Number of tokens available in the bucket at the beginning. Set to 1 to always
    *                                   let the first packet through. This number should not be higher than
    *                                   `bucketCapacity`.
    */
-  explicit TokenBucketLimiter(const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period,
-    size_t bucketCapacity = 2, double initialTokensAvailable = 1.0);
+  explicit TokenBucketLimiter(
+      const ::rclcpp::Clock::SharedPtr& clock, const ::rclcpp::Duration& period,
+      size_t bucket_capacity = 2, double initial_tokens_available = 1.0);
 
   bool shouldPublish(const ::rclcpp::Time& stamp) override;
+
   void reset() override;
 
 protected:
   //! \brief Stamp of the last incoming message. Zero at the beginning.
-  ::rclcpp::Time lastCheckTime {0, 0};
+  ::rclcpp::Time last_check_time_ {0, 0};
 
   //! \brief Number of tokens that can fit into the bucket. This influences the maximum burst size.
-  size_t bucketCapacity;
+  size_t bucket_capacity_;
 
   //! \brief The number of currently available tokens. This units of this number are actually not seconds, but Duration
   //! is used here to achieve higher decimal point accuracy.
-  ::rclcpp::Duration tokensAvailable;
+  ::rclcpp::Duration tokens_available_;
 
   //! \brief The number of tokens that are initially in the buffer (and after reset).
-  double initialTokensAvailable;
+  double initial_tokens_available_;
 };
 
-}
+}  // namespace cras

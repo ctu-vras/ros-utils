@@ -1,92 +1,84 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileCopyrightText: Czech Technical University in Prague
+
 /**
  * \file
  * \brief Implementation of a reversed semaphore usable for thread synchronization.
  * \author Martin Pecka
- * SPDX-License-Identifier: BSD-3-Clause
- * SPDX-FileCopyrightText: Czech Technical University in Prague
  */
 
 #include <iostream>
 
 #include <cras_cpp_common/thread_utils/semaphore.hpp>
 
-namespace cras
-{
+namespace cras {
 
-ReverseSemaphore::ReverseSemaphore(const bool waitZeroAtDestroy) : waitZeroAtDestroy(waitZeroAtDestroy)
-{
+ReverseSemaphore::ReverseSemaphore(const bool wait_zero_at_destroy) : wait_zero_at_destroy_(wait_zero_at_destroy) {
 }
 
-ReverseSemaphore::~ReverseSemaphore()
-{
-  this->isDestroying = true;
-  this->disable();
-  if (this->waitZeroAtDestroy)
-  {
-    this->waitZero();
-  }
-  else
-  {
+ReverseSemaphore::~ReverseSemaphore() {
+  is_destroying_ = true;
+  disable();
+  if (wait_zero_at_destroy_) {
+    waitZero();
+  } else {
     // needed for cv destructor to finish
-    std::lock_guard lock(this->mutex);
-    this->cv.notify_all();
+    std::lock_guard lock(mutex_);
+    cv_.notify_all();
   }
 }
 
-bool ReverseSemaphore::acquire()
-{
-  std::lock_guard lock(this->mutex);
-  if (this->disabled)
+bool ReverseSemaphore::acquire() {
+  std::lock_guard lock(mutex_);
+  if (disabled_) {
     return false;
-  this->count = this->count + 1;
+  }
+  count_ = count_ + 1;
   return true;
 }
 
-void ReverseSemaphore::release()
-{
-  bool reportError{false};
+void ReverseSemaphore::release() {
+  auto report_error{false};
   {
-    std::lock_guard lock(this->mutex);
-    if (this->count > 0)
-      this->count = this->count - 1;
-    else
-      reportError = true;
-    if (this->count == 0)
-      this->cv.notify_all();
+    std::lock_guard lock(mutex_);
+    if (count_ > 0) {
+      count_ = count_ - 1;
+    } else {
+      report_error = true;
+    }
+    if (count_ == 0) {
+      cv_.notify_all();
+    }
   }
-  if (reportError)
+  if (report_error) {
     std::cerr << "ReverseSemaphore released more times than acquired!" << std::endl;
+  }
 }
 
-bool ReverseSemaphore::waitZero()
-{
-  std::unique_lock lock(this->mutex);
-  this->cv.wait(lock, [this](){ return this->count == 0 || (!this->waitZeroAtDestroy && this->isDestroying); });
-  return this->count == 0;
+bool ReverseSemaphore::waitZero() {
+  std::unique_lock lock(mutex_);
+  cv_.wait(lock, [this] { return count_ == 0 || (!wait_zero_at_destroy_ && is_destroying_); });
+  return count_ == 0;
 }
 
-void ReverseSemaphore::disable()
-{
-  std::lock_guard lock(this->mutex);
-  this->disabled = true;
+void ReverseSemaphore::disable() {
+  std::lock_guard lock(mutex_);
+  disabled_ = true;
 }
 
-void ReverseSemaphore::enable()
-{
-  std::lock_guard lock(this->mutex);
-  this->disabled = false;
+void ReverseSemaphore::enable() {
+  std::lock_guard lock(mutex_);
+  disabled_ = false;
 }
 
-bool ReverseSemaphore::isEnabled() const
-{
-  std::lock_guard lock(this->mutex);
-  return !this->disabled;
+bool ReverseSemaphore::isEnabled() const {
+  std::lock_guard lock(mutex_);
+  return !disabled_;
 }
 
-size_t ReverseSemaphore::getCount() const
-{
-  std::lock_guard lock(this->mutex);
-  return this->count;
+size_t ReverseSemaphore::getCount() const {
+  std::lock_guard lock(mutex_);
+  return count_;
 }
 
-}
+}  // namespace cras

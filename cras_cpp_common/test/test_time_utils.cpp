@@ -24,30 +24,29 @@ using namespace cras;
 using namespace rclcpp;
 using namespace std::chrono_literals;
 
-// // The following testcase has to be the first one because it tests what happens when time is not initialized!
+//// The following testcase has to be the first one because it tests what happens when time is not initialized!
 // TEST(TimeUtils, NowFallbackToWall)  // NOLINT
 // {
-//   // Before time is initialized, nowFallbackToWall() should return wall time
-//   auto t = cras::nowFallbackToWall();
-//   const auto wall = rclcpp::WallTime::now();
-//   const auto wallTime = rclcpp::Time(wall.sec, wall.nsec);
-//   EXPECT_LT((wallTime > t) ? (wallTime - t) : (t - wallTime), rclcpp::Duration(0.1));
+//// Before time is initialized, nowFallbackToWall() should return wall time
+// auto t = cras::nowFallbackToWall();
+// const auto wall = rclcpp::WallTime::now();
+// const auto wallTime = rclcpp::Time(wall.sec, wall.nsec);
+// EXPECT_LT((wallTime > t) ? (wallTime - t) : (t - wallTime), rclcpp::Duration(0.1));
 //
-//   // This is an unrelated testcase, but we need to test both before time is initialized
-//   EXPECT_THROW(remainingTime({99, 0}, {2, 0}), rclcpp::TimeNotInitializedException);
+//// This is an unrelated testcase, but we need to test both before time is initialized
+// EXPECT_THROW(remainingTime({99, 0}, {2, 0}), rclcpp::TimeNotInitializedException);
 //
-//   // After time initialization, it should return ROS time
-//   const auto clock = createTestClock();
-//   setTime(clock, {100, 0});
+//// After time initialization, it should return ROS time
+// const auto clock = createTestClock();
+// setTime(clock, {100, 0});
 //
-//   t = cras::nowFallbackToWall();
-//   EXPECT_EQ(rclcpp::Time::now(), t);
+// t = cras::nowFallbackToWall();
+// EXPECT_EQ(rclcpp::Time::now(), t);
 //
-//   Time::shutdown();
+// Time::shutdown();
 // }
 
-Clock::SharedPtr createTestClock()
-{
+Clock::SharedPtr createTestClock() {
   const auto clock = rclcpp::Clock::make_shared(RCL_ROS_TIME);
   const auto ret = rcl_enable_ros_time_override(clock->get_clock_handle());
   if (ret != RMW_RET_OK)
@@ -55,8 +54,7 @@ Clock::SharedPtr createTestClock()
   return clock;
 }
 
-void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time)
-{
+void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time) {
   const auto ret = rcl_set_ros_time_override(
     clock->get_clock_handle(), cras::convertTime<rcl_time_point_value_t>(time));
   if (ret != RMW_RET_OK)
@@ -213,344 +211,344 @@ TEST(TimeUtils, SaturateAddTime)  // NOLINT
 // class TestSleepInterface : public cras::InterruptibleSleepInterface
 // {
 // public:
-//   bool isOk {true};
-//   bool ok() const override
-//   {
-//     return isOk;
-//   }
+// bool isOk {true};
+// bool ok() const override
+// {
+// return isOk;
+// }
 // };
 //
-// /**
-//  * Test that the sleep in InterruptibleSleepInterface has the right duration.
-//  */
+///**
+// * Test that the sleep in InterruptibleSleepInterface has the right duration.
+// */
 // TEST(TimeUtils, SleepInterfaceSimTime)  // NOLINT
 // {
-//   const auto clock = createTestClock();
-//   setTime(clock, {10, 0});
+// const auto clock = createTestClock();
+// setTime(clock, {10, 0});
 //
-//   TestSleepInterface i;
+// TestSleepInterface i;
 //
-//   // Test normal sleep behavior without interruption.
+//// Test normal sleep behavior without interruption.
 //
-//   bool started = false;
-//   bool executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_TRUE(i.sleep({1, 0}));
-//   executed = true;}).detach();
+// bool started = false;
+// bool executed = false;
+// std::thread([&](){started = true;
+// EXPECT_TRUE(i.sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::setTime(clock, rclcpp::Time(10.99));
+// rclcpp::setTime(clock, rclcpp::Time(10.99));
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
-//   EXPECT_FALSE(executed);
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::setTime(clock, rclcpp::Time(11, 0));
+// rclcpp::setTime(clock, rclcpp::Time(11, 0));
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
-//   EXPECT_TRUE(executed);
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
+// EXPECT_TRUE(executed);
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 // }
 //
-// /**
-//  * Test that the sleep in InterruptibleSleepInterface has the right duration.
-//  */
+///**
+// * Test that the sleep in InterruptibleSleepInterface has the right duration.
+// */
 // TEST(TimeUtils, SleepInterfaceWallTime)  // NOLINT
 // {
-//   const auto clock = createTestClock();
-//   ASSERT_TRUE(Time::isSystemTime());
+// const auto clock = createTestClock();
+// ASSERT_TRUE(Time::isSystemTime());
 //
-//   TestSleepInterface i;
+// TestSleepInterface i;
 //
-//   // Test normal sleep behavior without interruption.
+//// Test normal sleep behavior without interruption.
 //
-//   bool started = false;
-//   bool executed = false;
-//   std::thread([&](){started = true;
-//     auto startTime = rclcpp::WallTime::now();
-//     EXPECT_TRUE(i.sleep({1, 0}));
-//     auto duration = rclcpp::WallTime::now() - startTime;
-//     EXPECT_GT(1.1, duration.seconds());
-//     EXPECT_LT(1.0, duration.seconds());
-//   executed = true;}).detach();
+// bool started = false;
+// bool executed = false;
+// std::thread([&](){started = true;
+// auto startTime = rclcpp::WallTime::now();
+// EXPECT_TRUE(i.sleep({1, 0}));
+// auto duration = rclcpp::WallTime::now() - startTime;
+// EXPECT_GT(1.1, duration.seconds());
+// EXPECT_LT(1.0, duration.seconds());
+// executed = true;}).detach();
 //
-//   auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(1.5);
-//   while ((!started || !executed) && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(1.5);
+// while ((!started || !executed) && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_TRUE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_TRUE(executed);
 // }
 //
-// /**
-//  * Test that the sleeps in InterruptibleSleepInterface can be interrupted by various methods.
-//  */
+///**
+// * Test that the sleeps in InterruptibleSleepInterface can be interrupted by various methods.
+// */
 // TEST(TimeUtils, SleepInterfaceInterrupt)  // NOLINT
 // {
-//   const auto clock = createTestClock();
-//   setTime(clock, {10, 0});
+// const auto clock = createTestClock();
+// setTime(clock, {10, 0});
 //
-//   TestSleepInterface i;
+// TestSleepInterface i;
 //
-//   // Test normal sleep behavior without interruption.
+//// Test normal sleep behavior without interruption.
 //
-//   bool started = false;
-//   bool executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_TRUE(i.sleep({1, 0}));
-//   executed = true;}).detach();
+// bool started = false;
+// bool executed = false;
+// std::thread([&](){started = true;
+// EXPECT_TRUE(i.sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::WallDuration(0.2).sleep();
-//   EXPECT_FALSE(executed);
+// rclcpp::WallDuration(0.2).sleep();
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::setTime(clock, {11, 1000});
+// rclcpp::setTime(clock, {11, 1000});
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed);
 //
-//   // Test interrupting a running sleep by setting ok() to false.
+//// Test interrupting a running sleep by setting ok() to false.
 //
-//   rclcpp::setTime(clock, {10, 0});
+// rclcpp::setTime(clock, {10, 0});
 //
-//   started = false;
-//   executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_FALSE(i.sleep({1, 0}));
-//   executed = true;}).detach();
+// started = false;
+// executed = false;
+// std::thread([&](){started = true;
+// EXPECT_FALSE(i.sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::WallDuration(0.2).sleep();
-//   EXPECT_FALSE(executed);
+// rclcpp::WallDuration(0.2).sleep();
+// EXPECT_FALSE(executed);
 //
-//   i.isOk = false;
+// i.isOk = false;
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed);
 //
-//   // Test two simultaneous sleeps where the second one should end earlier than the first one.
+//// Test two simultaneous sleeps where the second one should end earlier than the first one.
 //
-//   rclcpp::setTime(clock, {10, 0});
-//   i.isOk = true;
+// rclcpp::setTime(clock, {10, 0});
+// i.isOk = true;
 //
-//   started = false;
-//   executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_TRUE(i.sleep({1, 0}));
-//   executed = true;}).detach();
+// started = false;
+// executed = false;
+// std::thread([&](){started = true;
+// EXPECT_TRUE(i.sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   auto started2 = false;
-//   auto executed2 = false;
-//   std::thread([&](){started2 = true;
-//     EXPECT_TRUE(i.sleep(rclcpp::Duration(0.1)));
-//   executed2 = true;}).detach();
+// auto started2 = false;
+// auto executed2 = false;
+// std::thread([&](){started2 = true;
+// EXPECT_TRUE(i.sleep(rclcpp::Duration(0.1)));
+// executed2 = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started2 && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started2 && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_TRUE(started2);
-//   EXPECT_FALSE(executed);
-//   EXPECT_FALSE(executed2);
+// EXPECT_TRUE(started);
+// EXPECT_TRUE(started2);
+// EXPECT_FALSE(executed);
+// EXPECT_FALSE(executed2);
 //
-//   rclcpp::WallDuration(0.2).sleep();
-//   EXPECT_FALSE(executed);
-//   EXPECT_FALSE(executed2);
+// rclcpp::WallDuration(0.2).sleep();
+// EXPECT_FALSE(executed);
+// EXPECT_FALSE(executed2);
 //
-//   rclcpp::setTime(clock, rclcpp::Time(10.11));
+// rclcpp::setTime(clock, rclcpp::Time(10.11));
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed2 && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed2 && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_FALSE(executed);
-//   EXPECT_TRUE(executed2);
+// EXPECT_FALSE(executed);
+// EXPECT_TRUE(executed2);
 //
-//   rclcpp::setTime(clock, {11, 1000});
+// rclcpp::setTime(clock, {11, 1000});
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed);
 //
-//   // Test simultaneous sleeps and setting ok() to false during them.
+//// Test simultaneous sleeps and setting ok() to false during them.
 //
-//   rclcpp::setTime(clock, {10, 0});
-//   i.isOk = true;
+// rclcpp::setTime(clock, {10, 0});
+// i.isOk = true;
 //
-//   started = false;
-//   executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_FALSE(i.sleep({1, 0}));
-//   executed = true;}).detach();
+// started = false;
+// executed = false;
+// std::thread([&](){started = true;
+// EXPECT_FALSE(i.sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   started2 = false;
-//   executed2 = false;
-//   std::thread([&](){started2 = true;
-//     EXPECT_FALSE(i.sleep({1, 0}));
-//   executed2 = true;}).detach();
+// started2 = false;
+// executed2 = false;
+// std::thread([&](){started2 = true;
+// EXPECT_FALSE(i.sleep({1, 0}));
+// executed2 = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started2 && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started2 && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_TRUE(started2);
-//   EXPECT_FALSE(executed);
-//   EXPECT_FALSE(executed2);
+// EXPECT_TRUE(started);
+// EXPECT_TRUE(started2);
+// EXPECT_FALSE(executed);
+// EXPECT_FALSE(executed2);
 //
-//   rclcpp::WallDuration(0.1).sleep();
-//   EXPECT_FALSE(executed);
-//   EXPECT_FALSE(executed2);
+// rclcpp::WallDuration(0.1).sleep();
+// EXPECT_FALSE(executed);
+// EXPECT_FALSE(executed2);
 //
-//   rclcpp::setTime(clock, rclcpp::Time(10.1));
+// rclcpp::setTime(clock, rclcpp::Time(10.1));
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed2 && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed2 && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_FALSE(executed);
-//   EXPECT_FALSE(executed2);
+// EXPECT_FALSE(executed);
+// EXPECT_FALSE(executed2);
 //
-//   i.isOk = false;
+// i.isOk = false;
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
-//   EXPECT_TRUE(executed2);
+// EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed2);
 //
 // }
 //
-// /**
-//  * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep also when using WallTime.
-//  */
+///**
+// * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep also when using WallTime.
+// */
 // TEST(TimeUtils, SleepInterfaceInterruptWallTime)  // NOLINT
 // {
-//   const auto clock = createTestClock();
-//   ASSERT_TRUE(Time::isSystemTime());
+// const auto clock = createTestClock();
+// ASSERT_TRUE(Time::isSystemTime());
 //
-//   auto i = std::make_shared<TestSleepInterface>();
+// auto i = std::make_shared<TestSleepInterface>();
 //
-//   auto startTime = rclcpp::WallTime::now();
+// auto startTime = rclcpp::WallTime::now();
 //
-//   bool started = false;
-//   bool executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_FALSE(i->sleep({10, 0}));
-//   executed = true;}).detach();
+// bool started = false;
+// bool executed = false;
+// std::thread([&](){started = true;
+// EXPECT_FALSE(i->sleep({10, 0}));
+// executed = true;}).detach();
 //
-//   auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::WallDuration(0.2).sleep();
-//   EXPECT_FALSE(executed);
+// rclcpp::WallDuration(0.2).sleep();
+// EXPECT_FALSE(executed);
 //
-//   i->isOk = false;
+// i->isOk = false;
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!executed && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!executed && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed);
 //
-//   const auto duration = rclcpp::WallTime::now() - startTime;
-//   EXPECT_GT(10.0, duration.seconds());
+// const auto duration = rclcpp::WallTime::now() - startTime;
+// EXPECT_GT(10.0, duration.seconds());
 // }
 //
-// /**
-//  * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep if it is being destroyed.
-//  */
+///**
+// * \brief Test that InterruptibleSleepInterface can interrupt an ongoing sleep if it is being destroyed.
+// */
 // TEST(TimeUtils, SleepInterfaceDestructor)  // NOLINT
 // {
-//   const auto clock = createTestClock();
-//   setTime(clock, {10, 0});
+// const auto clock = createTestClock();
+// setTime(clock, {10, 0});
 //
-//   auto i = std::make_shared<TestSleepInterface>();
+// auto i = std::make_shared<TestSleepInterface>();
 //
-//   bool started = false;
-//   bool executed = false;
-//   std::thread([&](){started = true;
-//     EXPECT_FALSE(i->sleep({1, 0}));
-//   executed = true;}).detach();
+// bool started = false;
+// bool executed = false;
+// std::thread([&](){started = true;
+// EXPECT_FALSE(i->sleep({1, 0}));
+// executed = true;}).detach();
 //
-//   auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while (!started && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// auto end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while (!started && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(started);
-//   EXPECT_FALSE(executed);
+// EXPECT_TRUE(started);
+// EXPECT_FALSE(executed);
 //
-//   rclcpp::WallDuration(0.2).sleep();
-//   EXPECT_FALSE(executed);
+// rclcpp::WallDuration(0.2).sleep();
+// EXPECT_FALSE(executed);
 //
-//   bool started2 = false;
-//   bool executed2 = false;
+// bool started2 = false;
+// bool executed2 = false;
 //
-//   // Destroy the sleep interface object and make sure both the destruction and the ongoing sleep have finished on time.
+//// Destroy the sleep interface object and make sure both the destruction and the ongoing sleep have finished on time.
 //
-//   std::thread([&](){started2 = true;
-//     i.reset();
-//   executed2 = true;}).detach();
+// std::thread([&](){started2 = true;
+// i.reset();
+// executed2 = true;}).detach();
 //
-//   end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
-//   while ((!started2 || !executed2 || !executed) && rclcpp::WallTime::now() < end)
-//     rclcpp::WallDuration(0.01).sleep();
+// end = rclcpp::WallTime::now() + rclcpp::WallDuration(0.2);
+// while ((!started2 || !executed2 || !executed) && rclcpp::WallTime::now() < end)
+// rclcpp::WallDuration(0.01).sleep();
 //
-//   EXPECT_TRUE(executed);
-//   EXPECT_TRUE(executed2);
-//   EXPECT_TRUE(started2);
+// EXPECT_TRUE(executed);
+// EXPECT_TRUE(executed2);
+// EXPECT_TRUE(started2);
 // }
 
 TEST(TimeUtils, TimeType)  // NOLINT
@@ -889,8 +887,7 @@ TEST(TimeUtils, ConvertDuration)  // NOLINT
   EXPECT_EQ(1'000'000'000, (cras::convertDuration<rclcpp::Duration>(durationS).nanoseconds()));
 }
 
-bool operator==(const tm& t1, const tm& t2)
-{
+bool operator==(const tm& t1, const tm& t2) {
   return
     t1.tm_year == t2.tm_year &&
     t1.tm_mon == t2.tm_mon &&
@@ -951,8 +948,7 @@ TEST(TimeUtils, FromStructTm)  // NOLINT
   EXPECT_EQ(rclcpp::Time(1731505444, 0), cras::fromStructTm(t));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -249,8 +249,8 @@ struct ParameterValueTraits<::std::vector<uint8_t>> {
 
 template<typename T>
 struct ParameterValueTraits<
-  ::std::vector<T>,
-  ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
+    ::std::vector<T>,
+    ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
 > {
   constexpr static ::rclcpp::ParameterType param_type {
     ::cras::arrayFromBaseType(::cras::ParameterValueTraits<T>::param_type)
@@ -262,8 +262,8 @@ struct ParameterValueTraits<
 
 template<typename T>
 struct ParameterValueTraits<
-  ::std::list<T>,
-  ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
+    ::std::list<T>,
+    ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
 > {
   constexpr static ::rclcpp::ParameterType param_type {
     ::cras::arrayFromBaseType(::cras::ParameterValueTraits<T>::param_type)
@@ -275,8 +275,8 @@ struct ParameterValueTraits<
 
 template<typename T>
 struct ParameterValueTraits<
-  ::std::set<T>,
-  ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
+    ::std::set<T>,
+    ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
 > {
   constexpr static ::rclcpp::ParameterType param_type {
     ::cras::arrayFromBaseType(::cras::ParameterValueTraits<T>::param_type)
@@ -288,8 +288,8 @@ struct ParameterValueTraits<
 
 template<typename T>
 struct ParameterValueTraits<
-  ::std::unordered_set<T>,
-  ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
+    ::std::unordered_set<T>,
+    ::std::enable_if_t<!::cras::ParameterValueTraits<T>::is_array && !::cras::ParameterValueTraits<T>::is_canonical>
 > {
   constexpr static ::rclcpp::ParameterType param_type {
     ::cras::arrayFromBaseType(::cras::ParameterValueTraits<T>::param_type)
@@ -301,9 +301,9 @@ struct ParameterValueTraits<
 
 template<typename T, size_t N>
 struct ParameterValueTraits<
-  ::std::array<T, N>,
-  ::std::enable_if_t<
-    ::cras::ParameterValueTraits<::std::vector<T>>::param_type != ::rclcpp::ParameterType::PARAMETER_NOT_SET>
+    ::std::array<T, N>,
+    ::std::enable_if_t<
+        ::cras::ParameterValueTraits<::std::vector<T>>::param_type != ::rclcpp::ParameterType::PARAMETER_NOT_SET>
 > {
   constexpr static ::rclcpp::ParameterType param_type {::cras::ParameterValueTraits<::std::vector<T>>::param_type};
   constexpr static ::std::string_view string_type {::cras::to_string(param_type)};

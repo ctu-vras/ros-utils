@@ -18,8 +18,7 @@
 
 #include "cloud/impl/cloud.hpp"
 
-namespace cras
-{
+namespace cras {
 
 //! \brief Shorthand for sensor_msgs::PointCloud2
 typedef ::sensor_msgs::msg::PointCloud2 Cloud;
@@ -67,36 +66,35 @@ typedef ::cras::impl::GenericCloudConstIterator<> GenericCloudConstIter;
  * \param[in] cloud The cloud to examine.
  * \return The number of points.
  */
-inline size_t numPoints(const ::cras::Cloud& cloud)
-{
+inline size_t numPoints(const ::cras::Cloud& cloud) {
   return static_cast<size_t>(cloud.height) * static_cast<size_t>(cloud.width);
 }
 
 /**
  * \brief Return true if the cloud contains a field with the given name.
  * \param[in] cloud The cloud to search.
- * \param[in] fieldName Name of the field.
+ * \param[in] field_name Name of the field.
  * \return Whether the field is there or not.
  */
-bool hasField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
+bool hasField(const ::cras::Cloud& cloud, const ::std::string& field_name);
 
 /**
  * \brief Return the sensor_msgs::PointField with the given name.
  * \param[in] cloud Cloud to extract the field from.
- * \param[in] fieldName Name of the field.
+ * \param[in] field_name Name of the field.
  * \return Reference to the field.
  * \throws std::runtime_error if the field doesn't exist.
  */
-::sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const ::std::string& fieldName);
+::sensor_msgs::msg::PointField& getField(::cras::Cloud& cloud, const ::std::string& field_name);
 
 /**
  * \brief Return the sensor_msgs::PointField with the given name.
  * \param[in] cloud Cloud to extract the field from.
- * \param[in] fieldName Name of the field.
+ * \param[in] field_name Name of the field.
  * \return Reference to the field.
  * \throws std::runtime_error if the field doesn't exist.
  */
-const ::sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const ::std::string& fieldName);
+const ::sensor_msgs::msg::PointField& getField(const ::cras::Cloud& cloud, const ::std::string& field_name);
 
 /**
  * \brief Return the size (in bytes) of a sensor_msgs::PointField datatype.
@@ -119,11 +117,11 @@ size_t sizeOfPointField(const ::sensor_msgs::msg::PointField& field);
  * \param[in] in The input cloud.
  * \param[out] out The output cloud. It has to be resized to contain at least as many points as the input cloud.
  *                 It also has to have the given field present already.
- * \param[in] fieldName Name of the field whose data should be copied.
+ * \param[in] field_name Name of the field whose data should be copied.
  * \throws std::runtime_error If the output cloud is smaller (in nr. of points) than the input cloud.
  * \throws std::runtime_error If the given field doesn't exist in either of the clouds.
  */
-void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::string& fieldName);
+void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::string& field_name);
 
 // *INDENT-OFF*
 /**
@@ -133,14 +131,14 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
  * Points for which FILTER is true are part of the final pointcloud.
  */
 #define CREATE_FILTERED_CLOUD(IN, OUT, KEEP_ORGANIZED, FILTER) {\
-  const auto inputIsOrganized = (IN).height > 1; \
-  const auto outIsOrganized = (KEEP_ORGANIZED) && inputIsOrganized; \
+  const auto input_is_organized = (IN).height > 1; \
+  const auto out_is_organized = (KEEP_ORGANIZED) && input_is_organized; \
   \
   (OUT).header = (IN).header; \
   (OUT).fields = (IN).fields; \
   (OUT).point_step = (IN).point_step; \
-  (OUT).height = outIsOrganized ? (IN).height : 1; \
-  (OUT).width = outIsOrganized ? (IN).width : 0; \
+  (OUT).height = out_is_organized ? (IN).height : 1; \
+  (OUT).width = out_is_organized ? (IN).width : 0; \
   \
   (OUT).data.resize(0); \
   (OUT).data.reserve((IN).data.size()); \
@@ -149,15 +147,14 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
   ::cras::CloudConstIter y_it((IN), "y"); \
   ::cras::CloudConstIter z_it((IN), "z"); \
   \
-  const auto numPoints = ::cras::numPoints(IN); \
+  const auto num_points = ::cras::numPoints(IN); \
   \
-  if (!outIsOrganized) { \
-    for (size_t i = 0; i < numPoints; ++i, ++x_it, ++y_it, ++z_it) { \
+  if (!out_is_organized) { \
+    for (size_t i = 0; i < num_points; ++i, ++x_it, ++y_it, ++z_it) { \
       if (FILTER) { \
         size_t from = (i / (IN).width) * (IN).row_step + (i % (IN).width) * (IN).point_step; \
         size_t to = from + (IN).point_step; \
-        (OUT).data.insert((OUT).data.end(), (IN).data.begin() + from, \
-                        (IN).data.begin() + to); \
+        (OUT).data.insert((OUT).data.end(), (IN).data.begin() + from, (IN).data.begin() + to); \
         (OUT).width++; \
       } \
     } \
@@ -168,11 +165,11 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
     ::cras::CloudIter x_out_it((OUT), "x"); \
     ::cras::CloudIter y_out_it((OUT), "y"); \
     ::cras::CloudIter z_out_it((OUT), "z"); \
-    const auto invalidValue = std::numeric_limits<float>::quiet_NaN(); \
+    const auto invalid_value = std::numeric_limits<float>::quiet_NaN(); \
     \
-    for (size_t i = 0; i < numPoints; ++i, ++x_it, ++y_it, ++z_it, ++x_out_it, ++y_out_it, ++z_out_it) { \
+    for (size_t i = 0; i < num_points; ++i, ++x_it, ++y_it, ++z_it, ++x_out_it, ++y_out_it, ++z_out_it) { \
       if (!(FILTER)) { \
-        *x_out_it = *y_out_it = *z_out_it = invalidValue; \
+        *x_out_it = *y_out_it = *z_out_it = invalid_value; \
         (OUT).is_dense = false; \
       } \
     } \
@@ -181,4 +178,5 @@ void copyChannelData(const ::cras::Cloud& in, ::cras::Cloud& out, const ::std::s
   (OUT).row_step = (OUT).width * (OUT).point_step; \
 }
 // *INDENT-ON*
-}
+
+}  // namespace cras

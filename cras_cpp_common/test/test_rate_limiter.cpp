@@ -27,8 +27,7 @@
 
 using namespace cras;
 
-rclcpp::Clock::SharedPtr createTestClock()
-{
+rclcpp::Clock::SharedPtr createTestClock() {
   const auto clock = rclcpp::Clock::make_shared(RCL_ROS_TIME);
   const auto ret = rcl_enable_ros_time_override(clock->get_clock_handle());
   if (ret != RMW_RET_OK)
@@ -36,28 +35,26 @@ rclcpp::Clock::SharedPtr createTestClock()
   return clock;
 }
 
-void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time)
-{
+void setTime(const rclcpp::Clock::SharedPtr& clock, const rclcpp::Time& time) {
   const auto ret = rcl_set_ros_time_override(
     clock->get_clock_handle(), cras::convertTime<rcl_time_point_value_t>(time));
   if (ret != RMW_RET_OK)
     rclcpp::exceptions::throw_from_rcl_error(ret, "Error setting time");
 }
 
-void setTime(const rclcpp::Clock::SharedPtr& clock, const double time)
-{
+void setTime(const rclcpp::Clock::SharedPtr& clock, const double time) {
   setTime(clock, convertTime(time, RCL_ROS_TIME));
 }
 
 std::vector<rclcpp::Time> createRegularSequence(
-  const rclcpp::Time& start, const rclcpp::Duration& period, const size_t numTimes)
-{
+  const rclcpp::Time& start, const rclcpp::Duration& period, const size_t numTimes) {
   const rclcpp::Logger log = rclcpp::get_logger("test_logger");
 
   std::vector<rclcpp::Time> result;
   result.resize(numTimes);
-  for (size_t i = 0; i < numTimes; ++i)
+  for (size_t i = 0; i < numTimes; ++i) {
     result[i] = start + period * i;
+  }
   return result;
 }
 
@@ -74,8 +71,7 @@ TEST(ThrottleLimiter, RegularSequence)  // NOLINT
   const auto times = createRegularSequence({1, 0}, rclcpp::Duration::from_seconds(0.1), 10);
   const std::vector<bool> results = {true, false, true, false, true, false, true, false, true, false};
 
-  for (size_t i = 0; i < times.size(); ++i)
-  {
+  for (size_t i = 0; i < times.size(); ++i) {
     SCOPED_TRACE("Iteration " + std::to_string(i));
     EXPECT_EQ(results[i], limiter.shouldPublish(times[i]));
   }
@@ -88,8 +84,9 @@ TEST(ThrottleLimiter, RegularSequenceRatio)  // NOLINT
   const auto times = createRegularSequence({1, 0}, rclcpp::Duration::from_seconds(0.1), 1000);
   size_t numPublished {0};
 
-  for (const auto& time : times)
+  for (const auto& time : times) {
     numPublished += limiter.shouldPublish(time);
+}
 
   EXPECT_EQ(500, numPublished);  // Ideally 700. But throttle is not very good at achieving the 70% throughput rate.
 }
@@ -113,8 +110,7 @@ TEST(ThrottleLimiter, IrregularSequence)  // NOLINT
     true, false, false, false
   };
 
-  for (size_t i = 0; i < times.size(); ++i)
-  {
+  for (size_t i = 0; i < times.size(); ++i) {
     SCOPED_TRACE("Iteration " + std::to_string(i));
     EXPECT_EQ(results[i], limiter.shouldPublish(times[i]));
   }
@@ -150,7 +146,7 @@ TEST(ThrottleLimiter, JumpBack)  // NOLINT
   setTime(clk, 1.4); EXPECT_FALSE(limiter.shouldPublish(clk->now()));
   setTime(clk, 1.5); EXPECT_FALSE(limiter.shouldPublish(clk->now()));
 
-  EXPECT_THROW(limiter.setJumpBackTolerance(rclcpp::Duration(-1,0)), std::invalid_argument);
+  EXPECT_THROW(limiter.setJumpBackTolerance(rclcpp::Duration(-1, 0)), std::invalid_argument);
 
   // Set jump tolerance to 5
   setTime(clk, 10.0); EXPECT_TRUE(limiter.shouldPublish(clk->now()));
@@ -165,7 +161,7 @@ TEST(TokenBucketLimiter, BadConstruct)  // NOLINT
 {
   const auto clk = std::make_shared<rclcpp::Clock>();
   EXPECT_THROW(cras::TokenBucketLimiter(rclcpp::Rate(-1)), std::invalid_argument);
-  EXPECT_THROW(cras::TokenBucketLimiter(clk, rclcpp::Duration(-1,0)), std::invalid_argument);
+  EXPECT_THROW(cras::TokenBucketLimiter(clk, rclcpp::Duration(-1, 0)), std::invalid_argument);
 }
 
 TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
@@ -174,7 +170,8 @@ TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
   std::vector<cras::TokenBucketLimiter*> limiters;
   std::map<cras::TokenBucketLimiter*, std::string> names;
 
-  cras::TokenBucketLimiter limiter03(clk, rclcpp::Duration(3, 0), 2, 1); limiters.push_back(&limiter03); names[&limiter03] = "03";  // NOLINT
+  cras::TokenBucketLimiter limiter03(clk, rclcpp::Duration(3, 0), 2, 1); limiters.push_back(&limiter03);
+    names[&limiter03] = "03";                                                                                                       // NOLINT
   cras::TokenBucketLimiter limiter05(rclcpp::Rate(0.5), 2, 1); limiters.push_back(&limiter05); names[&limiter05] = "05";
   cras::TokenBucketLimiter limiter1(rclcpp::Rate(1), 2, 1); limiters.push_back(&limiter1); names[&limiter1] = "1";
   cras::TokenBucketLimiter limiter2(rclcpp::Rate(2), 2, 1); limiters.push_back(&limiter2); names[&limiter2] = "2";
@@ -187,28 +184,27 @@ TEST(TokenBucketLimiter, RegularSequence)  // NOLINT
   const auto times = createRegularSequence({1, 0}, rclcpp::Duration::from_seconds(0.1), 32);
 
   std::map<cras::TokenBucketLimiter*, std::vector<bool>> expected = {
-    //             1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
-    {&limiter03, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},  // NOLINT
-    {&limiter05, { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},  // NOLINT
-    {&limiter1,  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}},  // NOLINT
-    {&limiter2,  { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0}},  // NOLINT
-    {&limiter4,  { 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0}},  // NOLINT
-    {&limiter5,  { 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}},  // NOLINT
-    {&limiter7,  { 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0}},  // NOLINT
-    {&limiter10, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},  // NOLINT
-    {&limiter20, { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},  // NOLINT
+    // 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
+    {&limiter03, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}},  // NOLINT
+    {&limiter05, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},  // NOLINT
+    {&limiter1, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}},  // NOLINT
+    {&limiter2, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0}},  // NOLINT
+    {&limiter4, {1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0}},  // NOLINT
+    {&limiter5, {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}},  // NOLINT
+    {&limiter7, {1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0}},  // NOLINT
+    {&limiter10, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},  // NOLINT
+    {&limiter20, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},  // NOLINT
   };
 
   std::map<cras::TokenBucketLimiter*, std::vector<bool>> results;
 
-  for (const auto& time : times)
-  {
-    for (const auto& limiter : limiters)
+  for (const auto& time : times) {
+    for (const auto& limiter : limiters) {
       results[limiter].push_back(limiter->shouldPublish(time));
+    }
   }
 
-  for (const auto& limiter : limiters)
-  {
+  for (const auto& limiter : limiters) {
     SCOPED_TRACE("limiter" + names[limiter]);
     EXPECT_EQ(expected[limiter], results[limiter]);
   }
@@ -223,8 +219,7 @@ TEST(TokenBucketLimiter, RegularSequenceRatio)  // NOLINT
   std::map<cras::TokenBucketLimiter*, size_t> numPublished;
   std::map<cras::TokenBucketLimiter*, size_t> expectedPublished;
 
-  for (const auto& rate : rates)
-  {
+  for (const auto& rate : rates) {
     auto limiter = std::make_unique<cras::TokenBucketLimiter>(rclcpp::Rate(rate));
     names[limiter.get()] = "limiter " + std::to_string(rate);
     numPublished[limiter.get()] = 0;
@@ -234,14 +229,13 @@ TEST(TokenBucketLimiter, RegularSequenceRatio)  // NOLINT
   }
 
   const auto times = createRegularSequence({1, 0}, rclcpp::Duration::from_seconds(0.1), 1000);
-  for (const auto& time : times)
-  {
-    for (const auto& limiter : limiters)
+  for (const auto& time : times) {
+    for (const auto& limiter : limiters) {
       numPublished[limiter.get()] += limiter->shouldPublish(time);
+    }
   }
 
-  for (const auto& limiter : limiters)
-  {
+  for (const auto& limiter : limiters) {
     SCOPED_TRACE(names[limiter.get()]);
     EXPECT_NEAR(expectedPublished[limiter.get()], numPublished[limiter.get()], 1);
   }
@@ -266,8 +260,7 @@ TEST(TokenBucketLimiter, IrregularSequence)  // NOLINT
     true, false, false, false
   };
 
-  for (size_t i = 0; i < times.size(); ++i)
-  {
+  for (size_t i = 0; i < times.size(); ++i) {
     SCOPED_TRACE("Iteration " + std::to_string(i));
     EXPECT_EQ(results[i], limiter.shouldPublish(times[i]));
   }
@@ -347,8 +340,7 @@ TEST(TokenBucketLimiter, Params)  // NOLINT
   EXPECT_FALSE(fullStart.shouldPublish(cras::convertTime<rclcpp::Time>(12.2)));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

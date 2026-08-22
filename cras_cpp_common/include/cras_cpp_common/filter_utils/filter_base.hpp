@@ -26,8 +26,9 @@ namespace cras {
 class FilterNodeInterfaces {
 public:
   FilterNodeInterfaces(
-    const ::std::string& name, const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-    const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging);
+      const ::std::string& name,
+      const ::rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+      const ::rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging);
   virtual ~FilterNodeInterfaces();
 
   virtual ::rclcpp::node_interfaces::NodeBaseInterface::SharedPtr get_node_base_interface() const;
@@ -78,30 +79,30 @@ protected:
   }
 
   const ::rclcpp::ParameterValue& declareParameter(
-    const ::std::string& name, const ::rclcpp::ParameterValue& default_value,
-    const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
-    ::rcl_interfaces::msg::ParameterDescriptor(),
-    bool ignore_override = false) {
+      const ::std::string& name, const ::rclcpp::ParameterValue& default_value,
+      const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+      ::rcl_interfaces::msg::ParameterDescriptor(),
+      bool ignore_override = false) {
     const auto param_name = getFullParamName(name);
     return this->params_interface_->declare_parameter(param_name, default_value, parameter_descriptor, ignore_override);
   }
 
   template<typename T>
   const ::rclcpp::ParameterValue& declareParameter(
-    const ::std::string& name, const T& default_value,
-    const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
-    ::rcl_interfaces::msg::ParameterDescriptor(),
-    bool ignore_override = false) {
+      const ::std::string& name, const T& default_value,
+      const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+      ::rcl_interfaces::msg::ParameterDescriptor(),
+      bool ignore_override = false) {
     const auto param_name = getFullParamName(name);
     return this->params_interface_->declare_parameter(
       param_name, ::rclcpp::ParameterValue(default_value), parameter_descriptor, ignore_override);
   }
 
   const ::rclcpp::ParameterValue& declareParameter(
-    const ::std::string& name, ::rclcpp::ParameterType type,
-    const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
-    ::rcl_interfaces::msg::ParameterDescriptor(),
-    bool ignore_override = false) {
+      const ::std::string& name, ::rclcpp::ParameterType type,
+      const ::rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+      ::rcl_interfaces::msg::ParameterDescriptor(),
+      bool ignore_override = false) {
     const auto param_name = getFullParamName(name);
     return this->params_interface_->declare_parameter(param_name, type, parameter_descriptor, ignore_override);
   }
@@ -129,12 +130,12 @@ protected:
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ::cras::GetParamResult<ResultType> getParamVerbose(
-    const ::std::string& name,
-    const ::std::optional<ResultType>& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ::cras::GetParamResult<ResultType> getParamVerbose(
+      const ::std::string& name,
+      const ::std::optional<ResultType>& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     const auto param_name = getFullParamName(name);
     return params_->getParamVerbose(param_name, default_value, unit, options);
   }
@@ -156,12 +157,12 @@ protected:
    * \return A wrapper containing the loaded parameter value and details about the function execution.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ::cras::GetParamResult<ResultType> getParamVerbose(
-    const ::std::string& name,
-    const ResultType& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ::cras::GetParamResult<ResultType> getParamVerbose(
+      const ::std::string& name,
+      const ResultType& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     const auto param_name = getFullParamName(name);
     return params_->getParamVerbose(param_name, ::std::optional<ResultType>(default_value), unit, options);
   }
@@ -189,12 +190,12 @@ protected:
    * \return The loaded parameter value.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ResultType getParam(
-    const ::std::string& name,
-    const ::std::optional<ResultType>& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ResultType getParam(
+      const ::std::string& name,
+      const ::std::optional<ResultType>& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     const auto param_name = getFullParamName(name);
     return params_->getParamVerbose(param_name, default_value, unit, options).value;
   }
@@ -216,51 +217,53 @@ protected:
    * \return The loaded parameter value.
    */
   template<typename ResultType, typename ParamValueType = typename ::cras::DefaultParamValueType<ResultType>::type,
-    ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
-  inline ResultType getParam(
-    const ::std::string& name,
-    const ResultType& default_value = ResultType(),
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
+      ::cras::check_get_param_types<ResultType, ParamValueType>* = nullptr>
+  ResultType getParam(
+      const ::std::string& name,
+      const ResultType& default_value = ResultType(),
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<ResultType, ParamValueType>& options = {}) {
     const auto param_name = getFullParamName(name);
     return params_->getParamVerbose(param_name, default_value, unit, options).value;
   }
 
-  inline ::cras::GetParamResult<::std::string> getParamVerbose(
-    const ::std::string& name,
-    const ::std::optional<const char*>& default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {}) {
+  ::cras::GetParamResult<::std::string> getParamVerbose(
+      const ::std::string& name,
+      const ::std::optional<const char*>& default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {}) {
     ::std::optional<::std::string> new_default;
-    if (default_value.has_value())
+    if (default_value.has_value()) {
       new_default = *default_value;
+    }
     return getParamVerbose(name, new_default, unit, options);
   }
 
-  inline ::cras::GetParamResult<::std::string> getParamVerbose(
-    const ::std::string& name,
-    const char* default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {}) {
+  ::cras::GetParamResult<::std::string> getParamVerbose(
+      const ::std::string& name,
+      const char* default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {}) {
     return getParamVerbose(name, ::std::string(default_value), unit, options);
   }
 
-  inline ::std::string getParam(
-    const ::std::string& name,
-    const ::std::optional<const char*>& default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {}) {
+  ::std::string getParam(
+      const ::std::string& name,
+      const ::std::optional<const char*>& default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {}) {
     ::std::optional<::std::string> new_default;
-    if (default_value.has_value())
+    if (default_value.has_value()) {
       new_default = *default_value;
+    }
     return getParam(name, new_default, unit, options);
   }
 
-  inline ::std::string getParam(
-    const ::std::string& name,
-    const char* default_value = "",
-    const ::std::string& unit = "",
-    const ::cras::GetParamOptions<::std::string>& options = {}) {
+  ::std::string getParam(
+      const ::std::string& name,
+      const char* default_value = "",
+      const ::std::string& unit = "",
+      const ::cras::GetParamOptions<::std::string>& options = {}) {
     return getParam(name, ::std::string(default_value), unit, options);
   }
 

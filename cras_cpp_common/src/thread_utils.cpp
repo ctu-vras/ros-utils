@@ -12,35 +12,30 @@
 #include <cras_cpp_common/string_utils.hpp>
 #include <cras_cpp_common/thread_utils.hpp>
 
-namespace cras
-{
+namespace cras {
 
-std::string getThreadName()
-{
+std::string getThreadName() {
   char buf[16];
   auto res = pthread_getname_np(pthread_self(), buf, 16);
-  if (res != 0)
+  if (res != 0) {
     return "";
+  }
   return {buf};
 }
 
-void setThreadName(const std::string& name)
-{
-  char nameBuf[16];
+void setThreadName(const std::string& name) {
+  char name_buf[16];
 
-  if (name.length() <= 15)
-  {
-    memcpy(nameBuf, name.c_str(), name.length());
-    nameBuf[name.length()] = '\0';
+  if (name.length() <= 15) {
+    memcpy(name_buf, name.c_str(), name.length());
+    name_buf[name.length()] = '\0';
+  } else {
+    memcpy(name_buf, name.c_str(), 7);
+    memset(name_buf + 7, '.', 1);
+    memcpy(name_buf + 8, name.c_str() + (name.length() - 7), 7);
+    name_buf[15] = '\0';
   }
-  else
-  {
-    memcpy(nameBuf, name.c_str(), 7);
-    memset(nameBuf + 7, '.', 1);
-    memcpy(nameBuf + 8, name.c_str() + (name.length() - 7), 7);
-    nameBuf[15] = '\0';
-  }
-  pthread_setname_np(pthread_self(), nameBuf);
+  pthread_setname_np(pthread_self(), name_buf);
 }
 
-}
+}  // namespace cras

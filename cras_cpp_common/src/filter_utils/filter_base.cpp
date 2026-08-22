@@ -33,19 +33,19 @@
 namespace cras {
 
 using RequiredInterfaces = rclcpp::node_interfaces::NodeInterfaces<
-  rclcpp::node_interfaces::NodeBaseInterface,
-  rclcpp::node_interfaces::NodeClockInterface,
-  rclcpp::node_interfaces::NodeLoggingInterface,
-  rclcpp::node_interfaces::NodeParametersInterface,
-  rclcpp::node_interfaces::NodeServicesInterface,
-  rclcpp::node_interfaces::NodeTopicsInterface
+    rclcpp::node_interfaces::NodeBaseInterface,
+    rclcpp::node_interfaces::NodeClockInterface,
+    rclcpp::node_interfaces::NodeLoggingInterface,
+    rclcpp::node_interfaces::NodeParametersInterface,
+    rclcpp::node_interfaces::NodeServicesInterface,
+    rclcpp::node_interfaces::NodeTopicsInterface
 >;
 
 struct FilterNodeInterfaces::Impl {
   Impl(
-    const std::string& name, const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging_interface,
-    const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params_interface)
-    : name_(name), params_(params_interface), logging_(logging_interface) {}
+      const std::string& name, const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging_interface,
+      const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params_interface)
+      : name_(name), params_(params_interface), logging_(logging_interface) {}
 
   std::string name_;
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params_;
@@ -105,11 +105,11 @@ private:
     );
 
     executor_thread_ = std::make_unique<std::thread>(
-      [this] {
-        while (!should_stop_) {
-          executor_->spin_all(std::chrono::milliseconds(100));
-        }
-      });
+        [this] {
+          while (!should_stop_) {
+            executor_->spin_all(std::chrono::milliseconds(100));
+          }
+        });
   }
 
   rclcpp::Node::SharedPtr own_node_handle_;
@@ -120,8 +120,8 @@ private:
 };
 
 FilterNodeInterfaces::FilterNodeInterfaces(
-  const std::string& name, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
-  const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging) : impl_(new Impl{name, logging, params}) {}
+    const std::string& name, const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr& params,
+    const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr& logging) : impl_(new Impl{name, logging, params}) {}
 
 FilterNodeInterfaces::~FilterNodeInterfaces() = default;
 

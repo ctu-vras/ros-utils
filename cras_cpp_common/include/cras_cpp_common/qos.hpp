@@ -17,29 +17,28 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/qos.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Parse a QoS preset name into the QoS object.
- * \param[in] qosPreset The QoS profile string to parse (uppercase).
+ * \param[in] qos_preset The QoS profile string to parse (uppercase).
  * \return The parsed QoS preset.
  * \throws std::invalid_argument If the string does not represent any QoS preset.
  */
-::rclcpp::QoS parseQoSPreset(const ::std::string& qosPreset);
+::rclcpp::QoS parseQoSPreset(const ::std::string& qos_preset);
 
 bool configureQoSProfile(
-  ::rclcpp::QoS& profile, const ::std::optional<int>& depth,
-  const ::std::optional<::std::string>& history, const ::std::optional<::std::string>& reliability,
-  const ::std::optional<::std::string>& durability, const ::std::optional<::std::string>& liveliness,
-  const ::std::optional<double>& livelinessLeaseDurationSeconds);
+    ::rclcpp::QoS& profile, const ::std::optional<int>& depth,
+    const ::std::optional<::std::string>& history, const ::std::optional<::std::string>& reliability,
+    const ::std::optional<::std::string>& durability, const ::std::optional<::std::string>& liveliness,
+    const ::std::optional<double>& liveliness_lease_duration_seconds);
 
 void configureQoSProfile(
-  ::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
-  const ::std::optional<::rmw_qos_history_policy_t>& history,
-  const ::std::optional<::rmw_qos_reliability_policy_t>& reliability,
-  const ::std::optional<::rmw_qos_durability_policy_t>& durability,
-  const ::std::optional<::rmw_qos_liveliness_policy_t>& liveliness,
-  const ::std::optional<::rclcpp::Duration>& livelinessLeaseDuration);
+    ::rclcpp::QoS& profile, const ::std::optional<size_t>& depth,
+    const ::std::optional<::rmw_qos_history_policy_t>& history,
+    const ::std::optional<::rmw_qos_reliability_policy_t>& reliability,
+    const ::std::optional<::rmw_qos_durability_policy_t>& durability,
+    const ::std::optional<::rmw_qos_liveliness_policy_t>& liveliness,
+    const ::std::optional<::rclcpp::Duration>& liveliness_lease_duration);
 
-}
+}  // namespace cras

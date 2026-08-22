@@ -13,8 +13,7 @@
 
 #include <urdf_model/pose.h>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief URDF Vector3 to Eigen translation.
@@ -65,4 +64,4 @@ namespace cras
  */
 ::urdf::Pose toURDF(const ::Eigen::Isometry3d& pose);
 
-}
+}  // namespace cras

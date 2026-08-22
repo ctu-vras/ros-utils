@@ -13,8 +13,7 @@
 #include <string>
 #include <type_traits>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Type trait for dynamic-sized and constant-sized C strings.
@@ -49,11 +48,11 @@ template<typename T, typename = void>
 struct is_string : public std::false_type {};
 
 template<typename T>
-struct is_string<T, ::std::enable_if_t<::cras::is_c_string<typename std::decay<T>::type>::value>>
-  : public std::true_type {};
+struct is_string<T, ::std::enable_if_t<::cras::is_c_string<std::decay_t<T>>::value>>
+    : public std::true_type {};
 
 template<typename T>
-struct is_string<T, ::std::enable_if_t<::std::is_same<typename std::decay<T>::type, ::std::string>::value>>
-  : public std::true_type {};
+struct is_string<T, ::std::enable_if_t<::std::is_same_v<std::decay_t<T>, ::std::string>>>
+    : public std::true_type {};
 
-}
+}  // namespace cras

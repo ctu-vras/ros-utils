@@ -19,8 +19,7 @@
 #include <rclcpp/time.hpp>
 #include <rclcpp/timer.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Component for counting messages and their size.
@@ -35,8 +34,7 @@ namespace cras
  * - `~input` (any type): The input messages.
  * - `~reset` (any type): When a message is received on this topic, the counter is reset to zero.
  */
-class CountMessagesComponent : public ::rclcpp::Node
-{
+class CountMessagesComponent : public ::rclcpp::Node {
 public:
   explicit CountMessagesComponent(const ::rclcpp::NodeOptions& options);
 
@@ -68,55 +66,55 @@ protected:
   void discoverResetTopicAndSubscribe();
 
   //! \brief The message subscriber.
-  ::rclcpp::GenericSubscription::SharedPtr sub;
+  ::rclcpp::GenericSubscription::SharedPtr sub_;
 
   //! \brief The reset message subscriber.
-  ::rclcpp::GenericSubscription::SharedPtr resetSub;
+  ::rclcpp::GenericSubscription::SharedPtr reset_sub_;
 
   //! \brief Timer for input topic type discovery.
-  ::rclcpp::TimerBase::SharedPtr discoveryTimer;
+  ::rclcpp::TimerBase::SharedPtr discovery_timer_;
 
   //! \brief Timer for reset topic type discovery.
-  ::rclcpp::TimerBase::SharedPtr resetDiscoveryTimer;
+  ::rclcpp::TimerBase::SharedPtr reset_discovery_timer_;
 
   //! \brief Timer for printing reports.
-  ::rclcpp::TimerBase::SharedPtr reportTimer;
+  ::rclcpp::TimerBase::SharedPtr report_timer_;
 
   //! \brief The unresolved input topic name.
-  std::string topic {"input"};
+  std::string topic_ {"input"};
 
   //! \brief Resolved name of the input topic.
-  ::std::string resolvedTopic;
+  ::std::string resolved_topic_;
 
   //! \brief Resolved name of the reset topic.
-  ::std::string resolvedResetTopic;
+  ::std::string resolved_reset_topic_;
 
   //! \brief QoS for the input topic subscription.
-  ::rclcpp::QoS qosProfile {1000};
+  ::rclcpp::QoS qos_profile_ {1000};
 
   //! \brief Whether the current message and byte count should be set as parameters of the node.
-  bool useParams {true};
+  bool use_params_ {true};
 
   //! \brief Whether to publish topic statistics for the subscription.
-  bool topicStats {false};
+  bool topic_stats_ {false};
 
   //! \brief Whether to enable intraprocess comms for the subscription.
-  bool intraprocessComms {true};
+  bool intraprocess_comms_ {true};
 
   //! \brief Byte size of the received messages.
-  ::size_t bytes {0};
+  ::size_t bytes_ {0};
 
   //! \brief Number of received messages.
-  ::size_t count {0};
+  ::size_t count_ {0};
 
   //! \brief Number of received messages since last report.
-  ::size_t countSinceLastReport {0};
+  ::size_t count_since_last_report_ {0};
 
-  //! \brief Mutex protecting `count` and `bytes`.
-  ::std::mutex mutex;
+  //! \brief Mutex protecting `count_` and `bytes_`.
+  ::std::mutex mutex_;
 
   //! \brief Time when the message count was last reported.
-  ::std::optional<::rclcpp::Time> lastReportStamp;
+  ::std::optional<::rclcpp::Time> last_report_stamp_;
 };
 
-}
+}  // namespace cras

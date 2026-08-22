@@ -13,16 +13,15 @@
 
 #include <cras_cpp_common/cloud.hpp>
 
-void fillXYZ(sensor_msgs::msg::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size, bool allZeros = false)
-{
+void fillXYZ(
+  sensor_msgs::msg::PointCloud2& msg, sensor_msgs::PointCloud2Modifier& mod, size_t size, bool allZeros = false) {
   mod.resize(size);
 
   sensor_msgs::PointCloud2Iterator<float> it_x(msg, "x");
   sensor_msgs::PointCloud2Iterator<float> it_y(msg, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(msg, "z");
 
-  for (size_t i = 0; i < size; ++i)
-  {
+  for (size_t i = 0; i < size; ++i) {
     *it_x = *it_y = *it_z = static_cast<float>(allZeros ? 0 : i);
     ++it_x; ++it_y; ++it_z;
   }
@@ -166,8 +165,7 @@ TEST(Cloud, GenericConstIterator)  // NOLINT
   cras::GenericCloudConstIter it_g_y(msg, "y");
   cras::GenericCloudConstIter it_g_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *reinterpret_cast<const float*>(it_g_x.rawData()));
     EXPECT_EQ(i, *reinterpret_cast<const float*>(it_g_y.rawData()));
     EXPECT_EQ(i, *reinterpret_cast<const float*>(it_g_z.rawData()));
@@ -188,8 +186,7 @@ TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
   cras::GenericCloudConstIter it_g_y(msg, "y");
   cras::GenericCloudConstIter it_g_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_g_x.dataAs<float>());
     EXPECT_EQ(i, *it_g_y.dataAs<float>());
     EXPECT_EQ(i, *it_g_z.dataAs<float>());
@@ -201,12 +198,9 @@ TEST(Cloud, GenericConstIteratorDataAs)  // NOLINT
   EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<double>(), std::runtime_error);
-  try
-  {
+  try {
     it_g2.dataAs<int32_t>();  // int32_t is also 4-byte, the same as float
-  }
-  catch (const std::runtime_error& e)
-  {
+  } catch (const std::runtime_error& e) {
     GTEST_NONFATAL_FAILURE_(e.what());
   }
 }
@@ -222,8 +216,7 @@ TEST(Cloud, GenericIterator)  // NOLINT
   cras::GenericCloudIter it_g_y(msg, "y");
   cras::GenericCloudIter it_g_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     auto f = static_cast<float>(i);
     *reinterpret_cast<float*>(it_g_x.rawData()) = f;
     *reinterpret_cast<float*>(it_g_y.rawData()) = f * 2;
@@ -235,8 +228,7 @@ TEST(Cloud, GenericIterator)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it_y(msg, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_x);
     EXPECT_EQ(i * 2, *it_y);
     EXPECT_EQ(i * 3, *it_z);
@@ -255,8 +247,7 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
   cras::GenericCloudIter it_g_y(msg, "y");
   cras::GenericCloudIter it_g_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     auto f = static_cast<float>(i);
     *it_g_x.dataAs<float>() = f;
     *it_g_y.dataAs<float>() = f * 2;
@@ -268,8 +259,7 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it_y(msg, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it_z(msg, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_x);
     EXPECT_EQ(i * 2, *it_y);
     EXPECT_EQ(i * 3, *it_z);
@@ -281,12 +271,9 @@ TEST(Cloud, GenericIteratorDataAs)  // NOLINT
   EXPECT_THROW(it_g2.dataAs<short>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<long>(), std::runtime_error);  // NOLINT
   EXPECT_THROW(it_g2.dataAs<double>(), std::runtime_error);
-  try
-  {
+  try {
     it_g2.dataAs<int32_t>();  // int32_t is also 4-byte, the same as float
-  }
-  catch (const std::runtime_error& e)
-  {
+  } catch (const std::runtime_error& e) {
     GTEST_NONFATAL_FAILURE_(e.what());
   }
 }
@@ -311,8 +298,7 @@ TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
   cras::GenericCloudIter it2_g_y(msg2, "y");
   cras::GenericCloudIter it2_g_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     it2_g_x.copyData(it_g_x);
     it2_g_y.copyData(it_g_y);
     it2_g_z.copyData(it_g_z);
@@ -324,8 +310,7 @@ TEST(Cloud, GenericIteratorCopyDataFromConst)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it_y(msg2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_x);
     EXPECT_EQ(i, *it_y);
     EXPECT_EQ(i, *it_z);
@@ -353,8 +338,7 @@ TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
   cras::GenericCloudIter it2_g_y(msg2, "y");
   cras::GenericCloudIter it2_g_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     it2_g_x.copyData(it_g_x);
     it2_g_y.copyData(it_g_y);
     it2_g_z.copyData(it_g_z);
@@ -366,8 +350,7 @@ TEST(Cloud, GenericIteratorCopyDataFromNonConst)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it_y(msg2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_x);
     EXPECT_EQ(i, *it_y);
     EXPECT_EQ(i, *it_z);
@@ -403,8 +386,7 @@ TEST(Cloud, CopyChannelData)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it_y(msg2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it_x);
     EXPECT_EQ(0, *it_y);
     EXPECT_EQ(0, *it_z);
@@ -418,8 +400,7 @@ TEST(Cloud, CopyChannelData)  // NOLINT
   sensor_msgs::PointCloud2ConstIterator<float> it2_y(msg2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> it2_z(msg2, "z");
 
-  for (size_t i = 0; i < 4; ++i)
-  {
+  for (size_t i = 0; i < 4; ++i) {
     EXPECT_EQ(i, *it2_x);
     EXPECT_EQ(i, *it2_y);
     EXPECT_EQ(i, *it2_z);
@@ -438,14 +419,11 @@ TEST(Cloud, CopyChannelData)  // NOLINT
   EXPECT_THROW(cras::copyChannelData(msg, msg2, "y"), std::runtime_error);
   EXPECT_THROW(cras::copyChannelData(msg, msg2, "z"), std::runtime_error);
   mod.resize(2);
-  try
-  {
+  try {
     cras::copyChannelData(msg, msg2, "x");
     cras::copyChannelData(msg, msg2, "y");
     cras::copyChannelData(msg, msg2, "z");
-  }
-  catch (const std::runtime_error& e)
-  {
+  } catch (const std::runtime_error& e) {
     GTEST_NONFATAL_FAILURE_(e.what());
   }
 }
@@ -539,8 +517,7 @@ TEST(Cloud, SizeOfPointField)  // NOLINT
   EXPECT_THROW(cras::sizeOfPointField(sensor_msgs::msg::PointField::FLOAT64 + 2), std::runtime_error);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char**argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -21,8 +21,7 @@
 
 #ifdef CRAS_HAS_STD_FORMAT
 
-namespace cras
-{
+namespace cras {
 using ::std::format;
 using ::std::format_to;
 using ::std::format_to_n;
@@ -42,15 +41,14 @@ using ::std::format_context;
 using ::std::basic_format_parse_context;
 using ::std::format_parse_context;
 using ::std::format_error;
-}
+}  // namespace cras
 
 #else
 
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
-namespace cras
-{
+namespace cras {
 using ::fmt::format;
 using ::fmt::format_to;
 using ::fmt::format_to_n;
@@ -70,6 +68,6 @@ using ::fmt::format_context;
 using ::fmt::basic_format_parse_context;
 using ::fmt::format_parse_context;
 using ::fmt::format_error;
-}
+}  // namespace cras
 
 #endif

@@ -10,8 +10,7 @@
 
 #include <string>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Get the OS name of the current thread.
@@ -28,4 +27,4 @@ std::string getThreadName();
  */
 void setThreadName(const std::string& name);
 
-}
+}  // namespace cras

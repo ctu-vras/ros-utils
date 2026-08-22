@@ -13,8 +13,7 @@
 #include <cstddef>
 #include <optional>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Computation of running average and variance using Welford's algorithm.
@@ -29,8 +28,7 @@ namespace cras
  * This class also provides minimum and maximum values. However, these only work when removals are not used.
  */
 template<typename T>
-class RunningStats
-{
+class RunningStats {
 public:
   /**
    * \brief Reset the statistics to represent an empty sequence.
@@ -228,18 +226,18 @@ protected:
   static T maxValue();
 
   //! \brief Number of represented samples.
-  size_t count {0u};
+  size_t count_ {0u};
 
   //! \brief Mean of represented samples.
-  T mean {RunningStats<T>::zero()};
+  T mean_ {RunningStats<T>::zero()};
 
   //! \brief Sk term of the computation such that var(X0...Xk) = this->var/this->count.
-  T var {RunningStats<T>::zero()};
+  T var_ {RunningStats<T>::zero()};
 
-  ::std::optional<T> min;  //!< The minimum value.
-  ::std::optional<T> max;  //!< The maximum value.
+  ::std::optional<T> min_;  //!< The minimum value.
+  ::std::optional<T> max_;  //!< The maximum value.
 };
 
-}
+}  // namespace cras
 
 #include "impl/running_stats.hpp"

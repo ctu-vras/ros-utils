@@ -12,8 +12,7 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <tf2/LinearMath/Quaternion.hpp>
 
-namespace cras
-{
+namespace cras {
 
 /**
  * \brief Get roll, pitch and yaw from the given quaternion.
@@ -75,4 +74,4 @@ double getYaw(const ::tf2::Quaternion& quat);
  */
 double getYaw(const ::geometry_msgs::msg::Quaternion& quat);
 
-}
+}  // namespace cras

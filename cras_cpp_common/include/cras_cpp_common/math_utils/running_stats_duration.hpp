@@ -19,16 +19,18 @@ namespace cras {
 
 template<>
 ::rclcpp::Duration RunningStats<::rclcpp::Duration>::multiply(
-  const ::rclcpp::Duration& val1, const ::rclcpp::Duration& val2) {
+    const ::rclcpp::Duration& val1, const ::rclcpp::Duration& val2) {
   const auto s1 = static_cast<int64_t>(val1.nanoseconds() / 1'000'000'000LL);
   const auto s2 = static_cast<int64_t>(val2.nanoseconds() / 1'000'000'000LL);
   const auto ns1 = static_cast<int64_t>(val1.nanoseconds() % 1'000'000'000LL);
   const auto ns2 = static_cast<int64_t>(val2.nanoseconds() % 1'000'000'000LL);
+  const auto ns12 = ns1 * ns2;
   return ::rclcpp::Duration::from_nanoseconds(
     s1 * s2 * 1'000'000'000LL +
     s1 * ns2 +
     s2 * ns1 +
-    (ns1 * ns2) / 1'000'000'000LL);
+    ns12 / 1'000'000'000LL
+  );
 }
 
 template<>
