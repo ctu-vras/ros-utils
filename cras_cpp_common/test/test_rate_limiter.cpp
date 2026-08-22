@@ -22,7 +22,7 @@
 #include <rclcpp/rate.hpp>
 #include <rclcpp/time.hpp>
 
-#include <cras_cpp_common/rate_limiter.h>
+#include <cras_cpp_common/rate_limiter.hpp>
 #include <cras_cpp_common/time_utils.hpp>
 
 using namespace cras;

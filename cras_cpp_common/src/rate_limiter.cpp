@@ -14,7 +14,7 @@
 #undef private
 
 #include <algorithm>
-#include <cras_cpp_common/rate_limiter.h>
+#include <cras_cpp_common/rate_limiter.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 #include <stdexcept>

@@ -9,7 +9,7 @@
 
 #include <rcl_interfaces/msg/log.hpp>
 
-#include <cras_cpp_common/log_utils.h>
+#include <cras_cpp_common/log_utils.hpp>
 
 namespace cras {
 

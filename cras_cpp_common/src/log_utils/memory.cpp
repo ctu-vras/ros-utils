@@ -10,8 +10,8 @@
 #include <list>
 #include <string>
 
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/log_utils/memory.h>
+#include <cras_cpp_common/log_utils.hpp>
+#include <cras_cpp_common/log_utils/memory.hpp>
 
 #include <rcl_interfaces/msg/log.hpp>
 #include <rclcpp/time.hpp>

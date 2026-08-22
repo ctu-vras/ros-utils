@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
-#include <cras_cpp_common/log_utils.h>
-#include <cras_cpp_common/log_utils/memory.h>
+#include <cras_cpp_common/log_utils.hpp>
+#include <cras_cpp_common/log_utils/memory.hpp>
 #include <cras_cpp_common/suppress_warnings.hpp>
 #include <rcl_interfaces/msg/log.hpp>
 
