@@ -2,6 +2,24 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Renamed some .h files to .hpp (**breaking change!**)
+* Applied new naming style. (**breaking change!**)
+* Updated code style.
+* time_utils: Completed the who-to-who conversion matrix in convertTime and convertDuration. It's possible this introduced subtle behavior changes, but it should be generally safe.
+* filter_utils: Added FilterBase.
+* param_utils: Added ParamHelper.
+* string_utils: Added to_string() for ParameterValue and friends.
+* Added cras::is_optional trait
+* Export cras_defaults target in cras_cpp_common that defines basic compiler features used by CRAS packages.
+* math_utils: Added min/max to RunningStats, enabled tests.
+* Fixed include directories for exported targets.
+* Fixed shared libraries.
+* cloud, tf2_sensor_msgs: Converted to ROS 2.
+* Ported urdf_utils to ROS 2.
+* Contributors: Martin Pecka
+
 3.0.2 (2026-04-07)
 ------------------
 * Fixed compatibility with Rolling.

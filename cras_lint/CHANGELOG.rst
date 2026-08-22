@@ -2,6 +2,11 @@
 Changelog for package cras_lint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated to new code style that is closer to Google Code Style (**breaking change!**)
+* Contributors: Martin Pecka
+
 3.0.2 (2026-04-07)
 ------------------
 * Updated ROS 2 website links to point to index.ros.org

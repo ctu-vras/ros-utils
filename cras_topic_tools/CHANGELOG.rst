@@ -2,6 +2,12 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Applied new naming style. (**breaking change!**)
+* Updated code style.
+* Contributors: Martin Pecka
+
 3.0.2 (2026-04-07)
 ------------------
 * Try fixing readme rendering on index.ros.org
