@@ -17,7 +17,7 @@ This package is always tested for architectures amd64 and arm64.
 
 This package is supported on ROS 1 **Melodic** and **Noetic** (on branch `master`) even after their End of Life.
 
-This package is supported on ROS 2 **Jazzy** and **Klited** (on branch `ros2`). Humble and Foxy are not and will not be supported.
+This package is supported on ROS 2 **Jazzy**, **Klited**, **Lyrical** and **Rolling** (on branch `ros2`). Humble and Foxy are not and will not be supported.
 
 `ros2` branch CI: [![CI](https://github.com/ctu-vras/ros-utils/actions/workflows/ci-ros2.yaml/badge.svg?branch=ros2)](https://github.com/ctu-vras/ros-utils/actions/workflows/ci-ros2.yaml)
 
@@ -34,9 +34,10 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 
 - `expected`: Provides forward compatibility for [`std::expected`](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0323r3.pdf).
 
-<!--
 - `filter_utils`:
   - `FilterBase` eases access to filter parameters via `param_utils`.
+
+<!--
   - `FilterChain` class and nodelet improve upon [`filters::FilterChain`](https://github.com/ros/filters/blob/noetic-devel/include/filters/filter_chain.hpp) by adding support for dynamic disabling/enabling of individual filters, diagnostics of the individual filters and possibility to publish the intermediate filtering results.
 - `functional`: Provides forward compatibility for [`std::apply()`](https://en.cppreference.com/w/cpp/utility/apply), [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke) and [`std::bind_front()`](https://en.cppreference.com/w/cpp/utility/functional/bind_front). Especially `cras::bind_front()` is super useful for specifying ROS subscriber callbacks, where you just bind `this` to the callback, and the rest of the parameters is automatically handled.
 -->
@@ -49,8 +50,12 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 - `node_utils`: Integration of `diag_utils` and `param_utils` for ROS nodes.
 - `nodelet_utils`:
   - `cras::Nodelet` base class provides integration of `diag_utils` and `param_utils` for nodelets, adds the ability to update name of the current thread with name of the nodelet, adds support for sharing a single TF buffer between multiple nodelets, and provides an `ok()` method that is similar to `ros::ok()`, but starts returning `false` when the nodelet is being unloaded.
-  - `nodelet_manager_sharing_tf_buffer` is a customized nodelet manager that is able to share its own (single) TF buffer to multiple nodelets (based on `cras::Nodelet`). 
+  - `nodelet_manager_sharing_tf_buffer` is a customized nodelet manager that is able to share its own (single) TF buffer to multiple nodelets (based on `cras::Nodelet`).
+-->
+
 - `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
+
+<!--
 - `pool_allocator`: Provides a memory-pool-based allocator for ROS messages. It comes handy if you want to publish shared pointer messages on a high rate - it should decrease the time needed for object allocation via `new`.
 -->
 
@@ -75,7 +80,34 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 - `urdf_utils`: Conversions between `urdf` and `Eigen` types.
 -->
 
-<!--
+## `cras_defaults` CMake target
+
+In your packages, you may depend on this target to always receive the correct C++ flags and other compilation configuration (correct = configured for CRAS packages).
+
+This is a short snippet you can use to create a helper target in your packages:
+
+```CMake
+add_library(${PROJECT_NAME}_defaults INTERFACE)
+# privately use C++20, but don't put any C++20 features into public header files, other ROS parts would not like it
+target_compile_features(${PROJECT_NAME}_defaults INTERFACE $<BUILD_INTERFACE:cxx_std_20>)
+# publicly use what this package specifies (which just transitively passes what ROS needs)
+target_link_libraries(${PROJECT_NAME}_defaults INTERFACE cras_cpp_common::cras_defaults)
+# automatically add the include directory from this package to any target that links to this one
+target_include_directories(${PROJECT_NAME}_defaults INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+# this assumes you install your includes with: install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+```
+
+Usage of this helper target is easy:
+
+```CMake
+add_library(my_lib SHARED src/my_lib.cpp)
+target_link_libraries(my_lib PUBLIC ${PROJECT_NAME}_defaults)
+# that's it, you don't need to specify any basic C++ flags or include directories
+```
+
 ## `param_utils`: Parameter Reading Helpers
 
 `param_utils`, `node_utils`, `nodelet_utils` and `filter_utils` provide a type-safe, unified and highly configurable interface for reading ROS parameters. Use the same syntax to read parameters of a node, nodelet, filter, or a custom `XmlRpcValue` struct. Read an Eigen matrix, vector of unsigned ints, `ros::Duration` or `geometry_msgs::Vector3` directly without the need to write a single line of conversion code or value checking. Type of the value to read is automatically determined either from the provided default value, or from template parameter of the `getParam<>()` function.
@@ -83,46 +115,35 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 Example usage:
 
 ```c++
-// Usage in a nodelet based on `cras::Nodelet`:
+// Usage in a class based on rclcpp::Node :
 // read a parameter of size_t type defaulting to 10 if not set.
 // The _sz suffix is a helper to convert a numeric literal to size_t type.
-const auto params = this->privateParams();
-const size_t queueSize = params->getParam("queue_size", 10_sz, "messages");
-
-// Usage in a node:
-// read array of 3 doubles from parameter server into a tf2::Vector3, defaulting to the specified vector if not set.
-cras::NodeParamHelper params("~");
-const tf2::Vector3 gravity = params->getParam("gravity", tf2::Vector3(0, 0, -9.81), "m.s^-2");
+const auto params = cras::ParamHelper(*this, "my_node");
+const size_t queue_size = params.getParam("queue_size", 10_sz, "messages");
+const tf2::Vector3 gravity = params.getParam("gravity", tf2::Vector3(0, 0, -9.81), "m.s^-2");
 
 // Usage in a filter based on cras::FilterBase:
-// read a required ros::Duration parameter from a float
-// the nullopt specifies instead of the default value specifies it is required.
-const ros::Duration timeout = this->getParam<ros::Duration>("timeout", cras::nullopt);
-
-// Usage directly from a XmlRpcValue dict
-// read an Eigen::Vector3d from a XmlRpcValue array
-XmlRpc::XmlRpcValue values;
-values["offset"][0] = 1; values["offset"][1] = 2; values["offset"][2] = 3; 
-auto logger = std::make_shared<cras::NodeLogHelper>();
-auto paramHelper = std::make_shared<cras::XmlRpcValueGetParamAdapter>(values, "");
-BoundParamHelper params(logger, paramHelper);
-const Eigen::Vector3d offset = params->getParam("offset", Eigen::Vector3d::UnitX());
+// read a required rclcpp::Duration parameter from a float
+// the nullopt specified instead of the default value specifies it is required.
+const rclcpp::Duration timeout = this->getParam<rclcpp::Duration>("timeout", cras::nullopt);
 ```
 
 You can also configure the parameter lookup behavior, e.g. to throw exception if the value cannot be converted to the requested type (normally, the default value is used in such case):
 
 ```c++
 // Will throw cras::GetParamException if float_param has a non-integer value
-const int intParam = params->getParam("float_param", 0, "", {.throwIfConvertFails = true});
+const int int_param = params.getParam("float_param", 0, "", {.throwIfConvertFails = true});
 ```
 
 Finally, there is also a more verbose version of `getParam()` that tells more about how the lookup went:
 
 ```c++
-const cras::GetParamResult<int> res = params->getParamVerbose("int", 0);
-const int intParam = res.value;
-const bool wasDefaultUsed = res.info.defaultUsed;
+const cras::GetParamResult<int> res = params.getParamVerbose("int", 0);
+const int int_param = res.value;
+const bool was_default_used = res.info.default_used;
 ```
+
+<!--
 
 ## `diag_utils`: Easy setup of publisher/subscriber with rate and delay diagnostics
 
