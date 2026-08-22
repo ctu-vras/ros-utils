@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.0 (2026-08-23)
+------------------
 * Applied new naming style. (**breaking change!**)
 * Updated code style.
 * Contributors: Martin Pecka

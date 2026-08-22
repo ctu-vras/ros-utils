@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.0 (2026-08-23)
+------------------
 * Renamed some .h files to .hpp (**breaking change!**)
 * Applied new naming style. (**breaking change!**)
 * Updated code style.

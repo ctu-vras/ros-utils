@@ -2,8 +2,8 @@
 Changelog for package cras_lint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.0 (2026-08-23)
+------------------
 * Updated to new code style that is closer to Google Code Style (**breaking change!**)
 * Contributors: Martin Pecka
 
