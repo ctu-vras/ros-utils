@@ -15,8 +15,9 @@ find_package(std_msgs REQUIRED)
 find_package(topic_tools REQUIRED)
 
 ament_export_dependencies(
-#  rclcpp
-#  rclcpp_components
+  cras_cpp_common
+  rclcpp
+  rclcpp_components
 )
 
 add_library(${PROJECT_NAME}_defaults INTERFACE)
