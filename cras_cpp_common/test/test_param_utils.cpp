@@ -1500,7 +1500,6 @@ TEST(GetParamOptions, Constructor)  // NOLINT
     EXPECT_EQ(3.14, d);
   }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
   {  // test braced-initializer construction
     GetParamOptions<double> options{.throwIfConvertFails = true, .origParamName = "asd"};
     EXPECT_TRUE(options.printMessages);
@@ -1517,7 +1516,6 @@ TEST(GetParamOptions, Constructor)  // NOLINT
     EXPECT_TRUE(options.toParam(x, d, true, nullptr));
     EXPECT_EQ(3.14, d);
   }
-#endif
 
   // the following just tests it is possible to compile the default functions
   {GetParamOptions<double> options; options.toResult({});}

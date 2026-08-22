@@ -9,11 +9,10 @@ endif()
 
 project(cras_cpp_common)
 
-set(CMAKE_CXX_STANDARD 20)
-
 find_package(ament_cmake REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(filters REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -38,6 +37,7 @@ find_package(Threads REQUIRED)
 ament_export_dependencies(
   builtin_interfaces
   Eigen3
+  filters
   fmt
   geometry_msgs
   rcl
@@ -53,53 +53,63 @@ ament_export_dependencies(
   urdfdom_headers
 )
 
-set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-try_compile(HAS_DESIGNATED_INITIALIZERS
-  ${CMAKE_BINARY_DIR}/designated_initializers ${CMAKE_CURRENT_SOURCE_DIR}/cmake/designated_initializers_try_compile.cpp
-  CXX_STANDARD 20)
+# Target with default compiler settings for CRAS packages. We use C++17 in header files and C++20 in implementation.
+# The C++20 for implementation cannot be exported using this target, so add it manually in every package, but do not
+# export it to downstream packages. Have a look a few blocks lower on how to do it correctly.
+add_library(cras_defaults INTERFACE)
+find_package(ament_cmake_ros_core QUIET)
+if(ament_cmake_ros_core_FOUND AND TARGET ament_cmake_ros_core::ament_ros_defaults)
+  target_link_libraries(cras_defaults INTERFACE ament_cmake_ros_core::ament_ros_defaults)
+  ament_export_dependencies(ament_cmake_ros_core)
+else()
+  target_compile_features(cras_defaults INTERFACE cxx_std_17 c_std_11)
+endif()
 
 set(CCC_INCLUDE_BASE "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
-add_library(${PROJECT_NAME}_includes INTERFACE)
-target_include_directories(${PROJECT_NAME}_includes INTERFACE
+add_library(${PROJECT_NAME}_defaults INTERFACE)
+target_include_directories(${PROJECT_NAME}_defaults INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
+target_link_libraries(${PROJECT_NAME}_defaults INTERFACE cras_defaults)
+# This does not get exported to downstream packages; each has to specify it on its own
+target_compile_features(${PROJECT_NAME}_defaults INTERFACE $<BUILD_INTERFACE:cxx_std_20>)
 
 add_library(cras_expected INTERFACE)
 target_sources(cras_expected INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/expected.hpp>)
-target_link_libraries(cras_expected INTERFACE tl::expected ${PROJECT_NAME}_includes)
+target_link_libraries(cras_expected INTERFACE tl::expected ${PROJECT_NAME}_defaults)
 
 add_library(cras_format INTERFACE)
 target_sources(cras_format INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/format.hpp>)
 # It actually depends on fmt only for older compilers, but it's not a big deal to over-depend on fmt
-target_link_libraries(cras_format INTERFACE fmt::fmt ${PROJECT_NAME}_includes)
+target_link_libraries(cras_format INTERFACE fmt::fmt ${PROJECT_NAME}_defaults)
 
 add_library(cras_small_map INTERFACE)
 target_sources(cras_small_map INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/small_map.hpp>)
-target_link_libraries(cras_small_map INTERFACE ${PROJECT_NAME}_includes)
+target_link_libraries(cras_small_map INTERFACE ${PROJECT_NAME}_defaults)
 
 add_library(cras_c_api SHARED src/c_api.cpp)
-target_link_libraries(cras_c_api PUBLIC ${PROJECT_NAME}_includes)
+target_link_libraries(cras_c_api PUBLIC ${PROJECT_NAME}_defaults)
 
 add_library(cras_semaphore SHARED src/thread_utils/semaphore.cpp)
-target_link_libraries(cras_semaphore PUBLIC ${PROJECT_NAME}_includes)
+target_link_libraries(cras_semaphore PUBLIC ${PROJECT_NAME}_defaults)
 
 add_library(cras_set_utils INTERFACE)
 target_sources(cras_set_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/set_utils.hpp>)
-target_link_libraries(cras_set_utils INTERFACE ${PROJECT_NAME}_includes)
+target_link_libraries(cras_set_utils INTERFACE ${PROJECT_NAME}_defaults)
 
 add_library(cras_type_traits INTERFACE)
 target_sources(cras_type_traits INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/string_traits.hpp>)
-target_link_libraries(cras_type_traits INTERFACE ${PROJECT_NAME}_includes)
+target_link_libraries(cras_type_traits INTERFACE ${PROJECT_NAME}_defaults)
 
 add_library(cras_literal_sz INTERFACE)
 target_sources(cras_literal_sz INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/type_utils/literal_sz.hpp>)
-target_link_libraries(cras_literal_sz INTERFACE ${PROJECT_NAME}_includes)
+target_link_libraries(cras_literal_sz INTERFACE ${PROJECT_NAME}_defaults)
 
 add_library(cras_urdf_utils SHARED src/urdf_utils.cpp)
 target_link_libraries(cras_urdf_utils
-  PUBLIC urdfdom_headers::urdfdom_headers Eigen3::Eigen ${PROJECT_NAME}_includes)
+  PUBLIC urdfdom_headers::urdfdom_headers Eigen3::Eigen ${PROJECT_NAME}_defaults)
 
 #add_library(cras_message_utils INTERFACE)
 #target_sources(cras_message_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/message_utils.hpp>)
@@ -108,7 +118,7 @@ target_link_libraries(cras_urdf_utils
 #add_dependencies(cras_message_utils INTERFACE ${catkin_EXPORTED_TARGETS})
 
 add_library(cras_cloud SHARED src/cloud.cpp)
-target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS} ${PROJECT_NAME}_includes)
+target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS} ${PROJECT_NAME}_defaults)
 
 #add_library(cras_diag_updater src/diag_utils/updater.cpp)
 #add_dependencies(cras_diag_updater ${catkin_EXPORTED_TARGETS})
@@ -125,27 +135,27 @@ target_link_libraries(cras_cloud PUBLIC ${sensor_msgs_TARGETS} ${PROJECT_NAME}_i
 add_library(cras_math_utils INTERFACE)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils.hpp>)
 target_sources(cras_math_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats.hpp>)
-target_link_libraries(cras_math_utils INTERFACE ${PROJECT_NAME}_includes)
+target_link_libraries(cras_math_utils INTERFACE ${PROJECT_NAME}_defaults)
 
 add_library(cras_math_utils_running_stats_duration INTERFACE)
 target_sources(cras_math_utils_running_stats_duration INTERFACE
   $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/math_utils/running_stats_duration.hpp>)
 target_link_libraries(cras_math_utils_running_stats_duration INTERFACE
-  cras_math_utils rclcpp::rclcpp ${PROJECT_NAME}_includes)
+  cras_math_utils rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
 add_library(cras_time_utils SHARED
   src/time_utils.cpp
 #  src/time_utils/interruptible_sleep_interface.cpp
 )
 target_link_libraries(cras_time_utils
-  PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_includes
+  PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults
   PRIVATE cras_format Boost::boost
   # cras_semaphore
 )
 
 add_library(cras_rate_limiter SHARED src/rate_limiter.cpp)
 target_link_libraries(cras_rate_limiter
-  PUBLIC rcl::rcl rclcpp::rclcpp ${PROJECT_NAME}_includes
+  PUBLIC rcl::rcl rclcpp::rclcpp ${PROJECT_NAME}_defaults
   PRIVATE cras_time_utils)
 
 add_library(cras_tf2_utils SHARED
@@ -153,7 +163,7 @@ add_library(cras_tf2_utils SHARED
 #  src/tf2_utils/interruptible_buffer.cpp
 )
 target_link_libraries(cras_tf2_utils
-  PUBLIC tf2::tf2 ${geometry_mgs_TARGETS} ${PROJECT_NAME}_includes
+  PUBLIC tf2::tf2 ${geometry_mgs_TARGETS} ${PROJECT_NAME}_defaults
   PRIVATE tf2_geometry_msgs::tf2_geometry_msgs
 )
 
@@ -162,12 +172,12 @@ add_library(cras_string_utils SHARED
   src/string_utils/rclcpp.cpp
 )
 target_link_libraries(cras_string_utils PUBLIC
-  cras_format cras_time_utils cras_type_traits rclcpp::rclcpp ${PROJECT_NAME}_includes
+  cras_format cras_time_utils cras_type_traits rclcpp::rclcpp ${PROJECT_NAME}_defaults
 )
 
 add_library(cras_thread_utils SHARED src/thread_utils.cpp)
 target_link_libraries(cras_thread_utils
-  PUBLIC ${PROJECT_NAME}_includes
+  PUBLIC ${PROJECT_NAME}_defaults
   PRIVATE cras_string_utils Threads::Threads
 )
 
@@ -178,7 +188,7 @@ add_library(cras_log_utils SHARED
   #src/log_utils/nodelet.cpp
 )
 target_link_libraries(cras_log_utils
-  PUBLIC cras_string_utils rcl::rcl rclcpp::rclcpp ${rcl_interfaces_TARGETS} ${PROJECT_NAME}_includes
+  PUBLIC cras_string_utils rcl::rcl rclcpp::rclcpp ${rcl_interfaces_TARGETS} ${PROJECT_NAME}_defaults
   PRIVATE cras_time_utils
 )
 
@@ -200,7 +210,7 @@ check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 
 add_library(cras_tf2_sensor_msgs SHARED src/tf2_sensor_msgs.cpp)
 target_link_libraries(cras_tf2_sensor_msgs
-  PUBLIC ${geometry_msgs_TARGETS} ${sensor_msgs_TARGETS} ${PROJECT_NAME}_includes tf2::tf2
+  PUBLIC ${geometry_msgs_TARGETS} ${sensor_msgs_TARGETS} ${PROJECT_NAME}_defaults tf2::tf2
   PRIVATE cras_cloud cras_string_utils cras_time_utils Eigen3::Eigen tf2_eigen::tf2_eigen)
 # The pointcloud processing loop really needs SIMD. We enable it conservatively.
 # ROS buildfarm should pick up x86-64-v3 for x86 builds, armv7 for armhf builds and armv8 for arm64 builds.
@@ -223,25 +233,24 @@ endif()
 
 add_library(cras_type_utils SHARED src/type_utils.cpp)
 target_link_libraries(cras_type_utils
-  PUBLIC cras_type_traits cras_literal_sz ${PROJECT_NAME}_includes
+  PUBLIC cras_type_traits cras_literal_sz ${PROJECT_NAME}_defaults
   PRIVATE cras_string_utils)
 
 add_library(cras_test_utils INTERFACE)
 #target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils/preloading_class_loader.hpp>)
 target_sources(cras_test_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/test_utils.hpp>)
-target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_includes)
+target_link_libraries(cras_test_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
-add_library(cras_param_utils INTERFACE)
-target_sources(cras_param_utils INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/param_utils.hpp>)
-target_link_libraries(cras_param_utils INTERFACE rclcpp::rclcpp ${PROJECT_NAME}_includes)
+add_library(cras_param_utils SHARED src/param_utils.cpp)
+target_link_libraries(cras_param_utils PUBLIC cras_string_utils rclcpp::rclcpp ${PROJECT_NAME}_defaults)
+target_link_libraries(cras_param_utils PRIVATE Eigen3::Eigen tf2::tf2 ${geometry_msgs_TARGETS})
 
 add_library(cras_qos_utils SHARED src/qos.cpp)
-target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_includes)
+target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
-#add_library(cras_filter_base INTERFACE)
-#target_sources(cras_filter_base INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_base.hpp>)
-#target_link_libraries(cras_filter_base
-#  INTERFACE cras_log_utils cras_param_utils cras_string_utils ${catkin_LIBRARIES})
+add_library(cras_filter_base SHARED src/filter_utils/filter_base.cpp)
+target_link_libraries(cras_filter_base
+  PUBLIC cras_param_utils cras_string_utils filters::filter_base rclcpp::rclcpp ${PROJECT_NAME}_defaults)
 
 #add_library(cras_filter_chain INTERFACE)
 #target_sources(cras_filter_chain INTERFACE $<BUILD_INTERFACE:${CCC_INCLUDE_BASE}/filter_utils/filter_chain.hpp>)
@@ -309,16 +318,21 @@ target_link_libraries(cras_qos_utils PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_inclu
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
 
+# Generate version.h header
+add_library(${PROJECT_NAME}_version INTERFACE)
+ament_generate_version_header(${PROJECT_NAME}_version)
+
 # All shared libraries exported by the project. Do not add component nodes here (they should not be exported).
 # All PUBLIC and INTERFACE dependencies of these libraries have to be <depend> and they have to be covered by
 # ament_export_dependencies() for each package they depend on.
 set(EXPORTED_LIBS
   cras_c_api
   cras_cloud
+  cras_defaults
   #  cras_diag_updater
   #  cras_diag_utils
   cras_expected
-  #  cras_filter_base
+  cras_filter_base
   #  cras_filter_chain
   cras_format
   cras_literal_sz
@@ -345,7 +359,8 @@ set(EXPORTED_LIBS
   cras_type_traits
   cras_type_utils
   cras_urdf_utils
-  ${PROJECT_NAME}_includes
+  ${PROJECT_NAME}_defaults
+  ${PROJECT_NAME}_version
 )
 
 # Libraries that should not be exported (i.e. external packages will not link to them). E.g. component nodes go here.
@@ -355,16 +370,14 @@ set(NON_EXPORTED_LIBS
   #  cras_nodelet_manager_sharing_tf_buffer
 )
 
-add_library(${PROJECT_NAME}_version INTERFACE)
-ament_generate_version_header(${PROJECT_NAME}_version)
-
 # Create a convenience target ${PROJECT_NAME}::${PROJECT_NAME} that links to all sub-libraries
 add_library(${PROJECT_NAME} INTERFACE)
-target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS} ${PROJECT_NAME}_version)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXPORTED_LIBS})
+list(APPEND EXPORTED_LIBS ${PROJECT_NAME})
 
 # Install exported libs
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_version ${EXPORTED_LIBS}
+install(TARGETS ${EXPORTED_LIBS}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -395,7 +408,8 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/diag_utils/deprecated/*
     include/${PROJECT_NAME}/diag_utils/impl/*
     include/${PROJECT_NAME}/diagnostics/*
-    include/${PROJECT_NAME}/filter_utils/*
+    include/${PROJECT_NAME}/filter_utils/filter_chain.hpp
+    include/${PROJECT_NAME}/filter_utils/filter_chain_nodelet.hpp
     include/${PROJECT_NAME}/filter_utils/impl/*
     include/${PROJECT_NAME}/log_utils/node.h
     include/${PROJECT_NAME}/log_utils/nodelet.h
@@ -405,8 +419,6 @@ if(BUILD_TESTING)
     include/${PROJECT_NAME}/test_utils/*
     include/${PROJECT_NAME}/tf2_utils/interruptible_buffer.h
     include/${PROJECT_NAME}/diag_utils.hpp
-    include/${PROJECT_NAME}/filter_chain_nodelet.hpp
-    include/${PROJECT_NAME}/filter_utils.hpp
     include/${PROJECT_NAME}/message_utils.hpp
     include/${PROJECT_NAME}/node_utils.hpp
     include/${PROJECT_NAME}/nodelet_utils.hpp
@@ -481,7 +493,7 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_cras_thread_utils cras_semaphore cras_string_utils cras_thread_utils Threads::Threads)
 #
   ament_add_gtest(test_cras_time_utils test/test_time_utils.cpp)
-  target_link_libraries(test_cras_time_utils cras_time_utils)
+  target_link_libraries(test_cras_time_utils cras_time_utils ${PROJECT_NAME}_defaults)
 
   ament_add_gtest(test_cras_type_utils test/test_type_utils.cpp)
   target_link_libraries(test_cras_type_utils cras_type_utils cras_string_utils cras_time_utils)
@@ -513,9 +525,6 @@ if(BUILD_TESTING)
 #  add_rostest_gtest(test_cras_diag_utils test/test_diag_utils.test test/test_diag_utils.cpp)
 #  target_link_libraries(test_cras_diag_utils cras_diag_utils ${catkin_LIBRARIES})
 #  target_compile_options(test_cras_diag_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
-#  if (HAS_DESIGNATED_INITIALIZERS)
-#    target_compile_definitions(test_cras_diag_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
-#  endif()
 #  roslaunch_add_file_check(test/test_diag_utils.test USE_TEST_DEPENDENCIES)
 #
 #  add_rostest_gtest(test_cras_filter_base test/test_filter_base.test test/test_filter_base.cpp)
@@ -526,9 +535,6 @@ if(BUILD_TESTING)
 #  add_rostest_gtest(test_cras_param_utils test/test_param_utils.test test/test_param_utils.cpp)
 #  target_link_libraries(test_cras_param_utils cras_param_utils ${catkin_LIBRARIES})
 #  target_compile_options(test_cras_param_utils PRIVATE -fno-var-tracking-assignments)  # speed up build
-#  if (HAS_DESIGNATED_INITIALIZERS)
-#    target_compile_definitions(test_cras_param_utils PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
-#  endif()
 #  # roslaunch_add_file_check(test/test_param_utils.test USE_TEST_DEPENDENCIES)  # Disabled due to conflicting params
 #
 #  add_rostest_gtest(test_cras_nodelet_get_param test/test_nodelet_get_param.test test/test_nodelet_get_param.cpp)
@@ -549,9 +555,6 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_cras_node_utils_diagnostics cras_node_utils cras_param_utils ${catkin_LIBRARIES})
 #  target_compile_options(test_cras_node_utils_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
 #  add_dependencies(tests test_cras_node_utils_diagnostics)
-#  if (HAS_DESIGNATED_INITIALIZERS)
-#    target_compile_definitions(test_cras_node_utils_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
-#  endif()
 #
 #  catkin_add_executable_with_gtest(
 #    test_cras_node_with_master test/test_node_utils_node_with_master.cpp EXCLUDE_FROM_ALL)
@@ -588,9 +591,6 @@ if(BUILD_TESTING)
 #  target_link_libraries(test_cras_nodelet_diagnostics cras_diag_utils cras_nodelet_utils ${catkin_LIBRARIES})
 #  add_dependencies(tests test_cras_nodelet_diagnostics)
 #  target_compile_options(test_cras_nodelet_diagnostics PRIVATE -fno-var-tracking-assignments)  # speed up build
-#  if (HAS_DESIGNATED_INITIALIZERS)
-#    target_compile_definitions(test_cras_nodelet_diagnostics PRIVATE HAS_DESIGNATED_INITIALIZERS=1)
-#  endif()
 #
 #  add_rostest(test/test_nodelet_utils.test DEPENDENCIES
 #    test_cras_nodelet_aware_tf_buffer

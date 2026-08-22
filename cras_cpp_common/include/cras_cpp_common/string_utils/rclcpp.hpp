@@ -11,9 +11,12 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <rclcpp/duration.hpp>
+#include <rclcpp/parameter.hpp>
+#include <rclcpp/parameter_value.hpp>
 #include <rclcpp/rate.hpp>
 #include <rclcpp/time.hpp>
 
@@ -23,20 +26,55 @@
 namespace cras
 {
 
+constexpr ::std::string_view to_string(const ::rclcpp::ParameterType& type) {
+  switch (type) {
+    case ::rclcpp::ParameterType::PARAMETER_NOT_SET:
+      return "not set";
+    case ::rclcpp::ParameterType::PARAMETER_BOOL:
+      return "bool";
+    case ::rclcpp::ParameterType::PARAMETER_INTEGER:
+      return "integer";
+    case ::rclcpp::ParameterType::PARAMETER_DOUBLE:
+      return "double";
+    case ::rclcpp::ParameterType::PARAMETER_STRING:
+      return "string";
+    case ::rclcpp::ParameterType::PARAMETER_BYTE_ARRAY:
+      return "byte_array";
+    case ::rclcpp::ParameterType::PARAMETER_BOOL_ARRAY:
+      return "bool_array";
+    case ::rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY:
+      return "integer_array";
+    case ::rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY:
+      return "double_array";
+    case ::rclcpp::ParameterType::PARAMETER_STRING_ARRAY:
+      return "string_array";
+  }
+
+  return "unknown type";
+}
+
+::std::string to_string(const ::rclcpp::Parameter& value);
+
+::std::string to_string(const ::rclcpp::ParameterValue& value);
+
 ::std::string to_string(const ::rclcpp::Time& value);
 
-template<typename T, typename ::std::enable_if_t<::cras::TimeType<T>::value>* = nullptr>
+template<typename T, typename ::std::enable_if_t<
+    ::cras::TimeType<T>::value && !::std::is_same_v<T, ::rclcpp::Time> && !::std::is_integral_v<T> &&
+    !::std::is_floating_point_v<T>>* = nullptr>
 inline ::std::string to_string(const T& value)
 {
-  return to_string(::cras::convertTime<::rclcpp::Time>(value));
+  return ::cras::to_string(::cras::convertTime<::rclcpp::Time>(value));
 }
 
 ::std::string to_string(const ::rclcpp::Duration& value);
 
-template<typename T, typename ::std::enable_if_t<::cras::DurationType<T>::value>* = nullptr>
+template<typename T, typename ::std::enable_if_t<
+    ::cras::DurationType<T>::value && !::std::is_same_v<T, ::rclcpp::Duration> && !::cras::TimeType<T>::value &&
+    !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
 inline ::std::string to_string(const T& value)
 {
-  return to_string(::cras::convertDuration<::rclcpp::Duration>(value));
+  return ::cras::to_string(::cras::convertDuration<::rclcpp::Duration>(value));
 }
 
 /**
@@ -45,7 +83,8 @@ inline ::std::string to_string(const T& value)
  * \param value The time to convert.
  * \return Human-readable date-time representation.
  */
-template<typename T, typename ::std::enable_if_t<::cras::TimeType<T>::value>* = nullptr>
+template<typename T, typename ::std::enable_if_t<
+    ::cras::TimeType<T>::value && !::std::is_integral_v<T> && !::std::is_floating_point_v<T>>* = nullptr>
 ::std::string to_pretty_string(const T& value) = delete;
 
 template<>
@@ -62,7 +101,13 @@ inline ::std::string to_string(const T& value)
   return ss.str();
 }
 
-template<typename M, ::std::enable_if_t<::rosidl_generator_traits::is_message<M>::value>* = nullptr>
+template<typename M,
+::std::enable_if_t<
+  ::rosidl_generator_traits::is_message<M>::value &&
+  // We exclude Time and Duration because we convert them via the time-interfaces to_string()
+  !::std::is_same_v<M, ::builtin_interfaces::msg::Time> &&
+  !::std::is_same_v<M, ::builtin_interfaces::msg::Duration>
+>* = nullptr>
 inline std::string to_string(const M& msg)
 {
   ::std::string s = to_yaml(msg);

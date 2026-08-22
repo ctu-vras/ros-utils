@@ -206,12 +206,27 @@ TEST(StringUtils, ToStringBasic)  // NOLINT
 
 TEST(StringUtils, ToStringRos)  // NOLINT
 {
-  EXPECT_EQ("1.500000000", to_string(rclcpp::Time(1, 500000000)));
-  EXPECT_EQ("1.500000000", to_string(rclcpp::Duration(1, 500000000)));
+  constexpr auto ts = "1.500000000";
+  const rclcpp::Time t(1, 500000000);
+  const rclcpp::Duration d(1, 500000000);
 
-  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(rclcpp::Time(1, 500000000)));
+  EXPECT_EQ(ts, to_string(t));
+  EXPECT_EQ(ts, to_string(d));
+
+  EXPECT_EQ("1970-01-01T00:00:01.500000Z", to_pretty_string(t));
 
   EXPECT_EQ("2024-11-13T13:44:04Z", to_pretty_string(rclcpp::Time(1731505444, 0)));
+
+  EXPECT_EQ(ts, to_string(convertTime<builtin_interfaces::msg::Time>(t)));
+  EXPECT_EQ(ts, to_string(convertTime<rcl_time_point_t>(t)));
+  EXPECT_EQ(ts, to_string(convertTime<rmw_time_t>(t)));
+  EXPECT_EQ("1.000000000", to_string(convertTime<tm>(t)));
+  EXPECT_EQ(ts, to_string(convertTime<std::chrono::system_clock::time_point>(t)));
+
+  EXPECT_EQ(ts, to_string(convertDuration<builtin_interfaces::msg::Duration>(d)));
+  EXPECT_EQ(ts, to_string(convertDuration<rcl_duration_t>(d)));
+  EXPECT_EQ(ts, to_string(convertDuration<rmw_time_t>(d)));
+  EXPECT_EQ(ts, to_string(convertDuration<std::chrono::nanoseconds>(d)));
 
   std_msgs::msg::Bool b;
   EXPECT_EQ("data: false", to_string(b));

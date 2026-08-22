@@ -620,7 +620,6 @@ public:
     }
   }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
   void testSubscribeSignaturesWithHeader2Nh2ParamDesignatedInit()
   {
     using TestClass = CbTestHeader;
@@ -659,7 +658,6 @@ public:
       ++i;
     }
   }
-#endif
 
   void testSubscribeSignaturesNoHeader2Nh1Param()
   {
@@ -892,7 +890,6 @@ public:
     }
   }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
   void testSubscribeSignaturesWithHeader1Nh2ParamDesignatedInit()
   {
     using TestClass = CbTestHeader;
@@ -931,7 +928,6 @@ public:
       ++i;
     }
   }
-#endif
 
   void testSubscribeSignaturesNoHeader1Nh1Param()
   {
@@ -1164,7 +1160,6 @@ public:
     }
   }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
   void testSubscribeSignaturesWithHeader0Nh2ParamDesignatedInit()
   {
     using TestClass = CbTestHeader;
@@ -1203,7 +1198,6 @@ public:
       ++i;
     }
   }
-#endif
 
   void testSubscribeSignaturesNoHeader0Nh1Param()
   {
@@ -1697,13 +1691,11 @@ TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader2Nh2Param)  // NOLINT
   n->testSubscribeSignaturesWithHeader2Nh2Param();
 }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader2Nh2ParamDesignatedInit)  // NOLINT
 {
   auto* n = getNodelet();
   n->testSubscribeSignaturesWithHeader2Nh2ParamDesignatedInit();
 }
-#endif
 
 TEST(NodeletDiagnostics, SubscribeSignaturesNoHeader2Nh1Param)  // NOLINT
 {
@@ -1741,13 +1733,11 @@ TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader1Nh2Param)  // NOLINT
   n->testSubscribeSignaturesWithHeader1Nh2Param();
 }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader1Nh2ParamDesignatedInit)  // NOLINT
 {
   auto* n = getNodelet();
   n->testSubscribeSignaturesWithHeader1Nh2ParamDesignatedInit();
 }
-#endif
 
 TEST(NodeletDiagnostics, SubscribeSignaturesNoHeader1Nh1Param)  // NOLINT
 {
@@ -1785,13 +1775,11 @@ TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader0Nh2Param)  // NOLINT
   n->testSubscribeSignaturesWithHeader0Nh2Param();
 }
 
-#ifdef HAS_DESIGNATED_INITIALIZERS
 TEST(NodeletDiagnostics, SubscribeSignaturesWithHeader0Nh2ParamDesignatedInit)  // NOLINT
 {
   auto* n = getNodelet();
   n->testSubscribeSignaturesWithHeader0Nh2ParamDesignatedInit();
 }
-#endif
 
 TEST(NodeletDiagnostics, SubscribeSignaturesNoHeader0Nh1Param)  // NOLINT
 {

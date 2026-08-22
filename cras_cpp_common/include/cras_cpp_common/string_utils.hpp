@@ -486,6 +486,17 @@ DECLARE_TO_STRING_MAP(::std::map)
 DECLARE_TO_STRING_MAP(::std::unordered_map)
 
 /**
+ * \brief Convert the given value to a string representation.
+ * \tparam T Type of the value.
+ * \param[in] value The value to convert.
+ * \return The string representation. Do not store the value, only directly use it.
+ */
+template<typename T>
+const char* to_cstring(const T& value) {
+  return ::cras::to_string(value).c_str();
+}
+
+/**
  * \brief Return a string that is a concatenation of elements of `strings` delimited by `delimiter`.
  * \tparam T An iterable type (must support `size()` and foreach).
  * \param[in] strings The elements to put into a string.

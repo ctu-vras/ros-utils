@@ -22,6 +22,7 @@
 
 using namespace cras;
 using namespace rclcpp;
+using namespace std::chrono_literals;
 
 // // The following testcase has to be the first one because it tests what happens when time is not initialized!
 // TEST(TimeUtils, NowFallbackToWall)  // NOLINT
@@ -561,7 +562,19 @@ TEST(TimeUtils, TimeType)  // NOLINT
   static_assert(cras::TimeType<int64_t>::value);
   static_assert(cras::TimeType<double>::value);
   static_assert(cras::TimeType<std::chrono::system_clock::time_point>::value);
-  static_assert(cras::TimeType<std::chrono::steady_clock::time_point>::value);
+  static_assert(cras::TimeType<std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>>::value);
+  static_assert(
+    TimeType<std::chrono::time_point<
+      std::chrono::system_clock, std::chrono::duration<std::chrono::seconds, double>
+    >>::value);
+  // Steady clock has no bound to wall clock so we can't use it as ROS time
+  static_assert(!cras::TimeType<std::chrono::steady_clock::time_point>::value);
+#ifdef cras_has_chrono_clocks_support
+  static_assert(cras::TimeType<std::chrono::file_clock::time_point>::value);
+  static_assert(cras::TimeType<std::chrono::gps_clock::time_point>::value);
+  static_assert(cras::TimeType<std::chrono::tai_clock::time_point>::value);
+  static_assert(cras::TimeType<std::chrono::utc_clock::time_point>::value);
+#endif
 
   static_assert(!cras::TimeType<rclcpp::Duration>::value);
   static_assert(!cras::TimeType<rcl_duration_t>::value);
@@ -583,17 +596,22 @@ TEST(TimeUtils, TimeSecNsec)  // NOLINT
 TEST(TimeUtils, DurationType)  // NOLINT
 {
   static_assert(cras::DurationType<rclcpp::Duration>::value);
-  static_assert(cras::DurationType<rcl_duration_t>::value);
-  static_assert(cras::DurationType<rcl_duration_value_t>::value);
   static_assert(cras::DurationType<builtin_interfaces::msg::Duration>::value);
-  static_assert(cras::DurationType<int64_t>::value);
+  static_assert(cras::DurationType<rcl_duration_t>::value);
+  static_assert(cras::DurationType<rcutils_duration_value_t>::value);
+  static_assert(cras::DurationType<rmw_time_t>::value);
   static_assert(cras::DurationType<double>::value);
   static_assert(cras::DurationType<std::chrono::nanoseconds>::value);
+  static_assert(cras::DurationType<std::chrono::seconds>::value);
+  static_assert(cras::DurationType<std::chrono::duration<double, ::std::milli>>::value);
+
+  static_assert(cras::is_duration_v<std::chrono::nanoseconds>);
+  static_assert(cras::is_duration_v<std::chrono::duration<double, ::std::milli>>);
 
   static_assert(!cras::DurationType<rclcpp::Time>::value);
+  static_assert(!cras::DurationType<builtin_interfaces::msg::Time>::value);
   static_assert(!cras::DurationType<rcl_time_point_t>::value);
   static_assert(!cras::DurationType<std::chrono::system_clock::time_point>::value);
-  static_assert(!cras::DurationType<builtin_interfaces::msg::Time>::value);
 }
 
 TEST(TimeUtils, DurationSecNsec)  // NOLINT
@@ -609,28 +627,266 @@ TEST(TimeUtils, DurationSecNsec)  // NOLINT
 
 TEST(TimeUtils, ConvertTime)  // NOLINT
 {
-  builtin_interfaces::msg::Time timeMsg;
-  timeMsg.sec = 1;
-  timeMsg.nanosec = 2;
-
   const rclcpp::Time timeRclcpp(1, 2, RCL_SYSTEM_TIME);
   const rclcpp::Time timeRclcppRos(1, 2, RCL_ROS_TIME);
+  const auto timeMsg = builtin_interfaces::msg::builder::Init_Time_sec().sec(1).nanosec(2);
+  const rcl_time_point_t timeRcl(1'000'000'000 + 2, RCL_SYSTEM_TIME);
+  const rcutils_time_point_value_t timeRcutils(1'000'000'000 + 2);
+  const rmw_time_t timeRmw(1, 2);
+  const double timeDouble(1.000000002);
+  const tm timeTm{.tm_sec = 1, .tm_mday = 1, .tm_year = 70};
+  const std::chrono::system_clock::time_point timeChrono(1s + 2ns);
 
   EXPECT_EQ(timeRclcpp, cras::convertTime(timeMsg, RCL_SYSTEM_TIME));
   EXPECT_EQ(timeRclcppRos, cras::convertTime(timeMsg, RCL_ROS_TIME));
-  EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(timeRclcpp));
+
+  {
+    const auto t = timeRclcpp;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeMsg;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeRcl;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeRcutils;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeRmw;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeDouble;
+    const auto eps = 2;
+    EXPECT_NEAR(timeRclcpp.nanoseconds(), cras::convertTime<rclcpp::Time>(t).nanoseconds(), eps);
+    EXPECT_EQ(timeMsg.sec, cras::convertTime<builtin_interfaces::msg::Time>(t).sec);
+    EXPECT_NEAR(timeMsg.nanosec, cras::convertTime<builtin_interfaces::msg::Time>(t).nanosec, eps);
+    EXPECT_NEAR(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds, eps);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_NEAR(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t), eps);
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_NEAR(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec, eps);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_NEAR(
+      timeChrono.time_since_epoch().count(),
+      cras::convertTime<std::chrono::system_clock::time_point>(t).time_since_epoch().count(),
+      eps);
+  }
+
+  {
+    const auto t = timeTm;
+    EXPECT_EQ(rclcpp::Time(1, 0), cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(
+      builtin_interfaces::msg::builder::Init_Time_sec().sec(1).nanosec(0),
+      cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(1'000'000'000, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(1'000'000'000, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(0, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(1.0, cras::convertTime<double>(t));
+    EXPECT_EQ(
+      std::chrono::system_clock::time_point(std::chrono::seconds(1)),
+      cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+  {
+    const auto t = timeChrono;
+    EXPECT_EQ(timeRclcpp, cras::convertTime<rclcpp::Time>(t));
+    EXPECT_EQ(timeMsg, cras::convertTime<builtin_interfaces::msg::Time>(t));
+    EXPECT_EQ(timeRcl.nanoseconds, cras::convertTime<rcl_time_point_t>(t).nanoseconds);
+    EXPECT_EQ(timeRcl.clock_type, cras::convertTime<rcl_time_point_t>(t).clock_type);
+    EXPECT_EQ(timeRcutils, cras::convertTime<rcutils_time_point_value_t>(t));
+    EXPECT_EQ(timeRmw.sec, cras::convertTime<rmw_time_t>(t).sec);
+    EXPECT_EQ(timeRmw.nsec, cras::convertTime<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(timeDouble, cras::convertTime<double>(t));
+    EXPECT_EQ(timeChrono, cras::convertTime<std::chrono::system_clock::time_point>(t));
+  }
+
+
+  using std::chrono::system_clock;
+  using std::chrono::seconds;
+  using std::chrono::nanoseconds;
+  using std::chrono::time_point;
+
+  const auto timeChronoS = std::chrono::time_point_cast<seconds>(timeChrono);
+  const auto timeChronoSN = std::chrono::time_point_cast<nanoseconds>(timeChronoS);  // nanoseconds are gone
+
+  EXPECT_EQ(timeChrono, cras::convertTime<system_clock::time_point>(timeChrono));
+  EXPECT_EQ(timeChronoSN, cras::convertTime<system_clock::time_point>(timeChronoS));
+  EXPECT_EQ(timeChronoS, (cras::convertTime<time_point<system_clock, seconds>>(timeChrono)));
+
+#ifdef cras_has_chrono_clocks_support
+  using std::chrono::gps_clock;
+
+  const auto timeGps = std::chrono::clock_cast<gps_clock>(timeChrono);
+  const auto timeGpsS = std::chrono::time_point_cast<seconds>(timeGps);
+  const auto timeGpsSN = std::chrono::time_point_cast<nanoseconds>(timeGpsS);  // nanoseconds are gone
+
+  EXPECT_EQ(timeGps, cras::convertTime<gps_clock::time_point>(timeChrono));
+  EXPECT_EQ(timeChrono, cras::convertTime<system_clock::time_point>(timeGps));
+  EXPECT_EQ(timeGps, cras::convertTime<gps_clock::time_point>(timeGps));
+  EXPECT_EQ(timeGpsSN, cras::convertTime<gps_clock::time_point>(timeGpsS));
+  EXPECT_EQ(timeGpsS, (cras::convertTime<time_point<gps_clock, seconds>>(timeGps)));
+
+  EXPECT_EQ(timeRclcpp, (cras::convertTime<rclcpp::Time>(timeGps)));
+#endif
 }
 
 TEST(TimeUtils, ConvertDuration)  // NOLINT
 {
-  builtin_interfaces::msg::Duration durationMsg;
-  durationMsg.sec = 1;
-  durationMsg.nanosec = 2;
-
   const rclcpp::Duration durationRclcpp(1, 2);
+  const auto durationMsg = builtin_interfaces::msg::builder::Init_Duration_sec().sec(1).nanosec(2);
+  const rcl_duration_t durationRcl(1'000'000'000 + 2);
+  const rcutils_duration_value_t durationRcutils(1'000'000'000 + 2);
+  const rmw_time_t durationRmw(1, 2);
+  const double durationDouble(1.000000002);
+  const std::chrono::nanoseconds durationChrono(1'000'000'000 + 2);
 
-  EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(durationMsg));
-  EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(durationRclcpp));
+  {
+    const auto t = durationRclcpp;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationMsg;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationRcl;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationRcutils;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationRmw;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationDouble;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  {
+    const auto t = durationChrono;
+    EXPECT_EQ(durationRclcpp, cras::convertDuration<rclcpp::Duration>(t));
+    EXPECT_EQ(durationMsg, cras::convertDuration<builtin_interfaces::msg::Duration>(t));
+    EXPECT_EQ(durationRcl.nanoseconds, cras::convertDuration<rcl_duration_t>(t).nanoseconds);
+    EXPECT_EQ(durationRcutils, cras::convertDuration<rcutils_duration_value_t>(t));
+    EXPECT_EQ(durationRmw.sec, cras::convertDuration<rmw_time_t>(t).sec);
+    EXPECT_EQ(durationRmw.nsec, cras::convertDuration<rmw_time_t>(t).nsec);
+    EXPECT_FLOAT_EQ(durationDouble, cras::convertDuration<double>(t));
+    EXPECT_EQ(durationChrono, cras::convertDuration<std::chrono::nanoseconds>(t));
+  }
+
+  using std::chrono::seconds;
+  using std::chrono::nanoseconds;
+
+  const auto durationS = std::chrono::duration_cast<seconds>(durationChrono);
+  const auto durationSN = std::chrono::duration_cast<nanoseconds>(durationS);  // nanoseconds are gone
+
+  EXPECT_EQ(durationS, cras::convertDuration<seconds>(durationChrono));
+  EXPECT_EQ(durationSN, cras::convertDuration<nanoseconds>(durationS));
+
+  EXPECT_EQ(1'000'000'000, (cras::convertDuration<rclcpp::Duration>(durationS).nanoseconds()));
 }
 
 bool operator==(const tm& t1, const tm& t2)

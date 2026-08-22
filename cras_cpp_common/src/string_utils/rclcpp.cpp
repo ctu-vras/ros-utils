@@ -12,7 +12,10 @@
 #include <regex>
 #include <string>
 
+#include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/duration.hpp>
+#include <rclcpp/parameter.hpp>
+#include <rclcpp/parameter_value.hpp>
 #include <rclcpp/time.hpp>
 
 #include <cras_cpp_common/format.hpp>
@@ -23,6 +26,39 @@
 
 namespace cras
 {
+
+
+
+std::string to_string(const rclcpp::ParameterValue& value) {
+  switch (value.get_type()) {
+    case rclcpp::PARAMETER_NOT_SET:
+      return "NOT-SET";
+    case rclcpp::PARAMETER_BOOL:
+      return cras::to_string(value.get<bool>());
+    case rclcpp::PARAMETER_INTEGER:
+      return cras::to_string(value.get<int64_t>());
+    case rclcpp::PARAMETER_DOUBLE:
+      return cras::to_string(value.get<double>());
+    case rclcpp::PARAMETER_STRING:
+      return value.get<std::string>();
+    case rclcpp::PARAMETER_BYTE_ARRAY:
+      return cras::to_string(value.get<std::vector<uint8_t>>());
+    case rclcpp::PARAMETER_BOOL_ARRAY:
+      return cras::to_string(value.get<std::vector<bool>>());
+    case rclcpp::PARAMETER_INTEGER_ARRAY:
+      return cras::to_string(value.get<std::vector<int64_t>>());
+    case rclcpp::PARAMETER_DOUBLE_ARRAY:
+      return cras::to_string(value.get<std::vector<double>>());
+    case rclcpp::PARAMETER_STRING_ARRAY:
+      return cras::to_string(value.get<std::vector<std::string>>());
+    default:
+      return "UNKNOWN-PARAMETER-TYPE";
+  }
+}
+
+std::string to_string(const rclcpp::Parameter& value) {
+  return cras::format("{}: {}", value.get_name(), cras::to_string(value.get_parameter_value()));
+}
 
 rclcpp::Duration parseTimezoneOffset(const std::string& s)
 {
