@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.1 (2026-08-23)
+------------------
 * fix: Properly export dependencies.
 * Contributors: Martin Pecka
 
