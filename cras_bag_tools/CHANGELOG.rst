@@ -2,6 +2,11 @@
 Changelog for package cras_bag_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* package.xml: set license to valid SPDX string (#13)
+* Contributors: Jan Vermaete
+
 4.0.1 (2026-08-23)
 ------------------
 

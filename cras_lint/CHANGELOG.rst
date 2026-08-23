@@ -2,6 +2,11 @@
 Changelog for package cras_lint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: Added missing licenses.
+* Contributors: Martin Pecka
+
 4.0.1 (2026-08-23)
 ------------------
 
