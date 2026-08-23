@@ -8,7 +8,7 @@
     single node in single message.
   </description>
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <author email="tpetricek@gmail.com">Tomas Petricek</author>
 

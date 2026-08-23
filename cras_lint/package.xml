@@ -11,7 +11,7 @@ SPDX-FileCopyrightText: Czech Technical University in Prague
 
   <maintainer email="peckama2@fel.cvut.cz">Martin Pecka</maintainer>
 
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <url type="website">https://index.ros.org/p/cras_lint</url>
   <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
