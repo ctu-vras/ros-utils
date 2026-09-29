@@ -96,7 +96,6 @@ public:
       const ::image_transport::ImageTransport::VoidPtr& tracked_object = ::image_transport::ImageTransport::VoidPtr(),
       const ::image_transport::TransportHints* transport_hints = nullptr, ::rclcpp::SubscriptionOptions options = {});
 
-#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   /**
    * \brief Subscribe to an image topic, version for bare function.
    * \param[in] base_topic Name of the raw image topic.
@@ -237,7 +236,6 @@ public:
       base_topic, custom_qos, ::std::bind(fp, obj.get(), ::std::placeholders::_1, ::std::placeholders::_2), obj,
       transport_hints);
   }
-#endif
 
 protected:
   ::cras::ImageTransport::RequiredInterfaces node_interfaces_;  //!< Node interfaces used by the image transport.

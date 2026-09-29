@@ -7,31 +7,24 @@
  * \author Martin Pecka
  */
 
-#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
 // HACK: we need to access private method getTransportOrDefault()
 #include <sstream>
 #define private protected
 #include <image_transport/image_transport.hpp>
 #undef private
-#else
-#include <image_transport/image_transport.hpp>
-#endif
 
 #include <string>
 
 #include <cras_cpp_common/image_transport.hpp>
-#include <image_transport/publisher.hpp>
-#include <rclcpp/publisher_options.hpp>
-#include <rclcpp/qos.hpp>
-
-#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
 #include <image_transport/camera_publisher.hpp>
 #include <image_transport/camera_subscriber.hpp>
+#include <image_transport/publisher.hpp>
 #include <image_transport/subscriber.hpp>
 #include <image_transport/transport_hints.hpp>
 #include <rclcpp/node.hpp>
+#include <rclcpp/publisher_options.hpp>
+#include <rclcpp/qos.hpp>
 #include <rclcpp/subscription_options.hpp>
-#endif
 
 #include "impl/node_helper.hpp"
 
@@ -63,40 +56,57 @@ ImageTransport::ImageTransport(const rclcpp::Node::SharedPtr& node)
 image_transport::Publisher ImageTransport::advertise(
     const std::string& base_topic, rclcpp::QoS custom_qos, rclcpp::PublisherOptions options) {
   const auto topics = node_interfaces_.get_node_topics_interface();
-#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
-  return image_transport::create_publisher(
-    impl_->node.get(), topics->resolve_topic_name(base_topic), custom_qos.get_rmw_qos_profile(), options);
+
+#ifdef IMAGE_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
 #else
-  return image_transport::create_publisher(
-    node_interfaces_, topics->resolve_topic_name(base_topic), custom_qos, options);
+  const auto& topic = base_topic;
+#endif
+
+#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
+  return image_transport::create_publisher(impl_->node.get(), topic, custom_qos.get_rmw_qos_profile(), options);
+#else
+  return image_transport::create_publisher(node_interfaces_, topic, custom_qos, options);
 #endif
 }
 
 image_transport::CameraPublisher ImageTransport::advertiseCamera(
     const std::string& base_topic, rclcpp::QoS custom_qos, rclcpp::PublisherOptions options) {
-#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
-  return image_transport::create_camera_publisher(
-    impl_->node.get(), base_topic, custom_qos.get_rmw_qos_profile(), options);
+  const auto topics = node_interfaces_.get_node_topics_interface();
+
+#ifdef IMAGE_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
 #else
-  return image_transport::create_camera_publisher(node_interfaces_, base_topic, custom_qos, options);
+  const auto& topic = base_topic;
+#endif
+
+#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
+  return image_transport::create_camera_publisher(impl_->node.get(), topic, custom_qos.get_rmw_qos_profile(), options);
+#else
+  return image_transport::create_camera_publisher(node_interfaces_, topic, custom_qos, options);
 #endif
 }
 
-#ifndef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
+
 image_transport::Subscriber ImageTransport::subscribe(
     const std::string& base_topic, rclcpp::QoS custom_qos, const image_transport::Subscriber::Callback& callback,
     const VoidPtr& tracked_object, const image_transport::TransportHints* transport_hints,
     rclcpp::SubscriptionOptions options) {
-  return image_transport::ImageTransport::subscribe(
-    base_topic, custom_qos, callback, tracked_object, transport_hints, options);
-}
+  const auto topics = node_interfaces_.get_node_topics_interface();
+
+#ifdef IMAGE_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
 #else
-image_transport::Subscriber ImageTransport::subscribe(
-    const std::string& base_topic, rclcpp::QoS custom_qos, const image_transport::Subscriber::Callback& callback,
-    const VoidPtr& tracked_object, const image_transport::TransportHints* transport_hints,
-    rclcpp::SubscriptionOptions options) {
+  const auto& topic = base_topic;
+#endif
+
+#ifndef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   return image_transport::ImageTransport::subscribe(
-    base_topic, custom_qos.get_rmw_qos_profile(), callback, tracked_object, transport_hints, options);
+    topic, custom_qos, callback, tracked_object, transport_hints, options);
+#else
+  return image_transport::ImageTransport::subscribe(
+    topic, custom_qos.get_rmw_qos_profile(), callback, tracked_object, transport_hints, options);
+#endif
 }
 
 image_transport::Subscriber ImageTransport::subscribe(
@@ -109,8 +119,21 @@ image_transport::CameraSubscriber ImageTransport::subscribeCamera(
     const std::string& base_topic, rclcpp::QoS custom_qos, const image_transport::CameraSubscriber::Callback& callback,
     const image_transport::ImageTransport::VoidPtr& tracked_object,
     const image_transport::TransportHints* transport_hints) {
+  const auto topics = node_interfaces_.get_node_topics_interface();
+
+#ifdef IMAGE_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
+#else
+  const auto& topic = base_topic;
+#endif
+
+#ifndef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   return image_transport::create_camera_subscription(
-    impl_->node.get(), base_topic, callback, getTransportOrDefault(transport_hints), custom_qos.get_rmw_qos_profile());
+    node_interfaces_, topic, callback, getTransportOrDefault(transport_hints), custom_qos);
+#else
+  return image_transport::create_camera_subscription(
+    impl_->node.get(), topic, callback, getTransportOrDefault(transport_hints), custom_qos.get_rmw_qos_profile());
+#endif
 }
 
 image_transport::CameraSubscriber ImageTransport::subscribeCamera(
@@ -118,7 +141,6 @@ image_transport::CameraSubscriber ImageTransport::subscribeCamera(
     const image_transport::TransportHints* transport_hints) {
   return subscribeCamera(base_topic, custom_qos, image_transport::CameraSubscriber::Callback(fp), {}, transport_hints);
 }
-#endif
 
 #ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
 struct ImageTransportHints::Impl {

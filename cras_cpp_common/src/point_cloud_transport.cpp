@@ -51,10 +51,23 @@ PointCloudTransport::PointCloudTransport(const rclcpp::Node::SharedPtr node)
     : point_cloud_transport::PointCloudTransport(node), node_interfaces_(*node), impl_(new Impl()) {
   impl_->node = node;
 }
+#endif
 
 point_cloud_transport::Publisher PointCloudTransport::advertise(
     const std::string& base_topic, const rclcpp::QoS custom_qos, const rclcpp::PublisherOptions& options) {
-  return point_cloud_transport::create_publisher(impl_->node, base_topic, custom_qos.get_rmw_qos_profile(), options);
+  const auto topics = node_interfaces_.get_node_topics_interface();
+
+#ifdef POINT_CLOUD_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
+#else
+  const auto& topic = base_topic;
+#endif
+
+#ifdef POINT_CLOUD_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
+  return point_cloud_transport::create_publisher(impl_->node, topic, custom_qos.get_rmw_qos_profile(), options);
+#else
+  return point_cloud_transport::create_publisher(node_interfaces_, topic, custom_qos, options);
+#endif
 }
 
 point_cloud_transport::Subscriber PointCloudTransport::subscribe(
@@ -63,8 +76,21 @@ point_cloud_transport::Subscriber PointCloudTransport::subscribe(
     const point_cloud_transport::PointCloudTransport::VoidPtr&,
     const point_cloud_transport::TransportHints* transport_hints, const rclcpp::SubscriptionOptions options) {
   const auto transport = getTransportOrDefault(transport_hints);
+  const auto topics = node_interfaces_.get_node_topics_interface();
+
+#ifdef POINT_CLOUD_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS
+  const auto topic = topics->resolve_topic_name(base_topic);
+#else
+  const auto& topic = base_topic;
+#endif
+
+#ifdef POINT_CLOUD_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   return point_cloud_transport::create_subscription(
-    impl_->node, base_topic, callback, transport, custom_qos.get_rmw_qos_profile(), options);
+    impl_->node, topic, callback, transport, custom_qos.get_rmw_qos_profile(), options);
+#else
+  return point_cloud_transport::create_subscription(
+    node_interfaces_, topic, callback, transport, custom_qos, options);
+#endif
 }
 
 point_cloud_transport::Subscriber PointCloudTransport::subscribe(
@@ -74,7 +100,6 @@ point_cloud_transport::Subscriber PointCloudTransport::subscribe(
   return subscribe(
     base_topic, custom_qos, point_cloud_transport::Subscriber::Callback(fp), {}, transport_hints, options);
 }
-#endif
 
 struct PointCloudTransportHints::Impl {};
 

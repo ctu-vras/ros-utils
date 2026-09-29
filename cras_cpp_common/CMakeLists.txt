@@ -336,6 +336,9 @@ target_link_libraries(cras_image_transport
 if(image_transport_VERSION VERSION_LESS 6.4.0)
   target_compile_definitions(cras_image_transport PUBLIC IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE)
 endif()
+if(image_transport_VERSION VERSION_LESS 6.0.0)
+  target_compile_definitions(cras_image_transport PUBLIC IMAGE_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS)
+endif()
 
 add_library(cras_point_cloud_transport SHARED src/point_cloud_transport.cpp)
 target_link_libraries(cras_point_cloud_transport
@@ -349,6 +352,8 @@ if(point_cloud_transport_VERSION VERSION_LESS 5.2.0)
 elseif(point_cloud_transport_VERSION VERSION_LESS 5.3.0)
   message(FATAL_ERROR "point_cloud_transport version 5.2.x is not supported")
 endif()
+# So far (Lyrical), no version remaps topics
+target_compile_definitions(cras_point_cloud_transport PUBLIC POINT_CLOUD_TRANSPORT_NODE_DOES_NOT_REMAP_TOPICS)
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
 

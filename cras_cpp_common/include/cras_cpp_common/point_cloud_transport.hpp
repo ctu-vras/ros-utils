@@ -49,7 +49,6 @@ public:
 
   ~PointCloudTransport() override;
 
-#ifdef POINT_CLOUD_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   /**
    * \brief Advertise the pointcloud topics for all registered transports.
    * \param[in] base_topic Name of the raw topic.
@@ -134,7 +133,6 @@ public:
     return subscribe(
       base_topic, custom_qos, ::std::bind(fp, obj, ::std::placeholders::_1), obj, transport_hints, options);
   }
-#endif
 
 protected:
   ::cras::PointCloudTransport::RequiredInterfaces node_interfaces_;  //!< Node interfaces used by the transport.
