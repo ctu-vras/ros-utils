@@ -42,6 +42,7 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 - `functional`: Provides forward compatibility for [`std::apply()`](https://en.cppreference.com/w/cpp/utility/apply), [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke) and [`std::bind_front()`](https://en.cppreference.com/w/cpp/utility/functional/bind_front). Especially `cras::bind_front()` is super useful for specifying ROS subscriber callbacks, where you just bind `this` to the callback, and the rest of the parameters is automatically handled.
 -->
 
+- `image_transport`: Provides a unified modern interface for publishing and subscribing to images compatible on Jazzy and newer.
 - `log_utils`: Unified access to the `ROS_*` and `NODELET_*` logging macros. This is more an internal utility of this package.
 
 <!--
@@ -54,6 +55,7 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 -->
 
 - `param_utils`: Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
+- `point_cloud_transport`: Provides a unified modern interface for publishing and subscribing to point clouds on Jazzy and newer.
 
 <!--
 - `pool_allocator`: Provides a memory-pool-based allocator for ROS messages. It comes handy if you want to publish shared pointer messages on a high rate - it should decrease the time needed for object allocation via `new`.

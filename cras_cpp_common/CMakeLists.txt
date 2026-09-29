@@ -14,6 +14,8 @@ find_package(backward_ros REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(filters REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(point_cloud_transport REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -40,6 +42,8 @@ ament_export_dependencies(
   filters
   fmt
   geometry_msgs
+  image_transport
+  point_cloud_transport
   rcl
   rclcpp
   rclcpp_components
@@ -316,6 +320,34 @@ target_link_libraries(cras_filter_base
 #target_link_libraries(nodelet_manager_sharing_tf_buffer
 #  PUBLIC cras_nodelet_manager_sharing_tf_buffer ${catkin_LIBRARIES})
 
+# cras_node_helper
+# cannot be SHARED, we don't want to export this library; OBJECT is similar to SHARED but not exported and has no .so
+add_library(cras_node_helper OBJECT src/impl/node_helper.cpp)
+target_link_libraries(cras_node_helper PUBLIC rclcpp::rclcpp ${PROJECT_NAME}_defaults)
+set_target_properties(cras_node_helper PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(cras_image_transport SHARED src/image_transport.cpp)
+target_link_libraries(cras_image_transport
+  PUBLIC
+    image_transport::image_transport rclcpp::rclcpp ${sensor_msgs_TARGETS} ${PROJECT_NAME}_defaults
+  PRIVATE
+    cras_node_helper
+)
+if(image_transport_VERSION VERSION_LESS 6.4.0)
+  target_compile_definitions(cras_image_transport PUBLIC IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE)
+endif()
+
+add_library(cras_point_cloud_transport SHARED src/point_cloud_transport.cpp)
+target_link_libraries(cras_point_cloud_transport
+  PUBLIC
+    point_cloud_transport::point_cloud_transport rclcpp::rclcpp ${sensor_msgs_TARGETS} ${PROJECT_NAME}_defaults
+  PRIVATE
+    cras_node_helper
+)
+if(point_cloud_transport_VERSION VERSION_LESS 5.2.0)
+  target_compile_definitions(cras_point_cloud_transport PUBLIC POINT_CLOUD_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE)
+endif()
+
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
 
 # Generate version.h header
@@ -335,6 +367,7 @@ set(EXPORTED_LIBS
   cras_filter_base
   #  cras_filter_chain
   cras_format
+  cras_image_transport
   cras_literal_sz
   cras_log_utils
   cras_math_utils
@@ -344,6 +377,7 @@ set(EXPORTED_LIBS
   #  cras_nodelet_manager
   #  cras_nodelet_utils
   cras_param_utils
+  cras_point_cloud_transport
   cras_qos_utils
   cras_rate_limiter
   #  cras_resettable
@@ -382,7 +416,6 @@ install(TARGETS ${EXPORTED_LIBS}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
 )
 
 # Install non-exported libs
@@ -390,7 +423,6 @@ install(TARGETS ${NON_EXPORTED_LIBS}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
 )
 
 # Install executables
@@ -442,6 +474,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_ros REQUIRED)
   find_package(geometry_msgs REQUIRED)
+  find_package(point_cloud_interfaces REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(tf2 REQUIRED)
 
@@ -604,6 +637,20 @@ if(BUILD_TESTING)
 #  add_rostest_gtest(test_resettable test/test_resettable.test test/test_resettable.cpp)
 #  target_link_libraries(test_resettable cras_resettable cras_test_utils ${catkin_LIBRARIES})
 #  roslaunch_add_file_check(test/test_resettable.test USE_TEST_DEPENDENCIES)
+
+  ament_add_ros_isolated_gtest(test_image_transport test/test_image_transport.cpp)
+  target_link_libraries(test_image_transport cras_image_transport cras_test_utils ${PROJECT_NAME}_defaults)
+
+  ament_add_ros_isolated_gtest(test_point_cloud_transport test/test_point_cloud_transport.cpp)
+  target_link_libraries(test_point_cloud_transport
+    cras_point_cloud_transport cras_test_utils ${point_cloud_interfaces_TARGETS} ${PROJECT_NAME}_defaults
+  )
+
+  ament_add_ros_isolated_gtest(test_all_transports test/test_all_transports.cpp)
+  target_link_libraries(test_all_transports
+    cras_image_transport cras_point_cloud_transport cras_test_utils ${point_cloud_interfaces_TARGETS}
+    ${PROJECT_NAME}_defaults
+  )
 endif()
 
 ament_package()
