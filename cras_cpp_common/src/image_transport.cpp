@@ -85,9 +85,10 @@ image_transport::CameraPublisher ImageTransport::advertiseCamera(
 #ifndef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
 image_transport::Subscriber ImageTransport::subscribe(
     const std::string& base_topic, rclcpp::QoS custom_qos, const image_transport::Subscriber::Callback& callback,
-    const VoidPtr& tracked_object, const image_transport::TransportHints* transport_hints) {
+    const VoidPtr& tracked_object, const image_transport::TransportHints* transport_hints,
+    rclcpp::SubscriptionOptions options) {
   return image_transport::ImageTransport::subscribe(
-    base_topic, custom_qos, callback, tracked_object, transport_hints, {});
+    base_topic, custom_qos, callback, tracked_object, transport_hints, options);
 }
 #else
 image_transport::Subscriber ImageTransport::subscribe(

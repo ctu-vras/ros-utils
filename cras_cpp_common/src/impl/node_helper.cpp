@@ -25,6 +25,26 @@
 namespace cras {
 
 struct NodeLike {
+  ~NodeLike() {
+    auto node = reinterpret_cast<rclcpp::Node*>(this);
+
+    if (node->node_base_) {
+      node->node_base_.reset();
+    }
+    if (node->node_logging_) {
+      node->node_logging_.reset();
+    }
+    if (node->node_parameters_) {
+      node->node_parameters_.reset();
+    }
+    if (node->node_timers_) {
+      node->node_timers_.reset();
+    }
+    if (node->node_topics_) {
+      node->node_topics_.reset();
+    }
+  }
+
   uint8_t data[sizeof(rclcpp::Node)];
 };
 

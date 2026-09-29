@@ -30,7 +30,8 @@ struct ImageTransportNode : rclcpp::Node {
       : rclcpp::Node("image_transport_test", node_options), image_transport_(*this) {
     image_pub_ = image_transport_.advertise("image_raw", rclcpp::QoS(1), {});
     const cras::ImageTransportHints hints(*this, "compressed");
-    image_sub_ = image_transport_.subscribe("image_raw", rclcpp::QoS(1), cb, nullptr, &hints);
+    image_sub_ = image_transport_.subscribe(
+      "image_raw", rclcpp::QoS(1), cb, nullptr, &hints, rclcpp::SubscriptionOptions());
   }
 
   cras::ImageTransport image_transport_;

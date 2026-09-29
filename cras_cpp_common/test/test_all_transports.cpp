@@ -241,7 +241,7 @@ TEST_F(AllTransports, Basic)  // NOLINT
     uint8_t b[4];
   } FloatConv;
 
-  for (size_t i = 0; i < data.size(); i += pc.point_step) {
+  for (size_t i = 0; i < data.size(); ++i) {
     FloatConv.f = data[i];
     pc.data.push_back(FloatConv.b[0]);
     pc.data.push_back(FloatConv.b[1]);

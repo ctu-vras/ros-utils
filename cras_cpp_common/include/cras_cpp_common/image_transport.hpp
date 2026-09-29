@@ -80,24 +80,6 @@ public:
   ::image_transport::CameraPublisher advertiseCamera(
       const ::std::string& base_topic, ::rclcpp::QoS custom_qos, ::rclcpp::PublisherOptions options = {});
 
-#ifndef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
-  /**
-   * \brief Subscribe to an image topic, version for arbitrary std::function object.
-   * \param[in] base_topic Name of the raw image topic.
-   * \param[in] custom_qos QoS of the image subscriber.
-   * \param[in] callback The callback to be called with the decoded raw image.
-   * \param[in] tracked_object The object whose lifetime should be tracked.
-   * \param[in] transport_hints Configuration that determines which transport topic will be subscribed.
-   * \note Lyrical and newer have this function implemented by default, but the last 3 arguments are not optional. This
-   *       function makes them optional, too.
-   * \return The subscriber object. The topic is subscribed as long as this object lives.
-   */
-  ::image_transport::Subscriber subscribe(
-      const ::std::string& base_topic, ::rclcpp::QoS custom_qos,
-      const ::image_transport::Subscriber::Callback& callback,
-      const ::image_transport::ImageTransport::VoidPtr& tracked_object = ::image_transport::ImageTransport::VoidPtr(),
-      const ::image_transport::TransportHints* transport_hints = nullptr);
-#else
   /**
    * \brief Subscribe to an image topic, version for arbitrary std::function object.
    * \param[in] base_topic Name of the raw image topic.
@@ -114,6 +96,7 @@ public:
       const ::image_transport::ImageTransport::VoidPtr& tracked_object = ::image_transport::ImageTransport::VoidPtr(),
       const ::image_transport::TransportHints* transport_hints = nullptr, ::rclcpp::SubscriptionOptions options = {});
 
+#ifdef IMAGE_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE
   /**
    * \brief Subscribe to an image topic, version for bare function.
    * \param[in] base_topic Name of the raw image topic.

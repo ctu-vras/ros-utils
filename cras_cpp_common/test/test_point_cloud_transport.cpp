@@ -146,7 +146,7 @@ TEST_F(PointCloudTransport, Basic)  // NOLINT
     uint8_t b[4];
   } FloatConv;
 
-  for (size_t i = 0; i < data.size(); i += pc.point_step) {
+  for (size_t i = 0; i < data.size(); ++i) {
     FloatConv.f = data[i];
     pc.data.push_back(FloatConv.b[0]);
     pc.data.push_back(FloatConv.b[1]);
@@ -167,7 +167,8 @@ TEST_F(PointCloudTransport, Basic)  // NOLINT
   EXPECT_EQ("pcl", last_compressed_msg->header.frame_id);
   EXPECT_EQ("zstd", last_compressed_msg->format);
   std::vector<uint8_t> expected_data = {
-    40, 181, 47, 253, 32, 4, 33, 0, 0, 0, 0, 0, 0,
+    40, 181, 47, 253, 32, 48, 129, 1, 0, 0, 0, 0, 0, 0, 0, 128, 63, 0, 0, 0, 64, 0, 0, 64, 64, 0, 0, 128, 64, 0, 0, 160,
+    64, 0, 0, 192, 64, 0, 0, 224, 64, 0, 0, 0, 65, 0, 0, 16, 65, 0, 0, 32, 65, 0, 0, 48, 65,
   };
   EXPECT_EQ(expected_data.size(), last_compressed_msg->compressed_data.size());
   EXPECT_EQ(expected_data, last_compressed_msg->compressed_data);

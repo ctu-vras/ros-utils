@@ -346,6 +346,8 @@ target_link_libraries(cras_point_cloud_transport
 )
 if(point_cloud_transport_VERSION VERSION_LESS 5.2.0)
   target_compile_definitions(cras_point_cloud_transport PUBLIC POINT_CLOUD_TRANSPORT_NODE_INTERFACES_NOT_AVAILABLE)
+elseif(point_cloud_transport_VERSION VERSION_LESS 5.3.0)
+  message(FATAL_ERROR "point_cloud_transport version 5.2.x is not supported")
 endif()
 
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME}/)
