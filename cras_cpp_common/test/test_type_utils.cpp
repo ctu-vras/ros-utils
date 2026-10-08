@@ -37,12 +37,16 @@ TEST(TypeUtils, CleanTypeName)  // NOLINT
 
   EXPECT_EQ("std::string", cras::cleanTypeName("std::string"));
   EXPECT_EQ("std::string", cras::cleanTypeName("std::__cxx11::basic_string<char >"));
-  EXPECT_EQ("std::string",
+  EXPECT_EQ(
+    "std::string",
     cras::cleanTypeName("std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"));
   EXPECT_EQ("std::string", cras::cleanTypeName(cras::demangle(typeid(std::string).name())));
 
   EXPECT_EQ("std::vector<int>", cras::cleanTypeName("std::vector<int, std::allocator<int> >"));
   EXPECT_EQ("std::vector<int>", cras::cleanTypeName(cras::demangle(typeid(std::vector<int>).name())));
+  EXPECT_EQ(
+    "geometry_msgs::msg::PolygonStamped",
+    cras::cleanTypeName("geometry_msgs::msg::PolygonStamped_<std::allocator<void>>"));
 }
 
 TEST(TypeUtils, Demangle)  // NOLINT

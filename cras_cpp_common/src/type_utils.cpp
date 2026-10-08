@@ -22,6 +22,7 @@ namespace cras {
 
 std::regex g_char_traits_regex("(.*), std::char_traits<\\1>");  // NOLINT
 std::regex g_allocator_regex("(.*), std::allocator<\\1>");  // NOLINT
+std::regex g_msg_allocator_regex("(.*)_<std::allocator<void>>");  // NOLINT
 std::regex g_map_regex("<(.*), (.*), std::less<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
 std::regex g_unordered_map_regex(  // NOLINT
     "<(.*), (.*), std::hash<\\1>, std::equal_to<\\1>, std::allocator<std::pair<\\1( const)?, \\2>>");  // NOLINT
@@ -39,9 +40,12 @@ std::string cleanTypeName(const std::string& type_name) {
   result = std::regex_replace(result, g_set_regex, "<$1");
   result = std::regex_replace(result, g_unordered_set_regex, "<$1");
 
-  while (std::regex_search(result, g_char_traits_regex) || std::regex_search(result, g_allocator_regex)) {
+  while (std::regex_search(result, g_char_traits_regex) || std::regex_search(result, g_allocator_regex) ||
+         std::regex_search(result, g_msg_allocator_regex))
+  {
     result = std::regex_replace(result, g_char_traits_regex, "$1");
     result = std::regex_replace(result, g_allocator_regex, "$1");
+    result = std::regex_replace(result, g_msg_allocator_regex, "$1");
   }
 
   cras::replace(result, "basic_string", "string");

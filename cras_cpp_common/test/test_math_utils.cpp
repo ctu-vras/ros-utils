@@ -59,6 +59,611 @@ public:
   using cras::RunningStats<T>::maxValue;
 };
 
+template<typename T>
+constexpr T _min() noexcept {
+  return std::numeric_limits<T>::lowest();
+}
+
+template<typename T>
+constexpr T _max() noexcept {
+  return std::numeric_limits<T>::max();
+}
+
+TEST(SaturatingCast, SameZero) {
+  // NOLINT
+  // Check that it is constexpr
+  static_assert(false == cras::saturating_cast<bool>(false));
+  static_assert(static_cast<char>(0) == cras::saturating_cast<char>(static_cast<char>(0)));
+  static_assert(static_cast<unsigned char>(0) == cras::saturating_cast<unsigned char>(static_cast<unsigned char>(0)));
+  static_assert(static_cast<signed char>(0) == cras::saturating_cast<signed char>(static_cast<signed char>(0)));
+  static_assert(static_cast<int8_t>(0) == cras::saturating_cast<int8_t>(static_cast<int8_t>(0)));
+  static_assert(static_cast<uint8_t>(0) == cras::saturating_cast<uint8_t>(static_cast<uint8_t>(0)));
+  static_assert(static_cast<short>(0) == cras::saturating_cast<short>(static_cast<short>(0)));
+  static_assert(
+    static_cast<unsigned short>(0) == cras::saturating_cast<unsigned short>(static_cast<unsigned short>(0)));
+  static_assert(static_cast<int16_t>(0) == cras::saturating_cast<int16_t>(static_cast<int16_t>(0)));
+  static_assert(static_cast<uint16_t>(0) == cras::saturating_cast<uint16_t>(static_cast<uint16_t>(0)));
+  static_assert(static_cast<int>(0) == cras::saturating_cast<int>(static_cast<int>(0)));
+  static_assert(static_cast<unsigned int>(0) == cras::saturating_cast<unsigned int>(static_cast<unsigned int>(0)));
+  static_assert(static_cast<int32_t>(0) == cras::saturating_cast<int32_t>(static_cast<int32_t>(0)));
+  static_assert(static_cast<uint32_t>(0) == cras::saturating_cast<uint32_t>(static_cast<uint32_t>(0)));
+  static_assert(static_cast<long>(0) == cras::saturating_cast<long>(static_cast<long>(0)));
+  static_assert(static_cast<unsigned long>(0) == cras::saturating_cast<unsigned long>(static_cast<unsigned long>(0)));
+  static_assert(static_cast<int64_t>(0) == cras::saturating_cast<int64_t>(static_cast<int64_t>(0)));
+  static_assert(static_cast<uint64_t>(0) == cras::saturating_cast<uint64_t>(static_cast<uint64_t>(0)));
+  static_assert(static_cast<long long>(0) == cras::saturating_cast<long long>(static_cast<long long>(0)));
+  static_assert(
+    static_cast<unsigned long long>(0) == cras::saturating_cast<unsigned long long>(
+      static_cast<unsigned long long>(0)));
+  static_assert(static_cast<float>(0) == cras::saturating_cast<float>(static_cast<float>(0)));
+  static_assert(static_cast<double>(0) == cras::saturating_cast<double>(static_cast<double>(0)));
+  static_assert(static_cast<long double>(0) == cras::saturating_cast<long double>(static_cast<long double>(0)));
+
+  EXPECT_EQ(false, cras::saturating_cast<bool>(false));
+  EXPECT_EQ(static_cast<char>(0), cras::saturating_cast<char>(static_cast<char>(0)));
+  EXPECT_EQ(static_cast<unsigned char>(0), cras::saturating_cast<unsigned char>(static_cast<unsigned char>(0)));
+  EXPECT_EQ(static_cast<signed char>(0), cras::saturating_cast<signed char>(static_cast<signed char>(0)));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(static_cast<int8_t>(0)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<uint8_t>(0)));
+  EXPECT_EQ(static_cast<short>(0), cras::saturating_cast<short>(static_cast<short>(0)));
+  EXPECT_EQ(static_cast<unsigned short>(0), cras::saturating_cast<unsigned short>(static_cast<unsigned short>(0)));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(static_cast<int16_t>(0)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<uint16_t>(0)));
+  EXPECT_EQ(static_cast<int>(0), cras::saturating_cast<int>(static_cast<int>(0)));
+  EXPECT_EQ(static_cast<unsigned int>(0), cras::saturating_cast<unsigned int>(static_cast<unsigned int>(0)));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(static_cast<int32_t>(0)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<uint32_t>(0)));
+  EXPECT_EQ(static_cast<long>(0), cras::saturating_cast<long>(static_cast<long>(0)));
+  EXPECT_EQ(static_cast<unsigned long>(0), cras::saturating_cast<unsigned long>(static_cast<unsigned long>(0)));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(static_cast<int64_t>(0)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<uint64_t>(0)));
+  EXPECT_EQ(static_cast<long long>(0), cras::saturating_cast<long long>(static_cast<long long>(0)));
+  EXPECT_EQ(
+    static_cast<unsigned long long>(0), cras::saturating_cast<unsigned long long>(static_cast<unsigned long long>(0)));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(static_cast<long double>(0)));
+}
+
+TEST(SaturatingCast, SameOne) {
+  // NOLINT
+  EXPECT_EQ(true, cras::saturating_cast<bool>(true));
+  EXPECT_EQ(static_cast<char>(1), cras::saturating_cast<char>(static_cast<char>(1)));
+  EXPECT_EQ(static_cast<unsigned char>(1), cras::saturating_cast<unsigned char>(static_cast<unsigned char>(1)));
+  EXPECT_EQ(static_cast<signed char>(1), cras::saturating_cast<signed char>(static_cast<signed char>(1)));
+  EXPECT_EQ(static_cast<int8_t>(1), cras::saturating_cast<int8_t>(static_cast<int8_t>(1)));
+  EXPECT_EQ(static_cast<uint8_t>(1), cras::saturating_cast<uint8_t>(static_cast<uint8_t>(1)));
+  EXPECT_EQ(static_cast<short>(1), cras::saturating_cast<short>(static_cast<short>(1)));
+  EXPECT_EQ(static_cast<unsigned short>(1), cras::saturating_cast<unsigned short>(static_cast<unsigned short>(1)));
+  EXPECT_EQ(static_cast<int16_t>(1), cras::saturating_cast<int16_t>(static_cast<int16_t>(1)));
+  EXPECT_EQ(static_cast<uint16_t>(1), cras::saturating_cast<uint16_t>(static_cast<uint16_t>(1)));
+  EXPECT_EQ(static_cast<int>(1), cras::saturating_cast<int>(static_cast<int>(1)));
+  EXPECT_EQ(static_cast<unsigned int>(1), cras::saturating_cast<unsigned int>(static_cast<unsigned int>(1)));
+  EXPECT_EQ(static_cast<int32_t>(1), cras::saturating_cast<int32_t>(static_cast<int32_t>(1)));
+  EXPECT_EQ(static_cast<uint32_t>(1), cras::saturating_cast<uint32_t>(static_cast<uint32_t>(1)));
+  EXPECT_EQ(static_cast<long>(1), cras::saturating_cast<long>(static_cast<long>(1)));
+  EXPECT_EQ(static_cast<unsigned long>(1), cras::saturating_cast<unsigned long>(static_cast<unsigned long>(1)));
+  EXPECT_EQ(static_cast<int64_t>(1), cras::saturating_cast<int64_t>(static_cast<int64_t>(1)));
+  EXPECT_EQ(static_cast<uint64_t>(1), cras::saturating_cast<uint64_t>(static_cast<uint64_t>(1)));
+  EXPECT_EQ(static_cast<long long>(1), cras::saturating_cast<long long>(static_cast<long long>(1)));
+  EXPECT_EQ(
+    static_cast<unsigned long long>(1), cras::saturating_cast<unsigned long long>(static_cast<unsigned long long>(1)));
+  EXPECT_EQ(static_cast<float>(1), cras::saturating_cast<float>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<double>(1), cras::saturating_cast<double>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<long double>(1), cras::saturating_cast<long double>(static_cast<long double>(1)));
+}
+
+TEST(SaturatingCast, SameMinusOne) {
+  // NOLINT
+  EXPECT_EQ(static_cast<signed char>(-1), cras::saturating_cast<signed char>(static_cast<signed char>(-1)));
+  EXPECT_EQ(static_cast<int8_t>(-1), cras::saturating_cast<int8_t>(static_cast<int8_t>(-1)));
+  EXPECT_EQ(static_cast<short>(-1), cras::saturating_cast<short>(static_cast<short>(-1)));
+  EXPECT_EQ(static_cast<int16_t>(-1), cras::saturating_cast<int16_t>(static_cast<int16_t>(-1)));
+  EXPECT_EQ(static_cast<int>(-1), cras::saturating_cast<int>(static_cast<int>(-1)));
+  EXPECT_EQ(static_cast<int32_t>(-1), cras::saturating_cast<int32_t>(static_cast<int32_t>(-1)));
+  EXPECT_EQ(static_cast<long>(-1), cras::saturating_cast<long>(static_cast<long>(-1)));
+  EXPECT_EQ(static_cast<int64_t>(-1), cras::saturating_cast<int64_t>(static_cast<int64_t>(-1)));
+  EXPECT_EQ(static_cast<long long>(-1), cras::saturating_cast<long long>(static_cast<long long>(-1)));
+  EXPECT_EQ(static_cast<float>(-1), cras::saturating_cast<float>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<double>(-1), cras::saturating_cast<double>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<long double>(-1), cras::saturating_cast<long double>(static_cast<long double>(-1)));
+
+  static_assert(static_cast<uint8_t>(0) == cras::saturating_cast<uint8_t>(static_cast<int8_t>(-1)));
+
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<int8_t>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<int16_t>(-1)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<int32_t>(-1)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<int64_t>(-1)));
+
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<int16_t>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<int32_t>(-1)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<int64_t>(-1)));
+
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<int32_t>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<int64_t>(-1)));
+}
+
+TEST(SaturatingCast, FloatZero) {
+  // NOLINT
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(static_cast<float>(0)));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(static_cast<float>(0)));
+
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(static_cast<double>(0)));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(static_cast<double>(0)));
+
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(static_cast<long double>(0)));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(static_cast<long double>(0)));
+}
+
+TEST(SaturatingCast, FloatOne) {
+  // NOLINT
+  EXPECT_EQ(static_cast<bool>(1), cras::saturating_cast<bool>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<int8_t>(1), cras::saturating_cast<int8_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<uint8_t>(1), cras::saturating_cast<uint8_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<int16_t>(1), cras::saturating_cast<int16_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<uint16_t>(1), cras::saturating_cast<uint16_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<int32_t>(1), cras::saturating_cast<int32_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<uint32_t>(1), cras::saturating_cast<uint32_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<int64_t>(1), cras::saturating_cast<int64_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<uint64_t>(1), cras::saturating_cast<uint64_t>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<double>(1), cras::saturating_cast<double>(static_cast<float>(1)));
+  EXPECT_EQ(static_cast<long double>(1), cras::saturating_cast<long double>(static_cast<float>(1)));
+
+  EXPECT_EQ(static_cast<bool>(1), cras::saturating_cast<bool>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<int8_t>(1), cras::saturating_cast<int8_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<uint8_t>(1), cras::saturating_cast<uint8_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<int16_t>(1), cras::saturating_cast<int16_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<uint16_t>(1), cras::saturating_cast<uint16_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<int32_t>(1), cras::saturating_cast<int32_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<uint32_t>(1), cras::saturating_cast<uint32_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<int64_t>(1), cras::saturating_cast<int64_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<uint64_t>(1), cras::saturating_cast<uint64_t>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<float>(1), cras::saturating_cast<float>(static_cast<double>(1)));
+  EXPECT_EQ(static_cast<long double>(1), cras::saturating_cast<long double>(static_cast<double>(1)));
+
+  EXPECT_EQ(static_cast<bool>(1), cras::saturating_cast<bool>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<int8_t>(1), cras::saturating_cast<int8_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<uint8_t>(1), cras::saturating_cast<uint8_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<int16_t>(1), cras::saturating_cast<int16_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<uint16_t>(1), cras::saturating_cast<uint16_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<int32_t>(1), cras::saturating_cast<int32_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<uint32_t>(1), cras::saturating_cast<uint32_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<int64_t>(1), cras::saturating_cast<int64_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<uint64_t>(1), cras::saturating_cast<uint64_t>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<float>(1), cras::saturating_cast<float>(static_cast<long double>(1)));
+  EXPECT_EQ(static_cast<double>(1), cras::saturating_cast<double>(static_cast<long double>(1)));
+}
+
+TEST(SaturatingCast, FloatMinusOne) {
+  // NOLINT
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<int8_t>(-1), cras::saturating_cast<int8_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<int16_t>(-1), cras::saturating_cast<int16_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<int32_t>(-1), cras::saturating_cast<int32_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<int64_t>(-1), cras::saturating_cast<int64_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<double>(-1), cras::saturating_cast<double>(static_cast<float>(-1)));
+  EXPECT_EQ(static_cast<long double>(-1), cras::saturating_cast<long double>(static_cast<float>(-1)));
+
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<int8_t>(-1), cras::saturating_cast<int8_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<int16_t>(-1), cras::saturating_cast<int16_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<int32_t>(-1), cras::saturating_cast<int32_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<int64_t>(-1), cras::saturating_cast<int64_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<float>(-1), cras::saturating_cast<float>(static_cast<double>(-1)));
+  EXPECT_EQ(static_cast<long double>(-1), cras::saturating_cast<long double>(static_cast<double>(-1)));
+
+  EXPECT_EQ(static_cast<bool>(0), cras::saturating_cast<bool>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<int8_t>(-1), cras::saturating_cast<int8_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<int16_t>(-1), cras::saturating_cast<int16_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<int32_t>(-1), cras::saturating_cast<int32_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<int64_t>(-1), cras::saturating_cast<int64_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<float>(-1), cras::saturating_cast<float>(static_cast<long double>(-1)));
+  EXPECT_EQ(static_cast<double>(-1), cras::saturating_cast<double>(static_cast<long double>(-1)));
+}
+
+TEST(SaturatingCast, Max) {  // NOLINT
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<bool>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<int8_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<uint8_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<int16_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<uint16_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<int32_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<uint32_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<int64_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<uint64_t>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<float>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<double>()));
+  EXPECT_EQ(_max<bool>(), cras::saturating_cast<bool>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<int8_t>(1), cras::saturating_cast<int8_t>(_max<bool>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<int8_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<uint8_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<int16_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<uint16_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<float>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<double>()));
+  EXPECT_EQ(_max<int8_t>(), cras::saturating_cast<int8_t>(_max<long double>()));
+
+  static_assert(_max<int8_t>() == cras::saturating_cast<int8_t>(_max<float>()));
+
+  EXPECT_EQ(static_cast<uint8_t>(1), cras::saturating_cast<uint8_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<uint8_t>(0x7fLL), cras::saturating_cast<uint8_t>(_max<int8_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<uint8_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<int16_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<uint16_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<float>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<double>()));
+  EXPECT_EQ(_max<uint8_t>(), cras::saturating_cast<uint8_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<int16_t>(1), cras::saturating_cast<int16_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<int16_t>(0x7fLL), cras::saturating_cast<int16_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<int16_t>(0xffLL), cras::saturating_cast<int16_t>(_max<uint8_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<int16_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<uint16_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<float>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<double>()));
+  EXPECT_EQ(_max<int16_t>(), cras::saturating_cast<int16_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<uint16_t>(1), cras::saturating_cast<uint16_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<uint16_t>(0x7fLL), cras::saturating_cast<uint16_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0xffLL), cras::saturating_cast<uint16_t>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0x7fffLL), cras::saturating_cast<uint16_t>(_max<int16_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<uint16_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<float>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<double>()));
+  EXPECT_EQ(_max<uint16_t>(), cras::saturating_cast<uint16_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<int32_t>(1), cras::saturating_cast<int32_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<int32_t>(0x7fLL), cras::saturating_cast<int32_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0xffLL), cras::saturating_cast<int32_t>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0x7fffLL), cras::saturating_cast<int32_t>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0xffffLL), cras::saturating_cast<int32_t>(_max<uint16_t>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<float>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<double>()));
+  EXPECT_EQ(_max<int32_t>(), cras::saturating_cast<int32_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<uint32_t>(1), cras::saturating_cast<uint32_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<uint32_t>(0x7fLL), cras::saturating_cast<uint32_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0xffLL), cras::saturating_cast<uint32_t>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0x7fffLL), cras::saturating_cast<uint32_t>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0xffffLL), cras::saturating_cast<uint32_t>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0x7fffffffLL), cras::saturating_cast<uint32_t>(_max<int32_t>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<float>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<double>()));
+  EXPECT_EQ(_max<uint32_t>(), cras::saturating_cast<uint32_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<int64_t>(1), cras::saturating_cast<int64_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<int64_t>(0x7fLL), cras::saturating_cast<int64_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0xffLL), cras::saturating_cast<int64_t>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0x7fffLL), cras::saturating_cast<int64_t>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0xffffLL), cras::saturating_cast<int64_t>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0x7fffffffLL), cras::saturating_cast<int64_t>(_max<int32_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0xffffffffLL), cras::saturating_cast<int64_t>(_max<uint32_t>()));
+  EXPECT_EQ(_max<int64_t>(), cras::saturating_cast<int64_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<int64_t>(), cras::saturating_cast<int64_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<int64_t>(), cras::saturating_cast<int64_t>(_max<float>()));
+  EXPECT_EQ(_max<int64_t>(), cras::saturating_cast<int64_t>(_max<double>()));
+  EXPECT_EQ(_max<int64_t>(), cras::saturating_cast<int64_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<uint64_t>(1), cras::saturating_cast<uint64_t>(_max<bool>()));
+  EXPECT_EQ(static_cast<uint64_t>(0x7fLL), cras::saturating_cast<uint64_t>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0xffLL), cras::saturating_cast<uint64_t>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0x7fffLL), cras::saturating_cast<uint64_t>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0xffffLL), cras::saturating_cast<uint64_t>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0x7fffffffLL), cras::saturating_cast<uint64_t>(_max<int32_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0xffffffffLL), cras::saturating_cast<uint64_t>(_max<uint32_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0x7fffffffffffffffULL), cras::saturating_cast<uint64_t>(_max<int64_t>()));
+  EXPECT_EQ(_max<uint64_t>(), cras::saturating_cast<uint64_t>(_max<uint64_t>()));
+  EXPECT_EQ(_max<uint64_t>(), cras::saturating_cast<uint64_t>(_max<float>()));
+  EXPECT_EQ(_max<uint64_t>(), cras::saturating_cast<uint64_t>(_max<double>()));
+  EXPECT_EQ(_max<uint64_t>(), cras::saturating_cast<uint64_t>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<float>(1), cras::saturating_cast<float>(_max<bool>()));
+  EXPECT_EQ(static_cast<float>(0x7fLL), cras::saturating_cast<float>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<float>(0xffLL), cras::saturating_cast<float>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<float>(0x7fffLL), cras::saturating_cast<float>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<float>(0xffffLL), cras::saturating_cast<float>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<float>(0x7fffffffLL), cras::saturating_cast<float>(_max<int32_t>()));
+  EXPECT_EQ(static_cast<float>(0xffffffffLL), cras::saturating_cast<float>(_max<uint32_t>()));
+  EXPECT_EQ(static_cast<float>(0x7fffffffffffffffULL), cras::saturating_cast<float>(_max<int64_t>()));
+  EXPECT_EQ(static_cast<float>(0xffffffffffffffffULL), cras::saturating_cast<float>(_max<uint64_t>()));
+  EXPECT_EQ(_max<float>(), cras::saturating_cast<float>(_max<float>()));
+  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(_max<double>()));
+  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<double>(1), cras::saturating_cast<double>(_max<bool>()));
+  EXPECT_EQ(static_cast<double>(0x7fLL), cras::saturating_cast<double>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<double>(0xffLL), cras::saturating_cast<double>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<double>(0x7fffLL), cras::saturating_cast<double>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<double>(0xffffLL), cras::saturating_cast<double>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<double>(0x7fffffffLL), cras::saturating_cast<double>(_max<int32_t>()));
+  EXPECT_EQ(static_cast<double>(0xffffffffLL), cras::saturating_cast<double>(_max<uint32_t>()));
+  EXPECT_EQ(static_cast<double>(0x7fffffffffffffffULL), cras::saturating_cast<double>(_max<int64_t>()));
+  EXPECT_EQ(static_cast<double>(0xffffffffffffffffULL), cras::saturating_cast<double>(_max<uint64_t>()));
+  EXPECT_EQ(static_cast<double>(_max<float>()), cras::saturating_cast<double>(_max<float>()));
+  EXPECT_EQ(_max<double>(), cras::saturating_cast<double>(_max<double>()));
+  EXPECT_EQ(std::numeric_limits<double>::infinity(), cras::saturating_cast<double>(_max<long double>()));
+
+  EXPECT_EQ(static_cast<long double>(1), cras::saturating_cast<long double>(_max<bool>()));
+  EXPECT_EQ(static_cast<long double>(0x7fLL), cras::saturating_cast<long double>(_max<int8_t>()));
+  EXPECT_EQ(static_cast<long double>(0xffLL), cras::saturating_cast<long double>(_max<uint8_t>()));
+  EXPECT_EQ(static_cast<long double>(0x7fffLL), cras::saturating_cast<long double>(_max<int16_t>()));
+  EXPECT_EQ(static_cast<long double>(0xffffLL), cras::saturating_cast<long double>(_max<uint16_t>()));
+  EXPECT_EQ(static_cast<long double>(0x7fffffffLL), cras::saturating_cast<long double>(_max<int32_t>()));
+  EXPECT_EQ(static_cast<long double>(0xffffffffLL), cras::saturating_cast<long double>(_max<uint32_t>()));
+  EXPECT_EQ(static_cast<long double>(0x7fffffffffffffffULL), cras::saturating_cast<long double>(_max<int64_t>()));
+  EXPECT_EQ(static_cast<long double>(0xffffffffffffffffULL), cras::saturating_cast<long double>(_max<uint64_t>()));
+  EXPECT_EQ(static_cast<long double>(_max<float>()), cras::saturating_cast<long double>(_max<float>()));
+  EXPECT_EQ(static_cast<long double>(_max<double>()), cras::saturating_cast<long double>(_max<double>()));
+  EXPECT_EQ(_max<long double>(), cras::saturating_cast<long double>(_max<long double>()));
+}
+
+TEST(SaturatingCast, Min) {  // NOLINT
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<bool>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<int8_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<uint8_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<int16_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<uint16_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<int32_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<uint32_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<int64_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<uint64_t>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<float>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<double>()));
+  EXPECT_EQ(_min<bool>(), cras::saturating_cast<bool>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(_min<bool>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(_min<uint8_t>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(_min<uint16_t>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(_min<uint32_t>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<int8_t>(0), cras::saturating_cast<int8_t>(_min<uint64_t>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<float>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<double>()));
+  EXPECT_EQ(_min<int8_t>(), cras::saturating_cast<int8_t>(_min<long double>()));
+
+  static_assert(_min<int8_t>() == cras::saturating_cast<int8_t>(_min<float>()));
+
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<uint32_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<float>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<double>()));
+  EXPECT_EQ(static_cast<uint8_t>(0), cras::saturating_cast<uint8_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<int16_t>(-0x80LL), cras::saturating_cast<int16_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(_min<uint8_t>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(_min<uint16_t>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(_min<uint32_t>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<int16_t>(0), cras::saturating_cast<int16_t>(_min<uint64_t>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<float>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<double>()));
+  EXPECT_EQ(_min<int16_t>(), cras::saturating_cast<int16_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<uint32_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<float>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<double>()));
+  EXPECT_EQ(static_cast<uint16_t>(0), cras::saturating_cast<uint16_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<int32_t>(-0x80LL), cras::saturating_cast<int32_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<int32_t>(-0x8000LL), cras::saturating_cast<int32_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(_min<uint16_t>()));
+  EXPECT_EQ(_min<int32_t>(), cras::saturating_cast<int32_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(_min<uint32_t>()));
+  EXPECT_EQ(_min<int32_t>(), cras::saturating_cast<int32_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<int32_t>(0), cras::saturating_cast<int32_t>(_min<uint64_t>()));
+  EXPECT_EQ(_min<int32_t>(), cras::saturating_cast<int32_t>(_min<float>()));
+  EXPECT_EQ(_min<int32_t>(), cras::saturating_cast<int32_t>(_min<double>()));
+  EXPECT_EQ(_min<int32_t>(), cras::saturating_cast<int32_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<uint32_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<float>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<double>()));
+  EXPECT_EQ(static_cast<uint32_t>(0), cras::saturating_cast<uint32_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<int64_t>(-0x80LL), cras::saturating_cast<int64_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<int64_t>(-0x8000LL), cras::saturating_cast<int64_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<int64_t>(-0x80000000LL), cras::saturating_cast<int64_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(_min<uint32_t>()));
+  EXPECT_EQ(_min<int64_t>(), cras::saturating_cast<int64_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<int64_t>(0), cras::saturating_cast<int64_t>(_min<uint64_t>()));
+  EXPECT_EQ(_min<int64_t>(), cras::saturating_cast<int64_t>(_min<float>()));
+  EXPECT_EQ(_min<int64_t>(), cras::saturating_cast<int64_t>(_min<double>()));
+  EXPECT_EQ(_min<int64_t>(), cras::saturating_cast<int64_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<bool>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<uint32_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<float>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<double>()));
+  EXPECT_EQ(static_cast<uint64_t>(0), cras::saturating_cast<uint64_t>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(_min<bool>()));
+  EXPECT_EQ(static_cast<float>(-0x80LL), cras::saturating_cast<float>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<float>(-0x8000LL), cras::saturating_cast<float>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<float>(-0x80000000LL), cras::saturating_cast<float>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(_min<uint32_t>()));
+  EXPECT_EQ(-static_cast<float>(0x8000000000000000LL), cras::saturating_cast<float>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<float>(0), cras::saturating_cast<float>(_min<uint64_t>()));
+  EXPECT_EQ(_min<float>(), cras::saturating_cast<float>(_min<float>()));
+  EXPECT_EQ(-std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(_min<double>()));
+  EXPECT_EQ(-std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(_min<bool>()));
+  EXPECT_EQ(static_cast<double>(-0x80LL), cras::saturating_cast<double>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<double>(-0x8000LL), cras::saturating_cast<double>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<double>(-0x80000000LL), cras::saturating_cast<double>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(_min<uint32_t>()));
+  EXPECT_EQ(-static_cast<double>(0x8000000000000000LL), cras::saturating_cast<double>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<double>(0), cras::saturating_cast<double>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<double>(_min<float>()), cras::saturating_cast<double>(_min<float>()));
+  EXPECT_EQ(_min<double>(), cras::saturating_cast<double>(_min<double>()));
+  EXPECT_EQ(-std::numeric_limits<double>::infinity(), cras::saturating_cast<double>(_min<long double>()));
+
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(_min<bool>()));
+  EXPECT_EQ(static_cast<long double>(-0x80LL), cras::saturating_cast<long double>(_min<int8_t>()));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(_min<uint8_t>()));
+  EXPECT_EQ(static_cast<long double>(-0x8000LL), cras::saturating_cast<long double>(_min<int16_t>()));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(_min<uint16_t>()));
+  EXPECT_EQ(static_cast<long double>(-0x80000000LL), cras::saturating_cast<long double>(_min<int32_t>()));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(_min<uint32_t>()));
+  EXPECT_EQ(-static_cast<long double>(0x8000000000000000LL), cras::saturating_cast<long double>(_min<int64_t>()));
+  EXPECT_EQ(static_cast<long double>(0), cras::saturating_cast<long double>(_min<uint64_t>()));
+  EXPECT_EQ(static_cast<long double>(_min<float>()), cras::saturating_cast<long double>(_min<float>()));
+  EXPECT_EQ(static_cast<long double>(_min<double>()), cras::saturating_cast<long double>(_min<double>()));
+  EXPECT_EQ(_min<long double>(), cras::saturating_cast<long double>(_min<long double>()));
+}
+
+TEST(SaturatingCast, Random) {
+  // NOLINT
+  EXPECT_EQ(127, cras::saturating_cast<int8_t>(200));
+  static_assert(127 == cras::saturating_cast<int8_t>(200));
+  EXPECT_EQ(-128, cras::saturating_cast<int8_t>(-200));
+  static_assert(-128 == cras::saturating_cast<int8_t>(-200));
+
+  EXPECT_EQ(32767, cras::saturating_cast<int16_t>(100'000));
+  static_assert(32767 == cras::saturating_cast<int16_t>(100'000));
+  EXPECT_EQ(-32768, cras::saturating_cast<int16_t>(-100'000));
+  static_assert(-32768 == cras::saturating_cast<int16_t>(-100'000));
+
+  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(1e+40));
+  static_assert(std::numeric_limits<float>::infinity() == cras::saturating_cast<float>(1e+40));
+  EXPECT_EQ(-std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(-1e+40));
+  static_assert(-std::numeric_limits<float>::infinity() == cras::saturating_cast<float>(-1e+40));
+
+  EXPECT_EQ(0, cras::saturating_cast<int32_t>(std::numeric_limits<float>::quiet_NaN()));
+  static_assert(0 == cras::saturating_cast<int32_t>(std::numeric_limits<float>::quiet_NaN()));
+  EXPECT_EQ(-0x80000000, cras::saturating_cast<int32_t>(-std::numeric_limits<float>::infinity()));
+  static_assert(-0x80000000 == cras::saturating_cast<int32_t>(-std::numeric_limits<float>::infinity()));
+  EXPECT_EQ(0x7fffffff, cras::saturating_cast<int32_t>(std::numeric_limits<float>::infinity()));
+  static_assert(0x7fffffff == cras::saturating_cast<int32_t>(std::numeric_limits<float>::infinity()));
+}
+
+#ifdef __SIZEOF_INT128__
+TEST(SaturatingCast, int128) {  // NOLINT
+  constexpr auto UINT128_MAX = static_cast<__uint128_t>(static_cast<__int128_t>(-1L));
+  constexpr __int128_t INT128_MAX = UINT128_MAX >> 1;
+  constexpr __int128_t INT128_MIN = -INT128_MAX - 1;
+
+  EXPECT_TRUE(std::isfinite(cras::saturating_cast<float>(INT128_MAX)));
+  static_assert(std::isfinite(cras::saturating_cast<float>(INT128_MAX)));
+  EXPECT_LT(1.7e+38, cras::saturating_cast<float>(INT128_MAX));
+  static_assert(1.7e+38 < cras::saturating_cast<float>(INT128_MAX));
+  EXPECT_TRUE(std::isfinite(cras::saturating_cast<float>(INT128_MIN)));
+  static_assert(std::isfinite(cras::saturating_cast<float>(INT128_MIN)));
+  EXPECT_GT(-1.7e+38, cras::saturating_cast<float>(INT128_MIN));
+  static_assert(-1.7e+38 > cras::saturating_cast<float>(INT128_MIN));
+  EXPECT_EQ(std::numeric_limits<float>::infinity(), cras::saturating_cast<float>(UINT128_MAX));
+  static_assert(std::numeric_limits<float>::infinity() == cras::saturating_cast<float>(UINT128_MAX));
+}
+#endif
+
 TEST(MathUtils, RunningStatsDouble) {  // NOLINT
   TestRunningStats<double> stats;
 
