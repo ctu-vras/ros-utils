@@ -44,9 +44,9 @@ _The ROS 2 port is still in its early stage. You will find more modules in this 
 
 - `image_transport`: Provides a unified modern interface for publishing and subscribing to images compatible on Jazzy and newer.
 - `log_utils`: Unified access to the `ROS_*` and `NODELET_*` logging macros. This is more an internal utility of this package.
+- `math_utils`: `sgn()` signum function, `saturating_cast()`, and `RunningStats` (computes mean and variance on a stream of data in O(1) time per sample).
 
 <!--
-- `math_utils`: `sgn()` signum function, and `RunningStats` (computes mean and variance on a stream of data in O(1) time per sample).
 - `message_utils`: `BaseMessage<M>` and `IsMessageParam<M>` template helpers for working with ROS message classes.
 - `node_utils`: Integration of `diag_utils` and `param_utils` for ROS nodes.
 - `nodelet_utils`:
