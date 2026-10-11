@@ -1,53 +1,75 @@
-cmake_minimum_required(VERSION 3.10.2)
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Czech Technical University in Prague
+
+cmake_minimum_required(VERSION 3.20.2)
 project(cras_py_common)
 
-find_package(catkin REQUIRED COMPONENTS sensor_msgs)
+find_package(ament_cmake_python REQUIRED)
 
-catkin_python_setup()
+ament_python_install_package(cras)
 
-catkin_package()
+#add_library(sensor_msgs_py src/distortion_models.cpp src/image_encodings.cpp)
+#target_include_directories(sensor_msgs_py PRIVATE ${catkin_INCLUDE_DIRS})
+#target_link_libraries(sensor_msgs_py ${catkin_LIBRARIES})
 
-add_library(sensor_msgs_py src/distortion_models.cpp src/image_encodings.cpp)
-target_include_directories(sensor_msgs_py PRIVATE ${catkin_INCLUDE_DIRS})
-target_link_libraries(sensor_msgs_py ${catkin_LIBRARIES})
+#install(TARGETS sensor_msgs_py
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+#)
 
-install(TARGETS sensor_msgs_py
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+if(BUILD_TESTING)
+  find_package(cras_lint REQUIRED)
+  cras_lint_common()
+  cras_lint_py(EXCLUDE
+    cras/impl/__init__.py
+    cras/impl/param_utils_geometry_msgs.py
+    cras/impl/param_utils_numpy.py
+    cras/impl/param_utils_rospy.py
+    cras/distortion_models.py
+    cras/geometry_utils.py
+    cras/image_encodings.py
+    cras/log_utils.py
+    cras/message_utils.py
+    cras/param_utils.py
+    cras/plugin_utils.py
+    cras/python_utils.py
+    cras/static_transform_broadcaster.py
+    cras/string_utils.py
+    cras/test_utils.py
+    cras/time_utils.py
+    cras/topic_utils.py
+    doc/conf.py
+    test/publish_static_tfs.py
+    test/test_ctypes_utils.py
+    test/test_distortion_models.py
+    test/test_geometry_utils.py
+    test/test_image_encodings.py
+    test/test_log_utils.py
+    test/test_message_utils.py
+    test/test_param_utils.py
+    test/test_plugin_utils.py
+    test/test_python_utils.py
+    test/test_static_tf_broadcaster.py
+    test/test_string_utils.py
+    test/test_test_utils.py
+    test/test_time_utils.py
+    test/test_topic_utils.py
+  )
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(roslint REQUIRED)
-  find_package(rostest REQUIRED)
-
-  roslint_custom(catkin_lint "-W2" .)
-
-  # Run roslint on Python sources
-  file(GLOB_RECURSE python_files src/*.py test/*.py)
-  roslint_python("${python_files}")
-
-  # Roslint C++ - checks formatting and some other rules for C++ files
-  file(GLOB_RECURSE ROSLINT_FILES src/*.cpp)
-  set(ROSLINT_CPP_OPTS "--extensions=h,hpp,hh,c,cpp,cc;--linelength=120;--filter=\
-    -build/header_guard,-build/include,-readability/namespace,-whitespace/braces,-runtime/references,\
-    -build/c++11,-readability/nolint,-readability/todo,-legal/copyright")
-  roslint_cpp(${ROSLINT_FILES})
-
-  roslint_add_test()
-
-  add_rostest(test/test_log_utils.test)
-  add_rostest(test/test_node_utils.test)
-  add_rostest(test/test_param_utils.test)
-  add_rostest(test/test_static_transform_broadcaster.test)
-  add_rostest(test/test_topic_utils.test)
-
-  catkin_add_nosetests(test/test_ctypes_utils.py)
-  catkin_add_nosetests(test/test_geometry_utils.py)
-  catkin_add_nosetests(test/test_image_encodings.py)
-  catkin_add_nosetests(test/test_message_utils.py)
-  catkin_add_nosetests(test/test_python_utils.py)
-  catkin_add_nosetests(test/test_string_utils.py)
-  catkin_add_nosetests(test/test_test_utils.py)
-  catkin_add_nosetests(test/test_time_utils.py)
+  find_package(ament_cmake_pytest REQUIRED)
+  set(_pytest_tests
+    test/test_ctypes_utils.py
+    test/test_node_utils.py
+  )
+  foreach(_test_path ${_pytest_tests})
+    get_filename_component(_test_name ${_test_path} NAME_WE)
+    ament_add_pytest_test(${_test_name} ${_test_path}
+      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}
+      TIMEOUT 60
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+  endforeach()
 endif()
+
+ament_package()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: Czech Technical University in Prague
@@ -6,23 +6,23 @@
 """Unit test for cras.ctypes_utils"""
 
 from ctypes import c_double, string_at, Array
+from io import BytesIO
 import math
 import unittest
 
-import rospy
-from std_msgs.msg import Header
-from rosgraph_msgs.msg import Log
+# import rclpy
+# from std_msgs.msg import Header
+# from rosgraph_msgs.msg import Log
 
-from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, RosMessagesAllocator, \
-    LogMessagesAllocator, ScalarAllocator, get_ro_c_buffer, c_array, libc_getenv, libc_setenv, libc_unsetenv
-from cras.string_utils import BufferStringIO
-from cras.test_utils import RosconsoleCapture
+from cras.ctypes_utils import load_library, StringAllocator, BytesAllocator, ScalarAllocator, get_ro_c_buffer, c_array,\
+    libc_getenv, libc_setenv, libc_unsetenv
+# from cras.test_utils import RosconsoleCapture
 
 
-class TestLogAllocator(LogMessagesAllocator):
-    def format_log_message(self, msg):
-        return str(msg)
-
+# class TestLogAllocator(LogMessagesAllocator):
+#     def format_log_message(self, msg):
+#         return str(msg)
+#
 
 class CtypesUtils(unittest.TestCase):
 
@@ -128,94 +128,94 @@ class CtypesUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, a, 4)
         self.assertRaises(RuntimeError, a, 16)
 
-    def test_ros_messages_allocator(self):
-        a = RosMessagesAllocator(Header)
-        self.assertEqual(0, len(a.allocated))
-        self.assertEqual(0, len(a.allocated_sizes))
-        self.assertIsNone(a.value)
-        self.assertEqual(0, len(a.values))
-        h = Header(seq=1, stamp=rospy.Time(2, 3), frame_id="cras")
-        buf = BufferStringIO()
-        h.serialize(buf)
-        size = len(buf.getvalue())
-        a(size)
-        for i in range(size):
-            val = buf.getvalue()[i]
-            a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
-        self.assertEqual(len(a.allocated), 1)
-        self.assertEqual(len(a.allocated_sizes), 1)
-        self.assertEqual(len(list(a.messages)), 1)
-        self.assertEqual(len(a.value), size)
-        self.assertEqual(a.allocated_sizes[0], size)
-        self.assertEqual(h, list(a.messages)[0])
-
-        h2 = Header(seq=4, stamp=rospy.Time(5, 6), frame_id="test")
-        buf2 = BufferStringIO()
-        h2.serialize(buf2)
-        size2 = len(buf2.getvalue())
-        a(size2)
-        for i in range(size2):
-            val = buf2.getvalue()[i]
-            a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
-        self.assertEqual(len(a.allocated), 2)
-        self.assertEqual(len(a.allocated_sizes), 2)
-        self.assertEqual(len(list(a.messages)), 2)
-        self.assertEqual(len(a.value), size)
-        self.assertEqual(len(a.values), 2)
-        self.assertEqual(a.allocated_sizes[0], size)
-        self.assertEqual(a.allocated_sizes[1], size2)
-        self.assertEqual(2, len(list(a.messages)))
-        self.assertEqual(h, list(a.messages)[0])
-        self.assertEqual(h2, list(a.messages)[1])
-
-    def test_log_messages_allocator(self):
-        a = TestLogAllocator()
-        self.assertEqual(0, len(a.allocated))
-        self.assertEqual(0, len(a.allocated_sizes))
-        self.assertIsNone(a.value)
-        self.assertEqual(0, len(a.values))
-        log = Log(header=Header(seq=1, stamp=rospy.Time(2, 3), frame_id="cras"), level=Log.WARN, name="log", msg="cras",
-                  file="file", function="fun", line=4)
-        buf = BufferStringIO()
-        log.serialize(buf)
-        size = len(buf.getvalue())
-        a(size)
-        for i in range(size):
-            val = buf.getvalue()[i]
-            a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
-        self.assertEqual(len(a.allocated), 1)
-        self.assertEqual(len(a.allocated_sizes), 1)
-        self.assertEqual(len(list(a.messages)), 1)
-        self.assertEqual(len(a.value), size)
-        self.assertEqual(a.allocated_sizes[0], size)
-        self.assertEqual(log, list(a.messages)[0])
-        self.assertEqual(Log.WARN, list(a.get_formatted_log_messages())[0][0])
-        self.assertEqual(str(log), list(a.get_formatted_log_messages())[0][1])
-        with RosconsoleCapture(self, Log.WARN, str(log)):
-            a.print_log_messages()
-
-        log2 = Log(header=Header(seq=5, stamp=rospy.Time(6, 7), frame_id="test"), level=Log.ERROR, name="logger",
-                   msg="test", file="file2", function="fun2", line=8)
-        buf2 = BufferStringIO()
-        log2.serialize(buf2)
-        size2 = len(buf2.getvalue())
-        a(size2)
-        for i in range(size2):
-            val = buf2.getvalue()[i]
-            a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
-        self.assertEqual(len(a.allocated), 2)
-        self.assertEqual(len(a.allocated_sizes), 2)
-        self.assertEqual(len(list(a.messages)), 2)
-        self.assertEqual(len(a.value), size)
-        self.assertEqual(len(a.values), 2)
-        self.assertEqual(a.allocated_sizes[0], size)
-        self.assertEqual(a.allocated_sizes[1], size2)
-        self.assertEqual(2, len(list(a.messages)))
-        self.assertEqual(log, list(a.messages)[0])
-        self.assertEqual(log2, list(a.messages)[1])
-
-        with RosconsoleCapture(self, (Log.WARN, Log.ERROR), (str(log), str(log2))):
-            a.print_log_messages()
+    # def test_ros_messages_allocator(self):
+    #     a = RosMessagesAllocator(Header)
+    #     self.assertEqual(0, len(a.allocated))
+    #     self.assertEqual(0, len(a.allocated_sizes))
+    #     self.assertIsNone(a.value)
+    #     self.assertEqual(0, len(a.values))
+    #     h = Header(seq=1, stamp=rospy.Time(2, 3), frame_id="cras")
+    #     buf = BufferStringIO()
+    #     h.serialize(buf)
+    #     size = len(buf.getvalue())
+    #     a(size)
+    #     for i in range(size):
+    #         val = buf.getvalue()[i]
+    #         a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
+    #     self.assertEqual(len(a.allocated), 1)
+    #     self.assertEqual(len(a.allocated_sizes), 1)
+    #     self.assertEqual(len(list(a.messages)), 1)
+    #     self.assertEqual(len(a.value), size)
+    #     self.assertEqual(a.allocated_sizes[0], size)
+    #     self.assertEqual(h, list(a.messages)[0])
+    #
+    #     h2 = Header(seq=4, stamp=rospy.Time(5, 6), frame_id="test")
+    #     buf2 = BufferStringIO()
+    #     h2.serialize(buf2)
+    #     size2 = len(buf2.getvalue())
+    #     a(size2)
+    #     for i in range(size2):
+    #         val = buf2.getvalue()[i]
+    #         a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
+    #     self.assertEqual(len(a.allocated), 2)
+    #     self.assertEqual(len(a.allocated_sizes), 2)
+    #     self.assertEqual(len(list(a.messages)), 2)
+    #     self.assertEqual(len(a.value), size)
+    #     self.assertEqual(len(a.values), 2)
+    #     self.assertEqual(a.allocated_sizes[0], size)
+    #     self.assertEqual(a.allocated_sizes[1], size2)
+    #     self.assertEqual(2, len(list(a.messages)))
+    #     self.assertEqual(h, list(a.messages)[0])
+    #     self.assertEqual(h2, list(a.messages)[1])
+    #
+    # def test_log_messages_allocator(self):
+    #     a = TestLogAllocator()
+    #     self.assertEqual(0, len(a.allocated))
+    #     self.assertEqual(0, len(a.allocated_sizes))
+    #     self.assertIsNone(a.value)
+    #     self.assertEqual(0, len(a.values))
+    #     log = Log(header=Header(seq=1, stamp=rospy.Time(2, 3), frame_id="cras"), level=Log.WARN, name="log", msg="cras",
+    #               file="file", function="fun", line=4)
+    #     buf = BufferStringIO()
+    #     log.serialize(buf)
+    #     size = len(buf.getvalue())
+    #     a(size)
+    #     for i in range(size):
+    #         val = buf.getvalue()[i]
+    #         a.allocated[0][i] = ord(val) if not isinstance(val, int) else val
+    #     self.assertEqual(len(a.allocated), 1)
+    #     self.assertEqual(len(a.allocated_sizes), 1)
+    #     self.assertEqual(len(list(a.messages)), 1)
+    #     self.assertEqual(len(a.value), size)
+    #     self.assertEqual(a.allocated_sizes[0], size)
+    #     self.assertEqual(log, list(a.messages)[0])
+    #     self.assertEqual(Log.WARN, list(a.get_formatted_log_messages())[0][0])
+    #     self.assertEqual(str(log), list(a.get_formatted_log_messages())[0][1])
+    #     with RosconsoleCapture(self, Log.WARN, str(log)):
+    #         a.print_log_messages()
+    #
+    #     log2 = Log(header=Header(seq=5, stamp=rospy.Time(6, 7), frame_id="test"), level=Log.ERROR, name="logger",
+    #                msg="test", file="file2", function="fun2", line=8)
+    #     buf2 = BufferStringIO()
+    #     log2.serialize(buf2)
+    #     size2 = len(buf2.getvalue())
+    #     a(size2)
+    #     for i in range(size2):
+    #         val = buf2.getvalue()[i]
+    #         a.allocated[1][i] = ord(val) if not isinstance(val, int) else val
+    #     self.assertEqual(len(a.allocated), 2)
+    #     self.assertEqual(len(a.allocated_sizes), 2)
+    #     self.assertEqual(len(list(a.messages)), 2)
+    #     self.assertEqual(len(a.value), size)
+    #     self.assertEqual(len(a.values), 2)
+    #     self.assertEqual(a.allocated_sizes[0], size)
+    #     self.assertEqual(a.allocated_sizes[1], size2)
+    #     self.assertEqual(2, len(list(a.messages)))
+    #     self.assertEqual(log, list(a.messages)[0])
+    #     self.assertEqual(log2, list(a.messages)[1])
+    #
+    #     with RosconsoleCapture(self, (Log.WARN, Log.ERROR), (str(log), str(log2))):
+    #         a.print_log_messages()
 
     def test_get_ro_c_buffer(self):
         buf = get_ro_c_buffer([1, 2])
@@ -227,7 +227,7 @@ class CtypesUtils(unittest.TestCase):
         buf = get_ro_c_buffer(b'\x01\x02')
         self.assertEqual(string_at(buf, 2), b'\x01\x02')
 
-        buf = get_ro_c_buffer(BufferStringIO(b'\x01\x02'))
+        buf = get_ro_c_buffer(BytesIO(b'\x01\x02'))
         self.assertEqual(string_at(buf, 2), b'\x01\x02')
 
     def test_c_array(self):

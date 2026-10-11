@@ -3,15 +3,15 @@
 
 """Utilities for working with the ctypes library."""
 
-from ctypes import CDLL, CFUNCTYPE, c_bool, c_char_p, c_void_p, c_size_t, cast, create_string_buffer, c_uint8, \
+from ctypes import c_bool, c_char_p, c_size_t, c_uint8, c_void_p, cast, CDLL, CFUNCTYPE, create_string_buffer, \
     get_errno, POINTER, set_errno, sizeof, string_at
 from ctypes.util import find_library
-from logging import LogRecord
+# from logging import LogRecord
 import os
 import sys
 
-from rosgraph.roslogging import RosStreamHandler
-import rospy
+# from rosgraph.roslogging import RosStreamHandler
+from rclpy.logging import get_logger
 
 RTLD_LAZY = 1
 """Relocate dynamic symbols only when they are used."""
@@ -21,7 +21,8 @@ RTLD_NOW = 2
 
 
 def load_library(library_name, mode=RTLD_LAZY, use_errno=False):
-    """Load a C library (.so file) located on LD_LIBRARY_PATH.
+    """
+    Load a C library (.so file) located on LD_LIBRARY_PATH.
 
     All dependencies of this library have to be loaded before this one with :obj:`mode` =  :const:`ctypes.RTLD_GLOBAL`.
 
@@ -37,14 +38,15 @@ def load_library(library_name, mode=RTLD_LAZY, use_errno=False):
 
     library = find_library(library_name)
     if library_name is not None and library is None:
-        rospy.logfatal("Could not find shared library " + library_name)
+        get_logger('ctypes_utils').fatal('Could not find shared library ' + library_name)
         return None
 
     return CDLL(library, mode=mode, use_errno=use_errno)
 
 
 def get_ro_c_buffer(buf, buf_len=None):
-    """Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy.
+    """
+    Return a read-only ctypes byte buffer object that points to the given buffer's memory or its copy.
 
     :param [list|tuple|BufferStringIO|bytes] buf: The source buffer.
     :param int buf_len: Length of the buffer (if `None`, `len(buf)` is used if it exists, or stream length).
@@ -54,7 +56,7 @@ def get_ro_c_buffer(buf, buf_len=None):
         if buf_len is None:
             buf_len = len(buf)
         return (c_uint8 * buf_len).from_buffer(bytearray(buf))
-    elif hasattr(buf, "getvalue"):  # check for BufferStringIO instance cannot be done directly
+    elif hasattr(buf, 'getvalue'):  # check for BufferStringIO instance cannot be done directly
         if buf_len is None:
             pos = buf.tell()
             buf.seek(0, os.SEEK_END)
@@ -66,7 +68,8 @@ def get_ro_c_buffer(buf, buf_len=None):
 
 
 def c_array(data, c_type):
-    """Convert the given Python iterable to a C array with zero element after the last one.
+    """
+    Convert the given Python iterable to a C array with zero element after the last one.
 
     :param list data: The data to convert.
     :param type c_type: The ctypes type of the individual elements.
@@ -84,7 +87,7 @@ __libc = None
 def get_libc():
     global __libc
     if __libc is None:
-        __libc = load_library("c", use_errno=True)
+        __libc = load_library('c', use_errno=True)
     return __libc
 
 
@@ -95,7 +98,8 @@ __setlocale = None
 
 
 def libc_getenv(name, default_value=None):
-    """Call libc function `getenv()` to get a C program environment variable value.
+    """
+    Call libc function `getenv()` to get a C program environment variable value.
 
     :param str name: Name of the variable.
     :param default_value: Default value to return if the variable is not found.
@@ -109,17 +113,16 @@ def libc_getenv(name, default_value=None):
         __getenv = libc.getenv
         __getenv.argtypes = [c_char_p]
         __getenv.restype = c_char_p
-    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
-    fsdecode = getattr(os, 'fsdecode', lambda x: x)  # Py2 doesn't have fsdecode
     set_errno(0)
-    res = __getenv(fsencode(name))
+    res = __getenv(os.fsencode(name))
     if res is None:
         return default_value
-    return fsdecode(res)
+    return os.fsdecode(res)
 
 
 def libc_setenv(name, value, overwrite=True):
-    """Call libc function `setenv()` to set the C program environment.
+    """
+    Call libc function `setenv()` to set the C program environment.
 
     :param str name: Name of the variable.
     :param str value: Value of the variable.
@@ -134,16 +137,16 @@ def libc_setenv(name, value, overwrite=True):
         __setenv = libc.setenv
         __setenv.argtypes = [c_char_p, c_char_p, c_bool]
         __setenv.restype = int
-    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
     set_errno(0)
-    res = __setenv(fsencode(name), fsencode(value), overwrite)
+    res = __setenv(os.fsencode(name), os.fsencode(value), overwrite)
     if res != 0:
         raise OSError(get_errno(), os.strerror(get_errno()))
     return True
 
 
 def libc_unsetenv(name):
-    """Call libc function `unsetenv()` to unset the C program environment.
+    """
+    Call libc function `unsetenv()` to unset the C program environment.
 
     :param str name: Name of the variable.
     :return: True on success.
@@ -156,16 +159,16 @@ def libc_unsetenv(name):
         __unsetenv = libc.unsetenv
         __unsetenv.argtypes = [c_char_p]
         __unsetenv.restype = int
-    fsencode = getattr(os, 'fsencode', lambda x: x)  # Py2 doesn't have fsencode
     set_errno(0)
-    res = __unsetenv(fsencode(name))
+    res = __unsetenv(os.fsencode(name))
     if res != 0:
         raise OSError(get_errno(), os.strerror(get_errno()))
     return True
 
 
 class Allocator(object):
-    """An allocator that can be passed as a callback to a C function that should return dynamically allocated data.
+    """
+    An allocator that can be passed as a callback to a C function that should return dynamically allocated data.
 
     This way, Python can still manage the lifetime of the buffer, and it is not needed to know the size of the buffer
     prior to calling the C function.
@@ -188,7 +191,8 @@ class Allocator(object):
         return cast(self.allocated[-1], c_void_p).value
 
     def _alloc(self, size):
-        """Actually allocate a buffer of the given size and return it.
+        """
+        Actually allocate a buffer of the given size and return it.
 
         Descendant classes have to implement this method.
 
@@ -199,7 +203,8 @@ class Allocator(object):
         raise NotImplementedError()
 
     def get_cfunc(self):
-        """Get the ctypes object referring to this allocator.
+        """
+        Get the ctypes object referring to this allocator.
 
         :return: The ctypes-compatible allocator object (that should be passed as function argument).
         :rtype: Allocator.ALLOCATOR
@@ -208,7 +213,8 @@ class Allocator(object):
 
     @property
     def value(self):
-        """Get the first allocated value converted to a Python object.
+        """
+        Get the first allocated value converted to a Python object.
 
         :return: The allocated value.
         """
@@ -218,7 +224,8 @@ class Allocator(object):
 
     @property
     def values(self):
-        """Get the allocated values converted to Python objects.
+        """
+        Get the allocated values converted to Python objects.
 
         :return: The allocated values.
         """
@@ -263,7 +270,8 @@ class BytesAllocator(Allocator):
 
 
 class ScalarAllocator(Allocator):
-    """ctypes allocator suitable for allocating scalar values (e.g. numbers). The returned value is a scalar value.
+    """
+    ctypes allocator suitable for allocating scalar values (e.g. numbers). The returned value is a scalar value.
 
     This means the size of each allocation needs to exactly match the number of bytes the given `c_type` has. If other
     sizes are requested, :class:`RuntimeError` is thrown.
@@ -275,7 +283,7 @@ class ScalarAllocator(Allocator):
 
     def _alloc(self, size):
         if size != sizeof(self._c_type):
-            raise RuntimeError("ScalarAllocator can only handle size 1 allocations.")
+            raise RuntimeError('ScalarAllocator can only handle size 1 allocations.')
         return (self._c_type * 1)()
 
     @property
@@ -289,87 +297,87 @@ class ScalarAllocator(Allocator):
         return [a[0] for a in self.allocated]
 
 
-class RosMessagesAllocator(BytesAllocator):
-    """ctypes allocator suitable for allocating byte buffers for serialized ROS messages."""
-
-    def __init__(self, msg_type):
-        """Create the message allocator.
-
-        :param Type msg_type: Type of the messages.
-        """
-        super(RosMessagesAllocator, self).__init__()
-        self.msg_type = msg_type
-
-    @property
-    def message(self):
-        """Return the first ROS message allocated by this allocator.
-
-        :return: The log message.
-        :rtype: genpy.Message
-        """
-        if len(self.allocated) == 0:
-            return None
-        return self.messages[0]
-
-    @property
-    def messages(self):
-        """Return the ROS messages allocated by this allocator.
-
-        :return: The log messages.
-        :rtype: collections.Iterable[genpy.Message]
-        """
-        for msg in self.values:
-            m = self.msg_type()
-            m.deserialize(msg)
-            yield m
-
-
-class LogMessagesAllocator(RosMessagesAllocator):
-    """ctypes allocator suitable for allocating byte buffers for serialized :rosgraph_msgs:`Log` messages and printing
-    them via standard `rospy` logging mechanisms."""
-
-    def __init__(self):
-        from rosgraph_msgs.msg import Log
-        super(LogMessagesAllocator, self).__init__(Log)
-        try:
-            from cStringIO import StringIO
-        except ImportError:
-            from io import StringIO
-        self.stream = StringIO()
-        self.stream_handler = RosStreamHandler(colorize=False, stdout=self.stream, stderr=self.stream)
-
-    def format_log_message(self, msg):
-        """Convert the log message to a string to be logged.
-
-        :param rosgraph_msgs.msg.Log msg: The log message.
-        :return: The text to be logged.
-        :rtype: str
-        """
-        from cras.log_utils import log_level_ros_to_py, log_level_names
-        record = LogRecord(msg.name, log_level_ros_to_py[msg.level], msg.file, msg.line, msg.msg, None, None,
-                           func=msg.function)
-        self.stream.truncate(0)
-        self.stream.seek(0)
-        self.stream_handler.emit(record)
-        message = self.stream.getvalue().rstrip("\n")
-        # get rid of the [INFO] part of the message as it will be duplicated by the rospy logging call
-        message = message.replace(log_level_names[msg.level], "")
-        message = message.replace("[]: ", "").replace("[] ", "").replace("[]", "")
-        return message
-
-    def get_formatted_log_messages(self):
-        """Get all messages allocated by this allocator converted to strings to be printed.
-
-        :return: Tuples of (loglevel, message string).
-        :rtype: collections.Iterable[Tuple[int, str]]
-        """
-        for msg in self.messages:
-            yield msg.level, self.format_log_message(msg)
-
-    def print_log_messages(self):
-        """Print all messages allocated by this allocator using the standard rospy logger."""
-        from cras.log_utils import log_level_ros_to_py_name
-        for level, msg in self.get_formatted_log_messages():
-            # Call _base_logger directly so that the stack unwinding correctly points to the line that called this
-            # function.
-            rospy.core._base_logger(msg, (), {}, level=log_level_ros_to_py_name[level].lower())
+# class RosMessagesAllocator(BytesAllocator):
+#     """ctypes allocator suitable for allocating byte buffers for serialized ROS messages."""
+#
+#     def __init__(self, msg_type):
+#         """Create the message allocator.
+#
+#         :param Type msg_type: Type of the messages.
+#         """
+#         super(RosMessagesAllocator, self).__init__()
+#         self.msg_type = msg_type
+#
+#     @property
+#     def message(self):
+#         """Return the first ROS message allocated by this allocator.
+#
+#         :return: The log message.
+#         :rtype: genpy.Message
+#         """
+#         if len(self.allocated) == 0:
+#             return None
+#         return self.messages[0]
+#
+#     @property
+#     def messages(self):
+#         """Return the ROS messages allocated by this allocator.
+#
+#         :return: The log messages.
+#         :rtype: collections.Iterable[genpy.Message]
+#         """
+#         for msg in self.values:
+#             m = self.msg_type()
+#             m.deserialize(msg)
+#             yield m
+#
+#
+# class LogMessagesAllocator(RosMessagesAllocator):
+#     """ctypes allocator suitable for allocating byte buffers for serialized :rosgraph_msgs:`Log` messages and printing
+#     them via standard `rospy` logging mechanisms."""
+#
+#     def __init__(self):
+#         from rosgraph_msgs.msg import Log
+#         super(LogMessagesAllocator, self).__init__(Log)
+#         try:
+#             from cStringIO import StringIO
+#         except ImportError:
+#             from io import StringIO
+#         self.stream = StringIO()
+#         self.stream_handler = RosStreamHandler(colorize=False, stdout=self.stream, stderr=self.stream)
+#
+#     def format_log_message(self, msg):
+#         """Convert the log message to a string to be logged.
+#
+#         :param rosgraph_msgs.msg.Log msg: The log message.
+#         :return: The text to be logged.
+#         :rtype: str
+#         """
+#         from cras.log_utils import log_level_ros_to_py, log_level_names
+#         record = LogRecord(msg.name, log_level_ros_to_py[msg.level], msg.file, msg.line, msg.msg, None, None,
+#                            func=msg.function)
+#         self.stream.truncate(0)
+#         self.stream.seek(0)
+#         self.stream_handler.emit(record)
+#         message = self.stream.getvalue().rstrip("\n")
+#         # get rid of the [INFO] part of the message as it will be duplicated by the rospy logging call
+#         message = message.replace(log_level_names[msg.level], "")
+#         message = message.replace("[]: ", "").replace("[] ", "").replace("[]", "")
+#         return message
+#
+#     def get_formatted_log_messages(self):
+#         """Get all messages allocated by this allocator converted to strings to be printed.
+#
+#         :return: Tuples of (loglevel, message string).
+#         :rtype: collections.Iterable[Tuple[int, str]]
+#         """
+#         for msg in self.messages:
+#             yield msg.level, self.format_log_message(msg)
+#
+#     def print_log_messages(self):
+#         """Print all messages allocated by this allocator using the standard rospy logger."""
+#         from cras.log_utils import log_level_ros_to_py_name
+#         for level, msg in self.get_formatted_log_messages():
+#             # Call _base_logger directly so that the stack unwinding correctly points to the line that called this
+#             # function.
+#             rospy.core._base_logger(msg, (), {}, level=log_level_ros_to_py_name[level].lower())
