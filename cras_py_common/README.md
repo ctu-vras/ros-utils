@@ -7,7 +7,7 @@ A Czech-army knife for ROS code written in Python.
 
 The aim of this package is to provide some missing utility functions to rclpy. Using libraries from this package, you should be able to write more efficient, safer and less error-prone code without much boilerplate. As this package is intended to handle a lot of the boring code for you "behind the scenes", ubiquitous effort was put into unit-testing everything, so that you can rely on the provided code without the usual fear whether it works or not.
 
-Not yet available for ROS 2.
+Not all libraries are available for ROS 2 yet.
 
 <!--
 This readme shortly introduces the provided libraries. Detailed documentation can be found in the comments in code and in the [API docs](https://docs.ros.org/en/api/cras_py_common/html/). Examples of usage can be found in the dependent packages from `ros-utils`, and in the unit tests.
@@ -38,6 +38,8 @@ Release jobs Noetic
 [![Bin debian noetic-amd64](https://build.ros.org/job/Nbin_db_dB64__cras_py_common__debian_buster_amd64__binary/badge/icon?subject=buster+amd64)](https://build.ros.org/job/Nbin_db_dB64__cras_py_common__debian_buster_amd64__binary/)
 [![Bin debian noetic-arm64](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_py_common__debian_buster_arm64__binary/badge/icon?subject=buster+arm64)](https://build.ros.org/job/Nbin_dbv8_dBv8__cras_py_common__debian_buster_arm64__binary/)
 
+-->
+
 ## List of Provided Modules
 
 The most useful functions and classes from these modules are available directly from the `cras` package, i.e.
@@ -48,11 +50,19 @@ from cras import to_str
 from cras.string_utils import to_str
 ```
 
+<!--
+
 - [`ctypes_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.ctypes_utils): Utilities for working with the ctypes library.
 - [`geometry_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.geometry_utils): Finally THE module providing easy and foolproof conversion between quaternions and roll/pitch/yaw notation.
 - [`log_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.log_utils): Some convenience for `rospy` logging. Provides `log*_once_identical()` functions to log unique messages.
 - [`message_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.message_utils): Conversion of `std_msgs/String` to Python type etc. Generic access to message fields using a string "address".
-- [`node_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.node_utils): Utilities for easier writing of nodes, adding e.g. easy-to-write `reset()` function that is automatically called when ROS time jumps back/forward.
+
+-->
+
+- [`node_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.node_utils): Utilities for easier writing of nodes.
+
+<!--
+
 - [`param_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.param_utils): Utilities for type-safe, easy, unified and configurable access to ROS parameters. See below for examples and more details.
 - [`python_utils`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.python_utils): General Python utilities.
 - [`static_transform_broadcaster`](https://docs.ros.org/en/api/cras_py_common/html/cras.html#module-cras.static_transform_broadcaster): An drop-in replacement of `tf2_ros.static_transform_broadcaster` that can safely publish multiple transforms from a single node ([upstreaming to tf2_ros in progress](https://github.com/ros/geometry2/pull/484)).
