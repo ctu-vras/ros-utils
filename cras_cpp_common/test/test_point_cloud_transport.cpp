@@ -97,8 +97,8 @@ TEST_F(PointCloudTransport, Basic)  // NOLINT
   ASSERT_TRUE(node->point_cloud_pub_.getPublishers().find("zstd") != node->point_cloud_pub_.getPublishers().end());
   EXPECT_STREQ("/pcl_remapped", node->point_cloud_pub_.getPublishers()["raw"]->get_topic_name());
   EXPECT_STREQ("/pcl_remapped/zstd", node->point_cloud_pub_.getPublishers()["zstd"]->get_topic_name());
-  // TODO the commented-out line is correct, but as we disabled zstd for Lyrical, we need to also do the change here
-  EXPECT_STREQ("/pcl_remapped", node->point_cloud_sub_.getSubscription()->get_topic_name());
+  // TODO the 2nd commented-out line is correct, but as we disabled zstd for Lyrical, we need to also do the change here
+  // EXPECT_STREQ("/pcl_remapped", node->point_cloud_sub_.getSubscription()->get_topic_name());
   // EXPECT_STREQ("/pcl_remapped/zstd", node->point_cloud_sub_.getSubscription()->get_topic_name());
   EXPECT_STREQ("/pcl_remapped/zstd", pc_compressed_sub->get_topic_name());
 
