@@ -16,6 +16,7 @@
   <url type="bugtracker">https://github.com/ctu-vras/ros-utils/issues</url>
   <url type="repository">https://github.com/ctu-vras/ros-utils</url>
 
+  <buildtool_depend>ament_cmake_core</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <exec_depend>language-pack-en</exec_depend>  <!-- Needed to get en_US.UTF-8 locale -->

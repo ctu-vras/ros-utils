@@ -4,6 +4,8 @@
 cmake_minimum_required(VERSION 3.20.2)
 project(cras_py_common)
 
+# ament_cmake_core should not be find_packaged, but because of https://github.com/ament/ament_cmake/pull/645 we have to
+find_package(ament_cmake_core REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
 ament_python_install_package(cras)
