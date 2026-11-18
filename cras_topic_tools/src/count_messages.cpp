@@ -74,9 +74,11 @@ void CountMessagesComponent::discoverTopicAndSubscribe() {
   if (this->intraprocess_comms_) {
     opts.use_intra_process_comm = rclcpp::IntraProcessSetting::Enable;
   }
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
   if (this->topic_stats_) {
     opts.topic_stats_options.state = rclcpp::TopicStatisticsState::Enable;
   }
+#endif
 
   this->sub_ = ::cras::create_generic_subscription(
     *this, this->topic_, type, this->qos_profile_, std::bind(&CountMessagesComponent::cb, this, std::placeholders::_1),
@@ -115,7 +117,13 @@ CountMessagesComponent::CountMessagesComponent(const ::rclcpp::NodeOptions& opti
     : rclcpp::Node("count_messages", options) {
   this->use_params_ = this->declare_parameter("use_parameters", this->use_params_);
   this->intraprocess_comms_ = this->declare_parameter("intraprocess_comms", this->intraprocess_comms_);
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
   this->topic_stats_ = this->declare_parameter("topic_statistics", this->topic_stats_);
+#else
+  if (this->has_parameter("topic_statistics")) {
+    RCLCPP_WARN(this->get_logger(), "topic_statistics parameter ignored, not supported in this version of rclcpp");
+  }
+#endif
   auto report_interval_double = this->declare_parameter("report_interval", 0.0);
 
   auto qos_profile_str = this->declare_parameter("qos_profile", "");

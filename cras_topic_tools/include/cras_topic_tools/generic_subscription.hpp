@@ -9,6 +9,33 @@
 
 #pragma once
 
+#include <chrono>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+#include <rclcpp/any_subscription_callback.hpp>
+#include <rclcpp/create_publisher.hpp>
+#include <rclcpp/create_timer.hpp>
+#include <rclcpp/generic_subscription.hpp>
+#include <rclcpp/message_info.hpp>
+#include <rclcpp/node_interfaces/node_base_interface.hpp>
+#include <rclcpp/node_interfaces/node_parameters_interface.hpp>
+#include <rclcpp/node_interfaces/node_topics_interface.hpp>
+#include <rclcpp/qos.hpp>
+#include <rclcpp/time.hpp>
+#include <rclcpp/serialized_message.hpp>
+#include <rclcpp/subscription_options.hpp>
+#include <rclcpp/typesupport_helpers.hpp>
+#include <rcpputils/shared_library.hpp>
+
+// Topic statistics were removed in rclcpp 33.2.0
+#if __has_include(<rclcpp/topic_statistics/subscription_topic_statistics.hpp>)
+#define CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
+#include <rclcpp/topic_statistics/subscription_topic_statistics.hpp>
+#endif
+
 namespace cras
 {
 
@@ -43,13 +70,18 @@ public:
     const ::std::shared_ptr<::rcpputils::SharedLibrary> ts_lib, const ::std::string& topic_name,
     const ::std::string& topic_type, const ::rclcpp::QoS& qos,
     ::rclcpp::AnySubscriptionCallback<::rclcpp::SerializedMessage, AllocatorT> callback,
-    const ::rclcpp::SubscriptionOptionsWithAllocator<AllocatorT>& options,
-    ::std::shared_ptr<::rclcpp::topic_statistics::SubscriptionTopicStatistics> subscription_topic_stats = nullptr)
+    const ::rclcpp::SubscriptionOptionsWithAllocator<AllocatorT>& options
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
+    , ::std::shared_ptr<::rclcpp::topic_statistics::SubscriptionTopicStatistics> subscription_topic_stats = nullptr
+#endif
+    )
   : ::rclcpp::GenericSubscription(node_base, ts_lib, topic_name, topic_type, qos, callback, options),
     any_callback(callback)
   {
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
     if (subscription_topic_stats != nullptr)
       this->subscription_topic_statistics = ::std::move(subscription_topic_stats);
+#endif
 
 #ifndef TRACETOOLS_DISABLED
     this->any_callback.register_callback_for_tracing();
@@ -59,23 +91,29 @@ public:
   void handle_serialized_message(const ::std::shared_ptr<::rclcpp::SerializedMessage>& serialized_message,
     const ::rclcpp::MessageInfo& message_info) override
   {
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
     ::std::chrono::time_point<::std::chrono::system_clock> now;
     if (this->subscription_topic_statistics)
       now = ::std::chrono::system_clock::now();
+#endif
 
     this->any_callback.dispatch(serialized_message, message_info);
 
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
     if (this->subscription_topic_statistics)
     {
       const auto nanos = ::std::chrono::time_point_cast<::std::chrono::nanoseconds>(now);
       const auto time = ::rclcpp::Time(nanos.time_since_epoch().count());
       this->subscription_topic_statistics->handle_message(message_info.get_rmw_message_info(), time);
     }
+#endif
   }
 
 protected:
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
   //! \brief Component which computes and publishes topic statistics for this subscriber.
   ::std::shared_ptr<::rclcpp::topic_statistics::SubscriptionTopicStatistics> subscription_topic_statistics {nullptr};
+#endif
 
   //! \brief The callback to call when a message is received.
   ::rclcpp::AnySubscriptionCallback<::rclcpp::SerializedMessage, ::std::allocator<void>> any_callback;
@@ -107,6 +145,7 @@ template<typename CallbackT, typename AllocatorT = ::std::allocator<void>>
   const ::std::string& topic_type, const ::rclcpp::QoS& qos, CallbackT&& callback,
   const ::rclcpp::SubscriptionOptionsWithAllocator<AllocatorT>& options = {})
 {
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
   ::std::shared_ptr<::rclcpp::topic_statistics::SubscriptionTopicStatistics> subscription_topic_stats {nullptr};
   if (::rclcpp::detail::resolve_enable_topic_statistics(options, *topics_interface->get_node_base_interface()))
   {
@@ -141,6 +180,7 @@ template<typename CallbackT, typename AllocatorT = ::std::allocator<void>>
 
     subscription_topic_stats->set_publisher_timer(timer);
   }
+#endif
 
   auto ts_lib = ::rclcpp::get_typesupport_library(topic_type, "rosidl_typesupport_cpp");
   const auto allocator = options.get_allocator();
@@ -150,7 +190,11 @@ template<typename CallbackT, typename AllocatorT = ::std::allocator<void>>
   any_subscription_callback.set(::std::forward<CallbackT>(callback));
 
   auto subscription = ::std::make_shared<::cras::GenericSubscription>(topics_interface->get_node_base_interface(),
-    ::std::move(ts_lib), topic_name, topic_type, qos, any_subscription_callback, options, subscription_topic_stats);
+    ::std::move(ts_lib), topic_name, topic_type, qos, any_subscription_callback, options
+#ifdef CRAS_HAS_SUBSCRIPTION_TOPIC_STATISTICS
+    , subscription_topic_stats
+#endif
+    );
 
   topics_interface->add_subscription(subscription, options.callback_group);
 
