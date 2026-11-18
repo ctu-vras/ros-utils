@@ -2,6 +2,11 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: Support rclcpp without topic statistics
+* Contributors: Martin Pecka
+
 4.0.2 (2026-08-23)
 ------------------
 * package.xml: set license to valid SPDX string (#13)

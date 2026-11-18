@@ -2,6 +2,12 @@
 Changelog for package cras_py_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed build. Workaround for https://github.com/ament/ament_cmake/pull/645 .
+* Converted package to ROS 2.
+* Contributors: Martin Pecka
+
 2.5.1 (2025-02-18)
 ------------------
 

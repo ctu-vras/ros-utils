@@ -2,6 +2,17 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* point_cloud_transport: Disabled a test failing on Rolling.
+* type_utils: Better type name cleaning for ROS messages.
+* math_utils: Added saturating_cast.
+* image_transport + point_cloud_transport: Addressed review feedback, handled topic remapping more properly.
+  Double remapping is still a problem for both transports.
+  Some TODOs are left in the code for later.
+* Added image_transport and point_cloud_transport helpers.
+* Contributors: Martin Pecka
+
 4.0.2 (2026-08-23)
 ------------------
 * package.xml: set license to valid SPDX string (#13)
