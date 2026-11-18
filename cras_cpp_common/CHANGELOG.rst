@@ -2,8 +2,8 @@
 Changelog for package cras_cpp_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.1.0 (2026-11-19)
+------------------
 * point_cloud_transport: Disabled a test failing on Rolling.
 * type_utils: Better type name cleaning for ROS messages.
 * math_utils: Added saturating_cast.

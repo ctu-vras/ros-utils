@@ -2,8 +2,8 @@
 Changelog for package cras_topic_tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.1.0 (2026-11-19)
+------------------
 * fix: Support rclcpp without topic statistics
 * Contributors: Martin Pecka
 
